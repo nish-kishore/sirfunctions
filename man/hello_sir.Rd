@@ -12,3 +12,7 @@ Hello world
 \description{
 An example function
 }
+\examples{
+hello_sir()
+}
+\keyword{sir}
