@@ -115,7 +115,7 @@ f.npafp.rate.01 <- function(
   # For merging on country - Country name is used from the ctry.data set -
   # this pulled from extract_ctry_info - merge is then subsequently by year
   # alone.
-  if (prov.dist == "ctry") { # Analysis at country level
+  if(prov.dist == "ctry"){ # Analysis at country level
     int.data <- npafp.data |>
       mutate(year = year(date)) |>
       group_by(year) |>
@@ -155,7 +155,7 @@ f.npafp.rate.01 <- function(
   }
 
   # Province level calculation
-  if (prov.dist == "prov") { # Analysis at province level
+  if(prov.dist == "prov"){ # Analysis at province level
     int.data <- npafp.data |>
       mutate(year = year(date)) |>
       group_by(adm1guid, year) |>
@@ -199,7 +199,7 @@ f.npafp.rate.01 <- function(
   }
 
   # District level calculation
-  if (prov.dist == "dist") { # Analysis at district level
+  if(prov.dist == "dist"){ # Analysis at district level
     int.data <- npafp.data |>
       mutate(year = year(date)) |>
       group_by(adm1guid, adm2guid, year) |>
