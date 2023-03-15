@@ -16,19 +16,21 @@ list(
   "pop.data.dist" = pop.data.dist, 
   "pop.data.prov" = pop.data.prov, 
   "pop.data.ctry" = pop.data.ctry, 
-  "afp.data" = afp.data
+  "afp.data" = ctry.data$afp.all.2
 ) |> 
   write_rds("C:/Users/ynm2/Desktop/npafp_test_data.rds")
 
 #start here 
-data <- read_rds("C:/Users/ynm2/Desktop/npafp_test_data.rds")
+library(tidyverse)
+library(lubridate)
+data <- read_rds("//cdc.gov/project/CGH_GID_Active/PEB/SIR/DATA/Core 2.0/test_data/npafp_test_data.rds")
 
 f.npafp.rate.01(
   afp.data = data$afp.data, 
   pop.data = data$pop.data.dist, 
   start.date = "2019-04-01", 
   end.date = "2020-09-01", 
-  spatial.scale = "dist", 
+  spatial.scale = "prov", 
   pending = T, 
   rolling = F
 )

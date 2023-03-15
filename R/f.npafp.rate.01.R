@@ -299,7 +299,7 @@ f.npafp.rate.01 <- function(
       ) |>
       # Calculate NPAFP rate per 100,000 annualized by calendar year
       select( # Select columns to keep for output
-        year, n_npafp, prov.pop, n_days, days_in_year,
+        year, n_npafp, u15pop, n_days, days_in_year,
         weight, adm0guid, adm1guid, ctry, prov, earliest_date, latest_date
       ) %>%
       {
