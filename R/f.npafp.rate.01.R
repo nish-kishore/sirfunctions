@@ -67,6 +67,11 @@ f.npafp.rate.01 <- function(
                   paste0(names.pop.ctry[!names.pop.ctry %in% names(pop.data)], collapse = ", ")))
     }
 
+    #check if pop data is of a larger spatial scale than the parameter chosen
+    if(sum(c("adm1guid", "adm2guid") %in% names(pop.data)) > 0){
+      stop("Please check that the spatial scale of the pop data provided matches the `spatial.scale` chosen.")
+    }
+
     incomplete.adm <- pop.data |>
       group_by(adm0guid) |>
       summarize(freq = n()) |>
@@ -87,6 +92,12 @@ f.npafp.rate.01 <- function(
       stop(paste0("The follow variables were not found in pop.data: ",
                   paste0(names.pop.prov[!names.pop.prov %in% names(pop.data)], collapse = ", ")))
     }
+
+    #check if pop data is of a larger spatial scale than the parameter chosen
+    if(sum(c("adm2guid") %in% names(pop.data)) > 0){
+      stop("Please check that the spatial scale of the pop data provided matches the `spatial.scale` chosen.")
+    }
+
 
     incomplete.adm <- pop.data |>
       group_by(adm1guid) |>
