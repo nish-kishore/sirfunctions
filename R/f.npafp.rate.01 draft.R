@@ -2,11 +2,14 @@
 #'
 #' @name f.npafp.rate.01
 #' @description
-#' @param ctry.data list: country specific data object
+#' @import tidyverse
+#' @param ctry.data list: country specific data object with structure...that includes at a minimum...
+#' @param dpop
 #' @param start.date chr: "YYYY-MM-DD"
 #' @param end.date chr: "YYYY-MM-DD"
 #' @param prov.dist chr: "prov" or "dist" or "ctry"
-#' @param pending chr: "Include" or "Exclude"
+#' @param pending boolean: default FALSE
+#' @param rolling boolean: default FALSE
 #' @returns tibble
 #' @export
 #' @examples
@@ -15,7 +18,9 @@ f.npafp.rate.01 <- function(
     start.date,
     end.date,
     prov.dist,
-    pending){
+    pending = F,
+    rolling = F
+    ){
 
   # Analysis start and end date as defined by user (as a character)
   start.date <- as_date(start.date)
@@ -24,6 +29,7 @@ f.npafp.rate.01 <- function(
   # Limit AFP data to the range described by the analysis start and end dates
   afp.data <- ctry.data$afp.all.2 |>
     filter(date >= start.date & date <= end.date)
+
   # Filter population data to the years of the analysis date and to the
   # country of interest
   pop.data.og <- dpop %>%
@@ -42,7 +48,7 @@ f.npafp.rate.01 <- function(
     ))
   }
 
-  if (pending == "Include") {
+  if (pending) {
     npafp.data <- afp.data |>
       as_tibble() |>
       filter(
@@ -53,9 +59,7 @@ f.npafp.rate.01 <- function(
       # PENDING, or LAB PENDING are counted
       select(epid, date, ctry, adm0guid, prov, adm1guid, dist, adm2guid)
     # Keep only the listed variables (removes all others)
-  }
-
-  if (pending == "Exclude") {
+  }else{
     npafp.data <- afp.data |>
       as_tibble() |>
       filter(cdc.classification.all2 == "NPAFP") |> # filter all AFP data such
