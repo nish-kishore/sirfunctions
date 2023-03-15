@@ -116,6 +116,15 @@ f.npafp.rate.01 <- function(
 
   }
 
+  if(length(incomplete.adm) > 0){
+
+    readline(paste0("The following GUIDS at the ", spatial.scale,
+                   "were not valid across the temporal scale:\n",
+                   paste0(incomplete.adm, collapse = ", "),
+                   "\n Please hit [ENTER] to continue"))
+
+  }
+
   #Warning message about non-overlapping dates
   if(start.date < as_date(afp.data$date |> min(na.rm = T))){
     print(paste0(
@@ -140,11 +149,7 @@ f.npafp.rate.01 <- function(
       year <= year(end.date)) %>% # Only years of analysis
     filter(ctry == ctry.data$ctry$ADM0_NAME) # Only country of analysis
 
-
-
-
-
-
+  #check status of pending and filter data appropriately
   if(pending){
     npafp.data <- afp.data |>
       as_tibble() |>
@@ -163,6 +168,7 @@ f.npafp.rate.01 <- function(
     # Keep only the listed variables (removes all others)
   }
 
+  # calculate year weight table
   # convert start and end date into year-wise chunks with year weights
   year.data <- tibble(
     "year" = year(start.date):year(end.date) # Defines year as the amount of
