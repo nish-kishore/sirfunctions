@@ -23,11 +23,13 @@ list(
 #start here 
 library(tidyverse)
 library(lubridate)
+library(here)
 data <- read_rds("//cdc.gov/project/CGH_GID_Active/PEB/SIR/DATA/Core 2.0/test_data/npafp_test_data.rds")
+source(here("R/f.npafp.rate.01.R"))
 
 f.npafp.rate.01(
   afp.data = data$afp.data, 
-  pop.data = data$pop.data.dist, 
+  pop.data = data$pop.data.prov, 
   start.date = "2019-04-01", 
   end.date = "2020-09-01", 
   spatial.scale = "prov", 
