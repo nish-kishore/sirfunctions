@@ -4,7 +4,7 @@
 #' @description
 #' @import tidyverse
 #' @param ctry.data list: country specific data object with structure...that includes at a minimum...
-#' @param dpop
+#' @param dpop tibble: population data
 #' @param start.date chr: "YYYY-MM-DD"
 #' @param end.date chr: "YYYY-MM-DD"
 #' @param prov.dist chr: "prov" or "dist" or "ctry"
@@ -15,12 +15,19 @@
 #' @examples
 f.npafp.rate.01 <- function(
     ctry.data,
+    dpop,
     start.date,
     end.date,
     prov.dist,
     pending = F,
     rolling = F
     ){
+
+
+  #This function works in three stages:
+  #1) subset afp (incorporating pending information) and population data for the time periods and regions of interest
+  #2) calculate the year weights based on the start and end dates
+  #3) Calculate the npafp rate based on spatial scale and "rolling" parameter
 
   # Analysis start and end date as defined by user (as a character)
   start.date <- as_date(start.date)
@@ -37,7 +44,7 @@ f.npafp.rate.01 <- function(
       year <= year(date_last)) %>% # Only years of analysis
     filter(ADM0_NAME == ctry.data$ctry$ADM0_NAME) # Only country of analysis
 
-  if (start.date < as_date(afp.data$date |> min(na.rm = T))) {
+  if(start.date < as_date(afp.data$date |> min(na.rm = T))){
     print(paste0(
       "Your specified start date is ",
       start.date,
@@ -48,14 +55,12 @@ f.npafp.rate.01 <- function(
     ))
   }
 
-  if (pending) {
+  if(pending){
     npafp.data <- afp.data |>
       as_tibble() |>
       filter(
-        cdc.classification.all2 == "NPAFP" |
-          cdc.classification.all2 == "PENDING" |
-          cdc.classification.all2 == "LAB PENDING"
-      ) |> # filter all AFP data such that only cases listed as NPAFP,
+        cdc.classification.all2 %in% c("NPAFP", "PENDING", "LAB PENDING")
+        ) |> # filter all AFP data such that only cases listed as NPAFP,
       # PENDING, or LAB PENDING are counted
       select(epid, date, ctry, adm0guid, prov, adm1guid, dist, adm2guid)
     # Keep only the listed variables (removes all others)
@@ -93,7 +98,7 @@ f.npafp.rate.01 <- function(
       # then use the exact end date, otherwise use December 31
       latest_date = as_date(latest_date),
       n_days = as.integer(latest_date - earliest_date + 1), # Calculate number
-      # of days in calendar year between earliest and lastest date of that
+      # of days in calendar year between earliest and latest date of that
       # calendar year
       weight = n_days / days_in_year # Calculate weight adjustment for number
       # of cases based on number of days in given calendar year
