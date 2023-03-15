@@ -18,7 +18,7 @@ list(
   "pop.data.ctry" = pop.data.ctry, 
   "afp.data" = ctry.data$afp.all.2
 ) |> 
-  write_rds("C:/Users/ynm2/Desktop/npafp_test_data.rds")
+  write_rds("//cdc.gov/project/CGH_GID_Active/PEB/SIR/DATA/Core 2.0/test_data/npafp_test_data.rds")
 
 #start here 
 library(tidyverse)
