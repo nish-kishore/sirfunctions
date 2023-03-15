@@ -62,6 +62,16 @@ f.npafp.rate.01 <- function(
       stop(paste0("The follow variables were not found in pop.data: ",
                   paste0(names.pop.ctry[!names.pop.ctry %in% names(pop.data)], collapse = ", ")))
     }
+
+    incomplete.adm <- pop.data |>
+      group_by(adm0guid) |>
+      summarize(freq = n()) |>
+      filter(freq < length(year(start.date):year(end.date))) |>
+      pull(adm0guid)
+
+    pop.data <- filter(pop.data, !adm0guid %in% incomplete.adm)
+    afp.data <- filter(afp.data, !adm0guid %in% incomplete.adm)
+
   }
 
   if(spatial.scale == "prov"){
@@ -73,6 +83,16 @@ f.npafp.rate.01 <- function(
       stop(paste0("The follow variables were not found in pop.data: ",
                   paste0(names.pop.prov[!names.pop.prov %in% names(pop.data)], collapse = ", ")))
     }
+
+    incomplete.adm <- pop.data |>
+      group_by(adm1guid) |>
+      summarize(freq = n()) |>
+      filter(freq < length(year(start.date):year(end.date))) |>
+      pull(adm1guid)
+
+    pop.data <- filter(pop.data, !adm1guid %in% incomplete.adm)
+    afp.data <- filter(afp.data, !adm1guid %in% incomplete.adm)
+
   }
 
   if(spatial.scale == "dist"){
@@ -84,6 +104,16 @@ f.npafp.rate.01 <- function(
       stop(paste0("The follow variables were not found in pop.data: ",
                   paste0(names.pop.dist[!names.pop.dist %in% names(pop.data)], collapse = ", ")))
     }
+
+    incomplete.adm <- pop.data |>
+      group_by(adm2guid) |>
+      summarize(freq = n()) |>
+      filter(freq < length(year(start.date):year(end.date))) |>
+      pull(adm2guid)
+
+    pop.data <- filter(pop.data, !adm2guid %in% incomplete.adm)
+    afp.data <- filter(afp.data, !adm2guid %in% incomplete.adm)
+
   }
 
   #Warning message about non-overlapping dates
@@ -105,15 +135,12 @@ f.npafp.rate.01 <- function(
 
   # Filter population data to the years of the analysis date and to the
   # country of interest
-  pop.data.og <- ctry.data$dist.pop %>%
+  pop.data <- pop.data %>%
     filter(year >= year(start.date) &
       year <= year(end.date)) %>% # Only years of analysis
     filter(ctry == ctry.data$ctry$ADM0_NAME) # Only country of analysis
 
-  pop.data |>
-    group_by(adm2guid) |>
-    summarize(freq = n()) |>
-    filter(freq < length(year(start.date):year(end.date)))
+
 
 
 
