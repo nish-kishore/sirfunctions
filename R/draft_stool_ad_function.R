@@ -12,7 +12,7 @@
 #' @param missing chr: "good" or "bad" or "missing"
 #' @param bad.data chr: "remove" or "inadequate" or "adequate"
 #' @returns tibble
-#'
+#' @export
 
 # RETURN WHAT PARAMETERS PEOPLE CHOSE AS ANOTHER VARIABLE
 
