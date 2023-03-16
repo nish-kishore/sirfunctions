@@ -161,8 +161,7 @@ f.npafp.rate.01 <- function(
   # country of interest
   pop.data <- pop.data %>%
     filter(year >= year(start.date) &
-      year <= year(end.date)) %>% # Only years of analysis
-    filter(ctry == ctry.data$ctry$ADM0_NAME) # Only country of analysis
+      year <= year(end.date)) # Only years of analysis # Only country of analysis
 
   #check status of pending and filter data appropriately
   if(pending){
