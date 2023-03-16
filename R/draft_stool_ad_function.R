@@ -1,3 +1,6 @@
+#' Calculate Stool Adequacy Function
+#'
+#' @name f.stool.ad.01
 #' @description creates an adequacy variable - 'missing' parameter defines how
 #' missing data is treated - "Good" classifies missing data as good quality (POLIS method)
 #' "Bad" classifies all missing as bad quality, "missing" excludes missing from
@@ -13,7 +16,7 @@
 
 # RETURN WHAT PARAMETERS PEOPLE CHOSE AS ANOTHER VARIABLE
 
-calc_stool_adequacy <- function(ctry.data, start.date, end.date, prov.dist, missing, bad.data) {
+f.stool.ad.01 <- function(ctry.data, start.date, end.date, prov.dist, missing, bad.data) {
   start.date <- as_date(start.date)
   end.date <- as_date(end.date)
   
