@@ -40,10 +40,20 @@ f.npafp.rate.01 <- function(
     stop("Please make sure that your `afp.data` and `pop.data` are subset for the same countries")
   }
 
+
   #Check data inputs
   # Analysis start and end date as defined by user (as a character)
   start.date <- as_date(start.date)
   end.date <- as_date(end.date)
+
+  years <- year(start.date):year(end.date)
+  pop.years <- sort(unique(pop.data$year))
+
+  #check that pop data contains all the years necessary
+  if(sum(!years %in% pop.years) > 0){
+    unfound.years <- years[!(years %in% pop.years)]
+    stop(paste0("There are no years of population data for: ", paste0(unfound.years, collapse = ", ")))
+  }
 
   #Check dates and return warning if afp data out of range
 
