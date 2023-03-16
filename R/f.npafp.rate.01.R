@@ -7,7 +7,7 @@
 #' formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all2 which includes
 #' c("NPAFP", "PENDING", "LAB PENDING")
 #' @param pop.data tibble: Under 15 population data by a given spatial scale including
-#' "year", "adm{0,1,2}guid, "u15pop"
+#' "year", "adm{0,1,2}guid, "u15pop", and "{ctry/prov/dist}" as appropriate
 #' @param start.date chr: "YYYY-MM-DD"
 #' @param end.date chr: "YYYY-MM-DD"
 #' @param spatial.scale chr: "prov" or "dist" or "ctry"
@@ -31,9 +31,9 @@ f.npafp.rate.01 <- function(
   names.afp.prov <- c(names.afp.ctry, "adm1guid")
   names.afp.dist <- c(names.afp.prov, "adm2guid")
 
-  names.pop.ctry <- c("adm0guid", "year", "u15pop")
-  names.pop.prov <- c(names.pop.ctry, "adm1guid")
-  names.pop.dist <- c(names.pop.prov, "adm2guid")
+  names.pop.ctry <- c("adm0guid", "year", "u15pop", "ctry")
+  names.pop.prov <- c(names.pop.ctry, "adm1guid", "prov")
+  names.pop.dist <- c(names.pop.prov, "adm2guid", "dist")
 
   #check that data inputs have the same country data
   if(!sort(unique(pop.data$adm0guid)) == sort(unique(afp.data$adm0guid))){
@@ -134,7 +134,7 @@ f.npafp.rate.01 <- function(
   if(length(incomplete.adm) > 0){
 
     readline(paste0("The following GUIDS at the ", spatial.scale,
-                   "were not valid across the temporal scale:\n",
+                   " were not valid across the temporal scale:\n",
                    paste0(incomplete.adm, collapse = ", "),
                    "\n Please hit [ENTER] to continue"))
 
