@@ -23,6 +23,7 @@
 #' @export
 #' @examples
 
+
 f.stool.ad.01 <- function(
     afp.data,
     admin.data,
@@ -30,7 +31,8 @@ f.stool.ad.01 <- function(
     end.date, 
     spatial.scale, 
     missing = "good", 
-    bad.data = "inadequate"
+    bad.data = "inadequate",
+    rolling = F
     ){
   
   #file names
@@ -196,6 +198,35 @@ f.stool.ad.01 <- function(
              year <= year(end.date)) # Only years of analysis # Only country of analysis
   
   
+  year.data <- tibble(
+    "year" = year(start.date):year(end.date) # Defines year as the amount of
+    # time between the start date and end date by calendar year (eg 2019:2020)
+  ) |>
+    rowwise() |>
+    mutate(
+      days_in_year = length(seq(as_date(paste0(year, "-01-01")),
+                                as_date(paste0(year, "-12-31")),
+                                by = "day"
+      )),
+      # Number of days in calendar year
+      earliest_date = ifelse(year(start.date) == year, start.date,
+                             as_date(paste0(year, "-01-01"))
+      ),
+      # Create earliest date per calendar year - if it is the year of start
+      # date, then use the exact start date, otherwise use January 1
+      earliest_date = as_date(earliest_date),
+      latest_date = ifelse(year(end.date) == year,
+                           end.date, as_date(paste0(year, "-12-31"))
+      ),
+      # Create latest date per calendar year - if it is the year of end date,
+      # then use the exact end date, otherwise use December 31
+      latest_date = as_date(latest_date),
+      n_days = as.integer(latest_date - earliest_date + 1), # Calculate number
+      # of days in calendar year between earliest and latest date of that
+      # calendar year
+    )
+  
+  
   # Coding data to be adequate (1), inadequate (0), data missing (99), or data error (77)
   stool.data <- afp.data
   stool.data$adequacy.final <- NA
@@ -241,6 +272,9 @@ f.stool.ad.01 <- function(
     select(year, adm0guid, adm1guid, adm2guid, 
            adequacy.final, cdc.classification.all2)
   
+  stool.data <- full_join( # Merge stool data with days in year
+    stool.data, year.data,
+    by = c("year" = "year"))
   
   # Preserving the original classifications
   stool.data1 <- stool.data
@@ -267,14 +301,97 @@ f.stool.ad.01 <- function(
     stool.data = stool.data %>%
       filter(adequacy.final != 99)
   }
-  
+
   
   if (spatial.scale == "ctry") {
-    
-    admin.data <- ungroup(admin.data) %>%
-      select(names.ctry) %>%
-      distinct(.)
-    
+    if(rolling){
+      admin.data <- ungroup(admin.data) %>%
+        select(names.ctry, -"year") %>%
+        distinct(.)
+      
+      baddy = stool.data1 %>%
+        group_by(adm0guid, adequacy.final)%>%
+        summarize(bad.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 77) %>%
+        select(-adequacy.final)
+      
+      missy = stool.data1 %>%
+        group_by(adm0guid,adequacy.final)%>%
+        summarize(missing.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 99) %>%
+        select(-adequacy.final)
+      
+      int.data <- stool.data |>
+        group_by(adm0guid, adequacy.final) |>
+        summarize(freq = n()) |>
+        ungroup()
+      
+      # Total number of cases
+      tots <- stool.data |>
+        group_by(adm0guid) |>
+        summarize(toty = n())
+      
+      int.data <- full_join(int.data, tots, by = c("adm0guid" = "adm0guid"))
+      
+      int.data.ad <- int.data |>
+        filter(adequacy.final == 1) |>
+        mutate(stoolad = 100 * freq / toty) %>%
+        rename(num.ad = freq)
+      
+      int.data <- full_join(int.data.ad, missy,
+                            by = c("adm0guid" = "adm0guid")
+      ) %>%
+        full_join(baddy, by = c("adm0guid" = "adm0guid"))
+      
+      
+      # Join with admin file to fill in missing
+      int.data <- full_join(int.data, admin.data, 
+                            by = c("adm0guid" = "adm0guid"))
+      
+      
+      # Create number of days at risk
+      int.data <- int.data %>%
+        ungroup() |>
+        mutate(
+          days_at_risk = as.numeric(end.date - start.date+1),
+        )
+      
+      # Replace NAs with 0
+      int.data <- int.data %>%
+        mutate(across(c(num.ad, toty, stoolad, missing.data,
+                        bad.data), ~ replace_na(.x,0)))
+      
+      # Create number of adequate only
+      int.data$ad.only <- int.data$num.ad - int.data$missing.data
+      # Create inadequate only
+      int.data$inad.only <- 
+        int.data$toty - int.data$missing.data - int.data$ad.only - int.data$bad.data
+      
+      int.data <- int.data %>%
+        rename(
+          "afp.cases" = "toty",
+          "num.adequate" = "ad.only",
+          "num.inadequate" = "inad.only",
+          "num.missing.data" = "missing.data",
+          "num.data.error" = "bad.data",
+          "num.adj.w.miss" = "num.ad",
+          "per.stool.ad" = "stoolad",
+          "days.at.risk" = "days_at_risk"
+        ) %>%
+        select(
+          adm0guid, ctry, num.adequate, num.missing.data, num.data.error,
+          num.adj.w.miss, per.stool.ad, afp.cases, num.inadequate,
+          days.at.risk
+        ) 
+      int.data <- int.data[,c("days.at.risk","ctry","afp.cases", 
+                              "num.adj.w.miss","num.adequate","num.inadequate",
+                              "num.missing.data", "per.stool.ad",
+                              "adm0guid")]
+      
+      
+    }else{
     baddy = stool.data1 %>%
       group_by(adm0guid, year, adequacy.final)%>%
       summarize(bad.data = n()) %>%
@@ -311,236 +428,409 @@ f.stool.ad.01 <- function(
     ) %>%
       full_join(baddy, by = c("year" = "year", "adm0guid" = "adm0guid"))
     
+
     # Join with admin file to fill in missing
-    int.data <- full_join(int.data, admin.data, by = c("year" = "year", 
-                                                       "adm0guid" = "adm0guid"))
+    int.data <- full_join(int.data, admin.data, 
+                                by = c("year" = "year", 
+                                       "adm0guid" = "adm0guid"))
     
-    # Add AFP cases by year
-    afp.cases <- count(stool.data, adm0guid, year)
-    
-    # Join with int.data
-    int.data <- full_join(int.data, afp.cases, by= c("year" = "year",
-                                                     "adm0guid" = "adm0guid"))
-    
-    # Replace NAs with 0
+    # Create number of days at risk
     int.data <- int.data %>%
-      mutate(across(c(num.ad, toty, stoolad, missing.data,
-                      bad.data, n), ~ replace_na(.x,0)))
+      left_join(., year.data, by = c("year" = "year")) %>%
+      mutate(days_at_risk = n_days)
     
-    # Create number of adequate only
-    int.data$ad.only <- int.data$num.ad - int.data$missing.data
-    # Create inadequate only
-    int.data$inad.only <- 
-      int.data$toty - int.data$missing.data - int.data$ad.only - int.data$bad.data
+      
+      
+      # Replace NAs with 0
+      int.data <- int.data %>%
+        mutate(across(c(num.ad, toty, stoolad, missing.data,
+                        bad.data), ~ replace_na(.x,0)))
+      
+      # Create number of adequate only
+      int.data$ad.only <- int.data$num.ad - int.data$missing.data
+      # Create inadequate only
+      int.data$inad.only <- 
+        int.data$toty - int.data$missing.data - int.data$ad.only - int.data$bad.data
+      
+      int.data <- int.data %>%
+        rename(
+          "afp.cases" = "toty",
+          "num.adequate" = "ad.only",
+          "num.inadequate" = "inad.only",
+          "num.missing.data" = "missing.data",
+          "num.data.error" = "bad.data",
+          "num.adj.w.miss" = "num.ad",
+          "per.stool.ad" = "stoolad",
+          "days.at.risk" = "days_at_risk"
+        ) %>%
+        select(
+          year, adm0guid, ctry, num.adequate, num.missing.data, num.data.error,
+          num.adj.w.miss, per.stool.ad, afp.cases, num.inadequate,
+          days.at.risk
+        ) 
+      int.data <- int.data[,c("year", "days.at.risk","ctry","afp.cases", 
+                              "num.adj.w.miss","num.adequate","num.inadequate",
+                              "num.missing.data", "per.stool.ad",
+                              "adm0guid")]
+      
+    }
     
-    int.data <- int.data %>%
-      rename(
-        "afp.cases" = "n",
-        "num.adequate" = "ad.only",
-        "num.inadequate" = "inad.only",
-        "num.missing.data" = "missing.data",
-        "num.data.error" = "bad.data",
-        "num.adj.w.miss" = "num.ad",
-        "tot.final" = "toty",
-        "per.stool.ad" = "stoolad"
-      ) %>%
-      select(
-        year, adm0guid, ctry, num.adequate, num.missing.data, num.data.error,
-        num.adj.w.miss, tot.final, per.stool.ad, afp.cases, num.inadequate
-      ) 
-    int.data <- int.data[,c("year", "ctry","afp.cases", 
-                            "num.adj.w.miss","num.adequate","num.inadequate",
-                            "num.missing.data","tot.final", "per.stool.ad",
-                            "adm0guid")]
-    
+
   }
   
   
   if (spatial.scale == "prov") {
-
-    
-    admin.data <- ungroup(admin.data) %>%
-      select(names.prov) %>%
-      distinct(.)
-    
-    baddy = stool.data1 %>%
-      group_by(year, adm0guid,adm1guid,adequacy.final)%>%
-      summarize(bad.data = n()) %>%
-      ungroup()%>%
-      filter(adequacy.final == 77) %>%
-      select(-adequacy.final)
-    
-    missy = stool.data1 %>%
-      group_by(year, adm0guid,adm1guid,adequacy.final)%>%
-      summarize(missing.data = n()) %>%
-      ungroup()%>%
-      filter(adequacy.final == 99) %>%
-      select(-adequacy.final)
-    
-    
-    int.data <- stool.data |>
-      group_by(year, adm0guid,adm1guid,adequacy.final) |>
-      summarize(freq = n()) |>
-      ungroup()
-    
-    tots <- stool.data |>
-      group_by(adm0guid, adm1guid, year) |>
-      summarize(toty = n())
-    
-    int.data <- full_join(int.data, tots, by = c("year" = "year",
-                                                 "adm1guid" = "adm1guid"))
-    
-    int.data.ad <- int.data |>
-      filter(adequacy.final == 1) |>
-      mutate(stoolad = 100 * freq / toty) %>%
-      rename(num.ad = freq)
-    
-    
-    int.data <- full_join(int.data.ad, missy,
-                          by = c("year" = "year",
-                                 "adm1guid" = "adm1guid")
-    ) %>%
-      full_join(baddy, by = c("year" = "year", 
-                              "adm1guid" = "adm1guid"))
-    
-    # Join with admin file to fill in missing
-    int.data <- full_join(int.data, admin.data, by = c("year" = "year", 
-                                                       "adm1guid" = "adm1guid"))
-    
-    # Add AFP cases by year
-    afp.cases <- count(stool.data, adm1guid,year)
-    
-    # Join with int.data
-    int.data <- full_join(int.data, afp.cases, by= c("year" = "year",
-                                                     "adm1guid" = "adm1guid"))
-    
-    # Replace NAs with 0
-    int.data <- int.data %>%
-      mutate(across(c(num.ad, toty, stoolad, missing.data,
-                      bad.data, n), ~ replace_na(.x,0)))
-    
-    # Create number of adequate only
-    int.data$ad.only <- int.data$num.ad - int.data$missing.data
-    
-    # Create inadequate only
-    int.data$inad.only <- 
-      int.data$toty - int.data$missing.data - int.data$ad.only - int.data$bad.data
-    
-    int.data <- int.data %>%
-      rename(
-        "afp.cases" = "n",
-        "num.adequate" = "ad.only",
-        "num.inadequate" = "inad.only",
-        "num.missing.data" = "missing.data",
-        "num.data.error" = "bad.data",
-        "num.adj.w.miss" = "num.ad",
-        "tot.final" = "toty",
-        "per.stool.ad" = "stoolad"
+    if(rolling){
+      admin.data <- ungroup(admin.data) %>%
+        select(names.prov, -"year") %>%
+        distinct(.)
+      
+      baddy = stool.data1 %>%
+        group_by(adm1guid, adequacy.final)%>%
+        summarize(bad.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 77) %>%
+        select(-adequacy.final)
+      
+      missy = stool.data1 %>%
+        group_by(adm1guid,adequacy.final)%>%
+        summarize(missing.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 99) %>%
+        select(-adequacy.final)
+      
+      int.data <- stool.data |>
+        group_by(adm1guid, adequacy.final) |>
+        summarize(freq = n()) |>
+        ungroup()
+      
+      # Total number of cases
+      tots <- stool.data |>
+        group_by(adm1guid) |>
+        summarize(toty = n())
+      
+      int.data <- full_join(int.data, tots, by = c("adm1guid" = "adm1guid"))
+      
+      int.data.ad <- int.data |>
+        filter(adequacy.final == 1) |>
+        mutate(stoolad = 100 * freq / toty) %>%
+        rename(num.ad = freq)
+      
+      int.data <- full_join(int.data.ad, missy,
+                            by = c("adm1guid" = "adm1guid")
       ) %>%
-      select(
-        year, adm0guid, adm1guid, ctry, prov, num.adequate, num.missing.data, 
-        num.data.error, num.adj.w.miss, tot.final, per.stool.ad, afp.cases, 
-        num.inadequate
-      )
-    int.data <- int.data[,c("year", "ctry", "prov", "afp.cases", "num.adj.w.miss",
-                            "num.adequate","num.inadequate","num.missing.data",
-                            "tot.final", "per.stool.ad",
-                            "adm0guid", "adm1guid")]
+        full_join(baddy, by = c("adm1guid" = "adm1guid"))
+      
+      
+      # Join with admin file to fill in missing
+      int.data <- full_join(int.data, admin.data, 
+                            by = c("adm1guid" = "adm1guid"))
+      
+      
+      # Create number of days at risk
+      int.data <- int.data %>%
+        ungroup() |>
+        mutate(
+          days_at_risk = as.numeric(end.date - start.date+1),
+        )
+      
+      # Replace NAs with 0
+      int.data <- int.data %>%
+        mutate(across(c(num.ad, toty, stoolad, missing.data,
+                        bad.data), ~ replace_na(.x,0)))
+      
+      # Create number of adequate only
+      int.data$ad.only <- int.data$num.ad - int.data$missing.data
+      # Create inadequate only
+      int.data$inad.only <- 
+        int.data$toty - int.data$missing.data - int.data$ad.only - int.data$bad.data
+      
+      int.data <- int.data %>%
+        rename(
+          "afp.cases" = "toty",
+          "num.adequate" = "ad.only",
+          "num.inadequate" = "inad.only",
+          "num.missing.data" = "missing.data",
+          "num.data.error" = "bad.data",
+          "num.adj.w.miss" = "num.ad",
+          "per.stool.ad" = "stoolad",
+          "days.at.risk" = "days_at_risk"
+        ) %>%
+        select(
+          adm0guid, adm1guid, ctry, prov, num.adequate, num.missing.data, 
+          num.data.error, num.adj.w.miss, per.stool.ad, afp.cases, num.inadequate,
+          days.at.risk
+        ) 
+      int.data <- int.data[,c("days.at.risk","ctry", "prov","afp.cases", 
+                              "num.adj.w.miss","num.adequate","num.inadequate",
+                              "num.missing.data", "per.stool.ad",
+                              "adm0guid", "adm1guid")]
+      
+      
+    }else{
+      baddy = stool.data1 %>%
+        group_by(adm1guid, year, adequacy.final)%>%
+        summarize(bad.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 77) %>%
+        select(-adequacy.final)
+      
+      
+      missy = stool.data1 %>%
+        group_by(adm1guid, year, adequacy.final)%>%
+        summarize(missing.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 99) %>%
+        select(-adequacy.final)
+      
+      int.data <- stool.data |>
+        group_by(year, adm1guid, adequacy.final) |>
+        summarize(freq = n()) |>
+        ungroup()
+      
+      tots <- stool.data |>
+        group_by(adm1guid, year) |>
+        summarize(toty = n())
+      
+      int.data <- full_join(int.data, tots)
+      
+      int.data.ad <- int.data |>
+        filter(adequacy.final == 1) |>
+        mutate(stoolad = 100 * freq / toty) %>%
+        rename(num.ad = freq)
+      
+      int.data <- full_join(int.data.ad, missy,
+                            by = c("year" = "year", 
+                                   "adm1guid" = "adm1guid")
+      ) %>%
+        full_join(baddy, by = c("year" = "year", 
+                                "adm1guid" = "adm1guid"))
+      
+      
+      # Join with admin file to fill in missing
+      int.data <- full_join(int.data, admin.data, 
+                            by = c("year" = "year", 
+                                   "adm1guid" = "adm1guid"))
+      
+      # Create number of days at risk
+      int.data <- int.data %>%
+        left_join(., year.data, by = c("year" = "year")) %>%
+        mutate(days_at_risk = n_days)
+      
+      
+      
+      # Replace NAs with 0
+      int.data <- int.data %>%
+        mutate(across(c(num.ad, toty, stoolad, missing.data,
+                        bad.data), ~ replace_na(.x,0)))
+      
+      # Create number of adequate only
+      int.data$ad.only <- int.data$num.ad - int.data$missing.data
+      # Create inadequate only
+      int.data$inad.only <- 
+        int.data$toty - int.data$missing.data - int.data$ad.only - int.data$bad.data
+      
+      int.data <- int.data %>%
+        rename(
+          "afp.cases" = "toty",
+          "num.adequate" = "ad.only",
+          "num.inadequate" = "inad.only",
+          "num.missing.data" = "missing.data",
+          "num.data.error" = "bad.data",
+          "num.adj.w.miss" = "num.ad",
+          "per.stool.ad" = "stoolad",
+          "days.at.risk" = "days_at_risk"
+        ) %>%
+        select(
+          year, adm0guid, adm1guid, ctry, prov, num.adequate, num.missing.data, 
+          num.data.error, num.adj.w.miss, per.stool.ad, afp.cases, num.inadequate,
+          days.at.risk
+        ) 
+      int.data <- int.data[,c("year","days.at.risk","ctry", "prov","afp.cases", 
+                              "num.adj.w.miss","num.adequate","num.inadequate",
+                              "num.missing.data", "per.stool.ad",
+                              "adm0guid", "adm1guid")]
+      
+    }
   }
   
-  
   if (spatial.scale == "dist") {
-    
-    admin.data <- ungroup(admin.data) %>%
-      select(names.dist) %>%
-      distinct(.)
-    
-    baddy = stool.data1 %>%
-      group_by(year, adm0guid, adm1guid,adm2guid,adequacy.final)%>%
-      summarize(bad.data = n()) %>%
-      ungroup()%>%
-      filter(adequacy.final == 77) %>%
-      select(-adequacy.final)
-    
-    missy = stool.data1 %>%
-      group_by(year, adm0guid, adm1guid,adm2guid,adequacy.final)%>%
-      summarize(missing.data = n()) %>%
-      ungroup()%>%
-      filter(adequacy.final == 99) %>%
-      select(-adequacy.final)
-    
-    
-    int.data <- stool.data |>
-      group_by(year, adm0guid, adm1guid,adm2guid,adequacy.final) |>
-      summarize(freq = n()) |>
-      ungroup()
-    
-    tots <- stool.data |>
-      group_by(year, adm0guid, adm1guid,adm2guid) |>
-      summarize(toty = n())
-    
-    int.data <- full_join(int.data, tots, by = c("year" = "year",
-                                                 "adm2guid" = "adm2guid"))
-    
-    int.data.ad <- int.data |>
-      filter(adequacy.final == 1) |>
-      mutate(stoolad = 100 * freq / toty) %>%
-      rename(num.ad = freq)
-    
-    
-    int.data <- full_join(int.data.ad, missy,
-                          by = c(
-                            "year" = "year", 
-                            "adm2guid" = "adm2guid"
-                          )
-    ) %>%
-      full_join(baddy, by = c("year" = "year", 
-                              "adm2guid" = "adm2guid"
-      ))
-    
-    # Join with admin file to fill in missing
-    int.data <- full_join(int.data, admin.data, by = c("year" = "year", 
-                                                       "adm2guid" = "adm2guid"))
-    
-    # Add AFP cases by year
-    afp.cases <- count(stool.data, adm2guid,year)
-    
-    # Join with int.data
-    int.data <- full_join(int.data, afp.cases, by= c("year" = "year",
-                                                     "adm2guid" = "adm2guid"))
-    
-    # Replace NAs with 0
-    int.data <- int.data %>%
-      mutate(across(c(num.ad, toty, stoolad, missing.data,
-                      bad.data, n), ~ replace_na(.x,0)))
-    
-    # Create number of adequate only
-    int.data$ad.only <- int.data$num.ad - int.data$missing.data
-    
-    # Create inadequate only
-    int.data$inad.only <- 
-      int.data$toty - int.data$missing.data - int.data$ad.only - int.data$bad.data
-    
-    int.data <- int.data %>%
-      rename(
-        "afp.cases" = "n",
-        "num.adequate" = "ad.only",
-        "num.inadequate" = "inad.only",
-        "num.missing.data" = "missing.data",
-        "num.data.error" = "bad.data",
-        "num.adj.w.miss" = "num.ad",
-        "tot.final" = "toty",
-        "per.stool.ad" = "stoolad") %>%
-      select(
-        year, adm0guid, adm1guid, adm2guid, ctry, num.adequate, num.missing.data, 
-        num.data.error, num.adj.w.miss, tot.final, per.stool.ad, afp.cases, 
-        num.inadequate
-      )
-    int.data <- int.data[,c("year", "ctry", "prov", "dist" ,"afp.cases", 
-                            "num.adj.w.miss","num.adequate","num.inadequate",
-                            "num.missing.data","tot.final", "per.stool.ad",
-                            "adm0guid", "adm1guid", "adm2guid")]
-    
+    if(rolling){
+      admin.data <- ungroup(admin.data) %>%
+        select(names.dist, -"year") %>%
+        distinct(.)
+      
+      baddy = stool.data1 %>%
+        group_by(adm2guid, adequacy.final)%>%
+        summarize(bad.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 77) %>%
+        select(-adequacy.final)
+      
+      missy = stool.data1 %>%
+        group_by(adm2guid,adequacy.final)%>%
+        summarize(missing.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 99) %>%
+        select(-adequacy.final)
+      
+      int.data <- stool.data |>
+        group_by(adm2guid, adequacy.final) |>
+        summarize(freq = n()) |>
+        ungroup()
+      
+      # Total number of cases
+      tots <- stool.data |>
+        group_by(adm2guid) |>
+        summarize(toty = n())
+      
+      int.data <- full_join(int.data, tots, by = c("adm2guid" = "adm2guid"))
+      
+      int.data.ad <- int.data |>
+        filter(adequacy.final == 1) |>
+        mutate(stoolad = 100 * freq / toty) %>%
+        rename(num.ad = freq)
+      
+      int.data <- full_join(int.data.ad, missy,
+                            by = c("adm2guid" = "adm2guid")
+      ) %>%
+        full_join(baddy, by = c("adm2guid" = "adm2guid"))
+      
+      
+      # Join with admin file to fill in missing
+      int.data <- full_join(int.data, admin.data, 
+                            by = c("adm2guid" = "adm2guid"))
+      
+      
+      # Create number of days at risk
+      int.data <- int.data %>%
+        ungroup() |>
+        mutate(
+          days_at_risk = as.numeric(end.date - start.date+1),
+        )
+      
+      # Replace NAs with 0
+      int.data <- int.data %>%
+        mutate(across(c(num.ad, toty, stoolad, missing.data,
+                        bad.data), ~ replace_na(.x,0)))
+      
+      # Create number of adequate only
+      int.data$ad.only <- int.data$num.ad - int.data$missing.data
+      # Create inadequate only
+      int.data$inad.only <- 
+        int.data$toty - int.data$missing.data - int.data$ad.only - int.data$bad.data
+      
+      int.data <- int.data %>%
+        rename(
+          "afp.cases" = "toty",
+          "num.adequate" = "ad.only",
+          "num.inadequate" = "inad.only",
+          "num.missing.data" = "missing.data",
+          "num.data.error" = "bad.data",
+          "num.adj.w.miss" = "num.ad",
+          "per.stool.ad" = "stoolad",
+          "days.at.risk" = "days_at_risk"
+        ) %>%
+        select(
+          adm0guid, adm1guid, adm2guid, ctry, prov, dist, num.adequate, 
+          num.missing.data, 
+          num.data.error, num.adj.w.miss, per.stool.ad, afp.cases, num.inadequate,
+          days.at.risk
+        ) 
+      int.data <- int.data[,c("days.at.risk","ctry", "prov", "dist",
+                              "afp.cases", 
+                              "num.adj.w.miss","num.adequate","num.inadequate",
+                              "num.missing.data", "per.stool.ad",
+                              "adm0guid", "adm1guid", "adm2guid")]
+      
+      
+    }else{
+      baddy = stool.data1 %>%
+        group_by(adm2guid, year, adequacy.final)%>%
+        summarize(bad.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 77) %>%
+        select(-adequacy.final)
+      
+      
+      missy = stool.data1 %>%
+        group_by(adm2guid, year, adequacy.final)%>%
+        summarize(missing.data = n()) %>%
+        ungroup()%>%
+        filter(adequacy.final == 99) %>%
+        select(-adequacy.final)
+      
+      int.data <- stool.data |>
+        group_by(year, adm2guid, adequacy.final) |>
+        summarize(freq = n()) |>
+        ungroup()
+      
+      tots <- stool.data |>
+        group_by(adm2guid, year) |>
+        summarize(toty = n())
+      
+      int.data <- full_join(int.data, tots)
+      
+      int.data.ad <- int.data |>
+        filter(adequacy.final == 1) |>
+        mutate(stoolad = 100 * freq / toty) %>%
+        rename(num.ad = freq)
+      
+      int.data <- full_join(int.data.ad, missy,
+                            by = c("year" = "year", 
+                                   "adm2guid" = "adm2guid")
+      ) %>%
+        full_join(baddy, by = c("year" = "year", 
+                                "adm2guid" = "adm2guid"))
+      
+      
+      # Join with admin file to fill in missing
+      int.data <- full_join(int.data, admin.data, 
+                            by = c("year" = "year", 
+                                   "adm2guid" = "adm2guid"))
+      
+      # Create number of days at risk
+      int.data <- int.data %>%
+        left_join(., year.data, by = c("year" = "year")) %>%
+        mutate(days_at_risk = n_days)
+      
+      
+      
+      # Replace NAs with 0
+      int.data <- int.data %>%
+        mutate(across(c(num.ad, toty, stoolad, missing.data,
+                        bad.data), ~ replace_na(.x,0)))
+      
+      # Create number of adequate only
+      int.data$ad.only <- int.data$num.ad - int.data$missing.data
+      # Create inadequate only
+      int.data$inad.only <- 
+        int.data$toty - int.data$missing.data - int.data$ad.only - int.data$bad.data
+      
+      int.data <- int.data %>%
+        rename(
+          "afp.cases" = "toty",
+          "num.adequate" = "ad.only",
+          "num.inadequate" = "inad.only",
+          "num.missing.data" = "missing.data",
+          "num.data.error" = "bad.data",
+          "num.adj.w.miss" = "num.ad",
+          "per.stool.ad" = "stoolad",
+          "days.at.risk" = "days_at_risk"
+        ) %>%
+        select(
+          year, adm0guid, adm1guid, adm2guid, ctry, prov, dist,
+          num.adequate, num.missing.data, 
+          num.data.error, num.adj.w.miss, per.stool.ad, afp.cases, num.inadequate,
+          days.at.risk
+        ) 
+      int.data <- int.data[,c("year","days.at.risk","ctry", "prov", "dist",
+                              "afp.cases", 
+                              "num.adj.w.miss","num.adequate","num.inadequate",
+                              "num.missing.data", "per.stool.ad",
+                              "adm0guid", "adm1guid", "adm2guid")]
+      
+    }
   }
   return(int.data)
 }
