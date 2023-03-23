@@ -231,43 +231,41 @@ f.stool.ad.01 <- function(
   stool.data <- afp.data
   stool.data$adequacy.final <- NA
   
-  stool.data <- afp.data |>
-    as_tibble() |>
-    filter(cdc.classification.all2 != "NOT-AFP") |> 
-    mutate(adequacy.final = case_when(#Conditions for Bad Data
-      bad.stool1 == "data entry error" | 
-        bad.stool1 == "date before onset" | 
-        bad.stool1 == "date onset missing" ~ 77
-    )) %>%
-    mutate(adequacy.final = case_when(#Conditions for Bad Data
-      is.na(adequacy.final) & (bad.stool2 == "data entry error" | 
-                                 bad.stool2 == "date before onset" | 
-                                 bad.stool2 == "date onset missing") ~ 77,
-      TRUE ~ adequacy.final
-    )) %>%
-    mutate(adequacy.final = case_when(#Conditions for Missing Adequacy
-      is.na(adequacy.final) & (is.na(stool.1.condition) == T | 
-                                 is.na(stool.2.condition) == T | 
-                                 stool.1.condition == "Unknown" | 
-                                 stool.2.condition == "Unknown") ~ 99,
-      TRUE ~ adequacy.final
-    )) %>%
-    mutate(adequacy.final = case_when(#Conditions for Poor Adequacy
-      is.na(adequacy.final) & (ontostool1 > 13 | ontostool1 < 0 | 
-                                 is.na(stool1tostool2) == T |
-                                 ontostool2 > 14 | ontostool2 < 1 | 
-                                 stool1tostool2 < 1 |
-                                 stool.1.condition == "Poor" | 
-                                 stool.2.condition == "Poor") ~ 0,
-      TRUE ~ adequacy.final)) %>% 
-    mutate(adequacy.final = case_when(#Conditions for Good Adequacy
-      is.na(adequacy.final) & (ontostool1 <= 13 & ontostool1 >= 0 & 
-                                 ontostool2 <= 14 & ontostool2 >= 1 & 
-                                 stool1tostool2 >= 1 & 
-                                 stool.1.condition == "Good" & 
-                                 stool.2.condition == "Good") ~ 1,
-      TRUE ~ adequacy.final
-    )) |>
+stool.data <- afp.data |>
+  as_tibble() |>
+  filter(cdc.classification.all2 != "NOT-AFP") |> 
+  mutate(adequacy.final = case_when(#Conditions for Bad Data
+    bad.stool1 == "data entry error" | 
+      bad.stool1 == "date before onset" | 
+      bad.stool1 == "date onset missing" ~ 77
+  )) %>%
+  mutate(adequacy.final = case_when(#Conditions for Bad Data
+    is.na(adequacy.final)==TRUE & (bad.stool2 == "data entry error" | 
+                                     bad.stool2 == "date before onset" | 
+                                     bad.stool2 == "date onset missing") ~ 77,
+    TRUE ~ adequacy.final
+  )) %>%
+  mutate(adequacy.final = case_when(#Conditions for Poor Adequacy
+    is.na(adequacy.final)==TRUE & (ontostool1 > 13 | ontostool1 < 0 | 
+                                     is.na(stool1tostool2) == T |
+                                     ontostool2 > 14 | ontostool2 < 1 | stool1tostool2 < 1 |
+                                     stool.1.condition == "Poor" | stool.2.condition == "Poor") ~ 0,
+    TRUE ~ adequacy.final)) %>% 
+  mutate(adequacy.final = case_when(#Conditions for Good Adequacy
+    is.na(adequacy.final)==TRUE & (ontostool1 <= 13 & ontostool1 >= 0 & 
+                                     ontostool2 <= 14 & ontostool2 >= 1 & 
+                                     stool1tostool2 >= 1 & stool.1.condition == "Good" & 
+                                     stool.2.condition == "Good") ~ 1,
+    TRUE ~ adequacy.final
+  )) %>%
+  mutate(adequacy.final = case_when(#Conditions for Missing Adequacy
+    is.na(adequacy.final)==TRUE & (is.na(stool.1.condition) == T | 
+                                     is.na(stool.2.condition) == T | 
+                                     stool.1.condition == "Unknown" | stool.2.condition == "Unknown") ~ 99,
+    TRUE ~ adequacy.final
+  ))
+
+ |>
     mutate(year = year(date)) |>
     select(year, adm0guid, adm1guid, adm2guid, 
            adequacy.final, cdc.classification.all2)
