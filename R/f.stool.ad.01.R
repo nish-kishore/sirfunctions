@@ -263,9 +263,7 @@ stool.data <- afp.data |>
                                      is.na(stool.2.condition) == T | 
                                      stool.1.condition == "Unknown" | stool.2.condition == "Unknown") ~ 99,
     TRUE ~ adequacy.final
-  ))
-
- |>
+  )) |>
     mutate(year = year(date)) |>
     select(year, adm0guid, adm1guid, adm2guid, 
            adequacy.final, cdc.classification.all2)
