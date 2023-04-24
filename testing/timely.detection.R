@@ -1,3 +1,5 @@
+library(tidyverse)
+
 # ES data
 es.clean.01 <-  list.files(path = file.path("","","cdc.gov","project",
                                             "CGH_GID_Active","PEB","SIR","DATA",
@@ -56,9 +58,9 @@ afp.es.detect.ind <- f.timly.detection.01(
   afp.data = data$afp.data,
   es.data = data$es.data,
   ctryseq.data = data$ctryseq.data,
-  start.date = "2021-01-01",
-  end.date = "2022-12-31",
-  rolling = F
+  start.date = "2021-06-01",
+  end.date = "2022-01-31",
+  rolling = T
 )
 
 overall.detection.01 <- afp.es.detect.ind[[1]]

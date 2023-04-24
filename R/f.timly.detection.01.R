@@ -111,45 +111,99 @@ f.timly.detection.01 <- function(
     ) %>%
     select(epid, ctry, year, ontonothq)
 
-  afpes.detect.01 <- rbind(afp.pos.detect.01, es.pos.detect.01) %>%
-    pivot_longer(!c(ctry, epid, year), names_to = "interval", values_to = "value") %>%
-    group_by(ctry, year, interval) %>%
-    summarize(median_days = median(value, na.rm = T),
-              afpes.pos.spec = n()) %>%
-    ungroup()
+  if(rolling){
 
-  afpes.detect.02 <- left_join(afpes.detect.01, ctryseq.data,  by=c('ctry'='ctry')) %>%
-    select(who.region, ctry, year, afpes.pos.spec, seq.capacity, median_days)
+    afpes.detect.01 <- rbind(afp.pos.detect.01, es.pos.detect.01) %>%
+      pivot_longer(!c(ctry, epid, year), names_to = "interval", values_to = "value") %>%
+      group_by(ctry, interval) %>%
+      summarize(median_days = median(value, na.rm = T),
+                afpes.pos.spec = n()) %>%
+      ungroup()
 
-  afpes.detect.03 <- afpes.detect.02 %>%
-    mutate(
-      afpes.detection.35d =
-        case_when(
-          seq.capacity == 'yes' & median_days <= 35 ~ 1,
-          seq.capacity == 'yes' & median_days > 35 ~ 0),
-      afpes.detection.49d =
-        case_when(
-          seq.capacity == 'no' & median_days <= 49 ~ 1,
-          seq.capacity == 'no' & median_days > 49 ~ 0)
-    )
+    afpes.detect.02 <- left_join(afpes.detect.01, ctryseq.data,  by=c('ctry'='ctry')) %>%
+      select(who.region, ctry, afpes.pos.spec, seq.capacity, median_days)
 
-  afpes.detect.04 <- afpes.detect.03 %>%
-    group_by(year) %>%
-    summarise(
-      num.ctry.inseq = sum(seq.capacity == 'yes'),
-      num.ctry.outseq = sum(seq.capacity == 'no'),
-      num.afpes.detect.35d = sum(afpes.detection.35d == 1, na.rm = T),
-      num.afpes.detect.49d = sum(afpes.detection.49d == 1, na.rm = T)
-    ) %>%
-    mutate(
-      pct.afpes.detect.35d = round(num.afpes.detect.35d/num.ctry.inseq *100, digits = 0),
-      ctry.afpes.detect.35d = paste(paste(num.afpes.detect.35d, num.ctry.inseq, sep="/"), " ", "(", pct.afpes.detect.35d, "%", ")", sep=""),
-      pct.afpes.detect.49d = round(num.afpes.detect.49d/num.ctry.outseq *100, digits = 0),
-      ctry.afpes.detect.49d = paste(paste(num.afpes.detect.49d, num.ctry.outseq, sep="/"), " ", "(", pct.afpes.detect.49d, "%", ")", sep="")
-    ) %>%
-    select(-num.ctry.inseq, -num.ctry.outseq, -num.afpes.detect.35d, -num.afpes.detect.49d,
-           -pct.afpes.detect.35d, -pct.afpes.detect.49d)
+    afpes.detect.03 <- afpes.detect.02 %>%
+      mutate(
+        afpes.detection.35d =
+          case_when(
+            seq.capacity == 'yes' & median_days <= 35 ~ 1,
+            seq.capacity == 'yes' & median_days > 35 ~ 0),
+        afpes.detection.49d =
+          case_when(
+            seq.capacity == 'no' & median_days <= 49 ~ 1,
+            seq.capacity == 'no' & median_days > 49 ~ 0)
+      ) |>
+      mutate(
+        start.date = start.date,
+        end.date = end.date
+      )
 
-  timly.detect <- list(afpes.detect.03, afpes.detect.04) # Store output in list
+    afpes.detect.04 <- afpes.detect.03 %>%
+      summarise(
+        num.ctry.inseq = sum(seq.capacity == 'yes'),
+        num.ctry.outseq = sum(seq.capacity == 'no'),
+        num.afpes.detect.35d = sum(afpes.detection.35d == 1, na.rm = T),
+        num.afpes.detect.49d = sum(afpes.detection.49d == 1, na.rm = T)
+      ) %>%
+      mutate(
+        pct.afpes.detect.35d = round(num.afpes.detect.35d/num.ctry.inseq *100, digits = 0),
+        ctry.afpes.detect.35d = paste(paste(num.afpes.detect.35d, num.ctry.inseq, sep="/"), " ", "(", pct.afpes.detect.35d, "%", ")", sep=""),
+        pct.afpes.detect.49d = round(num.afpes.detect.49d/num.ctry.outseq *100, digits = 0),
+        ctry.afpes.detect.49d = paste(paste(num.afpes.detect.49d, num.ctry.outseq, sep="/"), " ", "(", pct.afpes.detect.49d, "%", ")", sep="")
+      ) %>%
+      select(-num.ctry.inseq, -num.ctry.outseq, -num.afpes.detect.35d, -num.afpes.detect.49d,
+             -pct.afpes.detect.35d, -pct.afpes.detect.49d) |>
+      mutate(
+        start.date = start.date,
+        end.date = end.date
+      )
+
+  }else{
+
+    afpes.detect.01 <- rbind(afp.pos.detect.01, es.pos.detect.01) %>%
+      pivot_longer(!c(ctry, epid, year), names_to = "interval", values_to = "value") %>%
+      group_by(ctry, year, interval) %>%
+      summarize(median_days = median(value, na.rm = T),
+                afpes.pos.spec = n()) %>%
+      ungroup()
+
+    afpes.detect.02 <- left_join(afpes.detect.01, ctryseq.data,  by=c('ctry'='ctry')) %>%
+      select(who.region, ctry, year, afpes.pos.spec, seq.capacity, median_days)
+
+    afpes.detect.03 <- afpes.detect.02 %>%
+      mutate(
+        afpes.detection.35d =
+          case_when(
+            seq.capacity == 'yes' & median_days <= 35 ~ 1,
+            seq.capacity == 'yes' & median_days > 35 ~ 0),
+        afpes.detection.49d =
+          case_when(
+            seq.capacity == 'no' & median_days <= 49 ~ 1,
+            seq.capacity == 'no' & median_days > 49 ~ 0)
+      )
+
+    afpes.detect.04 <- afpes.detect.03 %>%
+      group_by(year) %>%
+      summarise(
+        num.ctry.inseq = sum(seq.capacity == 'yes'),
+        num.ctry.outseq = sum(seq.capacity == 'no'),
+        num.afpes.detect.35d = sum(afpes.detection.35d == 1, na.rm = T),
+        num.afpes.detect.49d = sum(afpes.detection.49d == 1, na.rm = T)
+      ) %>%
+      mutate(
+        pct.afpes.detect.35d = round(num.afpes.detect.35d/num.ctry.inseq *100, digits = 0),
+        ctry.afpes.detect.35d = paste(paste(num.afpes.detect.35d, num.ctry.inseq, sep="/"), " ", "(", pct.afpes.detect.35d, "%", ")", sep=""),
+        pct.afpes.detect.49d = round(num.afpes.detect.49d/num.ctry.outseq *100, digits = 0),
+        ctry.afpes.detect.49d = paste(paste(num.afpes.detect.49d, num.ctry.outseq, sep="/"), " ", "(", pct.afpes.detect.49d, "%", ")", sep="")
+      ) %>%
+      select(-num.ctry.inseq, -num.ctry.outseq, -num.afpes.detect.35d, -num.afpes.detect.49d,
+             -pct.afpes.detect.35d, -pct.afpes.detect.49d)
+
+  }
+
+
+
+  timly.detect <- list("ctry" = afpes.detect.03, "global" = afpes.detect.04) # Store output in list
   return(timly.detect) # Return output
 }
