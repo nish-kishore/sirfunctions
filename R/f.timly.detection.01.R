@@ -24,7 +24,7 @@ f.timly.detection.01 <- function(
     ctryseq.data,
     start.date,
     end.date,
-    rolling = F
+    rolling = T
 ){
 
   # Analysis start and end date as defined by user (as a character)
@@ -37,7 +37,7 @@ f.timly.detection.01 <- function(
   afp.data <- afp.data |>
     filter(date >= start.date & date <= end.date)
 
-  #Warning message about non-overlapping dates
+  # Warning message about non-overlapping dates
   if(start.date < as_date(afp.data$date |> min(na.rm = T))){
     print(paste0(
       "Your specified start date is ",
@@ -54,7 +54,7 @@ f.timly.detection.01 <- function(
   es.data <- es.data |>
     filter(collect.date >= start.date & collect.date <= end.date)
 
-  #Warning message about non-overlapping dates
+  # Warning message about non-overlapping dates
   if(start.date < as_date(es.data$collect.date |> min(na.rm = T))){
     print(paste0(
       "Your specified start date is ",
@@ -74,25 +74,18 @@ f.timly.detection.01 <- function(
       date.notification.to.hq = dmy(date.notification.to.hq),
       collecttonothq = as.numeric(date.notification.to.hq - collect.date)
     ) %>%
-  #================================================================================================================
-  # Table E1: ES Detection - system
-  # Denom: Number of ES Samples
-  # Num 1 (WPV/VDPV positive): ES samples with positive WPV/VPDV result <=35 days; do not include NPEV or SL +
-  # Num 2 (NPEV, SL+): ES samples that required ITD testing but not sequencing and results available  <=35 days
-  # Num 3 (negative): ES samples that had negative stool culture results  <=35 days
-  #================================================================================================================
-  mutate(
-    date.final.combined.result = dmy(date.final.combined.result),
-    date.final.results.reported = dmy(date.final.results.reported),
-    date.final.culture.result = dmy(date.final.culture.result),
-    date.f6.ref.itd = dmy(date.f6.ref.itd),
-    pv = ifelse(wpv==1 | vdpv==1, 1, 0),
-    end.date =case_when(
-      pv==1 ~coalesce(date.notification.to.hq, date.final.results.reported, date.final.combined.result),
-      pv==0 ~coalesce(date.notification.to.hq, date.final.combined.result, date.final.culture.result, date.final.results.reported, date.f6.ref.itd)
-    ),
-    collect.to.enddate = as.numeric(end.date - collect.date)
-  )%>%
+    mutate(
+      date.final.combined.result = dmy(date.final.combined.result),
+      date.final.results.reported = dmy(date.final.results.reported),
+      date.final.culture.result = dmy(date.final.culture.result),
+      date.f6.ref.itd = dmy(date.f6.ref.itd),
+      pv = ifelse(wpv==1 | vdpv==1, 1, 0),
+      end.date =case_when(
+        pv==1 ~coalesce(date.notification.to.hq, date.final.results.reported, date.final.combined.result),
+        pv==0 ~coalesce(date.notification.to.hq, date.final.combined.result, date.final.culture.result, date.final.results.reported, date.f6.ref.itd)
+        ),
+      collect.to.enddate = as.numeric(end.date - collect.date)
+      )%>%
     filter(!is.na(ADM0_NAME))
 
   #2.  ES detection
@@ -202,8 +195,7 @@ f.timly.detection.01 <- function(
 
   }
 
-
-
-  timly.detect <- list("ctry" = afpes.detect.03, "global" = afpes.detect.04) # Store output in list
+  timly.detect <- list("ctry" = afpes.detect.03,
+                       "global" = afpes.detect.04) # Store output in list
   return(timly.detect) # Return output
 }

@@ -58,7 +58,7 @@ afp.es.detect.ind <- f.timly.detection.01(
   afp.data = data$afp.data,
   es.data = data$es.data,
   ctryseq.data = data$ctryseq.data,
-  start.date = "2021-06-01",
+  start.date = "2019-06-01",
   end.date = "2022-01-31",
   rolling = T
 )
