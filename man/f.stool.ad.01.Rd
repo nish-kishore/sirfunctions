@@ -20,6 +20,10 @@ f.stool.ad.01(
 formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all2
 which includes "NOT-AFP"}
 
+\item{admin.data}{tibble: Full list of country administrative units by a given
+spatial scale including "year", "adm{0,1,2}guid, and "{ctry/prov/dist}"
+as appropriate}
+
 \item{start.date}{chr: "YYYY-MM-DD"}
 
 \item{end.date}{chr: "YYYY-MM-DD"}
@@ -30,11 +34,7 @@ which includes "NOT-AFP"}
 
 \item{bad.data}{chr: "remove" or "inadequate" or "adequate"; default "inadequate"}
 
-\item{ctry.data}{tibble: Full list of country administrative units by a given
-spatial scale including "year", "adm{0,1,2}guid, and "{ctry/prov/dist}"
-as appropriate}
-
-\item{prov.dist}{chr: "prov" or "dist" or "ctry"}
+\item{rolling}{boolean: Should data be annualized or calculated within the time period alloted}
 }
 \value{
 tibble
@@ -45,16 +45,4 @@ missing data is treated - "Good" classifies missing data as good quality
 (POLIS method)
 "Bad" classifies all missing as bad quality, "missing" excludes missing from
 the calculations
-}
-\examples{
-f.stool.ad.01(
-afp.data = data$afp.data,
-admin.data = data$pop.data.prov,
-start.date = "2019-04-01",
-end.date = "2020-09-01",
-spatial.scale = "prov",
-missing = "good",
-bad.data = "inadequate",
-rolling = F
-)
 }

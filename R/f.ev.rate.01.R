@@ -13,9 +13,6 @@
 #' @param end.date chr: "YYYY-MM-DD"
 #' @returns tibble
 #' @export
-#' @examples
-#' es.summary <- f.ev.rate.01(es.data = es.clean.01,
-#' start.date = "2022-01-01",end.date = "2022-12-31")
 f.ev.rate.01 <- function(
   es.data,
   start.date,
