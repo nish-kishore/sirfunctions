@@ -2,6 +2,9 @@
 #'
 #' @name f.ev.rate.01
 #' @description Function to calcualte the EV detection rate in sites from POLIS
+#' @import dplyr
+#' @import lubridate
+#' @import tibble
 #' @param es.data tibble: ES data which includes site name (site.name),
 #' country (ADM0_NAME),
 #' date of collection (collect.date), and a binary ev detection variable (ev.detect)
