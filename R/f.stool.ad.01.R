@@ -21,13 +21,7 @@
 #' @param bad.data chr: "remove" or "inadequate" or "adequate"; default "inadequate"
 #' @returns tibble
 #' @export
-#' @examples #start here
-#' library(tidyverse)
-#' library(lubridate)
-#' library(here)
-#' data <- read_rds("//cdc.gov/project/CGH_GID_Active/PEB/SIR/DATA/Core 2.0/test_data/stoolad_test_data.rds")
-#' source(here("R/f.stool.ad.01.R"))
-#' f.stool.ad.01(
+#' @examples f.stool.ad.01(
 #' afp.data = data$afp.data,
 #' admin.data = data$pop.data.prov,
 #' start.date = "2019-04-01",

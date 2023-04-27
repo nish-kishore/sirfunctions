@@ -16,14 +16,7 @@
 #' @param rolling boolean: default FALSE
 #' @returns list
 #' @export
-#' @examples library(tidyverse)
-#' library(lubridate)
-#' library(here)
-#' data <- read_rds("//cdc.gov/project/CGH_GID_Active/PEB/SIR/DATA/Core 2.0/test_data/timely_detection_data.rds")
-#' source(here("R/f.timly.detection.01.R"))
-#'
-#'
-#' afp.es.detect.ind <- f.timly.detection.01(
+#' @examples afp.es.detect.ind <- f.timly.detection.01(
 #'   afp.data = data$afp.data,
 #'   es.data = data$es.data,
 #'   ctryseq.data = data$ctryseq.data,
