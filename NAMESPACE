@@ -3,4 +3,4 @@
 export(f.ev.rate.01)
 export(f.npafp.rate.01)
 export(f.stool.ad.01)
-export(hello_sir)
+export(f.timely.detection.01)
