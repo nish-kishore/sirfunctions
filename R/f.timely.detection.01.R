@@ -2,7 +2,7 @@
 #===========================================================
 #' Function to calculate timeliness of detection
 #'
-#' @name f.timly.detection.01
+#' @name f.timely.detection.01
 #' @description Function to calculate the overall timeliness of detection in AFP & ES POLIS data
 #' @param afp.data tibble: AFP data which includes classification of AFP cases with onset date and date of notification to HQ,
 #' @param es.data tibble: ES data which includes classification of samples with collection date and date of notification to HQ,
@@ -35,7 +35,7 @@
 #' overall.detection.01 <- afp.es.detect.ind[[1]]
 #' overall.detection.02 <- afp.es.detect.ind[[2]]
 
-f.timly.detection.01 <- function(
+f.timely.detection.01 <- function(
     afp.data,
     es.data,
     ctryseq.data,
