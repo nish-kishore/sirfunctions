@@ -397,7 +397,7 @@ f.npafp.rate.01 <- function(
               npafp_rate = n_npafp / par * 100000
             )
         }else{
-          mutate(., npafp_rate = n_npafp / u15pop * 100000 * weight)
+          mutate(., npafp_rate = n_npafp / u15pop * 100000 / weight)
         }
       }
 
