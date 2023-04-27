@@ -4,6 +4,7 @@
 #' @description An example function
 #' @keywords sir
 #' @returns Hello world
+#' @export
 #' @examples
 #' hello_sir()
 
