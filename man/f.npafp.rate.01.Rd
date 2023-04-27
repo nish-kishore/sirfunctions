@@ -38,13 +38,3 @@ tibble
 \description{
 Calculate the NPAFP rate from POLIS data
 }
-\examples{
-f.npafp.rate.01(
-afp.data = data$afp.data,
-pop.data = data$pop.data.prov,
-start.date = "2019-04-01",
-end.date = "2020-09-01",
-spatial.scale = "prov",
-pending = T,
-rolling = F)
-}

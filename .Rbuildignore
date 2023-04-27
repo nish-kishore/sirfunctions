@@ -1,2 +1,5 @@
 ^sirfunctions\.Rproj$
 ^\.Rproj\.user$
+^LICENSE\.md$
+^misc
+^testing

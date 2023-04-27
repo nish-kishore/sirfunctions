@@ -22,7 +22,3 @@ tibble
 \description{
 Function to calcualte the EV detection rate in sites from POLIS
 }
-\examples{
-es.summary <- f.ev.rate.01(es.data = es.clean.01,
-start.date = "2022-01-01",end.date = "2022-12-31")
-}

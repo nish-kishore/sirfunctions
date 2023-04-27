@@ -3,6 +3,9 @@
 #'
 #' @name f.npafp.rate.01
 #' @description Calculate the NPAFP rate from POLIS data
+#' @import dplyr
+#' @import lubridate
+#' @import tibble
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
 #' formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all2 which includes
 #' c("NPAFP", "PENDING", "LAB PENDING")
@@ -15,14 +18,6 @@
 #' @param rolling boolean: default FALSE
 #' @returns tibble
 #' @export
-#' @examples f.npafp.rate.01(
-#' afp.data = data$afp.data,
-#' pop.data = data$pop.data.prov,
-#' start.date = "2019-04-01",
-#' end.date = "2020-09-01",
-#' spatial.scale = "prov",
-#' pending = T,
-#' rolling = F)
 f.npafp.rate.01 <- function(
     afp.data,
     pop.data,

@@ -2,6 +2,9 @@
 #'
 #' @name f.ev.rate.01
 #' @description Function to calcualte the EV detection rate in sites from POLIS
+#' @import dplyr
+#' @import lubridate
+#' @import tibble
 #' @param es.data tibble: ES data which includes site name (site.name),
 #' country (ADM0_NAME),
 #' date of collection (collect.date), and a binary ev detection variable (ev.detect)
@@ -10,9 +13,6 @@
 #' @param end.date chr: "YYYY-MM-DD"
 #' @returns tibble
 #' @export
-#' @examples
-#' es.summary <- f.ev.rate.01(es.data = es.clean.01,
-#' start.date = "2022-01-01",end.date = "2022-12-31")
 f.ev.rate.01 <- function(
   es.data,
   start.date,
