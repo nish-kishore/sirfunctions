@@ -17,7 +17,7 @@ f.stool.ad.01(
 }
 \arguments{
 \item{afp.data}{tibble: AFP data which includes GUID at a given spatial scale
-formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all2
+formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all
 which includes "NOT-AFP"}
 
 \item{admin.data}{tibble: Full list of country administrative units by a given

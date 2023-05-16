@@ -98,8 +98,8 @@ f.timely.detection.01 <- function(
   #1. AFP detection
   afp.pos.detect.01 <- afp.data %>%
     ungroup() %>%
-    filter(!cdc.classification.all2 %in% c("COMPATIBLE" ,"NPAFP", "PENDING", "UNKNOWN", "VAPP")) %>%
-    select(epid, ctry, year, cdc.classification.all2, date, datenotificationtohq) %>%
+    filter(!cdc.classification.all %in% c("COMPATIBLE" ,"NPAFP", "PENDING", "UNKNOWN", "VAPP", "LAB PENDING")) %>%
+    select(epid, ctry, year, cdc.classification.all, date, datenotificationtohq) %>%
     mutate(
       datenotifytohq = dmy(datenotificationtohq),
       ontonothq = as.numeric(datenotifytohq - date)
