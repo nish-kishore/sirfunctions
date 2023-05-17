@@ -1,5 +1,6 @@
 
 #' Utility function for colors
+#' @description Utility function to return SIR colors
 #' @param type str: type of colors we can return
 #' @returns list: color sets
 f.color.schemes <- function(type){

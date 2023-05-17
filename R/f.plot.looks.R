@@ -1,9 +1,10 @@
 
 #' Function to return specific plot looks
 #' @description Function to collate and return plot looks
+#' @import ggplot2
 #' @param type String describing a value to be returned
 #' @return ggplot theme for addition into plot
-f.plot.look <- function(type) {
+f.plot.looks <- function(type) {
 
   types <- c("02", "epicurve", "geomtile", "gpln_type1" ,"gpln_type2")
 
@@ -17,31 +18,31 @@ f.plot.look <- function(type) {
 
   if (type == "02") {
     return(list(
-      theme(
-        panel.grid.minor = element_blank(),
-        panel.background = element_rect(fill = "white"),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
+      ggplot2::theme(
+        panel.grid.minor = ggplot2::element_blank(),
+        panel.background = ggplot2::element_rect(fill = "white"),
+        axis.title.x = ggplot2::element_blank(),
+        axis.title.y = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank(),
+        axis.ticks.y = ggplot2::element_blank(),
+        axis.text.x = ggplot2::element_blank(),
+        axis.text.y = ggplot2::element_blank(),
         legend.position = "bottom",
-        legend.background = element_rect(colour = "black", fill = "white", linetype = "solid") # add a border to the legend
+        legend.background = ggplot2::element_rect(colour = "black", fill = "white", linetype = "solid") # add a border to the legend
       )
     ))
   }
 
   if (type == "epicurve") {
     return(list(
-      theme(
-        panel.grid.minor = element_blank(),
-        panel.background = element_rect(fill = "white"),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
+      ggplot2::theme(
+        panel.grid.minor = ggplot2::element_blank(),
+        panel.background = ggplot2::element_rect(fill = "white"),
+        axis.title.x = ggplot2::element_blank(),
+        axis.title.y = ggplot2::element_blank(),
         legend.position = "bottom",
-        axis.text.x = element_text(angle = 90),
-        legend.background = element_rect(colour = "black", fill = "white", linetype = "solid") # add a border to the legend
+        axis.text.x = ggplot2::element_text(angle = 90),
+        legend.background = ggplot2::element_rect(colour = "black", fill = "white", linetype = "solid") # add a border to the legend
       )
     ))
   }
@@ -49,31 +50,31 @@ f.plot.look <- function(type) {
 
   if (type == "geomtile") {
     return(list(
-      theme(
-        # panel.grid.minor = element_blank(),
-        # panel.background = element_rect(fill = "white")
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
+      ggplot2::theme(
+        # panel.grid.minor = ggplot2::element_blank(),
+        # panel.background = ggplot2::element_rect(fill = "white")
+        axis.title.x = ggplot2::element_blank(),
+        axis.title.y = ggplot2::element_blank(),
         legend.position = "bottom",
-        legend.background = element_rect(colour = "black", fill = "white", linetype = "solid") # add a border to the legend
+        legend.background = ggplot2::element_rect(colour = "black", fill = "white", linetype = "solid") # add a border to the legend
       )
     ))
   }
 
   if (type == "gpln_type1") {
     return(
-      theme(
-        panel.spacing = unit(0, "pt"),
-        panel.border = element_rect(colour = "grey50", fill = NA),
+      ggplot2::theme(
+        panel.spacing = ggplot2::unit(0, "pt"),
+        panel.border = ggplot2::element_rect(colour = "grey50", fill = NA),
         legend.position = "bottom",
-        axis.text.x = element_text(face = "bold"),
-        axis.text.y = element_text(face = "bold"),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold"),
-        legend.text = element_text(face = "bold"),
-        legend.title = element_text(face = "bold"),
-        plot.title = element_text(hjust = 0.5),
-        strip.text.x = element_text(
+        axis.text.x = ggplot2::element_text(face = "bold"),
+        axis.text.y = ggplot2::element_text(face = "bold"),
+        axis.title.x = ggplot2::element_text(face = "bold"),
+        axis.title.y = ggplot2::element_text(face = "bold"),
+        legend.text = ggplot2::element_text(face = "bold"),
+        legend.title = ggplot2::element_text(face = "bold"),
+        plot.title = ggplot2::element_text(hjust = 0.5),
+        strip.text.x = ggplot2::element_text(
           face = "bold"
         )
       )
@@ -82,14 +83,14 @@ f.plot.look <- function(type) {
 
   if (type == "gpln_type2") {
     return(
-      theme(
-        panel.grid = element_line(colour = "transparent"),
-        panel.background = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        panel.border = element_blank(),
-        axis.title = element_blank(),
-        plot.title = element_text(hjust = 0.5),
+      ggplot2::theme(
+        panel.grid = ggplot2::element_line(colour = "transparent"),
+        panel.background = ggplot2::element_blank(),
+        axis.text = ggplot2::element_blank(),
+        axis.ticks = ggplot2::element_blank(),
+        panel.border = ggplot2::element_blank(),
+        axis.title = ggplot2::element_blank(),
+        plot.title = ggplot2::element_text(hjust = 0.5),
         legend.position = "bottom"
       )
     )
