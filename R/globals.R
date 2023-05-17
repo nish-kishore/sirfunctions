@@ -1,7 +1,7 @@
 
 utils::globalVariables(c(
   'ADM0_NAME', 'adequacy.final', 'adm0guid', 'adm1guid', 'adm2guid', 'afp.cases',
-  'afpes.detection.35d', 'afpes.detection.49d', 'afpes.pos.spec', 'cdc.classification.all2',
+  'afpes.detection.35d', 'afpes.detection.49d', 'afpes.pos.spec', 'cdc.classification.all',
   'collect.date', 'collect.to.enddate', 'collect.yr', 'ctry', 'date.f6.ref.itd',
   'date.final.combined.result', 'date.final.culture.result', 'date.final.results.reported
   date.notification.to.hq', 'datenotificationtohq', 'datenotifytohq', 'days.at.risk',
