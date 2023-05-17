@@ -4,6 +4,7 @@
 #' @import ggplot2
 #' @param type String describing a value to be returned
 #' @return ggplot theme for addition into plot
+#' @export
 f.plot.looks <- function(type) {
 
   types <- c("02", "epicurve", "geomtile", "gpln_type1" ,"gpln_type2")

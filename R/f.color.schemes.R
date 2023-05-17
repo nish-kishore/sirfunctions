@@ -3,6 +3,7 @@
 #' @description Utility function to return SIR colors
 #' @param type str: type of colors we can return
 #' @returns list: color sets
+#' @export
 f.color.schemes <- function(type){
 
   types <- c("epicurve", "para.case", "afp.prov", "afp.dist",
