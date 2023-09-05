@@ -263,6 +263,7 @@ f.npafp.rate.01 <- function(
         year.data,
         by = c("year")
       ) |>
+            replace_na(list("n_npafp" = 0)) |> # Change all NAs to 0 for calculation
       # Calculate NPAFP rate per 100,000 annualized by calendar year
       select(
         year, ctry, n_npafp, u15pop, n_days, days_in_year,
@@ -314,6 +315,7 @@ f.npafp.rate.01 <- function(
       int.data |> select(adm0guid, adm1guid, year, n_npafp),
       by = c("adm0guid", "adm1guid", "year")
     ) |>
+                  replace_na(list("n_npafp" = 0)) |> # Change all NAs to 0 for calculation
       full_join( # Merge AFP case and population data with calculated yearly
         # weights
         year.data,
