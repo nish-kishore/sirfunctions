@@ -1,10 +1,96 @@
 #DAL - Data Access Layer
 
+#### 1) Utility functions ####
+
+#' Test network connection to the S drive
+#'
+#' @description Tests upload and download from S drive
+#' @param folder str: Location of download folder in S drive
+#' @param test_size int: byte size of a theoretical folder
+#' @param return_list: boolean: return a list of download time estimates, default F
+#' @import dplyr readr prettyunits tibble cli
+#' @returns System message with download and update time, potentially list output
+#' @export
+test_S_drive_connection <- function(
+    folder = file.path(
+      "",
+      "",
+      "cdc.gov",
+      "project",
+      "CGH_GID_Active",
+      "PEB",
+      "SIR",
+      "DATA",
+      "Core 2.0",
+      "datafiles_01"
+    ),
+    return_list = F,
+    test_size = 10000000
+){
+
+  tmp_data <- replicate(100, iris, simplify = F) |>
+    dplyr::bind_rows() |>
+    tibble::as_tibble()
+
+  tmp_file <- paste0(tempfile(),".rds")
+
+  readr::write_csv(tmp_data, tmp_file)
+
+  file_size <- file.info(tmp_file)$size
+
+  tick <- Sys.time()
+
+  readr::write_rds(tmp_data, paste0(folder, "/tmp.rds"))
+
+  tock <- Sys.time()
+
+  dt1 <- as.numeric(difftime(tock, tick, units = "secs"))
+
+  tick <- Sys.time()
+
+  x <- readr::read_rds(paste0(folder, "/tmp.rds"))
+
+  tock <- Sys.time()
+
+  dt2 <- as.numeric(difftime(tock, tick, units = "secs"))
+
+  cli::cli_alert_success(c(
+    "Uploaded {prettyunits::pretty_bytes(file_size)} in ",
+    "{prettyunits::pretty_sec(dt1)}"
+  ))
+  cli::cli_alert_success(c(
+    "Downloaded {prettyunits::pretty_bytes(file_size)} in ",
+    "{prettyunits::pretty_sec(dt2)}"
+  ))
+
+  x <- file.remove(paste0(folder, "/tmp.rds"))
+
+  dt3 <- test_size/file_size*dt1
+  dt4 <- test_size/file_size*dt2
+
+  cli::cli_alert_info(c(
+    "For a {prettyunits::pretty_bytes(test_size)} file we would expect the following times:"
+  ))
+
+  cli::cli_alert_info("Upload: {prettyunits::pretty_sec(dt3)}")
+  cli::cli_alert_info("Download: {prettyunits::pretty_sec(dt4)}")
+
+  if(return_list){
+    return(list("size" = file_size, "u" = dt1, "d" = dt2))
+  }
+
+}
+
+#### 2) Key data pull functions ####
+
+
 #' Retrieve all pre-processed Polio Data
+#'
 #' @description Download all Polio data from CDC pre-processed endpoint
-#' @import tidyverse, cli, sf
+#' @import dplyr cli sf tibble
 #' @param folder str: location of the CDC pre-processed endpoint
-#' @returns named list containing on relevant (to CDC) polio data
+#' @returns named list containing polio data that is relevant to CDC
+#' @export
 get_all_polio_data <- function(
     folder = file.path(
       "",
@@ -89,7 +175,7 @@ get_all_polio_data <- function(
       list.files(pattern = "^(positives).*(.rds)$", full.names = TRUE)
   ) |>
     lapply(function(x){
-      tibble(
+      tibble::tibble(
         "file" = strsplit(x, "/")[[1]] %>% {.[length(.)]},
         "size" = file.size(x),
         "dl_time_sec" = file.size(x)/download_metrics$size*download_metrics$d/16
@@ -356,6 +442,205 @@ get_all_polio_data <- function(
 
 }
 
+#' Extract country specific information from raw polio data
+#'
+#' @description Extract country specific data from raw data
+#' @import cli dplyr sf
+#' @param raw.data List of raw data sources
+#' @param country String of a country name of interest
+#' @export
+extract_country_data <- function(
+    .country,
+    .raw.data = raw.data
+){
+  cli::cli_h1(paste0("--Processing country data for: ", .country, "--"))
+  cli::cli_process_start("1) Subsetting country spatial data")
+  ctry.data <- list()
+  ctry.data$ctry <- .raw.data$global.ctry |>
+    dplyr::filter(str_detect(ADM0_NAME, .country))
+
+  #Error checking for overlapping ADM0 Names
+  ctrys <- sort(unique(ctry.data$ctry$ADM0_SOVRN))
+
+  if(length(ctrys) > 1){
+
+    ctry.options <- paste0(paste0("\n",  paste0(1:length(ctrys), ") "), ctrys), collapse = "")
+
+    message("Multiple countries match that name, please choose one by designating a number: ")
+    message(ctry.options)
+
+    chosen.country <- as.integer(readline("Enter only the number to designate a country: \n"))
+    i <- 1
+
+    while(!chosen.country %in% 1:length(ctrys) & i < 5){
+      chosen.country <- as.integer(readline("Invalid choice, please only choose a number from the list and enter only that number as an integer: \n"))
+      i <- i + 1
+    }
+
+    if(i == 5){
+      stop("Invalid country choice, please verify input and try running the function again!")
+    }
+
+    chosen.country <- ctrys[chosen.country]
+
+  }else{
+    chosen.country <- ctry.data$ctry$ADM0_SOVRN
+  }
+
+  ctry.data$ctry <- dplyr::filter(ctry.data$ctry, ADM0_SOVRN == chosen.country)
+  .country <- unique(ctry.data$ctry$ADM0_NAME)
+
+  ctry.data$prov <- .raw.data$global.prov |>
+    dplyr::filter(ADM0_NAME == .country)
+
+  ctry.data$dist <- .raw.data$global.dist |>
+    dplyr::filter(ADM0_NAME == .country)
+
+  ctry.data$name <- ctry.data$ctry$ADM0_NAME
+  ctry.data$vis.name <- ctry.data$ctry$ADM0_VIZ_NAME
+  ctry.data$ctry.code <- ctry.data$ctry$WHO_CODE
+
+  cli::cli_process_done()
+
+  cli::cli_process_start("2) Extracting bordering geometries for reference")
+  sf::sf_use_s2(F)
+  a <- st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
+  sf::sf_use_s2(T)
+  ctry.data$proximal.dist <- .raw.data$global.dist[a, ]
+
+  sf::sf_use_s2(F)
+  a <- st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
+  sf::sf_use_s2(T)
+  ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
+  cli::cli_process_done()
+
+  cli::cli_process_start("3) Pulling data from OSM for Roads")
+
+  ctry.data$roads <- raw.data$roads |>
+    sf::st_intersection(ctry.data$ctry)
+
+  cli::cli_process_done()
+
+  cli::cli_process_start("4) Pulling data from OSM for Cities")
+
+  ctry.data$cities <- raw.data$cities |>
+    sf::st_intersection(ctry.data$ctry)
+
+  cli::cli_process_done()
+
+  cli::cli_process_start("5) Prepping AFP linelist data")
+
+  ctry.data$afp.all <- raw.data$afp |>
+    #filter(str_detect(place.admin.0, .country)) |>
+    dplyr::filter(place.admin.0 == .country) |>
+    dplyr::filter(!is.na(lon) & !is.na(lat)) |>
+    sf::st_as_sf(coords = c(x = "lon", y = "lat"),
+             crs = sf::st_crs(ctry.data$ctry)) |>
+    dplyr::rename(
+      ctry = place.admin.0,
+      prov = place.admin.1,
+      dist = place.admin.2,
+      sex = person.sex,
+      date = dateonset,
+      year = yronset,
+      date.notify = datenotify,
+      date.invest = dateinvest,
+      cdc.class = cdc.classification.all
+    )
+
+  ctry.data$afp.all.2 <- raw.data$afp |>
+    #filter(str_detect(place.admin.0, .country)) |>
+    dplyr::filter(place.admin.0 == .country) |>
+    dplyr::rename(
+      ctry = place.admin.0,
+      prov = place.admin.1,
+      dist = place.admin.2,
+      sex = person.sex,
+      date = dateonset,
+      year = yronset,
+      date.notify = datenotify,
+      date.invest = dateinvest,
+      cdc.class = cdc.classification.all
+    )
+
+  ctry.data$afp <- raw.data$afp |>
+    #filter(str_detect(place.admin.0, .country)) |>
+    dplyr::filter(place.admin.0 == .country) |>
+    dplyr::filter(!is.na(lon) & !is.na(lat)) |>
+    dplyr::filter(!(
+      cdc.classification.all %in% c("PENDING", "NPAFP", "COMPATIBLE", "UNKNOWN", "NOT-AFP")
+    )) |>
+    sf::st_as_sf(coords = c(x = "lon", y = "lat"),
+             crs = sf::st_crs(ctry.data$ctry)) |>
+    dplyr::rename(
+      ctry = place.admin.0,
+      prov = place.admin.1,
+      dist = place.admin.2,
+      sex = person.sex,
+      date = dateonset,
+      year = yronset,
+      date.notify = datenotify,
+      date.invest = dateinvest,
+      cdc.class = cdc.classification.all
+    )
+
+  ctry.data$afp.2 <- raw.data$afp |>
+    #filter(str_detect(place.admin.0, .country)) |>
+    dplyr::filter(place.admin.0 == .country) |>
+    dplyr::filter(!(
+      cdc.classification.all %in% c("PENDING", "NPAFP", "COMPATIBLE", "UNKNOWN", "NOT-AFP")
+    )) |>
+    dplyr::rename(
+      ctry = place.admin.0,
+      prov = place.admin.1,
+      dist = place.admin.2,
+      sex = person.sex,
+      date = dateonset,
+      year = yronset,
+      date.notify = datenotify,
+      date.invest = dateinvest,
+      cdc.class = cdc.classification.all
+    )
+
+  ctry.data$afp.epi <- raw.data$afp.epi |>
+    dplyr::filter(place.admin.0 == .country)
+  #filter(str_detect(place.admin.0, .country))
+
+  ctry.data$para.case <- ctry.data$afp.epi |>
+    dplyr::filter(
+      cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
+    ) |>
+    dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
+
+  cli::cli_process_done()
+
+  cli::cli_process_start("6) Prepping population data")
+  ctry.data$dist.pop <- raw.data$dist.pop |>
+    dplyr::filter(ADM0_NAME == .country) |>
+    #filter(str_detect(ADM0_NAME, .country)) |>
+    dplyr::mutate(ADM0_NAME = .country) |>
+    dplyr::select(year,
+           ctry = ADM0_NAME,
+           prov = ADM1_NAME,
+           dist = ADM2_NAME,
+           u15pop,
+           adm2guid)
+
+  cli::cli_process_done()
+
+  cli::cli_process_start("7) Prepping positives data")
+  ctry.data$pos <- raw.data$pos |>
+    dplyr::filter(place.admin.0 == .country)
+  #filter(str_detect(place.admin.0, .country)) |>
+  cli::cli_process_done()
+
+  gc()
+
+  return(ctry.data)
+
+}
+
+#### 3) Secondary SP Functions ####
 
 load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
                                               'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
@@ -535,283 +820,6 @@ load_clean_ctry_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
       df.list <- c(df.list, list(i = f.yrs.01(out, i)))
     }
     return(bind_rows(df.list))
-  }
-
-}
-
-#' Extract country specific information from raw polio data
-#'
-#' @description Extract country specific data from raw data
-#' @import cli
-#' @param raw.data List of raw data sources
-#' @param country String of a country name of interest
-#' @export
-extract_country_data <- function(
-    .country,
-    .raw.data = raw.data
-){
-  cli::cli_h1(paste0("--Processing country data for: ", .country, "--"))
-  cli::cli_process_start("1) Subsetting country spatial data")
-  ctry.data <- list()
-  ctry.data$ctry <- .raw.data$global.ctry |>
-    filter(str_detect(ADM0_NAME, .country))
-
-  #Error checking for overlapping ADM0 Names
-  ctrys <- sort(unique(ctry.data$ctry$ADM0_SOVRN))
-
-  if(length(ctrys) > 1){
-
-    ctry.options <- paste0(paste0("\n",  paste0(1:length(ctrys), ") "), ctrys), collapse = "")
-
-    message("Multiple countries match that name, please choose one by designating a number: ")
-    message(ctry.options)
-
-    chosen.country <- as.integer(readline("Enter only the number to designate a country: \n"))
-    i <- 1
-
-    while(!chosen.country %in% 1:length(ctrys) & i < 5){
-      chosen.country <- as.integer(readline("Invalid choice, please only choose a number from the list and enter only that number as an integer: \n"))
-      i <- i + 1
-    }
-
-    if(i == 5){
-      stop("Invalid country choice, please verify input and try running the function again!")
-    }
-
-    chosen.country <- ctrys[chosen.country]
-
-  }else{
-    chosen.country <- ctry.data$ctry$ADM0_SOVRN
-  }
-
-  ctry.data$ctry <- filter(ctry.data$ctry, ADM0_SOVRN == chosen.country)
-  .country <- unique(ctry.data$ctry$ADM0_NAME)
-
-  ctry.data$prov <- .raw.data$global.prov |>
-    filter(ADM0_NAME == .country)
-
-  ctry.data$dist <- .raw.data$global.dist |>
-    filter(ADM0_NAME == .country)
-
-  ctry.data$name <- ctry.data$ctry$ADM0_NAME
-  ctry.data$vis.name <- ctry.data$ctry$ADM0_VIZ_NAME
-  ctry.data$ctry.code <- ctry.data$ctry$WHO_CODE
-
-  cli::cli_process_done()
-
-  cli::cli_process_start("2) Extracting bordering geometries for reference")
-  sf_use_s2(F)
-  a <- st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
-  sf_use_s2(T)
-  ctry.data$proximal.dist <- .raw.data$global.dist[a, ]
-
-  sf_use_s2(F)
-  a <- st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
-  sf_use_s2(T)
-  ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
-  cli::cli_process_done()
-
-  cli::cli_process_start("3) Pulling data from OSM for Roads")
-
-  ctry.data$roads <- raw.data$roads |>
-    st_intersection(ctry.data$ctry)
-
-  cli::cli_process_done()
-
-  cli::cli_process_start("4) Pulling data from OSM for Cities")
-
-  ctry.data$cities <- raw.data$cities |>
-    st_intersection(ctry.data$ctry)
-
-  cli::cli_process_done()
-
-  cli::cli_process_start("5) Prepping AFP linelist data")
-
-  ctry.data$afp.all <- raw.data$afp |>
-    #filter(str_detect(place.admin.0, .country)) |>
-    filter(place.admin.0 == .country) |>
-    filter(!is.na(lon) & !is.na(lat)) |>
-    st_as_sf(coords = c(x = "lon", y = "lat"),
-             crs = st_crs(ctry.data$ctry)) |>
-    rename(
-      ctry = place.admin.0,
-      prov = place.admin.1,
-      dist = place.admin.2,
-      sex = person.sex,
-      date = dateonset,
-      year = yronset,
-      date.notify = datenotify,
-      date.invest = dateinvest,
-      cdc.class = cdc.classification.all
-    )
-
-  ctry.data$afp.all.2 <- raw.data$afp |>
-    #filter(str_detect(place.admin.0, .country)) |>
-    filter(place.admin.0 == .country) |>
-    rename(
-      ctry = place.admin.0,
-      prov = place.admin.1,
-      dist = place.admin.2,
-      sex = person.sex,
-      date = dateonset,
-      year = yronset,
-      date.notify = datenotify,
-      date.invest = dateinvest,
-      cdc.class = cdc.classification.all
-    )
-
-  ctry.data$afp <- raw.data$afp |>
-    #filter(str_detect(place.admin.0, .country)) |>
-    filter(place.admin.0 == .country) |>
-    filter(!is.na(lon) & !is.na(lat)) |>
-    filter(!(
-      cdc.classification.all %in% c("PENDING", "NPAFP", "COMPATIBLE", "UNKNOWN", "NOT-AFP")
-    )) |>
-    st_as_sf(coords = c(x = "lon", y = "lat"),
-             crs = st_crs(ctry.data$ctry)) |>
-    rename(
-      ctry = place.admin.0,
-      prov = place.admin.1,
-      dist = place.admin.2,
-      sex = person.sex,
-      date = dateonset,
-      year = yronset,
-      date.notify = datenotify,
-      date.invest = dateinvest,
-      cdc.class = cdc.classification.all
-    )
-
-  ctry.data$afp.2 <- raw.data$afp |>
-    #filter(str_detect(place.admin.0, .country)) |>
-    filter(place.admin.0 == .country) |>
-    filter(!(
-      cdc.classification.all %in% c("PENDING", "NPAFP", "COMPATIBLE", "UNKNOWN", "NOT-AFP")
-    )) |>
-    rename(
-      ctry = place.admin.0,
-      prov = place.admin.1,
-      dist = place.admin.2,
-      sex = person.sex,
-      date = dateonset,
-      year = yronset,
-      date.notify = datenotify,
-      date.invest = dateinvest,
-      cdc.class = cdc.classification.all
-    )
-
-  ctry.data$afp.epi <- raw.data$afp.epi |>
-    filter(place.admin.0 == .country)
-  #filter(str_detect(place.admin.0, .country))
-
-  ctry.data$para.case <- ctry.data$afp.epi |>
-    filter(
-      cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
-    ) |>
-    mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
-
-  cli::cli_process_done()
-
-  cli::cli_process_start("6) Prepping population data")
-  ctry.data$dist.pop <- raw.data$dist.pop |>
-    filter(ADM0_NAME == .country) |>
-    #filter(str_detect(ADM0_NAME, .country)) |>
-    mutate(ADM0_NAME = .country) |>
-    select(year,
-           ctry = ADM0_NAME,
-           prov = ADM1_NAME,
-           dist = ADM2_NAME,
-           u15pop,
-           adm2guid)
-
-  cli::cli_process_done()
-
-  cli::cli_process_start("7) Prepping positives data")
-  ctry.data$pos <- raw.data$pos |>
-    filter(place.admin.0 == .country)
-  #filter(str_detect(place.admin.0, .country)) |>
-  cli::cli_process_done()
-
-  gc()
-
-  return(ctry.data)
-
-}
-
-
-
-#' Test network connection to the S drive
-#' @param folder str: Location of download folder in S drive
-#' @param test_size int: byte size of a theoretical folder
-#' @param return_list: boolean: return a list of download time estimates, default F
-#' @import dplyr readr prettyunits tibble cli
-#' @returns System message with download and update time, potentially list output
-#' @export
-test_S_drive_connection <- function(
-    folder = file.path(
-      "",
-      "",
-      "cdc.gov",
-      "project",
-      "CGH_GID_Active",
-      "PEB",
-      "SIR",
-      "DATA",
-      "Core 2.0",
-      "datafiles_01"
-    ),
-    return_list = F,
-    test_size = 10000000
-){
-
-  tmp_data <- replicate(100, iris, simplify = F) |>
-    dplyr::bind_rows() |>
-    tibble::as_tibble()
-
-  tmp_file <- paste0(tempfile(),".rds")
-
-  readr::write_csv(tmp_data, tmp_file)
-
-  file_size <- file.info(tmp_file)$size
-
-  tick <- Sys.time()
-
-  readr::write_rds(tmp_data, paste0(folder, "/tmp.rds"))
-
-  tock <- Sys.time()
-
-  dt1 <- as.numeric(difftime(tock, tick, units = "secs"))
-
-  tick <- Sys.time()
-
-  x <- readr::read_rds(paste0(folder, "/tmp.rds"))
-
-  tock <- Sys.time()
-
-  dt2 <- as.numeric(difftime(tock, tick, units = "secs"))
-
-  cli::cli_alert_success(c(
-    "Uploaded {prettyunits::pretty_bytes(file_size)} in ",
-    "{prettyunits::pretty_sec(dt1)}"
-  ))
-  cli::cli_alert_success(c(
-    "Downloaded {prettyunits::pretty_bytes(file_size)} in ",
-    "{prettyunits::pretty_sec(dt2)}"
-  ))
-
-  x <- file.remove(paste0(folder, "/tmp.rds"))
-
-  dt3 <- test_size/file_size*dt1
-  dt4 <- test_size/file_size*dt2
-
-  cli::cli_alert_info(c(
-    "For a {prettyunits::pretty_bytes(test_size)} file we would expect the following times:"
-  ))
-
-  cli::cli_alert_info("Upload: {prettyunits::pretty_sec(dt3)}")
-  cli::cli_alert_info("Download: {prettyunits::pretty_sec(dt4)}")
-
-  if(return_list){
-    return(list("size" = file_size, "u" = dt1, "d" = dt2))
   }
 
 }
