@@ -208,7 +208,7 @@ get_all_polio_data <- function(
         "shapefiles_01",
         "global.ctry.rds"
       ) |>
-      read_rds()
+      readr::read_rds()
 
 
     cli::cli_process_done()
@@ -216,16 +216,13 @@ get_all_polio_data <- function(
 
 
     cli::cli_process_start("2) Loading province shape files from S Drive")
-    tick <- Sys.time()
     raw.data$global.prov <-
       file.path(
         folder,
         "shapefiles_01",
         "global.prov.rds"
       ) |>
-      read_rds()
-    tock <- Sys.time()
-    tock - tick
+      readr::read_rds()
     cli::cli_process_done()
 
     cli::cli_process_start("3) Loading district shape files from S Drive")
@@ -248,10 +245,11 @@ get_all_polio_data <- function(
         pattern = "^.*(afp).*(linelist).*(.rds)$",
         full.names = TRUE
       ) |>
-      map_df( ~ read_rds(.x)) |>
-      filter(surveillancetypename == "AFP") |>
-      filter(yronset >= 2016) |>
-      mutate(
+      lapply(readr::read_rds) |>
+      dplyr::bind_rows() |>
+      dplyr::filter(surveillancetypename == "AFP") |>
+      dplyr::filter(yronset >= 2016) |>
+      dplyr::mutate(
         cdc.classification.all2 = ifelse(
           final.cell.culture.result == "Not received in lab" &
             cdc.classification.all == "PENDING",
@@ -272,13 +270,13 @@ get_all_polio_data <- function(
     cli::cli_process_start("Processing AFP data for analysis")
 
     raw.data$afp.epi <- raw.data$afp |>
-      filter(yronset >= 2016) |>
-      mutate(epi.week = epiweek(dateonset)) |>
-      group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
-      summarise(afp.cases = n()) |>
-      mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
+      dplyr::filter(yronset >= 2016) |>
+      dplyr::mutate(epi.week = epiweek(dateonset)) |>
+      dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
+      dplyr::summarise(afp.cases = n()) |>
+      dplyr::mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
       #manual fix of epi week
-      mutate(epi.week = ifelse(epi.week == 52 &
+      dplyr::mutate(epi.week = ifelse(epi.week == 52 &
                                  yronset == 2022, 1, epi.week)) |>
       ungroup()
 
@@ -313,10 +311,10 @@ get_all_polio_data <- function(
       )
 
     raw.data$para.case <- raw.data$afp |>
-      filter(
+      dplyr::filter(
         cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
       ) |>
-      mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
+      dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
     cli::cli_process_done()
 
 
@@ -326,27 +324,27 @@ get_all_polio_data <- function(
         folder,
         "dist.pop.long2010_2023.rds"
       ) |>
-      read_rds() |>
-      ungroup() |>
-      filter(year >= 2016)
+      readr::read_rds() |>
+      dplyr::ungroup() |>
+      dplyr::filter(year >= 2016)
 
     raw.data$prov.pop <-
       file.path(
         folder,
         "prov.pop.long2010_2023.rds"
       ) |>
-      read_rds() |>
-      ungroup() |>
-      filter(year >= 2016)
+      readr::read_rds() |>
+      dplyr::ungroup() |>
+      dplyr::filter(year >= 2016)
 
     raw.data$ctry.pop <-
       file.path(
         folder,
         "ctry.pop.2000_2023.rds"
       ) |>
-      read_rds() |>
-      ungroup() |>
-      filter(year >= 2016)
+      readr::read_rds() |>
+      dplyr::ungroup() |>
+      dplyr::filter(year >= 2016)
 
     cli::cli_process_done()
 
@@ -396,8 +394,8 @@ get_all_polio_data <- function(
         "all_year_all_var_files_20220909"
       ) |>
       list.files(pattern = "^(es).*(.rds)$", full.names = TRUE) |>
-      lapply(read_rds) |>
-      bind_rows()
+      lapply(readr::read_rds) |>
+      dplyr::bind_rows()
     cli::cli_process_done()
 
     cli::cli_process_start("8) Loading SIA data from S drive")
@@ -407,8 +405,8 @@ get_all_polio_data <- function(
         "all_year_all_var_files_20220909"
       ) |>
       list.files(pattern = "^.*(sia).*(.rds)$", full.names = TRUE) |>
-      lapply(read_rds) |>
-      bind_rows()
+      lapply(readr::read_rds) |>
+      dplyr::bind_rows()
     cli::cli_process_done()
 
     cli::cli_process_start("9) Loading all positives from S drive")
@@ -418,8 +416,8 @@ get_all_polio_data <- function(
         "all_year_all_var_files_20220909"
       ) |>
       list.files(pattern = "^(positives).*(.rds)$", full.names = TRUE) |>
-      lapply(read_rds) |>
-      bind_rows()
+      lapply(readr::read_rds) |>
+      dplyr::bind_rows()
     cli::cli_process_done()
 
     cli::cli_process_start("10) Loading road network data")
