@@ -640,6 +640,18 @@ extract_country_data <- function(
 
 #### 3) Secondary SP Functions ####
 
+#' Standard function to load District data
+#'
+#' @description Pulls district shapefiles directly from the geodatabase
+#' @param fp str: Location of geodatabase
+#' @param dist_guid array/str: Array of all district GUIDS that you want to pull
+#' @param ctry_name array/str: Array of all country names that you want to pull
+#' @param end.year int: last year you want to pull information for - default is current year
+#' @param st.year int: earlier year of spatial data you want to pull - default is 2000
+#' @param data.only boolean: default F, if true, returns a rectangular tibble instead of a shape file
+#' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
+#' @returns tibble or sf dataframe
+#' @export
 load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
                                               'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
                                               'WHO_POLIO_GLOBAL_GEODATABASE.gdb'),
@@ -650,13 +662,13 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
                                data.only = F,
                                type = NULL){
   out <- fp %>%
-    st_read(
+    sf::st_read(
       layer = "GLOBAL_ADM2",
       quiet = T
     ) %>%
-    mutate(
+    dplyr::mutate(
 
-      STARTDATE = as.Date(STARTDATE),
+      STARTDATE = lubridate::as_date(STARTDATE),
       # Typo in the dist start date (year) in shapefiles. Temporary correcting the start date for South Darfur in Sudan
       STARTDATE = if_else(ADM0_GUID =="{3050873E-F010-4C4F-82D1-541E3C4FD887}" & ADM1_GUID =="{0836D898-32B9-4912-AEA2-D07BD6E50ED8}"
                           & STARTDATE=='2018-01-01',
@@ -712,6 +724,19 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 
 }
 
+#' Standard function to load Province data
+#'
+#' @description Pulls province shapefiles directly from the geodatabase
+#' @param fp str: Location of geodatabase
+#' @param prov_guid array/str: Array of all province GUIDS that you want to pull
+#' @param prov_name array/str: Array of all province names that you want to pull
+#' @param ctry_name array/str: Array of all country names that you want to pull
+#' @param end.year int: last year you want to pull information for - default is current year
+#' @param st.year int: earlier year of spatial data you want to pull - default is 2000
+#' @param data.only boolean: default F, if true, returns a rectangular tibble instead of a shape file
+#' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
+#' @returns tibble or sf dataframe
+#' @export
 load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
                                               'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
                                               'WHO_POLIO_GLOBAL_GEODATABASE.gdb'),
