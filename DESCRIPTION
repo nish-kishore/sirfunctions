@@ -16,4 +16,8 @@ Imports:
     ggplot2,
     lubridate,
     sf,
-    tibble
+    tibble, 
+    cli, 
+    prettyunits, 
+    readr, 
+    stringr

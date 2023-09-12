@@ -13,7 +13,13 @@ utils::globalVariables(c(
   'par', 'pct.afpes.detect.35d', 'pct.afpes.detect.49d', 'per.stool.ad', 'percent',
   'pivot_longer', 'prov', 'pv', 'replace_na', 'seq.capacity', 'site.name', 'stoolad',
   'toty', 'u15pop', 'value', 'vdpv', 'weight', 'who.region', 'wpv', '.', 'date.notification.to.hq',
-  'date.final.results.reported'
+  'date.final.results.reported', 'raw.data', 'ADM0_GUID', 'ADM0_SOVRN', 'ADM1_GUID',
+  'ADM1_NAME', 'ADM2_NAME', 'ENDDATE', 'GUID', 'STARTDATE', 'adm0_name', 'adm1_name',
+  'adm2_name', 'cdc.classification.all2', 'dateinvest', 'datenotify', 'dateonset', 'dpt',
+  'dpt1', 'dpt3', 'epi.week', 'f.yrs.01', 'final.cell.culture.result', 'hot.case',
+  'iris', 'lat', 'lon', 'mcv1', 'paralysis.asymmetric', 'paralysis.onset.fever', 'paralysis.rapid.progress',
+  'person.sex', 'place.admin.0', 'place.admin.1','place.admin.2', 'surveillancetypename',
+  'under5_pop','yr.end','yronset', 'yr.st'
 ))
 
 # "ADM0_NAME adequacy.final adm0guid adm1guid adm2guid afp.cases
