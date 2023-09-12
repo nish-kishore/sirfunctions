@@ -7,7 +7,7 @@
 #' @description Tests upload and download from S drive
 #' @param folder str: Location of download folder in S drive
 #' @param test_size int: byte size of a theoretical folder
-#' @param return_list: boolean: return a list of download time estimates, default F
+#' @param return_list boolean: return a list of download time estimates, default F
 #' @import dplyr readr prettyunits tibble cli
 #' @returns System message with download and update time, potentially list output
 #' @export
@@ -296,7 +296,7 @@ get_all_polio_data <- function(
           "NPAFP",
           "NOT-AFP"
         ),
-        label = c(
+        labels = c(
           "WILD 1",
           "cVDPV 2",
           "VDPV 2",
@@ -443,9 +443,9 @@ get_all_polio_data <- function(
 #' Extract country specific information from raw polio data
 #'
 #' @description Extract country specific data from raw data
-#' @import cli dplyr sf
-#' @param raw.data List of raw data sources
-#' @param country String of a country name of interest
+#' @import cli dplyr sf stringr
+#' @param .raw.data List of raw data sources
+#' @param .country String of a country name of interest
 #' @export
 extract_country_data <- function(
     .country,
@@ -455,7 +455,7 @@ extract_country_data <- function(
   cli::cli_process_start("1) Subsetting country spatial data")
   ctry.data <- list()
   ctry.data$ctry <- .raw.data$global.ctry |>
-    dplyr::filter(str_detect(ADM0_NAME, .country))
+    dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
 
   #Error checking for overlapping ADM0 Names
   ctrys <- sort(unique(ctry.data$ctry$ADM0_SOVRN))
@@ -502,12 +502,12 @@ extract_country_data <- function(
 
   cli::cli_process_start("2) Extracting bordering geometries for reference")
   sf::sf_use_s2(F)
-  a <- st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
+  a <- sf::st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
   sf::sf_use_s2(T)
   ctry.data$proximal.dist <- .raw.data$global.dist[a, ]
 
   sf::sf_use_s2(F)
-  a <- st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
+  a <- sf::st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
   sf::sf_use_s2(T)
   ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
   cli::cli_process_done()
@@ -644,6 +644,7 @@ extract_country_data <- function(
 #'
 #' @description Pulls district shapefiles directly from the geodatabase
 #' @param fp str: Location of geodatabase
+#' @import stringr sf
 #' @param dist_guid array/str: Array of all district GUIDS that you want to pull
 #' @param ctry_name array/str: Array of all country names that you want to pull
 #' @param end.year int: last year you want to pull information for - default is current year
@@ -683,7 +684,7 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 
       yr.st = year(STARTDATE),
       yr.end = year(ENDDATE),
-      ADM0_NAME = ifelse(str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
+      ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
     ) %>%
 
     # remove the ouad eddahab in Morocco which started and ended the same year and causes overlap
@@ -727,6 +728,7 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 #' Standard function to load Province data
 #'
 #' @description Pulls province shapefiles directly from the geodatabase
+#' @import stringr sf
 #' @param fp str: Location of geodatabase
 #' @param prov_guid array/str: Array of all province GUIDS that you want to pull
 #' @param prov_name array/str: Array of all province names that you want to pull
@@ -755,7 +757,7 @@ load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
     mutate(
       yr.st = year(STARTDATE),
       yr.end = year(ENDDATE),
-      ADM0_NAME = ifelse(str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
+      ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
     ) %>%
     # this filters based on dates set in RMD
     filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
@@ -795,6 +797,19 @@ load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 
 }
 
+#' Standard function to load Country data
+#'
+#' @description Pulls province shapefiles directly from the geodatabase
+#' @import stringr sf
+#' @param fp str: Location of geodatabase
+#' @param ctry_guid array/str: Array of all country GUIDS that you want to pull
+#' @param ctry_name array/str: Array of all country names that you want to pull
+#' @param end.year int: last year you want to pull information for - default is current year
+#' @param st.year int: earlier year of spatial data you want to pull - default is 2000
+#' @param data.only boolean: default F, if true, returns a rectangular tibble instead of a shape file
+#' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
+#' @returns tibble or sf dataframe
+#' @export
 load_clean_ctry_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
                                               'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
                                               'WHO_POLIO_GLOBAL_GEODATABASE.gdb'),
@@ -812,7 +827,7 @@ load_clean_ctry_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
     mutate(
       yr.st = year(STARTDATE),
       yr.end = year(ENDDATE),
-      ADM0_NAME = ifelse(str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
+      ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
     ) %>%
     # this filters based on dates set in RMD
     filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
