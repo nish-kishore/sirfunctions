@@ -862,3 +862,21 @@ load_clean_ctry_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 
 }
 
+#### 4) Misc ####
+
+#' Utility function to fix years
+#'
+#' @param df tibble: dataframe to be used for fixing years
+#' @param yrs numeric array: array of years to fix data
+#' @returns long tibble
+f.yrs.01 <- function(df, yrs) {
+  quo.yrs <- enquo(yrs)
+
+  shape01 <- df %>%
+    filter((yr.st <= !!quo.yrs & yr.end >= !!quo.yrs) |
+             yr.st == !!quo.yrs) %>%
+    mutate(active.year.01 = !!quo.yrs)
+
+  return(shape01)
+}
+
