@@ -196,6 +196,11 @@ get_all_polio_data <- function(
 
   download_metrics <- test_EDAV_connection(return_list = T)
 
+  dplyr::bind_rows(
+    edav_io(io = "list", file_loc = file.path(folder, "polis")),
+    edav_io(io = "list", file_loc = file.path(folder, "spatial"))
+  ) |>
+    filter(!is.na(size))
 
   dl_table <- c(
     file.path(
