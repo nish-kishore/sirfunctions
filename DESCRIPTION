@@ -20,4 +20,6 @@ Imports:
     cli, 
     prettyunits, 
     readr, 
-    stringr
+    stringr, 
+    AzureAuth, 
+    AzureStor

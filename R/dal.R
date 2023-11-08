@@ -2,28 +2,121 @@
 
 #### 1) Utility functions ####
 
+#' Validate connection to EDAV
+#'
+#' @description Validate connection to CDC EDAV
+#' @import AzureStor AzureAuth
+#' @returns azure container verification
+get_azure_storage_connection <- function(){
+  mytoken <- AzureAuth::get_azure_token(
+    resource = "https://storage.azure.com/",
+    tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
+    app = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+    auth_type = "authorization_code"
+  )
+
+  token_hash <- AzureAuth::list_azure_tokens() |> names()
+  token_hash <- token_hash[1]
+  mytoken <- AzureAuth::load_azure_token(token_hash)
+
+
+  endptoken <- AzureStor::storage_endpoint(endpoint = "https://davsynapseanalyticsdev.dfs.core.windows.net", token = mytoken)
+
+  azcontainer <- AzureStor::storage_container(endptoken, "ddphsis-cgh")
+
+  return(azcontainer)
+}
+
+#' Helper function to read and write key data
+#'
+#' @description Helper function read and write key data to EDAV
+#' @import cli
+#' @param io str: "read", "write" or "list"
+#' @param file_loc str: location to "read", "write" or "list"
+#' @param obj default NULL object to be saved
+#' @param azcontainer azure container object
+#' @returns tibble
+edav_io <- function(
+    io,
+    file_loc,
+    obj = NULL,
+    azcontainer = get_azure_storage_connection()
+){
+
+  opts <- c("read", "write", "delete", "list")
+
+  if(!io %in% opts){
+    stop("io: must be 'read', 'write', 'delete' or 'list'")
+  }
+
+  if(io == "write" & is.null(obj)){
+    stop("Need to supply an object to be written")
+  }
+
+  if(io == "list"){
+
+    if(!AzureStor::storage_dir_exists(azcontainer, file_loc)){
+      stop("Directory does not exist")
+    }
+
+    return(AzureStor::list_storage_files(azcontainer, file_loc) |>
+      tibble::as_tibble())
+
+  }
+
+  if(io == "read"){
+
+    if(!AzureStor::storage_file_exists(azcontainer, file_loc)){
+      stop("File does not exist")
+    }
+
+    if(grepl(".rds", file_loc)){
+      return(AzureStor::storage_load_rds(azcontainer, file_loc))
+    }
+
+    if(grepl(".csv", file_loc)){
+      return(AzureStor::storage_read_csv(azcontainer, file_loc))
+    }
+
+  }
+
+  if(io == "write"){
+
+    if(grepl(".rds", file_loc)){
+      AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
+    }
+
+    if(grepl(".csv", file_loc)){
+      AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
+    }
+
+  }
+
+  if(io == "delete"){
+
+    if(!AzureStor::storage_file_exists(azcontainer, file_loc)){
+      stop("File does not exist")
+    }
+
+    AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
+
+  }
+
+}
+
 #' Test network connection to the S drive
 #'
 #' @description Tests upload and download from S drive
+#' @param azcontainer azure storage container
 #' @param folder str: Location of download folder in S drive
 #' @param test_size int: byte size of a theoretical folder
 #' @param return_list boolean: return a list of download time estimates, default F
 #' @import dplyr readr prettyunits tibble cli
 #' @returns System message with download and update time, potentially list output
 #' @export
-test_S_drive_connection <- function(
-    folder = file.path(
-      "",
-      "",
-      "cdc.gov",
-      "project",
-      "CGH_GID_Active",
-      "PEB",
-      "SIR",
-      "DATA",
-      "Core 2.0",
-      "datafiles_01"
-    ),
+test_EDAV_connection <- function(
+    azcontainer = get_azure_storage_connection(),
+    folder = "GID/PEB/SIR/Data",
     return_list = F,
     test_size = 10000000
 ){
@@ -40,7 +133,8 @@ test_S_drive_connection <- function(
 
   tick <- Sys.time()
 
-  readr::write_rds(tmp_data, paste0(folder, "/tmp.rds"))
+  edav_io(io = "write", file_loc = paste0(folder, "/tmp.rds"), obj = tmp_data)
+  #readr::write_rds(tmp_data, paste0(folder, "/tmp.rds"))
 
   tock <- Sys.time()
 
@@ -48,7 +142,8 @@ test_S_drive_connection <- function(
 
   tick <- Sys.time()
 
-  x <- readr::read_rds(paste0(folder, "/tmp.rds"))
+  x <- edav_io(io = "read", file_loc = paste0(folder, "/tmp.rds"))
+  #x <- readr::read_rds(paste0(folder, "/tmp.rds"))
 
   tock <- Sys.time()
 
@@ -63,7 +158,8 @@ test_S_drive_connection <- function(
     "{prettyunits::pretty_sec(dt2)}"
   ))
 
-  x <- file.remove(paste0(folder, "/tmp.rds"))
+  suppressMessages(edav_io(io = "delete", file_loc = paste0(folder, "/tmp.rds")), classes = c("message", "warning"))
+  #x <- file.remove(paste0(folder, "/tmp.rds"))
 
   dt3 <- test_size/file_size*dt1
   dt4 <- test_size/file_size*dt2
@@ -92,40 +188,29 @@ test_S_drive_connection <- function(
 #' @returns named list containing polio data that is relevant to CDC
 #' @export
 get_all_polio_data <- function(
-    folder = file.path(
-      "",
-      "",
-      "cdc.gov",
-      "project",
-      "CGH_GID_Active",
-      "PEB",
-      "SIR",
-      "DATA",
-      "Core 2.0",
-      "datafiles_01"
-    )
+    folder = "GID/PEB/SIR/Data/"
 ){
 
   cli::cli_h1("Testing download times")
 
 
-  download_metrics <- test_S_drive_connection(return_list = T)
+  download_metrics <- test_EDAV_connection(return_list = T)
 
 
   dl_table <- c(
     file.path(
       folder,
-      "shapefiles_01",
+      "spatial",
       "global.ctry.rds"
     ),
     file.path(
       folder,
-      "shapefiles_01",
+      "spatial",
       "global.prov.rds"
     ),
     file.path(
       folder,
-      "shapefiles_01",
+      "spatial",
       "global.dist.rds"
     ),
     list.files(
@@ -644,7 +729,8 @@ extract_country_data <- function(
 #'
 #' @description Pulls district shapefiles directly from the geodatabase
 #' @param fp str: Location of geodatabase
-#' @import stringr sf
+#' @import stringr AzureStor dplyr lubridate
+#' @param azcontainer azure validated container object
 #' @param dist_guid array/str: Array of all district GUIDS that you want to pull
 #' @param ctry_name array/str: Array of all country names that you want to pull
 #' @param end.year int: last year you want to pull information for - default is current year
@@ -653,20 +739,16 @@ extract_country_data <- function(
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
 #' @returns tibble or sf dataframe
 #' @export
-load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
-                                              'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
-                                              'WHO_POLIO_GLOBAL_GEODATABASE.gdb'),
+load_clean_dist_sp <- function(azcontainer = get_azure_storage_connection(),
+                               fp = "GID/PEB/SIR/Data/spatial/global.dist.rds",
                                dist_guid = NULL,
                                ctry_name = NULL,
                                end.year = year(Sys.Date()),
                                st.year = 2000,
                                data.only = F,
                                type = NULL){
-  out <- fp %>%
-    sf::st_read(
-      layer = "GLOBAL_ADM2",
-      quiet = T
-    ) %>%
+  cli::cli_alert_info("Loading country spatial files")
+  out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
 
       STARTDATE = lubridate::as_date(STARTDATE),
@@ -682,18 +764,18 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
                             GUID == "{54464216-2BD3-4F30-BF2C-3846BEE6805D}" & STARTDATE=='2020-01-01',
                           STARTDATE+366, STARTDATE),
 
-      yr.st = year(STARTDATE),
-      yr.end = year(ENDDATE),
+      yr.st = lubridate::year(STARTDATE),
+      yr.end = lubridate::year(ENDDATE),
       ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
     ) %>%
 
     # remove the ouad eddahab in Morocco which started and ended the same year and causes overlap
-    filter(!GUID=="{AE526BC0-8DC3-411C-B82E-75259AD3598C}") %>%
+    dplyr::filter(!GUID=="{AE526BC0-8DC3-411C-B82E-75259AD3598C}") %>%
     # this filters based on dates set in RMD
-    filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
+    dplyr::filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
     {
       if(is.null(dist_guid)){.}else{
-        filter(., GUID %in% dist_guid)
+        dplyr::filter(., GUID %in% dist_guid)
       }
     } %>%
     {
@@ -703,7 +785,7 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
     }
 
   if(data.only & is.null(type)){
-    out <- tibble(out)
+    out <- tibble::tibble(out)
 
     return(out)
   }
@@ -728,7 +810,8 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 #' Standard function to load Province data
 #'
 #' @description Pulls province shapefiles directly from the geodatabase
-#' @import stringr sf
+#' @import stringr AzureStor lubridate dplyr tibble
+#' @param azcontainer azure validated container object
 #' @param fp str: Location of geodatabase
 #' @param prov_guid array/str: Array of all province GUIDS that you want to pull
 #' @param prov_name array/str: Array of all province names that you want to pull
@@ -739,9 +822,8 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
 #' @returns tibble or sf dataframe
 #' @export
-load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
-                                              'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
-                                              'WHO_POLIO_GLOBAL_GEODATABASE.gdb'),
+load_clean_prov_sp <- function(azcontainer = get_azure_storage_connection(),
+                               fp = "GID/PEB/SIR/Data/spatial/global.prov.rds",
                                prov_guid = NULL,
                                prov_name = NULL,
                                ctry_name = NULL,
@@ -749,36 +831,33 @@ load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
                                st.year = 2000,
                                data.only = F,
                                type = NULL){
-  out <- fp %>%
-    st_read(
-      layer = "GLOBAL_ADM1",
-      quiet = T
-    ) %>%
-    mutate(
-      yr.st = year(STARTDATE),
-      yr.end = year(ENDDATE),
+  cli::cli_alert_info("Loading province spatial files")
+  out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
+    dplyr::mutate(
+      yr.st = lubridate::year(STARTDATE),
+      yr.end = lubridate::year(ENDDATE),
       ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
     ) %>%
     # this filters based on dates set in RMD
-    filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
+    dplyr::filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
     {
       if(is.null(prov_guid)){.}else{
-        filter(., GUID %in% prov_guid)
+        dplyr::filter(., GUID %in% prov_guid)
       }
     } %>%
     {
       if(is.null(ctry_name)){.}else{
-        filter(., ADM0_NAME %in% ctry_name)
+        dplyr::filter(., ADM0_NAME %in% ctry_name)
       }
     } %>%
     {
       if(is.null(prov_name)){.}else{
-        filter(., ADM1_NAME %in% prov_name)
+        dplyr::filter(., ADM1_NAME %in% prov_name)
       }
     }
 
   if(data.only & is.null(type)){
-    out <- tibble(out)
+    out <- tibble::tibble(out)
 
     return(out)
   }
@@ -800,7 +879,8 @@ load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 #' Standard function to load Country data
 #'
 #' @description Pulls province shapefiles directly from the geodatabase
-#' @import stringr sf
+#' @import stringr AzureStor dplyr tibble lubridate
+#' @param azcontainer azure validated container object
 #' @param fp str: Location of geodatabase
 #' @param ctry_guid array/str: Array of all country GUIDS that you want to pull
 #' @param ctry_name array/str: Array of all country names that you want to pull
@@ -810,40 +890,36 @@ load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
 #' @returns tibble or sf dataframe
 #' @export
-load_clean_ctry_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
-                                              'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
-                                              'WHO_POLIO_GLOBAL_GEODATABASE.gdb'),
+load_clean_ctry_sp <- function(azcontainer = get_azure_storage_connection(),
+                               fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
                                ctry_guid = NULL,
                                ctry_name = NULL,
                                end.year = year(Sys.Date()),
                                st.year = 2000,
                                data.only = F,
                                type = NULL){
-  out <- fp %>%
-    st_read(
-      layer = "GLOBAL_ADM0",
-      quiet = T
-    ) %>%
-    mutate(
-      yr.st = year(STARTDATE),
-      yr.end = year(ENDDATE),
+  cli::cli_alert_info("Loading country spatial files")
+  out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
+    dplyr::mutate(
+      yr.st = lubridate::year(STARTDATE),
+      yr.end = lubridate::year(ENDDATE),
       ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
     ) %>%
     # this filters based on dates set in RMD
-    filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
+    dplyr::filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
     {
       if(is.null(ctry_guid)){.}else{
-        filter(., GUID %in% ctry_guid)
+        dplyr::filter(., GUID %in% ctry_guid)
       }
     } %>%
     {
       if(is.null(ctry_name)){.}else{
-        filter(., ADM0_NAME %in% ctry_name)
+        dplyr::filter(., ADM0_NAME %in% ctry_name)
       }
     }
 
   if(data.only & is.null(type)){
-    out <- as_tibble(out)
+    out <- tibble::as_tibble(out)
 
     return(out)
   }
@@ -857,7 +933,7 @@ load_clean_ctry_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
     for (i in st.year:end.year) {
       df.list <- c(df.list, list(i = f.yrs.01(out, i)))
     }
-    return(bind_rows(df.list))
+    return(dplyr::bind_rows(df.list))
   }
 
 }

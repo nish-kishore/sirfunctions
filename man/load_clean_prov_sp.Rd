@@ -5,8 +5,8 @@
 \title{Standard function to load Province data}
 \usage{
 load_clean_prov_sp(
-  fp = file.path("", "", "cdc.gov", "project", "CGH_GID_Active", "PEB", "SIR", "DATA",
-    "Core 2.0", "datafiles_01", "shapefiles_01", "WHO_POLIO_GLOBAL_GEODATABASE.gdb"),
+  azcontainer = get_azure_storage_connection(),
+  fp = "GID/PEB/SIR/Data/spatial/global.prov.rds",
   prov_guid = NULL,
   prov_name = NULL,
   ctry_name = NULL,
@@ -17,6 +17,8 @@ load_clean_prov_sp(
 )
 }
 \arguments{
+\item{azcontainer}{azure validated container object}
+
 \item{fp}{str: Location of geodatabase}
 
 \item{prov_guid}{array/str: Array of all province GUIDS that you want to pull}
