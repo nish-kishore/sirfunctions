@@ -30,8 +30,8 @@ get_azure_storage_connection <- function(){
 #' Helper function to read and write key data
 #'
 #' @description Helper function read and write key data to EDAV
-#' @import cli
-#' @param io str: "read", "write" or "list"
+#' @import cli AzureStor
+#' @param io str: "read", "write", "delete" or "list"
 #' @param file_loc str: location to "read", "write" or "list"
 #' @param obj default NULL object to be saved
 #' @param azcontainer azure container object
@@ -40,7 +40,7 @@ edav_io <- function(
     io,
     file_loc,
     obj = NULL,
-    azcontainer = get_azure_storage_connection()
+    azcontainer = suppressMessages(get_azure_storage_connection())
 ){
 
   opts <- c("read", "write", "delete", "list")
@@ -71,11 +71,15 @@ edav_io <- function(
     }
 
     if(grepl(".rds", file_loc)){
-      return(AzureStor::storage_load_rds(azcontainer, file_loc))
+      return(suppressWarnings(AzureStor::storage_load_rds(azcontainer, file_loc)))
     }
 
     if(grepl(".csv", file_loc)){
-      return(AzureStor::storage_read_csv(azcontainer, file_loc))
+      return(suppressWarnings(AzureStor::storage_read_csv(azcontainer, file_loc)))
+    }
+
+    if(grepl(".rda", file_loc)){
+      return(suppressWarnings(AzureStor::storage_load_rdata(azcontainer, file_loc)))
     }
 
   }
@@ -104,18 +108,18 @@ edav_io <- function(
 
 }
 
-#' Test network connection to the S drive
+#' Test network connection to the EDAV
 #'
-#' @description Tests upload and download from S drive
+#' @description Tests upload and download from EDAV
 #' @param azcontainer azure storage container
-#' @param folder str: Location of download folder in S drive
+#' @param folder str: Location of download folder in EDAV
 #' @param test_size int: byte size of a theoretical folder
 #' @param return_list boolean: return a list of download time estimates, default F
 #' @import dplyr readr prettyunits tibble cli
 #' @returns System message with download and update time, potentially list output
 #' @export
 test_EDAV_connection <- function(
-    azcontainer = get_azure_storage_connection(),
+    azcontainer = suppressMessages(get_azure_storage_connection()),
     folder = "GID/PEB/SIR/Data",
     return_list = F,
     test_size = 10000000
@@ -185,93 +189,47 @@ test_EDAV_connection <- function(
 #' @description Download all Polio data from CDC pre-processed endpoint
 #' @import dplyr cli sf tibble
 #' @param folder str: location of the CDC pre-processed endpoint
+#' @param afp.trunc boolean: default T, if T returns the afp linelist since 2019
 #' @returns named list containing polio data that is relevant to CDC
 #' @export
 get_all_polio_data <- function(
-    folder = "GID/PEB/SIR/Data/"
+    folder = "GID/PEB/SIR/Data/",
+    afp.trunc = T
 ){
 
   cli::cli_h1("Testing download times")
 
+  if(!afp.trunc){
+    x <- readline("'afp.trunc' is FALSE, downloading this may take a while. Do you want to download the smaller one instead? [Y/N]: ")
+
+    if(tolower(x) == "y"){
+      message("Changing to truncated version")
+      afp.trunc <- T
+    }
+    }
 
   download_metrics <- test_EDAV_connection(return_list = T)
 
-  dplyr::bind_rows(
+  dl_table <- dplyr::bind_rows(
     edav_io(io = "list", file_loc = file.path(folder, "polis")),
-    edav_io(io = "list", file_loc = file.path(folder, "spatial"))
+    edav_io(io = "list", file_loc = file.path(folder, "spatial")),
+    edav_io(io = "list", file_loc = file.path(folder, "coverage")),
+    edav_io(io = "list", file_loc = file.path(folder, "pop"))
   ) |>
-    filter(!is.na(size))
+    dplyr::filter(!is.na(size)) |>
+    dplyr::select("file" = "name", "size") |>
+    dplyr::mutate(
+      "dl_time_sec" = size / download_metrics$size*download_metrics$d
+    ) |>
+    dplyr::filter(!grepl("other_surv", file))
 
-  dl_table <- c(
-    file.path(
-      folder,
-      "spatial",
-      "global.ctry.rds"
-    ),
-    file.path(
-      folder,
-      "spatial",
-      "global.prov.rds"
-    ),
-    file.path(
-      folder,
-      "spatial",
-      "global.dist.rds"
-    ),
-    list.files(
-      path = file.path(
-        folder,
-        "all_year_all_var_files_20220909"
-      ),
-      pattern = "^.*(afp).*(linelist).*(.rds)$",
-      full.names = TRUE
-    ),
-    file.path(
-      folder,
-      "ctry.pop.2000_2023.rds"
-    ),
-    file.path(
-      folder,
-      "prov.pop.long2010_2023.rds"
-    ),
-    file.path(
-      folder,
-      "dist.pop.long2010_2023.rds"
-    ),
-    file.path(
-      folder,
-      "coverage",
-      "dpt_district_summaries.rda"
-    ),
-    file.path(
-      folder,
-      "coverage",
-      "mcv1_district_summaries.rda"
-    ),
-    file.path(
-      folder,
-      "all_year_all_var_files_20220909"
-    ) |>
-      list.files(pattern = "^(es).*(.rds)$", full.names = TRUE),
-    file.path(
-      folder,
-      "all_year_all_var_files_20220909"
-    ) |>
-      list.files(pattern = "^.*(sia).*(.rds)$", full.names = TRUE),
-    file.path(
-      folder,
-      "all_year_all_var_files_20220909"
-    ) |>
-      list.files(pattern = "^(positives).*(.rds)$", full.names = TRUE)
-  ) |>
-    lapply(function(x){
-      tibble::tibble(
-        "file" = strsplit(x, "/")[[1]] %>% {.[length(.)]},
-        "size" = file.size(x),
-        "dl_time_sec" = file.size(x)/download_metrics$size*download_metrics$d/16
-      )
-    }) |>
-    bind_rows()
+  if(afp.trunc){
+    dl_table <- dl_table |>
+      filter(!grepl("afp_linelist_2001", file))
+  }else{
+    dl_table <- dl_table |>
+      filter(!grepl("afp_linelist_2019", file))
+  }
 
   file_size <- dl_table$size |> sum()
   download_time <- dl_table$dl_time_sec |> sum()
@@ -281,7 +239,7 @@ get_all_polio_data <- function(
     "{prettyunits::pretty_sec(download_time)}"
   ))
 
-  x <- readline("Do you want to start download? [Y/N]: ")
+  x <- readline("Downloading the full AFP linelist can take a while so it's best to do other work while you run this in the background. Do you want to start download?  [Y/N]: ")
 
   if(grepl("y", tolower(x), fixed = T)){
 
@@ -289,54 +247,24 @@ get_all_polio_data <- function(
 
     raw.data <- list()
 
-    cli::cli_process_start("1) Loading country shape files from S Drive")
-
-    #loading spatial data
-    raw.data$global.ctry <-
-      file.path(
-        folder,
-        "shapefiles_01",
-        "global.ctry.rds"
-      ) |>
-      readr::read_rds()
-
-
+    cli::cli_process_start("1) Loading country shape files from EDAV")
+    raw.data$global.ctry <- load_clean_ctry_sp()
     cli::cli_process_done()
 
 
-
-    cli::cli_process_start("2) Loading province shape files from S Drive")
-    raw.data$global.prov <-
-      file.path(
-        folder,
-        "shapefiles_01",
-        "global.prov.rds"
-      ) |>
-      readr::read_rds()
+    cli::cli_process_start("2) Loading province shape files from EDAV")
+    raw.data$global.prov <- load_clean_prov_sp()
     cli::cli_process_done()
 
-    cli::cli_process_start("3) Loading district shape files from S Drive")
-    raw.data$global.dist <-
-      file.path(
-        folder,
-        "shapefiles_01",
-        "global.dist.rds"
-      ) |>
-      read_rds()
+    cli::cli_process_start("3) Loading district shape files from EDAV")
+    raw.data$global.dist <- load_clean_dist_sp()
     cli::cli_process_done()
 
-    cli::cli_process_start("4) Loading AFP line list data from S Drive")
+    cli::cli_process_start("4) Loading AFP line list data from EDAV (This file is almost 3GB and can take a while)")
     raw.data$afp <-
-      list.files(
-        path = file.path(
-          folder,
-          "all_year_all_var_files_20220909"
-        ),
-        pattern = "^.*(afp).*(linelist).*(.rds)$",
-        full.names = TRUE
-      ) |>
-      lapply(readr::read_rds) |>
-      dplyr::bind_rows() |>
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("afp", file)) |>
+                dplyr::pull(file)) |>
       dplyr::filter(surveillancetypename == "AFP") |>
       dplyr::filter(yronset >= 2016) |>
       dplyr::mutate(
@@ -408,52 +336,35 @@ get_all_polio_data <- function(
     cli::cli_process_done()
 
 
-    cli::cli_process_start("5) Loading population data from S Drive")
+    cli::cli_process_start("5) Loading population data from EDAV")
     raw.data$dist.pop <-
-      file.path(
-        folder,
-        "dist.pop.long2010_2023.rds"
-      ) |>
-      readr::read_rds() |>
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
+                dplyr::pull(file)) |>
       dplyr::ungroup() |>
       dplyr::filter(year >= 2016)
 
     raw.data$prov.pop <-
-      file.path(
-        folder,
-        "prov.pop.long2010_2023.rds"
-      ) |>
-      readr::read_rds() |>
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
+                dplyr::pull(file)) |>
       dplyr::ungroup() |>
       dplyr::filter(year >= 2016)
 
     raw.data$ctry.pop <-
-      file.path(
-        folder,
-        "ctry.pop.2000_2023.rds"
-      ) |>
-      readr::read_rds() |>
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
+                dplyr::pull(file)) |>
       dplyr::ungroup() |>
       dplyr::filter(year >= 2016)
 
     cli::cli_process_done()
 
-    cli::cli_process_start("6) Loading coverage data from S Drive")
-    file.path(
-      folder,
-      "coverage",
-      "dpt_district_summaries.rda"
-    ) |>
-      load()
-
-    file.path(
-      folder,
-      "coverage",
-      "mcv1_district_summaries.rda"
-    ) |>
-      load()
-
-    raw.data$coverage <- dpt |>
+    cli::cli_process_start("6) Loading coverage data from EDAV")
+    raw.data$coverage <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
+                dplyr::pull(file)) |>
       select(ctry = adm0_name,
              prov = adm1_name,
              dist = adm2_name,
@@ -461,7 +372,9 @@ get_all_polio_data <- function(
              dpt1,
              dpt3) |>
       left_join(
-        mcv1 |>
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("mcv1", file)) |>
+                  dplyr::pull(file)) |>
           select(
             ctry = adm0_name,
             prov = adm1_name,
@@ -473,49 +386,39 @@ get_all_polio_data <- function(
         by = c("ctry", "prov", "dist", "year")
       )
 
-    rm(dpt)
-    rm(mcv1)
     cli::cli_process_done()
 
-    cli::cli_process_start("7) Loading ES data from S drive")
+    cli::cli_process_start("7) Loading ES data from EDAV")
     raw.data$es <-
-      file.path(
-        folder,
-        "all_year_all_var_files_20220909"
-      ) |>
-      list.files(pattern = "^(es).*(.rds)$", full.names = TRUE) |>
-      lapply(readr::read_rds) |>
-      dplyr::bind_rows()
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("/es_2001", file)) |>
+                dplyr::pull(file)) |>
     cli::cli_process_done()
 
-    cli::cli_process_start("8) Loading SIA data from S drive")
+    cli::cli_process_start("8) Loading SIA data from EDAV")
     raw.data$sia <-
-      file.path(
-        folder,
-        "all_year_all_var_files_20220909"
-      ) |>
-      list.files(pattern = "^.*(sia).*(.rds)$", full.names = TRUE) |>
-      lapply(readr::read_rds) |>
-      dplyr::bind_rows()
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
+                dplyr::pull(file)) |>
     cli::cli_process_done()
 
-    cli::cli_process_start("9) Loading all positives from S drive")
+    cli::cli_process_start("9) Loading all positives from EDAV")
     raw.data$pos <-
-      file.path(
-        folder,
-        "all_year_all_var_files_20220909"
-      ) |>
-      list.files(pattern = "^(positives).*(.rds)$", full.names = TRUE) |>
-      lapply(readr::read_rds) |>
-      dplyr::bind_rows()
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
+                dplyr::pull(file)) |>
     cli::cli_process_done()
 
     cli::cli_process_start("10) Loading road network data")
-    raw.data$roads <- sf::read_sf("//cdc.gov/project/CGH_GID_Active/PEB/SIR/DATA/Core 2.0/datafiles_01/shapefiles_01/ne_10m_roads")
+    raw.data$roads <- edav_io(io = "read",
+                              file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
+                                dplyr::pull(file))
     cli::cli_process_done()
 
     cli::cli_process_start("11) Loading city spatial data")
-    raw.data$cities <- sf::read_sf("//cdc.gov/project/CGH_GID_Active/PEB/SIR/DATA/Core 2.0/datafiles_01/shapefiles_01/World_Cities")
+    raw.data$cities <- edav_io(io = "read",
+                               file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
+                                 dplyr::pull(file))
     cli::cli_process_done()
 
     cli::cli_process_start("12) Clearing out unused memory")
@@ -744,7 +647,7 @@ extract_country_data <- function(
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
 #' @returns tibble or sf dataframe
 #' @export
-load_clean_dist_sp <- function(azcontainer = get_azure_storage_connection(),
+load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
                                fp = "GID/PEB/SIR/Data/spatial/global.dist.rds",
                                dist_guid = NULL,
                                ctry_name = NULL,
@@ -752,7 +655,7 @@ load_clean_dist_sp <- function(azcontainer = get_azure_storage_connection(),
                                st.year = 2000,
                                data.only = F,
                                type = NULL){
-  cli::cli_alert_info("Loading country spatial files")
+  cli::cli_alert_info("Loading district spatial files")
   out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
 
@@ -827,7 +730,7 @@ load_clean_dist_sp <- function(azcontainer = get_azure_storage_connection(),
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
 #' @returns tibble or sf dataframe
 #' @export
-load_clean_prov_sp <- function(azcontainer = get_azure_storage_connection(),
+load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
                                fp = "GID/PEB/SIR/Data/spatial/global.prov.rds",
                                prov_guid = NULL,
                                prov_name = NULL,
@@ -895,7 +798,7 @@ load_clean_prov_sp <- function(azcontainer = get_azure_storage_connection(),
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
 #' @returns tibble or sf dataframe
 #' @export
-load_clean_ctry_sp <- function(azcontainer = get_azure_storage_connection(),
+load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
                                fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
                                ctry_guid = NULL,
                                ctry_name = NULL,
