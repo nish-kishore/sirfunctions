@@ -194,7 +194,7 @@ test_EDAV_connection <- function(
 #' @export
 get_all_polio_data <- function(
     folder = "GID/PEB/SIR/Data/",
-    afp.trunc = T
+    afp.trunc = F
 ){
 
   cli::cli_h1("Testing download times")
@@ -208,222 +208,245 @@ get_all_polio_data <- function(
     }
     }
 
+  prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic")) |>
+    dplyr::filter(grepl("raw.data.rds", name) & lastModified == max(lastModified)) |>
+    dplyr::select("file" = "name", "size", "ctime" = "lastModified")
+
+  fresh.cache <- difftime(Sys.time(), prev_table$ctime, units = "days") <= 7
+
   download_metrics <- test_EDAV_connection(return_list = T)
 
-  dl_table <- dplyr::bind_rows(
-    edav_io(io = "list", file_loc = file.path(folder, "polis")),
-    edav_io(io = "list", file_loc = file.path(folder, "spatial")),
-    edav_io(io = "list", file_loc = file.path(folder, "coverage")),
-    edav_io(io = "list", file_loc = file.path(folder, "pop"))
-  ) |>
-    dplyr::filter(!is.na(size)) |>
-    dplyr::select("file" = "name", "size") |>
-    dplyr::mutate(
-      "dl_time_sec" = size / download_metrics$size*download_metrics$d
-    ) |>
-    dplyr::filter(!grepl("other_surv", file))
-
-  if(afp.trunc){
-    dl_table <- dl_table |>
-      filter(!grepl("afp_linelist_2001", file))
+  if(fresh.cache){
+    cli::cli_process_start("Previous cache identified, loading")
+    raw.data <- edav_io(io = "read", file_loc = prev_table$file)
+    cli::cli_process_done()
   }else{
-    dl_table <- dl_table |>
-      filter(!grepl("afp_linelist_2019", file))
+
+    dl_table <- dplyr::bind_rows(
+      edav_io(io = "list", file_loc = file.path(folder, "polis")),
+      edav_io(io = "list", file_loc = file.path(folder, "spatial")),
+      edav_io(io = "list", file_loc = file.path(folder, "coverage")),
+      edav_io(io = "list", file_loc = file.path(folder, "pop"))
+    ) |>
+      dplyr::filter(!is.na(size)) |>
+      dplyr::select("file" = "name", "size") |>
+      dplyr::mutate(
+        "dl_time_sec" = size / download_metrics$size*download_metrics$d
+      ) |>
+      dplyr::filter(!grepl("other_surv", file))
+
+    if(afp.trunc){
+      dl_table <- dl_table |>
+        filter(!grepl("afp_linelist_2001", file))
+    }else{
+      dl_table <- dl_table |>
+        filter(!grepl("afp_linelist_2019", file))
+    }
+
+    file_size <- dl_table$size |> sum()
+    download_time <- dl_table$dl_time_sec |> sum()
+
+    cli::cli_alert_info(c(
+      "Estimated MAX download time for {prettyunits::pretty_bytes(file_size)} is ",
+      "{prettyunits::pretty_sec(download_time)}"
+    ))
+
+    x <- readline("Downloading the full AFP linelist can take a while so it's best to do other work while you run this in the background. Do you want to start download?  [Y/N]: ")
+
+    if(grepl("y", tolower(x), fixed = T)){
+
+      cli::cli_h1("Downloading POLIS Data")
+
+      raw.data <- list()
+
+      cli::cli_process_start("1) Loading country shape files from EDAV")
+      raw.data$global.ctry <- load_clean_ctry_sp()
+      cli::cli_process_done()
+
+
+      cli::cli_process_start("2) Loading province shape files from EDAV")
+      raw.data$global.prov <- load_clean_prov_sp()
+      cli::cli_process_done()
+
+      cli::cli_process_start("3) Loading district shape files from EDAV")
+      raw.data$global.dist <- load_clean_dist_sp()
+      cli::cli_process_done()
+
+      cli::cli_process_start("4) Loading AFP line list data from EDAV (This file is almost 3GB and can take a while)")
+      raw.data$afp <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("afp", file)) |>
+                  dplyr::pull(file)) |>
+        dplyr::filter(surveillancetypename == "AFP") |>
+        dplyr::filter(yronset >= 2016) |>
+        dplyr::mutate(
+          cdc.classification.all2 = ifelse(
+            final.cell.culture.result == "Not received in lab" &
+              cdc.classification.all == "PENDING",
+            "LAB PENDING",
+            cdc.classification.all
+          ),
+          hot.case = ifelse(
+            paralysis.asymmetric == "Yes" &
+              paralysis.onset.fever == "Yes" &
+              paralysis.rapid.progress == "Yes",
+            1,
+            0
+          ),
+          hot.case = ifelse(is.na(hot.case), 99, hot.case)
+        )
+      cli::cli_process_done()
+
+      cli::cli_process_start("Processing AFP data for analysis")
+
+      raw.data$afp.epi <- raw.data$afp |>
+        dplyr::filter(yronset >= 2016) |>
+        dplyr::mutate(epi.week = epiweek(dateonset)) |>
+        dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
+        dplyr::summarise(afp.cases = n()) |>
+        dplyr::mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
+        #manual fix of epi week
+        dplyr::mutate(epi.week = ifelse(epi.week == 52 &
+                                          yronset == 2022, 1, epi.week)) |>
+        ungroup()
+
+      #factoring cdc classification to have an order we like in stacked bar chart
+      raw.data$afp.epi$cdc.classification.all2 <-
+        factor(
+          raw.data$afp.epi$cdc.classification.all2,
+          levels = c(
+            "WILD 1",
+            "cVDPV 2",
+            "VDPV 2",
+            "cVDPV 1",
+            "VDPV 1",
+            "COMPATIBLE",
+            "PENDING",
+            "LAB PENDING",
+            "NPAFP",
+            "NOT-AFP"
+          ),
+          labels = c(
+            "WILD 1",
+            "cVDPV 2",
+            "VDPV 2",
+            "cVDPV 1",
+            "VDPV 1",
+            "COMPATIBLE",
+            "PENDING",
+            "LAB PENDING",
+            "NPAFP",
+            "NOT-AFP"
+          )
+        )
+
+      raw.data$para.case <- raw.data$afp |>
+        dplyr::filter(
+          cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
+        ) |>
+        dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
+      cli::cli_process_done()
+
+
+      cli::cli_process_start("5) Loading population data from EDAV")
+      raw.data$dist.pop <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
+                  dplyr::pull(file)) |>
+        dplyr::ungroup() |>
+        dplyr::filter(year >= 2016)
+
+      raw.data$prov.pop <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
+                  dplyr::pull(file)) |>
+        dplyr::ungroup() |>
+        dplyr::filter(year >= 2016)
+
+      raw.data$ctry.pop <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
+                  dplyr::pull(file)) |>
+        dplyr::ungroup() |>
+        dplyr::filter(year >= 2016)
+
+      cli::cli_process_done()
+
+      cli::cli_process_start("6) Loading coverage data from EDAV")
+      raw.data$coverage <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
+                  dplyr::pull(file)) |>
+        select(ctry = adm0_name,
+               prov = adm1_name,
+               dist = adm2_name,
+               year,
+               dpt1,
+               dpt3) |>
+        left_join(
+          edav_io(io = "read",
+                  file_loc = dplyr::filter(dl_table, grepl("mcv1", file)) |>
+                    dplyr::pull(file)) |>
+            select(
+              ctry = adm0_name,
+              prov = adm1_name,
+              dist = adm2_name,
+              year,
+              mcv1,
+              under5_pop
+            ),
+          by = c("ctry", "prov", "dist", "year")
+        )
+
+      cli::cli_process_done()
+
+      cli::cli_process_start("7) Loading ES data from EDAV")
+
+      raw.data$es <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("/es_2001", file)) |>
+                  dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("8) Loading SIA data from EDAV")
+      raw.data$sia <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
+                  dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("9) Loading all positives from EDAV")
+      raw.data$pos <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
+                  dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("10) Loading road network data")
+      raw.data$roads <- edav_io(io = "read",
+                                file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
+                                  dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("11) Loading city spatial data")
+      raw.data$cities <- edav_io(io = "read",
+                                 file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
+                                   dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("12) Clearing out unused memory")
+      gc()
+      cli::cli_process_done
+
   }
 
-  file_size <- dl_table$size |> sum()
-  download_time <- dl_table$dl_time_sec |> sum()
 
-  cli::cli_alert_info(c(
-    "Estimated MAX download time for {prettyunits::pretty_bytes(file_size)} is ",
-    "{prettyunits::pretty_sec(download_time)}"
-  ))
+    if(!fresh.cache){
+      cli::cli_process_start("13) Caching processed data")
+      edav_io(io = "write", file_loc = file.path(folder, "/analytic/raw.data.rds"), obj = raw.data)
+      cli::cli_process_done()
+    }
 
-  x <- readline("Downloading the full AFP linelist can take a while so it's best to do other work while you run this in the background. Do you want to start download?  [Y/N]: ")
-
-  if(grepl("y", tolower(x), fixed = T)){
-
-    cli::cli_h1("Downloading POLIS Data")
-
-    raw.data <- list()
-
-    cli::cli_process_start("1) Loading country shape files from EDAV")
-    raw.data$global.ctry <- load_clean_ctry_sp()
-    cli::cli_process_done()
-
-
-    cli::cli_process_start("2) Loading province shape files from EDAV")
-    raw.data$global.prov <- load_clean_prov_sp()
-    cli::cli_process_done()
-
-    cli::cli_process_start("3) Loading district shape files from EDAV")
-    raw.data$global.dist <- load_clean_dist_sp()
-    cli::cli_process_done()
-
-    cli::cli_process_start("4) Loading AFP line list data from EDAV (This file is almost 3GB and can take a while)")
-    raw.data$afp <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("afp", file)) |>
-                dplyr::pull(file)) |>
-      dplyr::filter(surveillancetypename == "AFP") |>
-      dplyr::filter(yronset >= 2016) |>
-      dplyr::mutate(
-        cdc.classification.all2 = ifelse(
-          final.cell.culture.result == "Not received in lab" &
-            cdc.classification.all == "PENDING",
-          "LAB PENDING",
-          cdc.classification.all
-        ),
-        hot.case = ifelse(
-          paralysis.asymmetric == "Yes" &
-            paralysis.onset.fever == "Yes" &
-            paralysis.rapid.progress == "Yes",
-          1,
-          0
-        ),
-        hot.case = ifelse(is.na(hot.case), 99, hot.case)
-      )
-    cli::cli_process_done()
-
-    cli::cli_process_start("Processing AFP data for analysis")
-
-    raw.data$afp.epi <- raw.data$afp |>
-      dplyr::filter(yronset >= 2016) |>
-      dplyr::mutate(epi.week = epiweek(dateonset)) |>
-      dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
-      dplyr::summarise(afp.cases = n()) |>
-      dplyr::mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
-      #manual fix of epi week
-      dplyr::mutate(epi.week = ifelse(epi.week == 52 &
-                                 yronset == 2022, 1, epi.week)) |>
-      ungroup()
-
-    #factoring cdc classification to have an order we like in stacked bar chart
-    raw.data$afp.epi$cdc.classification.all2 <-
-      factor(
-        raw.data$afp.epi$cdc.classification.all2,
-        levels = c(
-          "WILD 1",
-          "cVDPV 2",
-          "VDPV 2",
-          "cVDPV 1",
-          "VDPV 1",
-          "COMPATIBLE",
-          "PENDING",
-          "LAB PENDING",
-          "NPAFP",
-          "NOT-AFP"
-        ),
-        labels = c(
-          "WILD 1",
-          "cVDPV 2",
-          "VDPV 2",
-          "cVDPV 1",
-          "VDPV 1",
-          "COMPATIBLE",
-          "PENDING",
-          "LAB PENDING",
-          "NPAFP",
-          "NOT-AFP"
-        )
-      )
-
-    raw.data$para.case <- raw.data$afp |>
-      dplyr::filter(
-        cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
-      ) |>
-      dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
-    cli::cli_process_done()
-
-
-    cli::cli_process_start("5) Loading population data from EDAV")
-    raw.data$dist.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
-                dplyr::pull(file)) |>
-      dplyr::ungroup() |>
-      dplyr::filter(year >= 2016)
-
-    raw.data$prov.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
-                dplyr::pull(file)) |>
-      dplyr::ungroup() |>
-      dplyr::filter(year >= 2016)
-
-    raw.data$ctry.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
-                dplyr::pull(file)) |>
-      dplyr::ungroup() |>
-      dplyr::filter(year >= 2016)
-
-    cli::cli_process_done()
-
-    cli::cli_process_start("6) Loading coverage data from EDAV")
-    raw.data$coverage <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
-                dplyr::pull(file)) |>
-      select(ctry = adm0_name,
-             prov = adm1_name,
-             dist = adm2_name,
-             year,
-             dpt1,
-             dpt3) |>
-      left_join(
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("mcv1", file)) |>
-                  dplyr::pull(file)) |>
-          select(
-            ctry = adm0_name,
-            prov = adm1_name,
-            dist = adm2_name,
-            year,
-            mcv1,
-            under5_pop
-          ),
-        by = c("ctry", "prov", "dist", "year")
-      )
-
-    cli::cli_process_done()
-
-    cli::cli_process_start("7) Loading ES data from EDAV")
-    raw.data$es <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("/es_2001", file)) |>
-                dplyr::pull(file)) |>
-    cli::cli_process_done()
-
-    cli::cli_process_start("8) Loading SIA data from EDAV")
-    raw.data$sia <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
-                dplyr::pull(file)) |>
-    cli::cli_process_done()
-
-    cli::cli_process_start("9) Loading all positives from EDAV")
-    raw.data$pos <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
-                dplyr::pull(file)) |>
-    cli::cli_process_done()
-
-    cli::cli_process_start("10) Loading road network data")
-    raw.data$roads <- edav_io(io = "read",
-                              file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
-                                dplyr::pull(file))
-    cli::cli_process_done()
-
-    cli::cli_process_start("11) Loading city spatial data")
-    raw.data$cities <- edav_io(io = "read",
-                               file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
-                                 dplyr::pull(file))
-    cli::cli_process_done()
-
-    cli::cli_process_start("12) Clearing out unused memory")
-    gc()
-    cli::cli_process_done()
 
     return(raw.data)
 
