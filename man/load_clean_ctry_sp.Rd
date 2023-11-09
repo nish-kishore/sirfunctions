@@ -5,8 +5,8 @@
 \title{Standard function to load Country data}
 \usage{
 load_clean_ctry_sp(
-  fp = file.path("", "", "cdc.gov", "project", "CGH_GID_Active", "PEB", "SIR", "DATA",
-    "Core 2.0", "datafiles_01", "shapefiles_01", "WHO_POLIO_GLOBAL_GEODATABASE.gdb"),
+  azcontainer = get_azure_storage_connection(),
+  fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
   ctry_guid = NULL,
   ctry_name = NULL,
   end.year = year(Sys.Date()),
@@ -16,6 +16,8 @@ load_clean_ctry_sp(
 )
 }
 \arguments{
+\item{azcontainer}{azure validated container object}
+
 \item{fp}{str: Location of geodatabase}
 
 \item{ctry_guid}{array/str: Array of all country GUIDS that you want to pull}

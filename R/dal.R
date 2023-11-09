@@ -2,28 +2,125 @@
 
 #### 1) Utility functions ####
 
-#' Test network connection to the S drive
+#' Validate connection to EDAV
 #'
-#' @description Tests upload and download from S drive
-#' @param folder str: Location of download folder in S drive
+#' @description Validate connection to CDC EDAV
+#' @import AzureStor AzureAuth
+#' @returns azure container verification
+get_azure_storage_connection <- function(){
+  mytoken <- AzureAuth::get_azure_token(
+    resource = "https://storage.azure.com/",
+    tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
+    app = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+    auth_type = "authorization_code"
+  )
+
+  token_hash <- AzureAuth::list_azure_tokens() |> names()
+  token_hash <- token_hash[1]
+  mytoken <- AzureAuth::load_azure_token(token_hash)
+
+
+  endptoken <- AzureStor::storage_endpoint(endpoint = "https://davsynapseanalyticsdev.dfs.core.windows.net", token = mytoken)
+
+  azcontainer <- AzureStor::storage_container(endptoken, "ddphsis-cgh")
+
+  return(azcontainer)
+}
+
+#' Helper function to read and write key data
+#'
+#' @description Helper function read and write key data to EDAV
+#' @import cli AzureStor
+#' @param io str: "read", "write", "delete" or "list"
+#' @param file_loc str: location to "read", "write" or "list"
+#' @param obj default NULL object to be saved
+#' @param azcontainer azure container object
+#' @returns tibble
+edav_io <- function(
+    io,
+    file_loc,
+    obj = NULL,
+    azcontainer = suppressMessages(get_azure_storage_connection())
+){
+
+  opts <- c("read", "write", "delete", "list")
+
+  if(!io %in% opts){
+    stop("io: must be 'read', 'write', 'delete' or 'list'")
+  }
+
+  if(io == "write" & is.null(obj)){
+    stop("Need to supply an object to be written")
+  }
+
+  if(io == "list"){
+
+    if(!AzureStor::storage_dir_exists(azcontainer, file_loc)){
+      stop("Directory does not exist")
+    }
+
+    return(AzureStor::list_storage_files(azcontainer, file_loc) |>
+      tibble::as_tibble())
+
+  }
+
+  if(io == "read"){
+
+    if(!AzureStor::storage_file_exists(azcontainer, file_loc)){
+      stop("File does not exist")
+    }
+
+    if(grepl(".rds", file_loc)){
+      return(suppressWarnings(AzureStor::storage_load_rds(azcontainer, file_loc)))
+    }
+
+    if(grepl(".csv", file_loc)){
+      return(suppressWarnings(AzureStor::storage_read_csv(azcontainer, file_loc)))
+    }
+
+    if(grepl(".rda", file_loc)){
+      return(suppressWarnings(AzureStor::storage_load_rdata(azcontainer, file_loc)))
+    }
+
+  }
+
+  if(io == "write"){
+
+    if(grepl(".rds", file_loc)){
+      AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
+    }
+
+    if(grepl(".csv", file_loc)){
+      AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
+    }
+
+  }
+
+  if(io == "delete"){
+
+    if(!AzureStor::storage_file_exists(azcontainer, file_loc)){
+      stop("File does not exist")
+    }
+
+    AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
+
+  }
+
+}
+
+#' Test network connection to the EDAV
+#'
+#' @description Tests upload and download from EDAV
+#' @param azcontainer azure storage container
+#' @param folder str: Location of download folder in EDAV
 #' @param test_size int: byte size of a theoretical folder
 #' @param return_list boolean: return a list of download time estimates, default F
 #' @import dplyr readr prettyunits tibble cli
 #' @returns System message with download and update time, potentially list output
 #' @export
-test_S_drive_connection <- function(
-    folder = file.path(
-      "",
-      "",
-      "cdc.gov",
-      "project",
-      "CGH_GID_Active",
-      "PEB",
-      "SIR",
-      "DATA",
-      "Core 2.0",
-      "datafiles_01"
-    ),
+test_EDAV_connection <- function(
+    azcontainer = suppressMessages(get_azure_storage_connection()),
+    folder = "GID/PEB/SIR/Data",
     return_list = F,
     test_size = 10000000
 ){
@@ -40,7 +137,8 @@ test_S_drive_connection <- function(
 
   tick <- Sys.time()
 
-  readr::write_rds(tmp_data, paste0(folder, "/tmp.rds"))
+  edav_io(io = "write", file_loc = paste0(folder, "/tmp.rds"), obj = tmp_data)
+  #readr::write_rds(tmp_data, paste0(folder, "/tmp.rds"))
 
   tock <- Sys.time()
 
@@ -48,7 +146,8 @@ test_S_drive_connection <- function(
 
   tick <- Sys.time()
 
-  x <- readr::read_rds(paste0(folder, "/tmp.rds"))
+  x <- edav_io(io = "read", file_loc = paste0(folder, "/tmp.rds"))
+  #x <- readr::read_rds(paste0(folder, "/tmp.rds"))
 
   tock <- Sys.time()
 
@@ -63,7 +162,8 @@ test_S_drive_connection <- function(
     "{prettyunits::pretty_sec(dt2)}"
   ))
 
-  x <- file.remove(paste0(folder, "/tmp.rds"))
+  suppressMessages(edav_io(io = "delete", file_loc = paste0(folder, "/tmp.rds")), classes = c("message", "warning"))
+  #x <- file.remove(paste0(folder, "/tmp.rds"))
 
   dt3 <- test_size/file_size*dt1
   dt4 <- test_size/file_size*dt2
@@ -89,354 +189,287 @@ test_S_drive_connection <- function(
 #' @description Download all Polio data from CDC pre-processed endpoint
 #' @import dplyr cli sf tibble
 #' @param folder str: location of the CDC pre-processed endpoint
+#' @param afp.trunc boolean: default F, if T returns the afp linelist since 2019
+#' @param force.new.run boolean: default F, if T will always run fully and cache
 #' @returns named list containing polio data that is relevant to CDC
 #' @export
 get_all_polio_data <- function(
-    folder = file.path(
-      "",
-      "",
-      "cdc.gov",
-      "project",
-      "CGH_GID_Active",
-      "PEB",
-      "SIR",
-      "DATA",
-      "Core 2.0",
-      "datafiles_01"
-    )
+    folder = "GID/PEB/SIR/Data/",
+    afp.trunc = F,
+    force.new.run = F
 ){
 
-  cli::cli_h1("Testing download times")
+  prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic")) |>
+    dplyr::filter(grepl("raw.data.rds", name) & lastModified == max(lastModified)) |>
+    dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
-
-  download_metrics <- test_S_drive_connection(return_list = T)
-
-
-  dl_table <- c(
-    file.path(
-      folder,
-      "shapefiles_01",
-      "global.ctry.rds"
-    ),
-    file.path(
-      folder,
-      "shapefiles_01",
-      "global.prov.rds"
-    ),
-    file.path(
-      folder,
-      "shapefiles_01",
-      "global.dist.rds"
-    ),
-    list.files(
-      path = file.path(
-        folder,
-        "all_year_all_var_files_20220909"
-      ),
-      pattern = "^.*(afp).*(linelist).*(.rds)$",
-      full.names = TRUE
-    ),
-    file.path(
-      folder,
-      "ctry.pop.2000_2023.rds"
-    ),
-    file.path(
-      folder,
-      "prov.pop.long2010_2023.rds"
-    ),
-    file.path(
-      folder,
-      "dist.pop.long2010_2023.rds"
-    ),
-    file.path(
-      folder,
-      "coverage",
-      "dpt_district_summaries.rda"
-    ),
-    file.path(
-      folder,
-      "coverage",
-      "mcv1_district_summaries.rda"
-    ),
-    file.path(
-      folder,
-      "all_year_all_var_files_20220909"
-    ) |>
-      list.files(pattern = "^(es).*(.rds)$", full.names = TRUE),
-    file.path(
-      folder,
-      "all_year_all_var_files_20220909"
-    ) |>
-      list.files(pattern = "^.*(sia).*(.rds)$", full.names = TRUE),
-    file.path(
-      folder,
-      "all_year_all_var_files_20220909"
-    ) |>
-      list.files(pattern = "^(positives).*(.rds)$", full.names = TRUE)
-  ) |>
-    lapply(function(x){
-      tibble::tibble(
-        "file" = strsplit(x, "/")[[1]] %>% {.[length(.)]},
-        "size" = file.size(x),
-        "dl_time_sec" = file.size(x)/download_metrics$size*download_metrics$d/16
-      )
-    }) |>
-    bind_rows()
-
-  file_size <- dl_table$size |> sum()
-  download_time <- dl_table$dl_time_sec |> sum()
-
-  cli::cli_alert_info(c(
-    "Estimated MAX download time for {prettyunits::pretty_bytes(file_size)} is ",
-    "{prettyunits::pretty_sec(download_time)}"
-  ))
-
-  x <- readline("Do you want to start download? [Y/N]: ")
-
-  if(grepl("y", tolower(x), fixed = T)){
-
-    cli::cli_h1("Downloading POLIS Data")
-
-    raw.data <- list()
-
-    cli::cli_process_start("1) Loading country shape files from S Drive")
-
-    #loading spatial data
-    raw.data$global.ctry <-
-      file.path(
-        folder,
-        "shapefiles_01",
-        "global.ctry.rds"
-      ) |>
-      readr::read_rds()
-
-
-    cli::cli_process_done()
-
-
-
-    cli::cli_process_start("2) Loading province shape files from S Drive")
-    raw.data$global.prov <-
-      file.path(
-        folder,
-        "shapefiles_01",
-        "global.prov.rds"
-      ) |>
-      readr::read_rds()
-    cli::cli_process_done()
-
-    cli::cli_process_start("3) Loading district shape files from S Drive")
-    raw.data$global.dist <-
-      file.path(
-        folder,
-        "shapefiles_01",
-        "global.dist.rds"
-      ) |>
-      read_rds()
-    cli::cli_process_done()
-
-    cli::cli_process_start("4) Loading AFP line list data from S Drive")
-    raw.data$afp <-
-      list.files(
-        path = file.path(
-          folder,
-          "all_year_all_var_files_20220909"
-        ),
-        pattern = "^.*(afp).*(linelist).*(.rds)$",
-        full.names = TRUE
-      ) |>
-      lapply(readr::read_rds) |>
-      dplyr::bind_rows() |>
-      dplyr::filter(surveillancetypename == "AFP") |>
-      dplyr::filter(yronset >= 2016) |>
-      dplyr::mutate(
-        cdc.classification.all2 = ifelse(
-          final.cell.culture.result == "Not received in lab" &
-            cdc.classification.all == "PENDING",
-          "LAB PENDING",
-          cdc.classification.all
-        ),
-        hot.case = ifelse(
-          paralysis.asymmetric == "Yes" &
-            paralysis.onset.fever == "Yes" &
-            paralysis.rapid.progress == "Yes",
-          1,
-          0
-        ),
-        hot.case = ifelse(is.na(hot.case), 99, hot.case)
-      )
-    cli::cli_process_done()
-
-    cli::cli_process_start("Processing AFP data for analysis")
-
-    raw.data$afp.epi <- raw.data$afp |>
-      dplyr::filter(yronset >= 2016) |>
-      dplyr::mutate(epi.week = epiweek(dateonset)) |>
-      dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
-      dplyr::summarise(afp.cases = n()) |>
-      dplyr::mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
-      #manual fix of epi week
-      dplyr::mutate(epi.week = ifelse(epi.week == 52 &
-                                 yronset == 2022, 1, epi.week)) |>
-      ungroup()
-
-    #factoring cdc classification to have an order we like in stacked bar chart
-    raw.data$afp.epi$cdc.classification.all2 <-
-      factor(
-        raw.data$afp.epi$cdc.classification.all2,
-        levels = c(
-          "WILD 1",
-          "cVDPV 2",
-          "VDPV 2",
-          "cVDPV 1",
-          "VDPV 1",
-          "COMPATIBLE",
-          "PENDING",
-          "LAB PENDING",
-          "NPAFP",
-          "NOT-AFP"
-        ),
-        labels = c(
-          "WILD 1",
-          "cVDPV 2",
-          "VDPV 2",
-          "cVDPV 1",
-          "VDPV 1",
-          "COMPATIBLE",
-          "PENDING",
-          "LAB PENDING",
-          "NPAFP",
-          "NOT-AFP"
-        )
-      )
-
-    raw.data$para.case <- raw.data$afp |>
-      dplyr::filter(
-        cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
-      ) |>
-      dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
-    cli::cli_process_done()
-
-
-    cli::cli_process_start("5) Loading population data from S Drive")
-    raw.data$dist.pop <-
-      file.path(
-        folder,
-        "dist.pop.long2010_2023.rds"
-      ) |>
-      readr::read_rds() |>
-      dplyr::ungroup() |>
-      dplyr::filter(year >= 2016)
-
-    raw.data$prov.pop <-
-      file.path(
-        folder,
-        "prov.pop.long2010_2023.rds"
-      ) |>
-      readr::read_rds() |>
-      dplyr::ungroup() |>
-      dplyr::filter(year >= 2016)
-
-    raw.data$ctry.pop <-
-      file.path(
-        folder,
-        "ctry.pop.2000_2023.rds"
-      ) |>
-      readr::read_rds() |>
-      dplyr::ungroup() |>
-      dplyr::filter(year >= 2016)
-
-    cli::cli_process_done()
-
-    cli::cli_process_start("6) Loading coverage data from S Drive")
-    file.path(
-      folder,
-      "coverage",
-      "dpt_district_summaries.rda"
-    ) |>
-      load()
-
-    file.path(
-      folder,
-      "coverage",
-      "mcv1_district_summaries.rda"
-    ) |>
-      load()
-
-    raw.data$coverage <- dpt |>
-      select(ctry = adm0_name,
-             prov = adm1_name,
-             dist = adm2_name,
-             year,
-             dpt1,
-             dpt3) |>
-      left_join(
-        mcv1 |>
-          select(
-            ctry = adm0_name,
-            prov = adm1_name,
-            dist = adm2_name,
-            year,
-            mcv1,
-            under5_pop
-          ),
-        by = c("ctry", "prov", "dist", "year")
-      )
-
-    rm(dpt)
-    rm(mcv1)
-    cli::cli_process_done()
-
-    cli::cli_process_start("7) Loading ES data from S drive")
-    raw.data$es <-
-      file.path(
-        folder,
-        "all_year_all_var_files_20220909"
-      ) |>
-      list.files(pattern = "^(es).*(.rds)$", full.names = TRUE) |>
-      lapply(readr::read_rds) |>
-      dplyr::bind_rows()
-    cli::cli_process_done()
-
-    cli::cli_process_start("8) Loading SIA data from S drive")
-    raw.data$sia <-
-      file.path(
-        folder,
-        "all_year_all_var_files_20220909"
-      ) |>
-      list.files(pattern = "^.*(sia).*(.rds)$", full.names = TRUE) |>
-      lapply(readr::read_rds) |>
-      dplyr::bind_rows()
-    cli::cli_process_done()
-
-    cli::cli_process_start("9) Loading all positives from S drive")
-    raw.data$pos <-
-      file.path(
-        folder,
-        "all_year_all_var_files_20220909"
-      ) |>
-      list.files(pattern = "^(positives).*(.rds)$", full.names = TRUE) |>
-      lapply(readr::read_rds) |>
-      dplyr::bind_rows()
-    cli::cli_process_done()
-
-    cli::cli_process_start("10) Loading road network data")
-    raw.data$roads <- sf::read_sf("//cdc.gov/project/CGH_GID_Active/PEB/SIR/DATA/Core 2.0/datafiles_01/shapefiles_01/ne_10m_roads")
-    cli::cli_process_done()
-
-    cli::cli_process_start("11) Loading city spatial data")
-    raw.data$cities <- sf::read_sf("//cdc.gov/project/CGH_GID_Active/PEB/SIR/DATA/Core 2.0/datafiles_01/shapefiles_01/World_Cities")
-    cli::cli_process_done()
-
-    cli::cli_process_start("12) Clearing out unused memory")
-    gc()
-    cli::cli_process_done()
-
-    return(raw.data)
-
+  if(nrow(prev_table) > 0){
+    if(difftime(Sys.time(), prev_table$ctime, units = "days") <= 7){
+      fresh.cache <- T
+    }else{
+      fresh.cache <- F
+    }
   }else{
-    cli::cli_alert_warning("Stopping download process, please try again with a better connection")
+    fresh.cache <- F
   }
+
+  if(force.new.run){
+    fresh.cache <- F
+  }
+
+  if(fresh.cache){
+    cli::cli_process_start("Previous cache identified, loading")
+    raw.data <- edav_io(io = "read", file_loc = prev_table$file)
+    cli::cli_process_done()
+  }else{
+
+    cli::cli_h1("Testing download times")
+
+    download_metrics <- test_EDAV_connection(return_list = T)
+
+    if(!afp.trunc){
+      x <- readline("'afp.trunc' is FALSE, downloading this may take a while. Do you want to download the smaller one instead? [Y/N]: ")
+
+      if(tolower(x) == "y"){
+        message("Changing to truncated version")
+        afp.trunc <- T
+      }
+    }
+
+    if(force.new.run){
+      afp.trunc <- F
+    }
+
+    dl_table <- dplyr::bind_rows(
+      edav_io(io = "list", file_loc = file.path(folder, "polis")),
+      edav_io(io = "list", file_loc = file.path(folder, "spatial")),
+      edav_io(io = "list", file_loc = file.path(folder, "coverage")),
+      edav_io(io = "list", file_loc = file.path(folder, "pop"))
+    ) |>
+      dplyr::filter(!is.na(size)) |>
+      dplyr::select("file" = "name", "size") |>
+      dplyr::mutate(
+        "dl_time_sec" = size / download_metrics$size*download_metrics$d
+      ) |>
+      dplyr::filter(!grepl("other_surv", file))
+
+    if(afp.trunc){
+      dl_table <- dl_table |>
+        filter(!grepl("afp_linelist_2001", file))
+    }else{
+      dl_table <- dl_table |>
+        filter(!grepl("afp_linelist_2019", file))
+    }
+
+    file_size <- dl_table$size |> sum()
+    download_time <- dl_table$dl_time_sec |> sum()
+
+    cli::cli_alert_info(c(
+      "Estimated MAX download time for {prettyunits::pretty_bytes(file_size)} is ",
+      "{prettyunits::pretty_sec(download_time)}"
+    ))
+
+    x <- readline("Downloading the full AFP linelist can take a while so it's best to do other work while you run this in the background. Do you want to start download?  [Y/N]: ")
+
+    if(grepl("y", tolower(x), fixed = T)){
+
+      cli::cli_h1("Downloading POLIS Data")
+
+      raw.data <- list()
+
+      cli::cli_process_start("1) Loading country shape files from EDAV")
+      raw.data$global.ctry <- load_clean_ctry_sp()
+      cli::cli_process_done()
+
+
+      cli::cli_process_start("2) Loading province shape files from EDAV")
+      raw.data$global.prov <- load_clean_prov_sp()
+      cli::cli_process_done()
+
+      cli::cli_process_start("3) Loading district shape files from EDAV")
+      raw.data$global.dist <- load_clean_dist_sp()
+      cli::cli_process_done()
+
+      cli::cli_process_start("4) Loading AFP line list data from EDAV (This file is almost 3GB and can take a while)")
+      raw.data$afp <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("afp", file)) |>
+                  dplyr::pull(file)) |>
+        dplyr::filter(surveillancetypename == "AFP") |>
+        dplyr::filter(yronset >= 2016) |>
+        dplyr::mutate(
+          cdc.classification.all2 = ifelse(
+            final.cell.culture.result == "Not received in lab" &
+              cdc.classification.all == "PENDING",
+            "LAB PENDING",
+            cdc.classification.all
+          ),
+          hot.case = ifelse(
+            paralysis.asymmetric == "Yes" &
+              paralysis.onset.fever == "Yes" &
+              paralysis.rapid.progress == "Yes",
+            1,
+            0
+          ),
+          hot.case = ifelse(is.na(hot.case), 99, hot.case)
+        )
+      cli::cli_process_done()
+
+      cli::cli_process_start("Processing AFP data for analysis")
+
+      raw.data$afp.epi <- raw.data$afp |>
+        dplyr::filter(yronset >= 2016) |>
+        dplyr::mutate(epi.week = epiweek(dateonset)) |>
+        dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
+        dplyr::summarise(afp.cases = n()) |>
+        dplyr::mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
+        #manual fix of epi week
+        dplyr::mutate(epi.week = ifelse(epi.week == 52 &
+                                          yronset == 2022, 1, epi.week)) |>
+        ungroup()
+
+      #factoring cdc classification to have an order we like in stacked bar chart
+      raw.data$afp.epi$cdc.classification.all2 <-
+        factor(
+          raw.data$afp.epi$cdc.classification.all2,
+          levels = c(
+            "WILD 1",
+            "cVDPV 2",
+            "VDPV 2",
+            "cVDPV 1",
+            "VDPV 1",
+            "COMPATIBLE",
+            "PENDING",
+            "LAB PENDING",
+            "NPAFP",
+            "NOT-AFP"
+          ),
+          labels = c(
+            "WILD 1",
+            "cVDPV 2",
+            "VDPV 2",
+            "cVDPV 1",
+            "VDPV 1",
+            "COMPATIBLE",
+            "PENDING",
+            "LAB PENDING",
+            "NPAFP",
+            "NOT-AFP"
+          )
+        )
+
+      raw.data$para.case <- raw.data$afp |>
+        dplyr::filter(
+          cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
+        ) |>
+        dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
+      cli::cli_process_done()
+
+
+      cli::cli_process_start("5) Loading population data from EDAV")
+      raw.data$dist.pop <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
+                  dplyr::pull(file)) |>
+        dplyr::ungroup() |>
+        dplyr::filter(year >= 2016)
+
+      raw.data$prov.pop <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
+                  dplyr::pull(file)) |>
+        dplyr::ungroup() |>
+        dplyr::filter(year >= 2016)
+
+      raw.data$ctry.pop <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
+                  dplyr::pull(file)) |>
+        dplyr::ungroup() |>
+        dplyr::filter(year >= 2016)
+
+      cli::cli_process_done()
+
+      cli::cli_process_start("6) Loading coverage data from EDAV")
+      raw.data$coverage <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
+                  dplyr::pull(file)) |>
+        select(ctry = adm0_name,
+               prov = adm1_name,
+               dist = adm2_name,
+               year,
+               dpt1,
+               dpt3) |>
+        left_join(
+          edav_io(io = "read",
+                  file_loc = dplyr::filter(dl_table, grepl("mcv1", file)) |>
+                    dplyr::pull(file)) |>
+            select(
+              ctry = adm0_name,
+              prov = adm1_name,
+              dist = adm2_name,
+              year,
+              mcv1,
+              under5_pop
+            ),
+          by = c("ctry", "prov", "dist", "year")
+        )
+
+      cli::cli_process_done()
+
+      cli::cli_process_start("7) Loading ES data from EDAV")
+
+      raw.data$es <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("/es_2001", file)) |>
+                  dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("8) Loading SIA data from EDAV")
+      raw.data$sia <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
+                  dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("9) Loading all positives from EDAV")
+      raw.data$pos <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
+                  dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("10) Loading road network data")
+      raw.data$roads <- edav_io(io = "read",
+                                file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
+                                  dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("11) Loading city spatial data")
+      raw.data$cities <- edav_io(io = "read",
+                                 file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
+                                   dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("12) Clearing out unused memory")
+      gc()
+      cli::cli_process_done
+
+  }
+
+  }
+
+  print(fresh.cache)
+  print(afp.trunc)
+  if(!fresh.cache & !afp.trunc){
+    cli::cli_process_start("13) Caching processed data")
+    edav_io(io = "write", file_loc = file.path(folder, "/analytic/raw.data.rds"), obj = raw.data)
+    cli::cli_process_done()
+  }
+
+
+  return(raw.data)
 
 }
 
@@ -644,7 +677,8 @@ extract_country_data <- function(
 #'
 #' @description Pulls district shapefiles directly from the geodatabase
 #' @param fp str: Location of geodatabase
-#' @import stringr sf
+#' @import stringr AzureStor dplyr lubridate
+#' @param azcontainer azure validated container object
 #' @param dist_guid array/str: Array of all district GUIDS that you want to pull
 #' @param ctry_name array/str: Array of all country names that you want to pull
 #' @param end.year int: last year you want to pull information for - default is current year
@@ -653,20 +687,16 @@ extract_country_data <- function(
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
 #' @returns tibble or sf dataframe
 #' @export
-load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
-                                              'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
-                                              'WHO_POLIO_GLOBAL_GEODATABASE.gdb'),
+load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
+                               fp = "GID/PEB/SIR/Data/spatial/global.dist.rds",
                                dist_guid = NULL,
                                ctry_name = NULL,
                                end.year = year(Sys.Date()),
                                st.year = 2000,
                                data.only = F,
                                type = NULL){
-  out <- fp %>%
-    sf::st_read(
-      layer = "GLOBAL_ADM2",
-      quiet = T
-    ) %>%
+  cli::cli_alert_info("Loading district spatial files")
+  out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
 
       STARTDATE = lubridate::as_date(STARTDATE),
@@ -682,18 +712,18 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
                             GUID == "{54464216-2BD3-4F30-BF2C-3846BEE6805D}" & STARTDATE=='2020-01-01',
                           STARTDATE+366, STARTDATE),
 
-      yr.st = year(STARTDATE),
-      yr.end = year(ENDDATE),
+      yr.st = lubridate::year(STARTDATE),
+      yr.end = lubridate::year(ENDDATE),
       ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
     ) %>%
 
     # remove the ouad eddahab in Morocco which started and ended the same year and causes overlap
-    filter(!GUID=="{AE526BC0-8DC3-411C-B82E-75259AD3598C}") %>%
+    dplyr::filter(!GUID=="{AE526BC0-8DC3-411C-B82E-75259AD3598C}") %>%
     # this filters based on dates set in RMD
-    filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
+    dplyr::filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
     {
       if(is.null(dist_guid)){.}else{
-        filter(., GUID %in% dist_guid)
+        dplyr::filter(., GUID %in% dist_guid)
       }
     } %>%
     {
@@ -703,7 +733,7 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
     }
 
   if(data.only & is.null(type)){
-    out <- tibble(out)
+    out <- tibble::tibble(out)
 
     return(out)
   }
@@ -728,7 +758,8 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 #' Standard function to load Province data
 #'
 #' @description Pulls province shapefiles directly from the geodatabase
-#' @import stringr sf
+#' @import stringr AzureStor lubridate dplyr tibble
+#' @param azcontainer azure validated container object
 #' @param fp str: Location of geodatabase
 #' @param prov_guid array/str: Array of all province GUIDS that you want to pull
 #' @param prov_name array/str: Array of all province names that you want to pull
@@ -739,9 +770,8 @@ load_clean_dist_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
 #' @returns tibble or sf dataframe
 #' @export
-load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
-                                              'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
-                                              'WHO_POLIO_GLOBAL_GEODATABASE.gdb'),
+load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
+                               fp = "GID/PEB/SIR/Data/spatial/global.prov.rds",
                                prov_guid = NULL,
                                prov_name = NULL,
                                ctry_name = NULL,
@@ -749,36 +779,33 @@ load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
                                st.year = 2000,
                                data.only = F,
                                type = NULL){
-  out <- fp %>%
-    st_read(
-      layer = "GLOBAL_ADM1",
-      quiet = T
-    ) %>%
-    mutate(
-      yr.st = year(STARTDATE),
-      yr.end = year(ENDDATE),
+  cli::cli_alert_info("Loading province spatial files")
+  out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
+    dplyr::mutate(
+      yr.st = lubridate::year(STARTDATE),
+      yr.end = lubridate::year(ENDDATE),
       ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
     ) %>%
     # this filters based on dates set in RMD
-    filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
+    dplyr::filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
     {
       if(is.null(prov_guid)){.}else{
-        filter(., GUID %in% prov_guid)
+        dplyr::filter(., GUID %in% prov_guid)
       }
     } %>%
     {
       if(is.null(ctry_name)){.}else{
-        filter(., ADM0_NAME %in% ctry_name)
+        dplyr::filter(., ADM0_NAME %in% ctry_name)
       }
     } %>%
     {
       if(is.null(prov_name)){.}else{
-        filter(., ADM1_NAME %in% prov_name)
+        dplyr::filter(., ADM1_NAME %in% prov_name)
       }
     }
 
   if(data.only & is.null(type)){
-    out <- tibble(out)
+    out <- tibble::tibble(out)
 
     return(out)
   }
@@ -800,7 +827,8 @@ load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 #' Standard function to load Country data
 #'
 #' @description Pulls province shapefiles directly from the geodatabase
-#' @import stringr sf
+#' @import stringr AzureStor dplyr tibble lubridate
+#' @param azcontainer azure validated container object
 #' @param fp str: Location of geodatabase
 #' @param ctry_guid array/str: Array of all country GUIDS that you want to pull
 #' @param ctry_name array/str: Array of all country names that you want to pull
@@ -810,40 +838,36 @@ load_clean_prov_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
 #' @returns tibble or sf dataframe
 #' @export
-load_clean_ctry_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
-                                              'SIR', 'DATA', 'Core 2.0', 'datafiles_01', 'shapefiles_01',
-                                              'WHO_POLIO_GLOBAL_GEODATABASE.gdb'),
+load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
+                               fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
                                ctry_guid = NULL,
                                ctry_name = NULL,
                                end.year = year(Sys.Date()),
                                st.year = 2000,
                                data.only = F,
                                type = NULL){
-  out <- fp %>%
-    st_read(
-      layer = "GLOBAL_ADM0",
-      quiet = T
-    ) %>%
-    mutate(
-      yr.st = year(STARTDATE),
-      yr.end = year(ENDDATE),
+  cli::cli_alert_info("Loading country spatial files")
+  out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
+    dplyr::mutate(
+      yr.st = lubridate::year(STARTDATE),
+      yr.end = lubridate::year(ENDDATE),
       ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"),"COTE D IVOIRE", ADM0_NAME)
     ) %>%
     # this filters based on dates set in RMD
-    filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
+    dplyr::filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
     {
       if(is.null(ctry_guid)){.}else{
-        filter(., GUID %in% ctry_guid)
+        dplyr::filter(., GUID %in% ctry_guid)
       }
     } %>%
     {
       if(is.null(ctry_name)){.}else{
-        filter(., ADM0_NAME %in% ctry_name)
+        dplyr::filter(., ADM0_NAME %in% ctry_name)
       }
     }
 
   if(data.only & is.null(type)){
-    out <- as_tibble(out)
+    out <- tibble::as_tibble(out)
 
     return(out)
   }
@@ -857,7 +881,7 @@ load_clean_ctry_sp <- function(fp = file.path('', '', 'cdc.gov', 'project', 'CGH
     for (i in st.year:end.year) {
       df.list <- c(df.list, list(i = f.yrs.01(out, i)))
     }
-    return(bind_rows(df.list))
+    return(dplyr::bind_rows(df.list))
   }
 
 }
