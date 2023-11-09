@@ -189,38 +189,56 @@ test_EDAV_connection <- function(
 #' @description Download all Polio data from CDC pre-processed endpoint
 #' @import dplyr cli sf tibble
 #' @param folder str: location of the CDC pre-processed endpoint
-#' @param afp.trunc boolean: default T, if T returns the afp linelist since 2019
+#' @param afp.trunc boolean: default F, if T returns the afp linelist since 2019
+#' @param force.new.run boolean: default F, if T will always run fully and cache
 #' @returns named list containing polio data that is relevant to CDC
 #' @export
 get_all_polio_data <- function(
     folder = "GID/PEB/SIR/Data/",
-    afp.trunc = F
+    afp.trunc = F,
+    force.new.run = F
 ){
-
-  cli::cli_h1("Testing download times")
-
-  if(!afp.trunc){
-    x <- readline("'afp.trunc' is FALSE, downloading this may take a while. Do you want to download the smaller one instead? [Y/N]: ")
-
-    if(tolower(x) == "y"){
-      message("Changing to truncated version")
-      afp.trunc <- T
-    }
-    }
 
   prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic")) |>
     dplyr::filter(grepl("raw.data.rds", name) & lastModified == max(lastModified)) |>
     dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
-  fresh.cache <- difftime(Sys.time(), prev_table$ctime, units = "days") <= 7
+  if(nrow(prev_table) > 0){
+    if(difftime(Sys.time(), prev_table$ctime, units = "days") <= 7){
+      fresh.cache <- T
+    }else{
+      fresh.cache <- F
+    }
+  }else{
+    fresh.cache <- F
+  }
 
-  download_metrics <- test_EDAV_connection(return_list = T)
+  if(force.new.run){
+    fresh.cache <- F
+  }
 
   if(fresh.cache){
     cli::cli_process_start("Previous cache identified, loading")
     raw.data <- edav_io(io = "read", file_loc = prev_table$file)
     cli::cli_process_done()
   }else{
+
+    cli::cli_h1("Testing download times")
+
+    download_metrics <- test_EDAV_connection(return_list = T)
+
+    if(!afp.trunc){
+      x <- readline("'afp.trunc' is FALSE, downloading this may take a while. Do you want to download the smaller one instead? [Y/N]: ")
+
+      if(tolower(x) == "y"){
+        message("Changing to truncated version")
+        afp.trunc <- T
+      }
+    }
+
+    if(force.new.run){
+      afp.trunc <- F
+    }
 
     dl_table <- dplyr::bind_rows(
       edav_io(io = "list", file_loc = file.path(folder, "polis")),
@@ -440,19 +458,18 @@ get_all_polio_data <- function(
 
   }
 
-
-    if(!fresh.cache){
-      cli::cli_process_start("13) Caching processed data")
-      edav_io(io = "write", file_loc = file.path(folder, "/analytic/raw.data.rds"), obj = raw.data)
-      cli::cli_process_done()
-    }
-
-
-    return(raw.data)
-
-  }else{
-    cli::cli_alert_warning("Stopping download process, please try again with a better connection")
   }
+
+  print(fresh.cache)
+  print(afp.trunc)
+  if(!fresh.cache & !afp.trunc){
+    cli::cli_process_start("13) Caching processed data")
+    edav_io(io = "write", file_loc = file.path(folder, "/analytic/raw.data.rds"), obj = raw.data)
+    cli::cli_process_done()
+  }
+
+
+  return(raw.data)
 
 }
 
