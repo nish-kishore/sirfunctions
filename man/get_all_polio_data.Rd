@@ -5,12 +5,17 @@
 \title{Retrieve all pre-processed Polio Data}
 \usage{
 get_all_polio_data(
-  folder = file.path("", "", "cdc.gov", "project", "CGH_GID_Active", "PEB", "SIR",
-    "DATA", "Core 2.0", "datafiles_01")
+  folder = "GID/PEB/SIR/Data/",
+  afp.trunc = F,
+  force.new.run = F
 )
 }
 \arguments{
 \item{folder}{str: location of the CDC pre-processed endpoint}
+
+\item{afp.trunc}{boolean: default F, if T returns the afp linelist since 2019}
+
+\item{force.new.run}{boolean: default F, if T will always run fully and cache}
 }
 \value{
 named list containing polio data that is relevant to CDC

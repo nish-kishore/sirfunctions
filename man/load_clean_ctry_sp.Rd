@@ -5,7 +5,7 @@
 \title{Standard function to load Country data}
 \usage{
 load_clean_ctry_sp(
-  azcontainer = get_azure_storage_connection(),
+  azcontainer = suppressMessages(get_azure_storage_connection()),
   fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
   ctry_guid = NULL,
   ctry_name = NULL,
