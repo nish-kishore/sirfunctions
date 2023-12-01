@@ -2,10 +2,10 @@
 % Please edit documentation in R/dal.R
 \name{test_EDAV_connection}
 \alias{test_EDAV_connection}
-\title{Test network connection to the S drive}
+\title{Test network connection to the EDAV}
 \usage{
 test_EDAV_connection(
-  azcontainer = get_azure_storage_connection(),
+  azcontainer = suppressMessages(get_azure_storage_connection()),
   folder = "GID/PEB/SIR/Data",
   return_list = F,
   test_size = 1e+07
@@ -14,7 +14,7 @@ test_EDAV_connection(
 \arguments{
 \item{azcontainer}{azure storage container}
 
-\item{folder}{str: Location of download folder in S drive}
+\item{folder}{str: Location of download folder in EDAV}
 
 \item{return_list}{boolean: return a list of download time estimates, default F}
 
@@ -24,5 +24,5 @@ test_EDAV_connection(
 System message with download and update time, potentially list output
 }
 \description{
-Tests upload and download from S drive
+Tests upload and download from EDAV
 }

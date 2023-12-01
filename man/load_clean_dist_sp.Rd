@@ -5,7 +5,7 @@
 \title{Standard function to load District data}
 \usage{
 load_clean_dist_sp(
-  azcontainer = get_azure_storage_connection(),
+  azcontainer = suppressMessages(get_azure_storage_connection()),
   fp = "GID/PEB/SIR/Data/spatial/global.dist.rds",
   dist_guid = NULL,
   ctry_name = NULL,

@@ -250,8 +250,7 @@ get_all_polio_data <- function(
       dplyr::select("file" = "name", "size") |>
       dplyr::mutate(
         "dl_time_sec" = size / download_metrics$size*download_metrics$d
-      ) |>
-      dplyr::filter(!grepl("other_surv", file))
+      )
 
     if(afp.trunc){
       dl_table <- dl_table |>
@@ -440,19 +439,26 @@ get_all_polio_data <- function(
                   dplyr::pull(file))
       cli::cli_process_done()
 
-      cli::cli_process_start("10) Loading road network data")
+      cli::cli_process_start("10) Loading other surveillance linelist from EDAV")
+      raw.data$other <-
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("/other", file)) |>
+                  dplyr::pull(file))
+      cli::cli_process_done()
+
+      cli::cli_process_start("11) Loading road network data")
       raw.data$roads <- edav_io(io = "read",
                                 file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
                                   dplyr::pull(file))
       cli::cli_process_done()
 
-      cli::cli_process_start("11) Loading city spatial data")
+      cli::cli_process_start("12) Loading city spatial data")
       raw.data$cities <- edav_io(io = "read",
                                  file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
                                    dplyr::pull(file))
       cli::cli_process_done()
 
-      cli::cli_process_start("12) Clearing out unused memory")
+      cli::cli_process_start("13) Clearing out unused memory")
       gc()
       cli::cli_process_done
 

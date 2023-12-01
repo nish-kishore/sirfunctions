@@ -4,10 +4,15 @@
 \alias{edav_io}
 \title{Helper function to read and write key data}
 \usage{
-edav_io(io, file_loc, obj = NULL, azcontainer = get_azure_storage_connection())
+edav_io(
+  io,
+  file_loc,
+  obj = NULL,
+  azcontainer = suppressMessages(get_azure_storage_connection())
+)
 }
 \arguments{
-\item{io}{str: "read", "write" or "list"}
+\item{io}{str: "read", "write", "delete" or "list"}
 
 \item{file_loc}{str: location to "read", "write" or "list"}
 

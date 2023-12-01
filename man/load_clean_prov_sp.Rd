@@ -5,7 +5,7 @@
 \title{Standard function to load Province data}
 \usage{
 load_clean_prov_sp(
-  azcontainer = get_azure_storage_connection(),
+  azcontainer = suppressMessages(get_azure_storage_connection()),
   fp = "GID/PEB/SIR/Data/spatial/global.prov.rds",
   prov_guid = NULL,
   prov_name = NULL,
