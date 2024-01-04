@@ -910,3 +910,15 @@ f.yrs.01 <- function(df, yrs) {
   return(shape01)
 }
 
+#### 5) Create, download and delete functions for the data lake ####
+
+#' Utility function to explore the data lake
+#'
+#' @description
+#' A short description...
+#'
+#' @param azcontainer azure storage container
+#' @returns description
+explore_edav <- function(azcontainer = suppressMessages(get_azure_storage_connection())){
+
+}
