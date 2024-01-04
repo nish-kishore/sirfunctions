@@ -36,6 +36,7 @@ get_azure_storage_connection <- function(){
 #' @param obj default NULL object to be saved
 #' @param azcontainer azure container object
 #' @returns tibble
+#' @export
 edav_io <- function(
     io,
     file_loc,
