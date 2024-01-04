@@ -244,7 +244,8 @@ get_all_polio_data <- function(
       edav_io(io = "list", file_loc = file.path(folder, "polis")),
       edav_io(io = "list", file_loc = file.path(folder, "spatial")),
       edav_io(io = "list", file_loc = file.path(folder, "coverage")),
-      edav_io(io = "list", file_loc = file.path(folder, "pop"))
+      edav_io(io = "list", file_loc = file.path(folder, "pop")),
+      edav_io(io = "list", file_loc = file.path("GID/PEB/SIR/POLIS/"))
     ) |>
       dplyr::filter(!is.na(size)) |>
       dplyr::select("file" = "name", "size") |>
