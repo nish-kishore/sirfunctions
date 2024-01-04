@@ -459,6 +459,13 @@ get_all_polio_data <- function(
       cli::cli_process_done()
 
       Cli::cli_process_start("13) Creating Metadata object")
+      raw.data$metadata$download_time
+      raw.data$metadata$processed_time
+      raw.data$metadata$user
+      raw.data$metadata$most_recent_pos
+      raw.data$metadata$most_recent_afp
+      raw.data$metadata$most_recent_env
+      raw.data$metadata$most_recent_sia
 
       cli::cli_process_done()
 
