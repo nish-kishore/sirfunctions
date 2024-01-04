@@ -459,14 +459,30 @@ get_all_polio_data <- function(
                                    dplyr::pull(file))
       cli::cli_process_done()
 
-      Cli::cli_process_start("13) Creating Metadata object")
-      raw.data$metadata$download_time
-      raw.data$metadata$processed_time
-      raw.data$metadata$user
+      cli::cli_process_start("13) Creating Metadata object")
+
+      polis.cache <- edav_io(io = "read",
+                             file_loc = dplyr::filter(dl_table, grepl("cache", file)) |>
+                               dplyr::pull(file)) |>
+        dplyr::mutate(last_sync = as.Date(last_sync))
+
+      raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
+
+      raw.data$metadata$processed_time <-
+
+      raw.data$metadata$user <- polis.cache |>
+        dplyr::filter(table == "virus") |>
+        dplyr::pull(last_user)
+
       raw.data$metadata$most_recent_pos
+
       raw.data$metadata$most_recent_afp
+
       raw.data$metadata$most_recent_env
+
       raw.data$metadata$most_recent_sia
+
+      rm(polis.cache)
 
       cli::cli_process_done()
 
