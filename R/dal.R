@@ -458,7 +458,11 @@ get_all_polio_data <- function(
                                    dplyr::pull(file))
       cli::cli_process_done()
 
-      cli::cli_process_start("13) Clearing out unused memory")
+      Cli::cli_process_start("13) Creating Metadata object")
+
+      cli::cli_process_done()
+
+      cli::cli_process_start("14) Clearing out unused memory")
       gc()
       cli::cli_process_done
 
