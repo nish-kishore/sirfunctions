@@ -478,11 +478,11 @@ get_all_polio_data <- function(
         dplyr::filter(table == "virus") |>
         dplyr::pull(last_user)
 
-      raw.data$metadata$most_recent_pos
+      raw.data$metadata$most_recent_pos <- max(raw.data[["pos"]]$dateonset, na.rm = TRUE)
 
-      raw.data$metadata$most_recent_afp
+      raw.data$metadata$most_recent_afp <- max(raw.data[["afp"]]$dateonset, na.rm = TRUE)
 
-      raw.data$metadata$most_recent_env
+      raw.data$metadata$most_recent_env <- max(raw.data[["es"]]$collect.date, na.rm = TRUE)
 
       raw.data$metadata$most_recent_sia
 
