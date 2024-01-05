@@ -468,7 +468,11 @@ get_all_polio_data <- function(
 
       raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
 
-      raw.data$metadata$processed_time <-
+      raw.data$metadata$processed_time <- edav_io(io = "list", file_loc = file.path(folder, "/polis")) |>
+        dplyr::filter(grepl("positives", name)) |>
+        dplyr::select("ctime" = "lastModified") |>
+        dplyr::mutate(ctime = as.Date(ctime)) |>
+        dplyr::pull(ctime)
 
       raw.data$metadata$user <- polis.cache |>
         dplyr::filter(table == "virus") |>
