@@ -43,7 +43,8 @@ edav_io <- function(
     default_dir = "GID/PEB/SIR",
     file_loc = NULL,
     obj = NULL,
-    azcontainer = suppressMessages(get_azure_storage_connection())
+    azcontainer = suppressMessages(get_azure_storage_connection()),
+    force_delete = F
 ){
 
   if(!is.null(file_loc)){
@@ -123,7 +124,24 @@ edav_io <- function(
       stop("File does not exist")
     }
 
-    AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
+    if(force_delete){
+      AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
+    }else{
+      x <- readline(prompt = "Are you sure you want to delete this file? It can only be recovered by an administrator. [Y/N]")
+      x <- tolower(x)
+
+
+      if(grepl("y|n",x)){
+        if(x == "y"){
+          AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
+          cli::cli_alert_info("File deleted!")
+        }else{
+          cli::cli_alert_info("Deletion canceled.")
+        }
+      }else{
+        stop("Response must be 'Y' or 'N'")
+      }
+    }
 
   }
 
