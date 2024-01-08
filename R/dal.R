@@ -283,10 +283,6 @@ get_all_polio_data <- function(
       edav_io(io = "list", file_loc = file.path(folder, "polis"), default_dir = NULL),
       edav_io(io = "list", file_loc = file.path(folder, "spatial"), default_dir = NULL),
       edav_io(io = "list", file_loc = file.path(folder, "coverage"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path(folder, "pop"), default_dir = NULL)
-      edav_io(io = "list", file_loc = file.path(folder, "polis"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path(folder, "spatial"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path(folder, "coverage"), default_dir = NULL),
       edav_io(io = "list", file_loc = file.path(folder, "pop"), default_dir = NULL),
       edav_io(io = "list", file_loc = file.path("GID/PEB/SIR/POLIS/")) |>
         filter(grepl("cache", name), default_dir = NULL)
