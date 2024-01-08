@@ -478,37 +478,37 @@ get_all_polio_data <- function(
         dplyr::filter(table == "virus") |>
         dplyr::pull(last_user)
 
-      raw.data$metadata$most_recent_pos <- max(raw.data[["pos"]]$dateonset, na.rm = TRUE)
-      raw.data$metadata$most_recent_pos_loc <- raw.data[["pos"]] |>
+      raw.data$metadata$most_recent_pos <- max(raw.data$pos$dateonset, na.rm = TRUE)
+      raw.data$metadata$most_recent_pos_loc <- raw.data$pos |>
         dplyr::arrange(desc(dateonset)) |>
         dplyr::slice(1) |>
         dplyr::pull(place.admin.0)
 
 
-      raw.data$metadata$most_recent_afp <- max(raw.data[["afp"]]$dateonset, na.rm = TRUE)
-      raw.data$metadata$most_recent_afp_loc <- raw.data[["afp"]] |>
+      raw.data$metadata$most_recent_afp <- max(raw.data$afp$dateonset, na.rm = TRUE)
+      raw.data$metadata$most_recent_afp_loc <- raw.data$afp |>
         dplyr::arrange(desc(dateonset)) |>
         dplyr::slice(1) |>
         dplyr::pull(place.admin.0)
 
 
-      raw.data$metadata$most_recent_env <- max(raw.data[["es"]]$collect.date, na.rm = TRUE)
-      raw.data$metadata$most_recent_env_loc <- raw.data[["es"]] |>
+      raw.data$metadata$most_recent_env <- max(raw.data$es$collect.date, na.rm = TRUE)
+      raw.data$metadata$most_recent_env_loc <- raw.data$es |>
         dplyr::arrange(desc(collect.date)) |>
         dplyr::slice(1) |>
         dplyr::pull(ADM0_NAME)
 
 
-      raw.data$metadata$most_recent_sia <- max(raw.data[["sia"]]$sub.activity.start.date)
-      raw.data$metadata$most_recent_sia_code <- raw.data[["sia"]] |>
+      raw.data$metadata$most_recent_sia <- max(raw.data$sia$sub.activity.start.date)
+      raw.data$metadata$most_recent_sia_code <- raw.data$sia |>
         dplyr::arrange(desc(sub.activity.start.date)) |>
         dplyr::slice(1) |>
         dplyr::pull(sia.code)
-      raw.data$metadata$most_recent_sia_location <- raw.data[["sia"]] |>
+      raw.data$metadata$most_recent_sia_location <- raw.data$sia |>
         dplyr::arrange(desc(sub.activity.start.date)) |>
         dplyr::slice(1) |>
         dplyr::pull(place.admin.0)
-      raw.data$metadata$most_recent_sia_vax <- raw.data[["sia"]] |>
+      raw.data$metadata$most_recent_sia_vax <- raw.data$sia |>
         dplyr::arrange(desc(sub.activity.start.date)) |>
         dplyr::slice(1) |>
         dplyr::pull(vaccine.type)
