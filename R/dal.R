@@ -284,6 +284,12 @@ get_all_polio_data <- function(
       edav_io(io = "list", file_loc = file.path(folder, "spatial"), default_dir = NULL),
       edav_io(io = "list", file_loc = file.path(folder, "coverage"), default_dir = NULL),
       edav_io(io = "list", file_loc = file.path(folder, "pop"), default_dir = NULL)
+      edav_io(io = "list", file_loc = file.path(folder, "polis"), default_dir = NULL),
+      edav_io(io = "list", file_loc = file.path(folder, "spatial"), default_dir = NULL),
+      edav_io(io = "list", file_loc = file.path(folder, "coverage"), default_dir = NULL),
+      edav_io(io = "list", file_loc = file.path(folder, "pop"), default_dir = NULL),
+      edav_io(io = "list", file_loc = file.path("GID/PEB/SIR/POLIS/")) |>
+        filter(grepl("cache", name), default_dir = NULL)
     ) |>
       dplyr::filter(!is.na(size)) |>
       dplyr::select("file" = "name", "size") |>
@@ -497,7 +503,65 @@ get_all_polio_data <- function(
                                    dplyr::pull(file), default_dir = NULL)
       cli::cli_process_done()
 
-      cli::cli_process_start("13) Clearing out unused memory")
+      cli::cli_process_start("13) Creating Metadata object")
+
+      polis.cache <- edav_io(io = "read",
+                             file_loc = dplyr::filter(dl_table, grepl("cache", file)) |>
+                               dplyr::pull(file)) |>
+        dplyr::mutate(last_sync = as.Date(last_sync))
+
+      raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
+
+      raw.data$metadata$processed_time <- edav_io(io = "list", file_loc = file.path(folder, "/polis")) |>
+        dplyr::filter(grepl("positives", name)) |>
+        dplyr::select("ctime" = "lastModified") |>
+        dplyr::mutate(ctime = as.Date(ctime)) |>
+        dplyr::pull(ctime)
+
+      raw.data$metadata$user <- polis.cache |>
+        dplyr::filter(table == "virus") |>
+        dplyr::pull(last_user)
+
+      raw.data$metadata$most_recent_pos <- max(raw.data$pos$dateonset, na.rm = TRUE)
+      raw.data$metadata$most_recent_pos_loc <- raw.data$pos |>
+        dplyr::arrange(desc(dateonset)) |>
+        dplyr::slice(1) |>
+        dplyr::pull(place.admin.0)
+
+
+      raw.data$metadata$most_recent_afp <- max(raw.data$afp$dateonset, na.rm = TRUE)
+      raw.data$metadata$most_recent_afp_loc <- raw.data$afp |>
+        dplyr::arrange(desc(dateonset)) |>
+        dplyr::slice(1) |>
+        dplyr::pull(place.admin.0)
+
+
+      raw.data$metadata$most_recent_env <- max(raw.data$es$collect.date, na.rm = TRUE)
+      raw.data$metadata$most_recent_env_loc <- raw.data$es |>
+        dplyr::arrange(desc(collect.date)) |>
+        dplyr::slice(1) |>
+        dplyr::pull(ADM0_NAME)
+
+
+      raw.data$metadata$most_recent_sia <- max(raw.data$sia$sub.activity.start.date)
+      raw.data$metadata$most_recent_sia_code <- raw.data$sia |>
+        dplyr::arrange(desc(sub.activity.start.date)) |>
+        dplyr::slice(1) |>
+        dplyr::pull(sia.code)
+      raw.data$metadata$most_recent_sia_location <- raw.data$sia |>
+        dplyr::arrange(desc(sub.activity.start.date)) |>
+        dplyr::slice(1) |>
+        dplyr::pull(place.admin.0)
+      raw.data$metadata$most_recent_sia_vax <- raw.data$sia |>
+        dplyr::arrange(desc(sub.activity.start.date)) |>
+        dplyr::slice(1) |>
+        dplyr::pull(vaccine.type)
+
+      rm(polis.cache)
+
+      cli::cli_process_done()
+
+      cli::cli_process_start("14) Clearing out unused memory")
       gc()
       cli::cli_process_done
 
