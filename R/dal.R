@@ -71,6 +71,10 @@ edav_io <- function(
       stop("File does not exist")
     }
 
+    if(!grepl(".rds|.rda|.csv",file_loc)){
+      stop("At the moment only 'rds' 'rda' and 'csv' are supported for reading.")
+    }
+
     if(grepl(".rds", file_loc)){
       return(suppressWarnings(AzureStor::storage_load_rds(azcontainer, file_loc)))
     }
@@ -86,6 +90,10 @@ edav_io <- function(
   }
 
   if(io == "write"){
+
+    if(!grepl(".rds|.csv",file_loc)){
+      stop("At the moment only 'rds' 'rda' and 'csv' are supported for reading.")
+    }
 
     if(grepl(".rds", file_loc)){
       AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
