@@ -32,6 +32,7 @@ get_azure_storage_connection <- function(){
 #' @description Helper function read and write key data to EDAV
 #' @import cli AzureStor
 #' @param io str: "read", "write", "delete" or "list"
+#' @param default_dir str: "GID/PEB/SIR"
 #' @param file_loc str: location to "read", "write" or "list"
 #' @param obj default NULL object to be saved
 #' @param azcontainer azure container object
@@ -39,10 +40,21 @@ get_azure_storage_connection <- function(){
 #' @export
 edav_io <- function(
     io,
-    file_loc,
+    default_dir = "GID/PEB/SIR",
+    file_loc = NULL,
     obj = NULL,
     azcontainer = suppressMessages(get_azure_storage_connection())
 ){
+
+  if(!is.null(file_loc)){
+    if(is.null(default_dir)){
+      file_loc <- file_loc
+    }else{
+      file_loc <- paste(default_dir, file_loc, sep = "/")
+    }
+  }else{
+    file_loc <- default_dir
+  }
 
   opts <- c("read", "write", "delete", "list")
 
