@@ -36,6 +36,7 @@ get_azure_storage_connection <- function(){
 #' @param file_loc str: location to "read", "write" or "list"
 #' @param obj default NULL object to be saved
 #' @param azcontainer azure container object
+#' @param force_delete boolean: use delete io without validation
 #' @returns tibble
 #' @export
 edav_io <- function(

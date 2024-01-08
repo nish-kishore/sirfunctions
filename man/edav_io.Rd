@@ -6,19 +6,25 @@
 \usage{
 edav_io(
   io,
-  file_loc,
+  default_dir = "GID/PEB/SIR",
+  file_loc = NULL,
   obj = NULL,
-  azcontainer = suppressMessages(get_azure_storage_connection())
+  azcontainer = suppressMessages(get_azure_storage_connection()),
+  force_delete = F
 )
 }
 \arguments{
 \item{io}{str: "read", "write", "delete" or "list"}
+
+\item{default_dir}{str: "GID/PEB/SIR"}
 
 \item{file_loc}{str: location to "read", "write" or "list"}
 
 \item{obj}{default NULL object to be saved}
 
 \item{azcontainer}{azure container object}
+
+\item{force_delete}{boolean: use delete io without validation}
 }
 \value{
 tibble
