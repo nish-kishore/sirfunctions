@@ -425,7 +425,7 @@ get_all_polio_data <- function(
       raw.data$ctry.pop <-
         edav_io(io = "read",
                 file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
-                  dplyr::pull(file)) |>
+                  dplyr::pull(file), default_dir = NULL) |>
         dplyr::ungroup() |>
         dplyr::filter(year >= 2016)
 
@@ -504,12 +504,12 @@ get_all_polio_data <- function(
 
       polis.cache <- edav_io(io = "read",
                              file_loc = dplyr::filter(dl_table, grepl("cache", file)) |>
-                               dplyr::pull(file)) |>
+                               dplyr::pull(file), default_dir = NULL) |>
         dplyr::mutate(last_sync = as.Date(last_sync))
 
       raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
 
-      raw.data$metadata$processed_time <- edav_io(io = "list", file_loc = file.path(folder, "/polis")) |>
+      raw.data$metadata$processed_time <- edav_io(io = "list", file_loc = file.path(folder, "/polis"), default_dir = NULL) |>
         dplyr::filter(grepl("positives", name)) |>
         dplyr::select("ctime" = "lastModified") |>
         dplyr::mutate(ctime = as.Date(ctime)) |>
