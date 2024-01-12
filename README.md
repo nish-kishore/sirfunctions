@@ -1,48 +1,35 @@
 # SIR Functions
 
-## Description 
-Key functions used by the SIR team 
+## Description
+Key functions used by the SIR team
 
 ## Usage
-First make sure you have `devtools` installed. Then run the following command: 
+First make sure you have `devtools` installed. Then run the following command:
 
 ```
 devtools::install_github("nish-kishore/sirfunctions")
 ```
 
-After you can use any function developed in this package using 
+After you can use any function developed in this package using
 
 ```
 sirfunctions::{function}
 ```
 
-for example: 
+for example:
 
 ```
-sirfunctions::hello_sir()
+sirfunctions::edav_io(io = "list")
 ```
+## Release Schedule
+- V1 to be released 2/1/2024, you can track progress [here](https://github.com/nish-kishore/sirfunctions/milestone/2).
 
-## Development 
-In the `R` folder create a new Rscript with the same name as your function. 
-Below you will find the required `roxygen` headers.
-Ensure that the function has the follow `roxygen` headers:
+Key features to be released include:
 
-```
-#'Hello SIR Function
-#'
-#' @name hello_sir
-#' @description An example function
-#' @keywords sir
-#' @returns Hello world
-#' @export
-#' @examples
-#' hello_sir()
+1. Set-up of GitHub Flow
+2.  User documentation
+3. Read/Write MS Sharepoint
+4. Send email to MS Outlook
+5. Send message to MS Teams
 
-hello_sir <- function(){
-  print("Hello SIR!")
-}
-
-
-```
-
- 
+- V1.1 scheduled for 3/1/2024
