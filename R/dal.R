@@ -15,10 +15,20 @@ get_azure_storage_connection <- function(){
     auth_type = "authorization_code"
   )
 
-  token_hash <- AzureAuth::list_azure_tokens() |> names()
-  token_hash <- token_hash[1]
-  mytoken <- AzureAuth::load_azure_token(token_hash)
+  cached_tokens <- AzureAuth::list_azure_tokens()
+  token_hash_names <- AzureAuth::list_azure_tokens() |> names()
 
+  mytoken <- lapply(1:length(token_hash_names), function(x){
+    dplyr::tibble(
+      "token" = token_hash_names[x],
+      "resource" = cached_tokens[[token_hash_names[x]]]$resource
+    )
+    }) |>
+    dplyr::bind_rows() |>
+    dplyr::filter(resource == "https://storage.azure.com/") |>
+    head(1) |>
+    dplyr::pull(token) |>
+    AzureAuth::load_azure_token()
 
   endptoken <- AzureStor::storage_endpoint(endpoint = "https://davsynapseanalyticsdev.dfs.core.windows.net", token = mytoken)
 
