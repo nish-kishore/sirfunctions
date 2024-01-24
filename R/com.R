@@ -4,7 +4,7 @@
 #'
 #' @description
 #' Helper function to send message to validated MS Teams interface
-#' @import Microsoft365R
+#' @import Microsoft365R AzureAuth
 #' @param msg str: message to be sent
 #' @param team_id str: Team id, defaults to "CGH-GID-PEB-SIR"
 #' @param channel str: channel where message should be sent
@@ -17,7 +17,7 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
   channel <- team$get_channel(channel)
 
   channel$send_message(body = msg,
-                       attachments = NULL)
+                       attachments = attach)
 
 }
 
@@ -25,7 +25,7 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #'
 #' @description
 #' Helper function to upload file to MS Sharepoint
-#' @import Microsoft365R
+#' @import Microsoft365R AzureAuth
 #' @param upload str: local path of files to be uploaded
 #' @param sp_folder str: location in sharepoint to upload file
 #' @param site str: Sharepoint site location, defaults to "CGH-GID-PEB"
@@ -33,10 +33,37 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #' @returns Success or error message
 upload_to_sharepoint <- function(upload, sp_folder, site = "CGH-GID-PEB-SIR", drive = "Documents"){
 
-  site <- get_sharepoint_site(site)
+  tokens <- AzureAuth::list_azure_tokens()
 
-  drv <- site$get_drive(drive)
+  token_hash_names <- tokens |> names()
 
-  drv$upload_file(src = upload, dest = sp_folder)
+  token_list <- lapply(1:length(token_hash_names), function(x){
+
+    obj <- tokens[[token_hash_names[x]]]
+
+    dplyr::tibble(
+      "token" = token_hash_names[x],
+      "resource" = obj$resource,
+      "scope" = obj$scope
+    )
+  }) |>
+    dplyr::bind_rows() |>
+    filter(grepl("Sites.ReadWrite.All", scope))
+
+  if(nrow(token_list == 0)){
+    site <- Microsoft365R::get_sharepoint_site(site)
+
+    drv <- site$get_drive(drive)
+
+    drv$upload_file(src = upload, dest = sp_folder)
+  }else{
+    site <- Microsoft365R::get_sharepoint_site(site, token = tokens[[pull(token_list, token)]])
+
+    drv <- site$get_drive(drive)
+
+    drv$upload_file(src = upload, dest = sp_folder)
+  }
+
+
 
 }
