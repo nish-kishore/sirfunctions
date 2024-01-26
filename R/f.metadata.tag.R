@@ -17,10 +17,15 @@ f.metadata.tag <- function(object_type,
         "Data downloaded from POLIS: ",
         metadata
       )
-  }
-
-  if(object_type == "table"){
-
     }
   }
+  if(object_type == "table"){
+    object$footer$dataset[1,] <- paste0(
+      object$table$dataset[1,1],
+      "\n",
+      metadata
+    )
+  }
+  return(object)
 }
+
