@@ -8,10 +8,15 @@ f.metadata.tag <- function(object_type,
 
   if(object_type == "figure"){
     if(is.null(object$labels$caption)){
-
+      object$labels$caption <- paste0("Data downloaded from POLIS: ",
+                                      metadata)
     }else{
-
-
+      object$labels$caption <- paste0(
+        object$labels$caption,
+        "\n",
+        "Data downloaded from POLIS: ",
+        metadata
+      )
   }
 
   if(object_type == "table"){
