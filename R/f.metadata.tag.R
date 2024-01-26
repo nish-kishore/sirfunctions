@@ -7,10 +7,15 @@ f.metadata.tag <- function(object_type,
                            metadata = raw.data$metadata$download_time){
 
   if(object_type == "figure"){
+    if(is.null(object$labels$caption)){
+
+    }else{
+
 
   }
 
   if(object_type == "table"){
 
+    }
   }
 }
