@@ -20,11 +20,7 @@ f.metadata.tag <- function(object_type,
     }
   }
   if(object_type == "table"){
-    object$footer$dataset[1,] <- paste0(
-      object$table$dataset[1,1],
-      "\n",
-      metadata
-    )
+    object <- add_footer_lines(object, paste0("Data Downloaded from POLIS: ", raw.data$metadata$download_time))
   }
   return(object)
 }
