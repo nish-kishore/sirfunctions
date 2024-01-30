@@ -8,6 +8,10 @@ f.metadata.tag <- function(object_type,
                            object,
                            metadata = raw.data$metadata$download_time){
 
+  if(!exists(raw.data)){
+    stop()
+  }else{
+
   if(object_type == "figure"){
     if(is.null(object$labels$caption)){
       object$labels$caption <- paste0("Data downloaded from POLIS: ",
@@ -23,6 +27,7 @@ f.metadata.tag <- function(object_type,
   }
   if(object_type == "table"){
     object <- flextable::add_footer_lines(object, paste0("Data Downloaded from POLIS: ", raw.data$metadata$download_time))
+    }
   }
   return(object)
 }
