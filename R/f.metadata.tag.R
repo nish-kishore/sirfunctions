@@ -1,11 +1,9 @@
 #' @description add metadata tags to figures and tables
 #' @import flextable
-#' @param object_type str: specify whether a "figure" or a "table"
 #' @param object obj: the figure or table to add metadata to
 #' @param metadata raw.data$metadata$download_time
 #' @export
-f.metadata.tag <- function(object_type,
-                           object,
+f.metadata.tag <- function(object,
                            metadata = raw.data$metadata$download_time){
 
   if(!exists(raw.data)){
