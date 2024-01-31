@@ -6,10 +6,9 @@
 f.metadata.tag <- function(object,
                            metadata = raw.data$metadata$download_time){
 
-  object.class <- data.frame(class(object))
 
   if(exists("raw.data")){
-    if(grepl("ggplot", object.class$class.object.)){
+    if("ggplot" %in% class(object)){
       if(is.null(object$labels$caption)){
         object$labels$caption <- paste0("Data downloaded from POLIS: ",
                                         metadata)
@@ -22,7 +21,7 @@ f.metadata.tag <- function(object,
         )
       }
     }
-    if(class(object) == "flextable"){
+    if("flextable" %in% class(object)){
       object <- flextable::add_footer_lines(object, paste0("Data Downloaded from POLIS: ", raw.data$metadata$download_time))
     }
   }else{
