@@ -16,6 +16,7 @@
 #' @param spatial.scale chr: "prov" or "dist" or "ctry"
 #' @param pending boolean: default TRUE
 #' @param rolling boolean: default FALSE
+#' @param sp_continuity_validation boolean: default TRUE
 #' @returns tibble
 #' @export
 f.npafp.rate.01 <- function(
@@ -25,7 +26,8 @@ f.npafp.rate.01 <- function(
     end.date,
     spatial.scale,
     pending = T,
-    rolling = F
+    rolling = F,
+    sp_continuity_validation = T
     ){
 
   #file names
@@ -90,8 +92,10 @@ f.npafp.rate.01 <- function(
       filter(freq < length(year(start.date):year(end.date))) |>
       pull(adm0guid)
 
-    pop.data <- filter(pop.data, !adm0guid %in% incomplete.adm)
-    afp.data <- filter(afp.data, !adm0guid %in% incomplete.adm)
+    if(sp_continuity_validation){
+      pop.data <- filter(pop.data, !adm0guid %in% incomplete.adm)
+      afp.data <- filter(afp.data, !adm0guid %in% incomplete.adm)
+    }
 
   }
 
@@ -117,8 +121,10 @@ f.npafp.rate.01 <- function(
       filter(freq < length(year(start.date):year(end.date))) |>
       pull(adm1guid)
 
-    pop.data <- filter(pop.data, !adm1guid %in% incomplete.adm)
-    afp.data <- filter(afp.data, !adm1guid %in% incomplete.adm)
+    if(sp_continuity_validation){
+      pop.data <- filter(pop.data, !adm1guid %in% incomplete.adm)
+      afp.data <- filter(afp.data, !adm1guid %in% incomplete.adm)
+    }
 
   }
 
@@ -138,18 +144,27 @@ f.npafp.rate.01 <- function(
       filter(freq < length(year(start.date):year(end.date))) |>
       pull(adm2guid)
 
-    pop.data <- filter(pop.data, !adm2guid %in% incomplete.adm)
-    afp.data <- filter(afp.data, !adm2guid %in% incomplete.adm)
+    if(sp_continuity_validation){
+      pop.data <- filter(pop.data, !adm2guid %in% incomplete.adm)
+      afp.data <- filter(afp.data, !adm2guid %in% incomplete.adm)
+    }
+
 
   }
 
-  if(length(incomplete.adm) > 0){
+  if(length(incomplete.adm) > 0 & sp_continuity_validation){
 
     readline(paste0("The following GUIDS at the ", spatial.scale,
                    " were not valid across the temporal scale:\n",
                    paste0(incomplete.adm, collapse = ", "),
                    "\n Please hit [ENTER] to continue"))
 
+  }else{
+    if(length(incomplete.adm) > 0){
+      paste0("The following GUIDS at the ", spatial.scale,
+             " were not valid across the temporal scale:\n",
+             paste0(incomplete.adm, collapse = ", "))
+    }
   }
 
   #Warning message about non-overlapping dates
