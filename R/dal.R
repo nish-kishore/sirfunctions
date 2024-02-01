@@ -564,6 +564,10 @@ get_all_polio_data <- function(
         dplyr::slice(1) |>
         dplyr::pull(vaccine.type)
 
+      raw.data$metadata$most_recent_vdpv_class_change_date <- raw.data$pos$vdpvclassificationchangedate |>
+        lubridate::as_date() |>
+        max(na.rm = T)
+
       rm(polis.cache)
 
       cli::cli_process_done()
