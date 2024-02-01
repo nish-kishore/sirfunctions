@@ -25,7 +25,7 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #'
 #' @description
 #' Helper function to upload file to MS Sharepoint
-#' @import Microsoft365R AzureAuth
+#' @import Microsoft365R AzureAuth dplyr
 #' @param file_to_upload str: local path of files to be uploaded
 #' @param sharepoint_file_loc str: location in sharepoint to upload file
 #' @param site str: Sharepoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"
@@ -68,7 +68,7 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 #'
 #' @description
 #' Helper function to send an email through Outlook from R
-#' @import Microsoft365R AzureAuth blastula
+#' @import Microsoft365R AzureAuth blastula dplyr
 #' @param title str: Subject of message to be sent
 #' @param body str: long string of body of message to be sent
 #' @param recipient str: semicolon separated list of recipients
@@ -97,7 +97,7 @@ send_outlook_email <- function(title, body, recipient, attachment = NULL){
     outl <- Microsoft365R::get_business_outlook()
 
   }else{
-    outl <- Microsoft365R::get_business_outlook(token = tokens[[pull(token_list, token)]])
+    outl <- Microsoft365R::get_business_outlook(token = tokens[[dplyr::pull(token_list, token)]])
 
   }
 
