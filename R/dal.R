@@ -41,9 +41,9 @@ get_azure_storage_connection <- function(){
 #'
 #' @description Helper function read and write key data to EDAV
 #' @import cli AzureStor
-#' @param io str: "read", "write", "delete" or "list"
+#' @param io str: "read", "write", "delete", "exists", "create" or "list"
 #' @param default_dir str: "GID/PEB/SIR"
-#' @param file_loc str: location to "read", "write" or "list"
+#' @param file_loc str: location to "read", "write", "exists", "create or "list"
 #' @param obj default NULL object to be saved
 #' @param azcontainer azure container object
 #' @param force_delete boolean: use delete io without validation
@@ -68,10 +68,10 @@ edav_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list")
+  opts <- c("read", "write", "delete", "list", "exists", "create")
 
   if(!io %in% opts){
-    stop("io: must be 'read', 'write', 'delete' or 'list'")
+    stop("io: must be 'read', 'write', 'exists','create', 'delete' or 'list'")
   }
 
   if(io == "write" & is.null(obj)){
