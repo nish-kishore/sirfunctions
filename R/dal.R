@@ -6,13 +6,19 @@
 #'
 #' @description Validate connection to CDC EDAV
 #' @import AzureStor AzureAuth utils dplyr
+#' @param app_id str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
+#' @param auth str: authorization type defaults to "authorization_code"
 #' @returns azure container verification
-get_azure_storage_connection <- function(){
+#' @export
+get_azure_storage_connection <- function(
+    app_id = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+    auth = "authorization_code"
+  ){
   mytoken <- AzureAuth::get_azure_token(
     resource = "https://storage.azure.com/",
     tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
-    app = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
-    auth_type = "authorization_code"
+    app = app_id,
+    auth_type = auth
   )
 
   cached_tokens <- AzureAuth::list_azure_tokens()
@@ -41,9 +47,9 @@ get_azure_storage_connection <- function(){
 #'
 #' @description Helper function read and write key data to EDAV
 #' @import cli AzureStor
-#' @param io str: "read", "write", "delete", "exists", "create" or "list"
+#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list"
 #' @param default_dir str: "GID/PEB/SIR"
-#' @param file_loc str: location to "read", "write", "exists", "create or "list"
+#' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list"
 #' @param obj default NULL object to be saved
 #' @param azcontainer azure container object
 #' @param force_delete boolean: use delete io without validation
@@ -68,10 +74,10 @@ edav_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list", "exists", "create")
+  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create")
 
   if(!io %in% opts){
-    stop("io: must be 'read', 'write', 'exists','create', 'delete' or 'list'")
+    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' or 'list'")
   }
 
   if(io == "write" & is.null(obj)){
@@ -89,8 +95,12 @@ edav_io <- function(
 
   }
 
-  if(io == "exists"){
+  if(io == "exists.dir"){
     return(AzureStor::storage_dir_exists(azcontainer, file_loc))
+  }
+
+  if(io == "exists.file"){
+    return(AzureStor::storage_file_exists(azcontainer, file_loc))
   }
 
   if(io == "create"){
