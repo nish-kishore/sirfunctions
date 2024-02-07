@@ -20,7 +20,7 @@ utils::globalVariables(c(
   'iris', 'lat', 'lon', 'mcv1', 'paralysis.asymmetric', 'paralysis.onset.fever', 'paralysis.rapid.progress',
   'person.sex', 'place.admin.0', 'place.admin.1','place.admin.2', 'surveillancetypename',
   'under5_pop','yr.end','yronset', 'yr.st', 'name', 'lastModified', 'size', 'last_sync', 'ctime', 'last_user',
-  'sub.activity.start.date', 'sia.code', 'vaccine.type'
+  'sub.activity.start.date', 'sia.code', 'vaccine.type', 'resource', 'token'
 ))
 
 # "ADM0_NAME adequacy.final adm0guid adm1guid adm2guid afp.cases
