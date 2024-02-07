@@ -6,19 +6,13 @@
 #'
 #' @description Validate connection to CDC EDAV
 #' @import AzureStor AzureAuth utils dplyr
-#' @param app_id str: application ID being used, default "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
-#' @param auth str: Authorization type, defaults to "authorization_code"
 #' @returns azure container verification
-#' @export
-get_azure_storage_connection <- function(
-    app_id = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
-    auth = "authorization_code"
-  ){
+get_azure_storage_connection <- function(){
   mytoken <- AzureAuth::get_azure_token(
     resource = "https://storage.azure.com/",
     tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
-    app = app_id,
-    auth_type = auth
+    app = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+    auth_type = "authorization_code"
   )
 
   cached_tokens <- AzureAuth::list_azure_tokens()
