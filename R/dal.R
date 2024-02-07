@@ -74,10 +74,10 @@ edav_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create")
+  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create.dir")
 
   if(!io %in% opts){
-    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' or 'list'")
+    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create.dir', 'delete' or 'list'")
   }
 
   if(io == "write" & is.null(obj)){
@@ -103,7 +103,7 @@ edav_io <- function(
     return(AzureStor::storage_file_exists(azcontainer, file_loc))
   }
 
-  if(io == "create"){
+  if(io == "create.dir"){
     tryCatch(
       {AzureStor::create_storage_dir(azcontainer, file_loc)
         print("Directory created!")},
