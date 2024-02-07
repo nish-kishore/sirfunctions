@@ -47,7 +47,7 @@ get_azure_storage_connection <- function(
 #'
 #' @description Helper function read and write key data to EDAV
 #' @import cli AzureStor
-#' @param io str: "read", "write", "delete", "exists", "create" or "list"
+#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list"
 #' @param default_dir str: "GID/PEB/SIR"
 #' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list"
 #' @param obj default NULL object to be saved
