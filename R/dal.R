@@ -5,7 +5,7 @@
 #' Validate connection to EDAV
 #'
 #' @description Validate connection to CDC EDAV
-#' @import AzureStor AzureAuth
+#' @import AzureStor AzureAuth utils dplyr
 #' @returns azure container verification
 get_azure_storage_connection <- function(){
   mytoken <- AzureAuth::get_azure_token(
@@ -26,7 +26,7 @@ get_azure_storage_connection <- function(){
     }) |>
     dplyr::bind_rows() |>
     dplyr::filter(resource == "https://storage.azure.com/") |>
-    head(1) |>
+    utils::head(1) |>
     dplyr::pull(token) |>
     AzureAuth::load_azure_token()
 
