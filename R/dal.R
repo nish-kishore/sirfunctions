@@ -49,7 +49,7 @@ get_azure_storage_connection <- function(
 #' @import cli AzureStor
 #' @param io str: "read", "write", "delete", "exists", "create" or "list"
 #' @param default_dir str: "GID/PEB/SIR"
-#' @param file_loc str: location to "read", "write", "exists", "create or "list"
+#' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list"
 #' @param obj default NULL object to be saved
 #' @param azcontainer azure container object
 #' @param force_delete boolean: use delete io without validation
@@ -74,10 +74,10 @@ edav_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list", "exists", "create")
+  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create")
 
   if(!io %in% opts){
-    stop("io: must be 'read', 'write', 'exists','create', 'delete' or 'list'")
+    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' or 'list'")
   }
 
   if(io == "write" & is.null(obj)){
@@ -95,8 +95,12 @@ edav_io <- function(
 
   }
 
-  if(io == "exists"){
+  if(io == "exists.dir"){
     return(AzureStor::storage_dir_exists(azcontainer, file_loc))
+  }
+
+  if(io == "exists.file"){
+    return(AzureStor::storage_file_exists(azcontainer, file_loc))
   }
 
   if(io == "create"){
