@@ -89,6 +89,19 @@ edav_io <- function(
 
   }
 
+  if(io == "exists"){
+    return(AzureStor::storage_dir_exists(azcontainer, file_loc))
+  }
+
+  if(io == "create"){
+    tryCatch(
+      {AzureStor::create_storage_dir(azcontainer, file_loc)
+        print("Directory created!")},
+      error = function(e) {stop("Directory creation failed")}
+    )
+
+  }
+
   if(io == "read"){
 
     if(!AzureStor::storage_file_exists(azcontainer, file_loc)){
