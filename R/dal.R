@@ -254,12 +254,17 @@ test_EDAV_connection <- function(
 #' @param folder str: location of the CDC pre-processed endpoint
 #' @param afp.trunc boolean: default F, if T returns the afp linelist since 2019
 #' @param force.new.run boolean: default F, if T will always run fully and cache
+#' @param default.subset.year int: year after which data will be subset
+#' @param skip.verification boolean: if you choose not to truncate the afp data
+#' this will skip the data size user verification
 #' @returns named list containing polio data that is relevant to CDC
 #' @export
 get_all_polio_data <- function(
     folder = "GID/PEB/SIR/Data/",
     afp.trunc = F,
-    force.new.run = F
+    force.new.run = F,
+    default.subset.year = 2016,
+    skip.verification = F
 ){
 
   prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
@@ -290,7 +295,7 @@ get_all_polio_data <- function(
 
     download_metrics <- test_EDAV_connection(return_list = T)
 
-    if(!afp.trunc){
+    if(!afp.trunc & !skip.verification){
       x <- readline("'afp.trunc' is FALSE, downloading this may take a while. Do you want to download the smaller one instead? [Y/N]: ")
 
       if(tolower(x) == "y"){
@@ -333,7 +338,11 @@ get_all_polio_data <- function(
       "{prettyunits::pretty_sec(download_time)}"
     ))
 
-    x <- readline("Downloading the full AFP linelist can take a while so it's best to do other work while you run this in the background. Do you want to start download?  [Y/N]: ")
+    if(!skip.verification){
+      x <- readline("Downloading the full AFP linelist can take a while so it's best to do other work while you run this in the background. Do you want to start download?  [Y/N]: ")
+    }else{
+      x <- "y"
+    }
 
     if(grepl("y", tolower(x), fixed = T)){
 
@@ -342,16 +351,16 @@ get_all_polio_data <- function(
       raw.data <- list()
 
       cli::cli_process_start("1) Loading country shape files from EDAV")
-      raw.data$global.ctry <- load_clean_ctry_sp()
+      raw.data$global.ctry <- load_clean_ctry_sp(st.year = default.subset.year)
       cli::cli_process_done()
 
 
       cli::cli_process_start("2) Loading province shape files from EDAV")
-      raw.data$global.prov <- load_clean_prov_sp()
+      raw.data$global.prov <- load_clean_prov_sp(st.year = default.subset.year)
       cli::cli_process_done()
 
       cli::cli_process_start("3) Loading district shape files from EDAV")
-      raw.data$global.dist <- load_clean_dist_sp()
+      raw.data$global.dist <- load_clean_dist_sp(st.year = default.subset.year)
       cli::cli_process_done()
 
       cli::cli_process_start("4) Loading AFP line list data from EDAV (This file is almost 3GB and can take a while)")
@@ -360,7 +369,7 @@ get_all_polio_data <- function(
                 file_loc = dplyr::filter(dl_table, grepl("afp", file)) |>
                   dplyr::pull(file), default_dir = NULL) |>
         dplyr::filter(surveillancetypename == "AFP") |>
-        dplyr::filter(yronset >= 2016) |>
+        dplyr::filter(yronset >= default.subset.year) |>
         dplyr::mutate(
           cdc.classification.all2 = ifelse(
             final.cell.culture.result == "Not received in lab" &
@@ -382,7 +391,7 @@ get_all_polio_data <- function(
       cli::cli_process_start("Processing AFP data for analysis")
 
       raw.data$afp.epi <- raw.data$afp |>
-        dplyr::filter(yronset >= 2016) |>
+        dplyr::filter(yronset >= default.subset.year) |>
         dplyr::mutate(epi.week = epiweek(dateonset)) |>
         dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
         dplyr::summarise(afp.cases = n()) |>
@@ -436,21 +445,21 @@ get_all_polio_data <- function(
                 file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
                   dplyr::pull(file), default_dir = NULL) |>
         dplyr::ungroup() |>
-        dplyr::filter(year >= 2016)
+        dplyr::filter(year >= default.subset.year)
 
       raw.data$prov.pop <-
         edav_io(io = "read",
                 file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
                   dplyr::pull(file), default_dir = NULL) |>
         dplyr::ungroup() |>
-        dplyr::filter(year >= 2016)
+        dplyr::filter(year >= default.subset.year)
 
       raw.data$ctry.pop <-
         edav_io(io = "read",
                 file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
                   dplyr::pull(file), default_dir = NULL) |>
         dplyr::ungroup() |>
-        dplyr::filter(year >= 2016)
+        dplyr::filter(year >= default.subset.year)
 
       cli::cli_process_done()
 
@@ -478,7 +487,8 @@ get_all_polio_data <- function(
               under5_pop
             ),
           by = c("ctry", "prov", "dist", "year")
-        )
+        ) |>
+        dplyr::filter(year >= default.subset.year)
 
       cli::cli_process_done()
 
@@ -487,28 +497,32 @@ get_all_polio_data <- function(
       raw.data$es <-
         edav_io(io = "read",
                 file_loc = dplyr::filter(dl_table, grepl("/es_2001", file)) |>
-                  dplyr::pull(file), default_dir = NULL)
+                  dplyr::pull(file), default_dir = NULL) |>
+        dplyr::filter(collect.year >= default.subset.year)
       cli::cli_process_done()
 
       cli::cli_process_start("8) Loading SIA data from EDAV")
       raw.data$sia <-
         edav_io(io = "read",
                 file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
-                  dplyr::pull(file), default_dir = NULL)
+                  dplyr::pull(file), default_dir = NULL) |>
+        dplyr::filter(yr.sia >= default.subset.year)
       cli::cli_process_done()
 
       cli::cli_process_start("9) Loading all positives from EDAV")
       raw.data$pos <-
         edav_io(io = "read",
                 file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
-                  dplyr::pull(file), default_dir = NULL)
+                  dplyr::pull(file), default_dir = NULL) |>
+        dplyr::filter(yronset >= default.subset.year)
       cli::cli_process_done()
 
       cli::cli_process_start("10) Loading other surveillance linelist from EDAV")
       raw.data$other <-
         edav_io(io = "read",
                 file_loc = dplyr::filter(dl_table, grepl("/other", file)) |>
-                  dplyr::pull(file), default_dir = NULL)
+                  dplyr::pull(file), default_dir = NULL) |>
+        dplyr::filter(yronset >= default.subset.year)
       cli::cli_process_done()
 
       cli::cli_process_start("11) Loading road network data")
@@ -581,6 +595,8 @@ get_all_polio_data <- function(
         lubridate::as_date() |>
         max(na.rm = T)
 
+      raw.data$metadata$default_subset_year <- default.subset.year
+
       rm(polis.cache)
 
       cli::cli_process_done()
@@ -593,9 +609,9 @@ get_all_polio_data <- function(
 
   }
 
-  print(fresh.cache)
-  print(afp.trunc)
-  if(!fresh.cache & !afp.trunc){
+  #print(fresh.cache)
+  #print(afp.trunc)
+  if(!fresh.cache & !afp.trunc & default.subset.year == 2016){
     cli::cli_process_start("13) Caching processed data")
     edav_io(io = "write", file_loc = file.path(folder, "/analytic/raw.data.rds"), obj = raw.data, default_dir = NULL)
     cli::cli_process_done()
