@@ -498,7 +498,7 @@ get_all_polio_data <- function(
         edav_io(io = "read",
                 file_loc = dplyr::filter(dl_table, grepl("/es_2001", file)) |>
                   dplyr::pull(file), default_dir = NULL) |>
-        dplyr::filter(collect.year >= default.subset.year)
+        dplyr::filter(collect.yr >= default.subset.year)
       cli::cli_process_done()
 
       cli::cli_process_start("8) Loading SIA data from EDAV")
