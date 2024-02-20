@@ -4,7 +4,15 @@
 \alias{get_azure_storage_connection}
 \title{Validate connection to EDAV}
 \usage{
-get_azure_storage_connection()
+get_azure_storage_connection(
+  app_id = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+  auth = "authorization_code"
+)
+}
+\arguments{
+\item{app_id}{str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46"}
+
+\item{auth}{str: authorization type defaults to "authorization_code"}
 }
 \value{
 azure container verification

@@ -14,11 +14,11 @@ edav_io(
 )
 }
 \arguments{
-\item{io}{str: "read", "write", "delete", "exists", "create" or "list"}
+\item{io}{str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list"}
 
 \item{default_dir}{str: "GID/PEB/SIR"}
 
-\item{file_loc}{str: location to "read", "write", "exists", "create or "list"}
+\item{file_loc}{str: location to "read", "write", "exists.dir", "exists.file", "create" or "list"}
 
 \item{obj}{default NULL object to be saved}
 
