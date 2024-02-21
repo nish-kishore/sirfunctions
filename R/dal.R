@@ -4,7 +4,9 @@
 
 #' Validate connection to EDAV
 #'
-#' @description Validate connection to CDC EDAV
+#' @description Generate token which connects to CDC EDAV resources and
+#' validates that the individual still has access. The current tenant ID
+#' is hard coded for CDC resources.
 #' @import AzureStor AzureAuth utils dplyr
 #' @param app_id str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
 #' @param auth str: authorization type defaults to "authorization_code"
@@ -271,13 +273,15 @@ test_EDAV_connection <- function(
 #' @param folder str: location of the CDC pre-processed endpoint
 #' @param force.new.run boolean: default F, if T will run recent data and cache
 #' @param recreate.static.files boolean: default F, if T will run all data and cache
+#' @param attach.spatial.data boolean: default T, adds spatial data to downloaded object
 #' @returns named list containing polio data that is relevant to CDC
 #' @export
 get_all_polio_data <- function(
     size = "small",
     folder = "GID/PEB/SIR/Data/",
     force.new.run = F,
-    recreate.static.files = F
+    recreate.static.files = F,
+    attach.spatial.data = T
 ){
 
   #check to see that size parameter is appropriate
@@ -300,6 +304,9 @@ get_all_polio_data <- function(
       force.new.run <- F
       create.cache <- F
     }
+  }else{
+    force.new.run <- T
+    create.cache <- T
   }
 
   if(recreate.static.files){
@@ -359,6 +366,20 @@ get_all_polio_data <- function(
 
     cli::cli_process_done()
 
+    if(attach.spatial.data){
+      cli::cli_process_start("Downloading and attaching spatial data")
+      spatial.data <- edav_io(io = "read", file_loc = file.path(folder, paste0("analytic/spatial.data.rds")))
+
+      raw.data$global.ctry <- spatial.data$global.ctry
+      raw.data$global.prov <- spatial.data$global.prov
+      raw.data$global.dist <- spatial.data$global.dist
+      raw.data$roads <- spatial.data$roads
+      raw.data$cities <- spatial.data$cities
+
+      cli::cli_process_done()
+    }
+
+
     return(raw.data)
 
   }else{
@@ -402,18 +423,19 @@ get_all_polio_data <- function(
     cli::cli_h1("Downloading POLIS Data")
 
     raw.data <- list()
+    spatial.data <- list()
 
     cli::cli_process_start("1) Loading country shape files from EDAV")
-    raw.data$global.ctry <- load_clean_ctry_sp()
+    spatial.data$global.ctry <- load_clean_ctry_sp()
     cli::cli_process_done()
 
 
     cli::cli_process_start("2) Loading province shape files from EDAV")
-    raw.data$global.prov <- load_clean_prov_sp()
+    spatial.data$global.prov <- load_clean_prov_sp()
     cli::cli_process_done()
 
     cli::cli_process_start("3) Loading district shape files from EDAV")
-    raw.data$global.dist <- load_clean_dist_sp()
+    spatial.data$global.dist <- load_clean_dist_sp()
     cli::cli_process_done()
 
     cli::cli_process_start("4) Loading AFP line list data from EDAV (This file is almost 3GB and can take a while)")
@@ -569,13 +591,13 @@ get_all_polio_data <- function(
     cli::cli_process_done()
 
     cli::cli_process_start("11) Loading road network data")
-    raw.data$roads <- edav_io(io = "read",
+    spatial.data$roads <- edav_io(io = "read",
                               file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
                                 dplyr::pull(file), default_dir = NULL)
     cli::cli_process_done()
 
     cli::cli_process_start("12) Loading city spatial data")
-    raw.data$cities <- edav_io(io = "read",
+    spatial.data$cities <- edav_io(io = "read",
                                file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
                                  dplyr::pull(file), default_dir = NULL)
     cli::cli_process_done()
@@ -673,6 +695,12 @@ get_all_polio_data <- function(
         default_dir = NULL
       )
     }
+
+    edav_io(
+      io = "write",
+      file_loc = file.path(folder, paste0("analytic/spatial.data.rds")),
+      obj = spatial.data, default_dir = NULL
+      )
 
     cli::cli_process_done()
   }
@@ -1134,10 +1162,6 @@ split_concat_raw_data <- function(
     raw.data.2001.2016 = NULL
   ){
 
-  #temp
-  split.years <- c(2000, 2016, 2019)
-  #temp
-
   actions <- c("concat", "split")
 
   if(!action %in% actions){
@@ -1146,9 +1170,9 @@ split_concat_raw_data <- function(
 
   current.year <- lubridate::year(Sys.time())
 
-  key.tables <- c("afp", "afp.epi", "para.case", "dist.pop", "es", "sia", "pos", "other")
+  key.tables <- c("afp", "afp.epi", "para.case", "es", "sia", "pos", "other", "dist.pop", "prov.pop", "ctry.pop", "coverage")
 
-  static.tables <- c("global.ctry", "global.prov", "global.dist", "prov.pop", "ctry.pop", "coverage", "roads", "cities", "metadata")
+  static.tables <- c("metadata")
 
   if(action == "split"){
 
@@ -1178,7 +1202,7 @@ split_concat_raw_data <- function(
 
     key.table.vars <- tibble(
       "data" = key.tables,
-      "year.var" = c(rep("yronset",3),"year", "collect.yr", "yr.sia", rep("yronset",2))
+      "year.var" = c(rep("yronset",3), "collect.yr", "yr.sia", rep("yronset",2), rep("year", 4))
     )
 
 
