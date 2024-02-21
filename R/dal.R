@@ -538,17 +538,17 @@ get_all_polio_data <- function(
       edav_io(io = "read",
               file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
                 dplyr::pull(file), default_dir = NULL) |>
-      select(ctry = adm0_name,
+      dplyr::select(ctry = adm0_name,
              prov = adm1_name,
              dist = adm2_name,
              year,
              dpt1,
              dpt3) |>
-      left_join(
+      dplyr::left_join(
         edav_io(io = "read",
                 file_loc = dplyr::filter(dl_table, grepl("mcv1", file)) |>
                   dplyr::pull(file), default_dir = NULL) |>
-          select(
+          dplyr::select(
             ctry = adm0_name,
             prov = adm1_name,
             dist = adm2_name,
@@ -680,18 +680,18 @@ get_all_polio_data <- function(
     current.year <- lubridate::year(Sys.time())
 
     out_files <- out$split.years |>
-      mutate(file_name = ifelse(grepl(current.year, tag),'recent', stringr::str_replace_all(tag, "-", ".")),
+      dplyr::mutate(file_name = ifelse(grepl(current.year, tag),'recent', stringr::str_replace_all(tag, "-", ".")),
              file_name = paste0("raw.data.",file_name,".rds"))
 
     if(!recreate.static.files){
-      out_files <- out_files |> filter(grepl("recent", file_name))
+      out_files <- out_files |> dplyr::filter(grepl("recent", file_name))
     }
 
     for(i in 1:nrow(out_files)){
       edav_io(
         io = "write",
-        file_loc = file.path(folder, paste0("analytic/", pull(out_files[i, ], file_name))),
-        obj = out[[pull(out_files[i, ], tag)]],
+        file_loc = file.path(folder, paste0("analytic/", dplyr::pull(out_files[i, ], file_name))),
+        obj = out[[dplyr::pull(out_files[i, ], tag)]],
         default_dir = NULL
       )
     }
@@ -1189,7 +1189,7 @@ split_concat_raw_data <- function(
     }
 
     split.years <- lapply(1:(length(split.years)-1), function(x){
-      tibble(
+      dplyr::tibble(
         start.yr = split.years[x],
         end.yr = ifelse(
           split.years[x + 1] == current.year,
@@ -1197,8 +1197,8 @@ split_concat_raw_data <- function(
           split.years[x + 1] - 1)
         )
     }) |>
-      bind_rows() |>
-      mutate(tag = paste0(start.yr,"-",end.yr))
+      dplyr::bind_rows() |>
+      dplyr::mutate(tag = paste0(start.yr,"-",end.yr))
 
     key.table.vars <- tibble(
       "data" = key.tables,
@@ -1212,11 +1212,11 @@ split_concat_raw_data <- function(
 
       for(j in 1:nrow(key.table.vars)){
 
-        out[[pull(split.years[i, ], tag)]][[key.table.vars[j, ] |> pull(data)]] <-
-          raw.data.all[[key.table.vars[j, ] |> pull(data)]] |>
+        out[[dplyr::pull(split.years[i, ], tag)]][[key.table.vars[j, ] |> dplyr::pull(data)]] <-
+          raw.data.all[[key.table.vars[j, ] |> dplyr::pull(data)]] |>
           dplyr::filter(
-            !!sym(key.table.vars[j, ] |> pull(year.var)) >= pull(split.years[i, ], start.yr) &
-              !!sym(key.table.vars[j, ] |> pull(year.var)) <= pull(split.years[i, ], end.yr)
+            !!sym(key.table.vars[j, ] |> dplyr::pull(year.var)) >= dplyr::pull(split.years[i, ], start.yr) &
+              !!sym(key.table.vars[j, ] |> dplyr::pull(year.var)) <= dplyr::pull(split.years[i, ], end.yr)
           )
 
 
@@ -1226,7 +1226,7 @@ split_concat_raw_data <- function(
 
       for(k in 1:length(static.tables)){
 
-        out[[pull(split.years[i, ], tag)]][[static.tables[k]]] <-
+        out[[dplyr::pull(split.years[i, ], tag)]][[static.tables[k]]] <-
           raw.data.all[[static.tables[k]]]
 
       }
@@ -1269,7 +1269,7 @@ split_concat_raw_data <- function(
       out[[i]] <- lapply(to.concat, function(x){
         input[[x]][[i]]
       }) |>
-        bind_rows()
+        dplyr::bind_rows()
 
     }
 
