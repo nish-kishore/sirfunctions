@@ -694,7 +694,7 @@ extract_country_data <- function(
     .raw.data = raw.data
 ){
 
-  .country <- stringr::str_trim(.country)
+  .country <- stringr::str_to_upper(stringr::str_trim(.country))
   cli::cli_h1(paste0("--Processing country data for: ", stringr::str_to_title(.country), "--"))
   cli::cli_process_start("1) Subsetting country spatial data")
   ctry.data <- list()
@@ -1124,7 +1124,7 @@ f.yrs.01 <- function(df, yrs) {
 #' @param raw.data.post.2019
 #' @param raw.data.2016.2019
 #' @param raw.data.2001.2016
-#' @returns list of lists or a single contatenated list
+#' @returns list of lists or a single concatenated list
 split_concat_raw_data <- function(
     action,
     split.years = NULL,
