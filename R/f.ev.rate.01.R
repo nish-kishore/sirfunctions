@@ -1,7 +1,7 @@
 #' Calculate EV detection rate function
 #'
 #' @name f.ev.rate.01
-#' @description Function to calcualte the EV detection rate in sites from POLIS
+#' @description Function to calculate the EV detection rate in sites from POLIS
 #' @import dplyr
 #' @import lubridate
 #' @import tibble
