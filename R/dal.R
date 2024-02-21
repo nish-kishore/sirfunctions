@@ -260,8 +260,8 @@ test_EDAV_connection <- function(
 #' Retrieve all pre-processed Polio Data
 #'
 #' @description Download POLIS data from the CDC pre-processed endpoint. By default
-#' this function will return a "small" or recent dataset. This is primarly for data
-#' that is from 2019 onwards. You can specify a "medium" sized datset for data
+#' this function will return a "small" or recent dataset. This is primarily for data
+#' that is from 2019 onwards. You can specify a "medium" sized dataset for data
 #' that is from 2016 onwards. Finally the "large" sized dataset will provide information
 #' from 2001 onwards. Regular pulls form the data will recreate the "small" dataset
 #' when new information is availble and the Data Management Team can force the
@@ -686,14 +686,16 @@ get_all_polio_data <- function(
 #'
 #' @description Extract country specific data from raw data
 #' @import cli dplyr sf stringr
-#' @param .raw.data List of raw data sources
-#' @param .country String of a country name of interest
+#' @param .raw.data list: list of raw data sources
+#' @param .country str: a country name of interest
 #' @export
 extract_country_data <- function(
     .country,
     .raw.data = raw.data
 ){
-  cli::cli_h1(paste0("--Processing country data for: ", .country, "--"))
+
+  .country <- stringr::str_trim(.country)
+  cli::cli_h1(paste0("--Processing country data for: ", stringr::str_to_title(.country), "--"))
   cli::cli_process_start("1) Subsetting country spatial data")
   ctry.data <- list()
   ctry.data$ctry <- .raw.data$global.ctry |>
