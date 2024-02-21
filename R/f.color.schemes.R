@@ -1,7 +1,9 @@
 
 #' Utility function for colors
 #' @description Utility function to return SIR colors
-#' @param type str: type of colors we can return
+#' @param type str: type of colors we can return. Accepted values include:
+#' 'epicurve', 'para.case', 'afp.prov', 'afp.dist', 'pot.comp', 'silence',
+#' 'silence.v2', 'cases', 'es'
 #' @returns list: color sets
 #' @export
 f.color.schemes <- function(type){
