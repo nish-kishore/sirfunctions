@@ -1,5 +1,4 @@
 
-#===========================================================
 #' Function to calculate timeliness of detection
 #'
 #' @name f.timely.detection.01
@@ -14,10 +13,10 @@
 #' classification of AFP cases & ES samples
 #' onset date of AFP cases and collection date of ES samples
 #' date of notification to HQ (date.notification.to.hq),
-#' @param start.date chr: "YYYY-MM-DD"
-#' @param end.date chr: "YYYY-MM-DD"
+#' @param start.date chr: "YYYY-MM-DD" - start date for evaluation
+#' @param end.date chr: "YYYY-MM-DD" - end date for evaluation
 #' @param rolling boolean: default FALSE
-#' @returns list
+#' @returns list of two tibbles with global and sub-global AFP / ES detection timeliness evaluation
 #' @export
 
 f.timely.detection.01 <- function(
