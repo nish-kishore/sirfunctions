@@ -70,7 +70,6 @@ using CDC cleaned AFP data and appropriately matched population data.
 
 ### Helper functions
 
-
 1) `test_EDAV_connection`: Evaluates the speed of connection that users have with the CDC EDAV system. 
 2) `f.color.schemes`: Adds Standard color schemes used in figure creation by the SIR team. 
 3) `f.expand.bbox`: Expands a geographic bounding box generated for maps.
@@ -78,6 +77,7 @@ using CDC cleaned AFP data and appropriately matched population data.
 5) `f.plot.looks`: Adds standard themes used in figure creation by the SIR team. 
 
 ## Release Schedule
+
 - V2 to be released 4/1/2024, you can track progress [here](https://github.com/nish-kishore/sirfunctions/milestone/3).
 
 Key features to be released are in development and will be shared shortly. 
