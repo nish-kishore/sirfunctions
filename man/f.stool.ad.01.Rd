@@ -24,9 +24,9 @@ which includes "NOT-AFP"}
 spatial scale including "year", "adm{0,1,2}guid, and "{ctry/prov/dist}"
 as appropriate}
 
-\item{start.date}{chr: "YYYY-MM-DD"}
+\item{start.date}{chr: "YYYY-MM-DD" - starting date for analysis}
 
-\item{end.date}{chr: "YYYY-MM-DD"}
+\item{end.date}{chr: "YYYY-MM-DD" - ending date for analysis}
 
 \item{spatial.scale}{chr: "prov" or "dist" or "ctry"}
 
@@ -37,7 +37,7 @@ as appropriate}
 \item{rolling}{boolean: Should data be annualized or calculated within the time period alloted}
 }
 \value{
-tibble
+tibble: long format stool adequacy evaluations
 }
 \description{
 creates an adequacy variable - 'missing' parameter defines how

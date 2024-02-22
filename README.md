@@ -78,7 +78,7 @@ using CDC cleaned AFP data and appropriately matched population data.
 
 ## Release Schedule
 
-- V2 to be released 4/1/2024, you can track progress [here](https://github.com/nish-kishore/sirfunctions/milestone/3).
+- V1.1 to be released 4/1/2024, you can track progress [here](https://github.com/nish-kishore/sirfunctions/milestone/3).
 
 Key features to be released are in development and will be shared shortly. 
 

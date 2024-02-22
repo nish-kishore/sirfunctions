@@ -8,8 +8,10 @@
 #' validates that the individual still has access. The current tenant ID
 #' is hard coded for CDC resources.
 #' @import AzureStor AzureAuth utils dplyr
-#' @param app_id str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
-#' @param auth str: authorization type defaults to "authorization_code"
+#' @param app_id str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+#' this can be changed if you have a service principal
+#' @param auth str: authorization type defaults to "authorization_code",
+#' this can be changed if you have a service principal
 #' @returns azure container verification
 #' @export
 get_azure_storage_connection <- function(
@@ -45,16 +47,24 @@ get_azure_storage_connection <- function(
   return(azcontainer)
 }
 
-#' Helper function to read and write key data
+#' Helper function to read and write key data to the EDAV environment
 #'
 #' @description Helper function read and write key data to EDAV
 #' @import cli AzureStor
-#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list"
-#' @param default_dir str: "GID/PEB/SIR"
-#' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list"
-#' @param obj default NULL object to be saved
-#' @param azcontainer azure container object
-#' @param force_delete boolean: use delete io without validation
+#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list".
+#' "read" - read a file from EDAV, must be an rds, csv, or rda;
+#' "write" - write a file from EDAV, must be an rds, csv or rda;
+#' "exists.dir" - returns a boolean after checking to see if a folder exists;
+#' "exists.file" - returns a boolean after checking to see if a file exists;
+#' "create" - creates a folder and all preceding folders
+#' "list" - returns a tibble with all objects in a folder
+#' @param default_dir str: "GID/PEB/SIR" - the default directory for all SIR data in EDAV, can be set to NULL
+#' if you provide the full directory path in `file_loc`
+#' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
+#' the information in `default_dir` if you set that parameter to NULL.
+#' @param obj default NULL object to be saved, needed for "write"
+#' @param azcontainer azure container object returned from `get_azure_storage_connection()`
+#' @param force_delete boolean: use delete io without verification in the command line
 #' @returns output dependent on "io"
 #' @export
 edav_io <- function(
@@ -185,10 +195,12 @@ edav_io <- function(
 
 #' Test network connection to the EDAV
 #'
-#' @description Tests upload and download from EDAV
-#' @param azcontainer azure storage container
-#' @param folder str: Location of download folder in EDAV
-#' @param test_size int: byte size of a theoretical folder
+#' @description Tests upload and download from EDAV by creating a temporary file
+#' of a given size and testing the time it takes to upload and download the file.
+#' @param azcontainer azure storage container provided by `get_azure_storage_connection()`
+#' @param folder str: Location of folder in the EDAV environment that you want to download
+#' and upload data from
+#' @param test_size int: byte size of a theoretical file to be uploaded or downloaded
 #' @param return_list boolean: return a list of download time estimates, default F
 #' @import dplyr readr prettyunits tibble cli
 #' @returns System message with download and update time, potentially list output
@@ -269,8 +281,11 @@ test_EDAV_connection <- function(
 #' when new information is availble and the Data Management Team can force the
 #' creation of the "medium" and "large" static datasets as necessary.
 #' @import dplyr cli sf tibble
-#' @param size str: "small", "medium", "large", defaults to "small"
-#' @param folder str: location of the CDC pre-processed endpoint
+#' @param size str: "small", "medium", "large", defaults to "small";
+#' "small" - returns data from 2019 onwards;
+#' "medium" - returns data from 2016 onwards;
+#' "large" - returns data from 2001 onwards.
+#' @param folder str: location of the CDC pre-processed endpoint, defaults to "GID/PEB/SIR/Data"
 #' @param force.new.run boolean: default F, if T will run recent data and cache
 #' @param recreate.static.files boolean: default F, if T will run all data and cache
 #' @param attach.spatial.data boolean: default T, adds spatial data to downloaded object
@@ -710,10 +725,13 @@ get_all_polio_data <- function(
 
 #' Extract country specific information from raw polio data
 #'
-#' @description Extract country specific data from raw data
+#' @description Extract country specific data from the CDC generated "raw.data" file from `get_all_polio_data`.
+#' The input will also need spatial data attached. Outputs list of country specific data and spatial objects.
 #' @import cli dplyr sf stringr
-#' @param .raw.data list: list of raw data sources
+#' @param .raw.data list: list of raw data sources that is output from `get_all_polio_data`. This raw.data file will also
+#' need to include all spatial data.
 #' @param .country str: a country name of interest
+#' @return list with country specific objects
 #' @export
 extract_country_data <- function(
     .country,
@@ -1145,11 +1163,11 @@ f.yrs.01 <- function(df, yrs) {
 #' Split or concatenate raw.data by year
 #'
 #' @param action Can either be to `concat` or `split`
-#' @param split.years
-#' @param raw.data.all
-#' @param raw.data.post.2019
-#' @param raw.data.2016.2019
-#' @param raw.data.2001.2016
+#' @param split.years an array of years by which data should be split
+#' @param raw.data.all a list of data objects to be split
+#' @param raw.data.post.2019 a list of data objects to be concatenated
+#' @param raw.data.2016.2019 a list of data objects to be concatenated
+#' @param raw.data.2001.2016 a list of data objects to be concatenated
 #' @returns list of lists or a single concatenated list
 split_concat_raw_data <- function(
     action,
@@ -1174,7 +1192,7 @@ split_concat_raw_data <- function(
 
   if(action == "split"){
 
-    if(is.null(split.years) | class(split.years) != "numeric"){
+    if(is.null(split.years) | !is.numeric(split.years)){
       stop("You must provide a numeric array of years to split by and the years must be between 2000-current year")
     }
 

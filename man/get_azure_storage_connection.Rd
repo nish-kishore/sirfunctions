@@ -10,13 +10,17 @@ get_azure_storage_connection(
 )
 }
 \arguments{
-\item{app_id}{str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46"}
+\item{app_id}{str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+this can be changed if you have a service principal}
 
-\item{auth}{str: authorization type defaults to "authorization_code"}
+\item{auth}{str: authorization type defaults to "authorization_code",
+this can be changed if you have a service principal}
 }
 \value{
 azure container verification
 }
 \description{
-Validate connection to CDC EDAV
+Generate token which connects to CDC EDAV resources and
+validates that the individual still has access. The current tenant ID
+is hard coded for CDC resources.
 }

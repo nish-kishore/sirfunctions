@@ -17,8 +17,8 @@ that indicates absence/presence (0, 1) of enterovius in an ES sample}
 \item{end.date}{chr: "YYYY-MM-DD"}
 }
 \value{
-tibble
+tibble: long format including site specific ev detection rate
 }
 \description{
-Function to calcualte the EV detection rate in sites from POLIS
+Function to calculate the EV detection rate in sites from POLIS
 }

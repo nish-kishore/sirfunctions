@@ -11,7 +11,8 @@ f.npafp.rate.01(
   end.date,
   spatial.scale,
   pending = T,
-  rolling = F
+  rolling = F,
+  sp_continuity_validation = T
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ c("NPAFP", "PENDING", "LAB PENDING")}
 \item{pending}{boolean: default TRUE}
 
 \item{rolling}{boolean: default FALSE}
+
+\item{sp_continuity_validation}{boolean: default TRUE}
 }
 \value{
 tibble

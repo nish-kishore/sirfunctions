@@ -5,21 +5,36 @@
 \title{Retrieve all pre-processed Polio Data}
 \usage{
 get_all_polio_data(
+  size = "small",
   folder = "GID/PEB/SIR/Data/",
-  afp.trunc = F,
-  force.new.run = F
+  force.new.run = F,
+  recreate.static.files = F,
+  attach.spatial.data = T
 )
 }
 \arguments{
-\item{folder}{str: location of the CDC pre-processed endpoint}
+\item{size}{str: "small", "medium", "large", defaults to "small";
+"small" - returns data from 2019 onwards;
+"medium" - returns data from 2016 onwards;
+"large" - returns data from 2001 onwards.}
 
-\item{afp.trunc}{boolean: default F, if T returns the afp linelist since 2019}
+\item{folder}{str: location of the CDC pre-processed endpoint, defaults to "GID/PEB/SIR/Data"}
 
-\item{force.new.run}{boolean: default F, if T will always run fully and cache}
+\item{force.new.run}{boolean: default F, if T will run recent data and cache}
+
+\item{recreate.static.files}{boolean: default F, if T will run all data and cache}
+
+\item{attach.spatial.data}{boolean: default T, adds spatial data to downloaded object}
 }
 \value{
 named list containing polio data that is relevant to CDC
 }
 \description{
-Download all Polio data from CDC pre-processed endpoint
+Download POLIS data from the CDC pre-processed endpoint. By default
+this function will return a "small" or recent dataset. This is primarily for data
+that is from 2019 onwards. You can specify a "medium" sized dataset for data
+that is from 2016 onwards. Finally the "large" sized dataset will provide information
+from 2001 onwards. Regular pulls form the data will recreate the "small" dataset
+when new information is availble and the Data Management Team can force the
+creation of the "medium" and "large" static datasets as necessary.
 }

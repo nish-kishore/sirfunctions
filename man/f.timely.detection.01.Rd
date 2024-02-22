@@ -24,14 +24,14 @@ classification of AFP cases & ES samples
 onset date of AFP cases and collection date of ES samples
 date of notification to HQ (date.notification.to.hq),}
 
-\item{start.date}{chr: "YYYY-MM-DD"}
+\item{start.date}{chr: "YYYY-MM-DD" - start date for evaluation}
 
-\item{end.date}{chr: "YYYY-MM-DD"}
+\item{end.date}{chr: "YYYY-MM-DD" - end date for evaluation}
 
 \item{rolling}{boolean: default FALSE}
 }
 \value{
-list
+list of two tibbles with global and sub-global AFP / ES detection timeliness evaluation
 }
 \description{
 Function to calculate the overall timeliness of detection in AFP & ES POLIS data

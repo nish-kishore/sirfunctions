@@ -1,6 +1,6 @@
 Package: sirfunctions
 Title: Key Functions for CDC/GID/PEB/SIR
-Version: 0.1.14
+Version: 1.0.0
 Authors@R: 
     c(person("Nishant", "Kishore", , "ynm2@cdc.gov", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0408-2747")),
@@ -22,4 +22,7 @@ Imports:
     readr, 
     stringr, 
     AzureAuth, 
-    AzureStor
+    AzureStor, 
+    Microsoft365R, 
+    blastula, 
+    flextable
