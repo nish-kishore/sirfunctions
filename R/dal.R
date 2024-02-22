@@ -660,15 +660,13 @@ get_all_polio_data <- function(
       lubridate::as_date() |>
       max(na.rm = T)
 
-    raw.data$metadata$default_subset_year <- default.subset.year
-
     rm(polis.cache)
 
     cli::cli_process_done()
 
     cli::cli_process_start("14) Clearing out unused memory")
     gc()
-    cli::cli_process_done
+    cli::cli_process_done()
 
   }
 
@@ -1263,6 +1261,11 @@ split_concat_raw_data <- function(
     to.concat <- names(input)
 
     out <- list()
+
+    key.table.vars <- tibble(
+      "data" = key.tables,
+      "year.var" = c(rep("yronset",3), "collect.yr", "yr.sia", rep("yronset",2), rep("year", 4))
+    )
 
     for(i in key.table.vars$data){
 
