@@ -368,7 +368,7 @@ get_all_polio_data <- function(
 
     if(attach.spatial.data){
       cli::cli_process_start("Downloading and attaching spatial data")
-      spatial.data <- edav_io(io = "read", file_loc = file.path(folder, paste0("analytic/spatial.data.rds")))
+      spatial.data <- edav_io(io = "read", file_loc = file.path(folder, paste0("analytic/spatial.data.rds")), default_dir = NULL)
 
       raw.data$global.ctry <- spatial.data$global.ctry
       raw.data$global.prov <- spatial.data$global.prov
