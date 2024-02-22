@@ -2,7 +2,8 @@
 #' Function to return specific plot looks
 #' @description Function to collate and return plot looks
 #' @import ggplot2
-#' @param type String describing a value to be returned
+#' @param type String describing a value to be returned. Accepted values include:
+#' '02', 'epicurve', 'geomtile', 'gpln_type1', 'gpln_type2'
 #' @return ggplot theme for addition into plot
 #' @export
 f.plot.looks <- function(type) {

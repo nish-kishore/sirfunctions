@@ -1,7 +1,7 @@
 #' Calculate EV detection rate function
 #'
 #' @name f.ev.rate.01
-#' @description Function to calcualte the EV detection rate in sites from POLIS
+#' @description Function to calculate the EV detection rate in sites from POLIS
 #' @import dplyr
 #' @import lubridate
 #' @import tibble
@@ -11,7 +11,7 @@
 #' that indicates absence/presence (0, 1) of enterovius in an ES sample
 #' @param start.date chr: "YYYY-MM-DD"
 #' @param end.date chr: "YYYY-MM-DD"
-#' @returns tibble
+#' @returns tibble: long format including site specific ev detection rate
 #' @export
 f.ev.rate.01 <- function(
   es.data,

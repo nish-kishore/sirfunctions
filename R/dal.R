@@ -4,10 +4,14 @@
 
 #' Validate connection to EDAV
 #'
-#' @description Validate connection to CDC EDAV
+#' @description Generate token which connects to CDC EDAV resources and
+#' validates that the individual still has access. The current tenant ID
+#' is hard coded for CDC resources.
 #' @import AzureStor AzureAuth utils dplyr
-#' @param app_id str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
-#' @param auth str: authorization type defaults to "authorization_code"
+#' @param app_id str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+#' this can be changed if you have a service principal
+#' @param auth str: authorization type defaults to "authorization_code",
+#' this can be changed if you have a service principal
 #' @returns azure container verification
 #' @export
 get_azure_storage_connection <- function(
@@ -43,17 +47,25 @@ get_azure_storage_connection <- function(
   return(azcontainer)
 }
 
-#' Helper function to read and write key data
+#' Helper function to read and write key data to the EDAV environment
 #'
 #' @description Helper function read and write key data to EDAV
 #' @import cli AzureStor
-#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list"
-#' @param default_dir str: "GID/PEB/SIR"
-#' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list"
-#' @param obj default NULL object to be saved
-#' @param azcontainer azure container object
-#' @param force_delete boolean: use delete io without validation
-#' @returns tibble
+#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list".
+#' "read" - read a file from EDAV, must be an rds, csv, or rda;
+#' "write" - write a file from EDAV, must be an rds, csv or rda;
+#' "exists.dir" - returns a boolean after checking to see if a folder exists;
+#' "exists.file" - returns a boolean after checking to see if a file exists;
+#' "create" - creates a folder and all preceding folders
+#' "list" - returns a tibble with all objects in a folder
+#' @param default_dir str: "GID/PEB/SIR" - the default directory for all SIR data in EDAV, can be set to NULL
+#' if you provide the full directory path in `file_loc`
+#' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
+#' the information in `default_dir` if you set that parameter to NULL.
+#' @param obj default NULL object to be saved, needed for "write"
+#' @param azcontainer azure container object returned from `get_azure_storage_connection()`
+#' @param force_delete boolean: use delete io without verification in the command line
+#' @returns output dependent on "io"
 #' @export
 edav_io <- function(
     io,
@@ -183,10 +195,12 @@ edav_io <- function(
 
 #' Test network connection to the EDAV
 #'
-#' @description Tests upload and download from EDAV
-#' @param azcontainer azure storage container
-#' @param folder str: Location of download folder in EDAV
-#' @param test_size int: byte size of a theoretical folder
+#' @description Tests upload and download from EDAV by creating a temporary file
+#' of a given size and testing the time it takes to upload and download the file.
+#' @param azcontainer azure storage container provided by `get_azure_storage_connection()`
+#' @param folder str: Location of folder in the EDAV environment that you want to download
+#' and upload data from
+#' @param test_size int: byte size of a theoretical file to be uploaded or downloaded
 #' @param return_list boolean: return a list of download time estimates, default F
 #' @import dplyr readr prettyunits tibble cli
 #' @returns System message with download and update time, potentially list output
@@ -259,57 +273,140 @@ test_EDAV_connection <- function(
 
 #' Retrieve all pre-processed Polio Data
 #'
-#' @description Download all Polio data from CDC pre-processed endpoint
+#' @description Download POLIS data from the CDC pre-processed endpoint. By default
+#' this function will return a "small" or recent dataset. This is primarily for data
+#' that is from 2019 onwards. You can specify a "medium" sized dataset for data
+#' that is from 2016 onwards. Finally the "large" sized dataset will provide information
+#' from 2001 onwards. Regular pulls form the data will recreate the "small" dataset
+#' when new information is availble and the Data Management Team can force the
+#' creation of the "medium" and "large" static datasets as necessary.
 #' @import dplyr cli sf tibble
-#' @param folder str: location of the CDC pre-processed endpoint
-#' @param afp.trunc boolean: default F, if T returns the afp linelist since 2019
-#' @param force.new.run boolean: default F, if T will always run fully and cache
+#' @param size str: "small", "medium", "large", defaults to "small";
+#' "small" - returns data from 2019 onwards;
+#' "medium" - returns data from 2016 onwards;
+#' "large" - returns data from 2001 onwards.
+#' @param folder str: location of the CDC pre-processed endpoint, defaults to "GID/PEB/SIR/Data"
+#' @param force.new.run boolean: default F, if T will run recent data and cache
+#' @param recreate.static.files boolean: default F, if T will run all data and cache
+#' @param attach.spatial.data boolean: default T, adds spatial data to downloaded object
 #' @returns named list containing polio data that is relevant to CDC
 #' @export
 get_all_polio_data <- function(
+    size = "small",
     folder = "GID/PEB/SIR/Data/",
-    afp.trunc = F,
-    force.new.run = F
+    force.new.run = F,
+    recreate.static.files = F,
+    attach.spatial.data = T
 ){
 
+  #check to see that size parameter is appropriate
+  if(!size %in% c("small", "medium", "large")){
+    stop("The parameter 'size' must be either 'small', 'medium', or 'large'")
+  }
+
+  #look to see if the recent raw data rds is in the analytic folder
   prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
-    dplyr::filter(grepl("raw.data.rds", name) & lastModified == max(lastModified)) |>
+    dplyr::filter(grepl("raw.data.recent.rds", name)) |>
     dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
+  #if there is previous dataset then
   if(nrow(prev_table) > 0){
-    if(difftime(Sys.time(), prev_table$ctime, units = "days") <= 7){
-      fresh.cache <- T
+    #check to see if it was created in the last 7 days and set parameters
+    if(difftime(Sys.time(), prev_table$ctime, units = "days") > 7){
+      force.new.run <- T
+      create.cache <- T
     }else{
-      fresh.cache <- F
+      force.new.run <- F
+      create.cache <- F
     }
   }else{
-    fresh.cache <- F
+    force.new.run <- T
+    create.cache <- T
   }
 
-  if(force.new.run){
-    fresh.cache <- F
+  if(recreate.static.files){
+    force.new.run <- T
+    create.cache <- T
   }
 
-  if(fresh.cache){
-    cli::cli_process_start("Previous cache identified, loading")
-    raw.data <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
+  if(!force.new.run){
+
+    #determine all raw data files to be downloaded
+    cli::cli_alert_info("Downloading most recent active polio data from 2019 onwards")
+    raw.data.post.2019 <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
+
+    if(size == "small"){
+      raw.data <- raw.data.post.2019
+    }
+
+    if(size == "medium"){
+
+      prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+        dplyr::filter(grepl("raw.data.2016.2018.rds", name)) |>
+        dplyr::select("file" = "name", "size", "ctime" = "lastModified")
+
+      cli::cli_alert_info("Downloading static polio data from 2016-2019")
+      raw.data.2016.2018 <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
+
+      raw.data <- split_concat_raw_data(
+        action = "concat",
+        raw.data.post.2019 = raw.data.post.2019,
+        raw.data.2016.2019 = raw.data.2016.2018
+        )
+    }
+
+    if(size == "large"){
+
+      prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+        dplyr::filter(grepl("raw.data.2016.2018.rds", name)) |>
+        dplyr::select("file" = "name", "size", "ctime" = "lastModified")
+
+      cli::cli_alert_info("Downloading static polio data from 2016-2019")
+      raw.data.2016.2019 <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
+
+      prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+        dplyr::filter(grepl("raw.data.2000", name)) |>
+        dplyr::select("file" = "name", "size", "ctime" = "lastModified")
+
+      cli::cli_alert_info("Downloading static polio data from 2001-2016")
+      raw.data.2001.2016 <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
+
+      raw.data <- split_concat_raw_data(
+        action = "concat",
+        raw.data.post.2019 = raw.data.post.2019,
+        raw.data.2016.2019 = raw.data.2016.2019,
+        raw.data.2001.2016 = raw.data.2001.2016
+      )
+    }
+
     cli::cli_process_done()
+
+    if(attach.spatial.data){
+      cli::cli_process_start("Downloading and attaching spatial data")
+      spatial.data <- edav_io(io = "read", file_loc = file.path(folder, paste0("analytic/spatial.data.rds")), default_dir = NULL)
+
+      raw.data$global.ctry <- spatial.data$global.ctry
+      raw.data$global.prov <- spatial.data$global.prov
+      raw.data$global.dist <- spatial.data$global.dist
+      raw.data$roads <- spatial.data$roads
+      raw.data$cities <- spatial.data$cities
+
+      cli::cli_process_done()
+    }
+
+
+    return(raw.data)
+
   }else{
 
     cli::cli_h1("Testing download times")
 
     download_metrics <- test_EDAV_connection(return_list = T)
 
-    if(!afp.trunc){
-      x <- readline("'afp.trunc' is FALSE, downloading this may take a while. Do you want to download the smaller one instead? [Y/N]: ")
+    #use the truncated AFP file
+    afp.trunc <- T
 
-      if(tolower(x) == "y"){
-        message("Changing to truncated version")
-        afp.trunc <- T
-      }
-    }
-
-    if(force.new.run){
+    if(recreate.static.files){
       afp.trunc <- F
     }
 
@@ -338,272 +435,286 @@ get_all_polio_data <- function(
     file_size <- dl_table$size |> sum()
     download_time <- dl_table$dl_time_sec |> sum()
 
-    cli::cli_alert_info(c(
-      "Estimated MAX download time for {prettyunits::pretty_bytes(file_size)} is ",
-      "{prettyunits::pretty_sec(download_time)}"
-    ))
+    cli::cli_h1("Downloading POLIS Data")
 
-    x <- readline("Downloading the full AFP linelist can take a while so it's best to do other work while you run this in the background. Do you want to start download?  [Y/N]: ")
+    raw.data <- list()
+    spatial.data <- list()
 
-    if(grepl("y", tolower(x), fixed = T)){
-
-      cli::cli_h1("Downloading POLIS Data")
-
-      raw.data <- list()
-
-      cli::cli_process_start("1) Loading country shape files from EDAV")
-      raw.data$global.ctry <- load_clean_ctry_sp()
-      cli::cli_process_done()
+    cli::cli_process_start("1) Loading country shape files from EDAV")
+    spatial.data$global.ctry <- load_clean_ctry_sp()
+    cli::cli_process_done()
 
 
-      cli::cli_process_start("2) Loading province shape files from EDAV")
-      raw.data$global.prov <- load_clean_prov_sp()
-      cli::cli_process_done()
+    cli::cli_process_start("2) Loading province shape files from EDAV")
+    spatial.data$global.prov <- load_clean_prov_sp()
+    cli::cli_process_done()
 
-      cli::cli_process_start("3) Loading district shape files from EDAV")
-      raw.data$global.dist <- load_clean_dist_sp()
-      cli::cli_process_done()
+    cli::cli_process_start("3) Loading district shape files from EDAV")
+    spatial.data$global.dist <- load_clean_dist_sp()
+    cli::cli_process_done()
 
-      cli::cli_process_start("4) Loading AFP line list data from EDAV (This file is almost 3GB and can take a while)")
-      raw.data$afp <-
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("afp", file)) |>
-                  dplyr::pull(file), default_dir = NULL) |>
-        dplyr::filter(surveillancetypename == "AFP") |>
-        dplyr::filter(yronset >= 2016) |>
-        dplyr::mutate(
-          cdc.classification.all2 = ifelse(
-            final.cell.culture.result == "Not received in lab" &
-              cdc.classification.all == "PENDING",
-            "LAB PENDING",
-            cdc.classification.all
-          ),
-          hot.case = ifelse(
-            paralysis.asymmetric == "Yes" &
-              paralysis.onset.fever == "Yes" &
-              paralysis.rapid.progress == "Yes",
-            1,
-            0
-          ),
-          hot.case = ifelse(is.na(hot.case), 99, hot.case)
+    cli::cli_process_start("4) Loading AFP line list data from EDAV (This file is almost 3GB and can take a while)")
+    raw.data$afp <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("afp", file)) |>
+                dplyr::pull(file), default_dir = NULL) |>
+      dplyr::filter(surveillancetypename == "AFP") |>
+      dplyr::mutate(
+        cdc.classification.all2 = ifelse(
+          final.cell.culture.result == "Not received in lab" &
+            cdc.classification.all == "PENDING",
+          "LAB PENDING",
+          cdc.classification.all
+        ),
+        hot.case = ifelse(
+          paralysis.asymmetric == "Yes" &
+            paralysis.onset.fever == "Yes" &
+            paralysis.rapid.progress == "Yes",
+          1,
+          0
+        ),
+        hot.case = ifelse(is.na(hot.case), 99, hot.case)
+      )
+    cli::cli_process_done()
+
+    cli::cli_process_start("Processing AFP data for analysis")
+
+    raw.data$afp.epi <- raw.data$afp |>
+      dplyr::mutate(epi.week = epiweek(dateonset)) |>
+      dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
+      dplyr::summarise(afp.cases = n()) |>
+      dplyr::mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
+      #manual fix of epi week
+      dplyr::mutate(epi.week = ifelse(epi.week == 52 &
+                                        yronset == 2022, 1, epi.week)) |>
+      ungroup()
+
+    #factoring cdc classification to have an order we like in stacked bar chart
+    raw.data$afp.epi$cdc.classification.all2 <-
+      factor(
+        raw.data$afp.epi$cdc.classification.all2,
+        levels = c(
+          "WILD 1",
+          "cVDPV 2",
+          "VDPV 2",
+          "cVDPV 1",
+          "VDPV 1",
+          "COMPATIBLE",
+          "PENDING",
+          "LAB PENDING",
+          "NPAFP",
+          "NOT-AFP"
+        ),
+        labels = c(
+          "WILD 1",
+          "cVDPV 2",
+          "VDPV 2",
+          "cVDPV 1",
+          "VDPV 1",
+          "COMPATIBLE",
+          "PENDING",
+          "LAB PENDING",
+          "NPAFP",
+          "NOT-AFP"
         )
-      cli::cli_process_done()
+      )
 
-      cli::cli_process_start("Processing AFP data for analysis")
+    raw.data$para.case <- raw.data$afp |>
+      dplyr::filter(
+        cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
+      ) |>
+      dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
+    cli::cli_process_done()
 
-      raw.data$afp.epi <- raw.data$afp |>
-        dplyr::filter(yronset >= 2016) |>
-        dplyr::mutate(epi.week = epiweek(dateonset)) |>
-        dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
-        dplyr::summarise(afp.cases = n()) |>
-        dplyr::mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
-        #manual fix of epi week
-        dplyr::mutate(epi.week = ifelse(epi.week == 52 &
-                                          yronset == 2022, 1, epi.week)) |>
-        ungroup()
 
-      #factoring cdc classification to have an order we like in stacked bar chart
-      raw.data$afp.epi$cdc.classification.all2 <-
-        factor(
-          raw.data$afp.epi$cdc.classification.all2,
-          levels = c(
-            "WILD 1",
-            "cVDPV 2",
-            "VDPV 2",
-            "cVDPV 1",
-            "VDPV 1",
-            "COMPATIBLE",
-            "PENDING",
-            "LAB PENDING",
-            "NPAFP",
-            "NOT-AFP"
+    cli::cli_process_start("5) Loading population data from EDAV")
+    raw.data$dist.pop <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
+                dplyr::pull(file), default_dir = NULL) |>
+      dplyr::ungroup()
+
+    raw.data$prov.pop <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
+                dplyr::pull(file), default_dir = NULL) |>
+      dplyr::ungroup()
+
+    raw.data$ctry.pop <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
+                dplyr::pull(file), default_dir = NULL) |>
+      dplyr::ungroup()
+
+    cli::cli_process_done()
+
+    cli::cli_process_start("6) Loading coverage data from EDAV")
+    raw.data$coverage <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
+                dplyr::pull(file), default_dir = NULL) |>
+      dplyr::select(ctry = adm0_name,
+             prov = adm1_name,
+             dist = adm2_name,
+             year,
+             dpt1,
+             dpt3) |>
+      dplyr::left_join(
+        edav_io(io = "read",
+                file_loc = dplyr::filter(dl_table, grepl("mcv1", file)) |>
+                  dplyr::pull(file), default_dir = NULL) |>
+          dplyr::select(
+            ctry = adm0_name,
+            prov = adm1_name,
+            dist = adm2_name,
+            year,
+            mcv1,
+            under5_pop
           ),
-          labels = c(
-            "WILD 1",
-            "cVDPV 2",
-            "VDPV 2",
-            "cVDPV 1",
-            "VDPV 1",
-            "COMPATIBLE",
-            "PENDING",
-            "LAB PENDING",
-            "NPAFP",
-            "NOT-AFP"
-          )
-        )
+        by = c("ctry", "prov", "dist", "year")
+      )
 
-      raw.data$para.case <- raw.data$afp |>
-        dplyr::filter(
-          cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
-        ) |>
-        dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
-      cli::cli_process_done()
+    cli::cli_process_done()
 
+    cli::cli_process_start("7) Loading ES data from EDAV")
 
-      cli::cli_process_start("5) Loading population data from EDAV")
-      raw.data$dist.pop <-
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
-                  dplyr::pull(file), default_dir = NULL) |>
-        dplyr::ungroup() |>
-        dplyr::filter(year >= 2016)
+    raw.data$es <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("/es_2001", file)) |>
+                dplyr::pull(file), default_dir = NULL)
+    cli::cli_process_done()
 
-      raw.data$prov.pop <-
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
-                  dplyr::pull(file), default_dir = NULL) |>
-        dplyr::ungroup() |>
-        dplyr::filter(year >= 2016)
+    cli::cli_process_start("8) Loading SIA data from EDAV")
+    raw.data$sia <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
+                dplyr::pull(file), default_dir = NULL)
+    cli::cli_process_done()
 
-      raw.data$ctry.pop <-
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
-                  dplyr::pull(file), default_dir = NULL) |>
-        dplyr::ungroup() |>
-        dplyr::filter(year >= 2016)
+    cli::cli_process_start("9) Loading all positives from EDAV")
+    raw.data$pos <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
+                dplyr::pull(file), default_dir = NULL)
+    cli::cli_process_done()
 
-      cli::cli_process_done()
+    cli::cli_process_start("10) Loading other surveillance linelist from EDAV")
+    raw.data$other <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("/other", file)) |>
+                dplyr::pull(file), default_dir = NULL)
+    cli::cli_process_done()
 
-      cli::cli_process_start("6) Loading coverage data from EDAV")
-      raw.data$coverage <-
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
-                  dplyr::pull(file), default_dir = NULL) |>
-        select(ctry = adm0_name,
-               prov = adm1_name,
-               dist = adm2_name,
-               year,
-               dpt1,
-               dpt3) |>
-        left_join(
-          edav_io(io = "read",
-                  file_loc = dplyr::filter(dl_table, grepl("mcv1", file)) |>
-                    dplyr::pull(file), default_dir = NULL) |>
-            select(
-              ctry = adm0_name,
-              prov = adm1_name,
-              dist = adm2_name,
-              year,
-              mcv1,
-              under5_pop
-            ),
-          by = c("ctry", "prov", "dist", "year")
-        )
+    cli::cli_process_start("11) Loading road network data")
+    spatial.data$roads <- edav_io(io = "read",
+                              file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
+                                dplyr::pull(file), default_dir = NULL)
+    cli::cli_process_done()
 
-      cli::cli_process_done()
+    cli::cli_process_start("12) Loading city spatial data")
+    spatial.data$cities <- edav_io(io = "read",
+                               file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
+                                 dplyr::pull(file), default_dir = NULL)
+    cli::cli_process_done()
 
-      cli::cli_process_start("7) Loading ES data from EDAV")
+    cli::cli_process_start("13) Creating Metadata object")
 
-      raw.data$es <-
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("/es_2001", file)) |>
-                  dplyr::pull(file), default_dir = NULL)
-      cli::cli_process_done()
+    polis.cache <- edav_io(io = "read",
+                           file_loc = dplyr::filter(dl_table, grepl("cache", file)) |>
+                             dplyr::pull(file), default_dir = NULL) |>
+      dplyr::mutate(last_sync = as.Date(last_sync))
 
-      cli::cli_process_start("8) Loading SIA data from EDAV")
-      raw.data$sia <-
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
-                  dplyr::pull(file), default_dir = NULL)
-      cli::cli_process_done()
+    raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
 
-      cli::cli_process_start("9) Loading all positives from EDAV")
-      raw.data$pos <-
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
-                  dplyr::pull(file), default_dir = NULL)
-      cli::cli_process_done()
+    raw.data$metadata$processed_time <- edav_io(io = "list", file_loc = file.path(folder, "/polis"), default_dir = NULL) |>
+      dplyr::filter(grepl("positives", name)) |>
+      dplyr::select("ctime" = "lastModified") |>
+      dplyr::mutate(ctime = as.Date(ctime)) |>
+      dplyr::pull(ctime)
 
-      cli::cli_process_start("10) Loading other surveillance linelist from EDAV")
-      raw.data$other <-
-        edav_io(io = "read",
-                file_loc = dplyr::filter(dl_table, grepl("/other", file)) |>
-                  dplyr::pull(file), default_dir = NULL)
-      cli::cli_process_done()
+    raw.data$metadata$user <- polis.cache |>
+      dplyr::filter(table == "virus") |>
+      dplyr::pull(last_user)
 
-      cli::cli_process_start("11) Loading road network data")
-      raw.data$roads <- edav_io(io = "read",
-                                file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
-                                  dplyr::pull(file), default_dir = NULL)
-      cli::cli_process_done()
-
-      cli::cli_process_start("12) Loading city spatial data")
-      raw.data$cities <- edav_io(io = "read",
-                                 file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
-                                   dplyr::pull(file), default_dir = NULL)
-      cli::cli_process_done()
-
-      cli::cli_process_start("13) Creating Metadata object")
-
-      polis.cache <- edav_io(io = "read",
-                             file_loc = dplyr::filter(dl_table, grepl("cache", file)) |>
-                               dplyr::pull(file), default_dir = NULL) |>
-        dplyr::mutate(last_sync = as.Date(last_sync))
-
-      raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
-
-      raw.data$metadata$processed_time <- edav_io(io = "list", file_loc = file.path(folder, "/polis"), default_dir = NULL) |>
-        dplyr::filter(grepl("positives", name)) |>
-        dplyr::select("ctime" = "lastModified") |>
-        dplyr::mutate(ctime = as.Date(ctime)) |>
-        dplyr::pull(ctime)
-
-      raw.data$metadata$user <- polis.cache |>
-        dplyr::filter(table == "virus") |>
-        dplyr::pull(last_user)
-
-      raw.data$metadata$most_recent_pos <- max(raw.data$pos$dateonset, na.rm = TRUE)
-      raw.data$metadata$most_recent_pos_loc <- raw.data$pos |>
-        dplyr::arrange(desc(dateonset)) |>
-        dplyr::slice(1) |>
-        dplyr::pull(place.admin.0)
+    raw.data$metadata$most_recent_pos <- max(raw.data$pos$dateonset, na.rm = TRUE)
+    raw.data$metadata$most_recent_pos_loc <- raw.data$pos |>
+      dplyr::arrange(desc(dateonset)) |>
+      dplyr::slice(1) |>
+      dplyr::pull(place.admin.0)
 
 
-      raw.data$metadata$most_recent_afp <- max(raw.data$afp$dateonset, na.rm = TRUE)
-      raw.data$metadata$most_recent_afp_loc <- raw.data$afp |>
-        dplyr::arrange(desc(dateonset)) |>
-        dplyr::slice(1) |>
-        dplyr::pull(place.admin.0)
+    raw.data$metadata$most_recent_afp <- max(raw.data$afp$dateonset, na.rm = TRUE)
+    raw.data$metadata$most_recent_afp_loc <- raw.data$afp |>
+      dplyr::arrange(desc(dateonset)) |>
+      dplyr::slice(1) |>
+      dplyr::pull(place.admin.0)
 
 
-      raw.data$metadata$most_recent_env <- max(raw.data$es$collect.date, na.rm = TRUE)
-      raw.data$metadata$most_recent_env_loc <- raw.data$es |>
-        dplyr::arrange(desc(collect.date)) |>
-        dplyr::slice(1) |>
-        dplyr::pull(ADM0_NAME)
+    raw.data$metadata$most_recent_env <- max(raw.data$es$collect.date, na.rm = TRUE)
+    raw.data$metadata$most_recent_env_loc <- raw.data$es |>
+      dplyr::arrange(desc(collect.date)) |>
+      dplyr::slice(1) |>
+      dplyr::pull(ADM0_NAME)
 
 
-      raw.data$metadata$most_recent_sia <- max(raw.data$sia$sub.activity.start.date)
-      raw.data$metadata$most_recent_sia_code <- raw.data$sia |>
-        dplyr::arrange(desc(sub.activity.start.date)) |>
-        dplyr::slice(1) |>
-        dplyr::pull(sia.code)
-      raw.data$metadata$most_recent_sia_location <- raw.data$sia |>
-        dplyr::arrange(desc(sub.activity.start.date)) |>
-        dplyr::slice(1) |>
-        dplyr::pull(place.admin.0)
-      raw.data$metadata$most_recent_sia_vax <- raw.data$sia |>
-        dplyr::arrange(desc(sub.activity.start.date)) |>
-        dplyr::slice(1) |>
-        dplyr::pull(vaccine.type)
+    raw.data$metadata$most_recent_sia <- max(raw.data$sia$sub.activity.start.date)
+    raw.data$metadata$most_recent_sia_code <- raw.data$sia |>
+      dplyr::arrange(desc(sub.activity.start.date)) |>
+      dplyr::slice(1) |>
+      dplyr::pull(sia.code)
+    raw.data$metadata$most_recent_sia_location <- raw.data$sia |>
+      dplyr::arrange(desc(sub.activity.start.date)) |>
+      dplyr::slice(1) |>
+      dplyr::pull(place.admin.0)
+    raw.data$metadata$most_recent_sia_vax <- raw.data$sia |>
+      dplyr::arrange(desc(sub.activity.start.date)) |>
+      dplyr::slice(1) |>
+      dplyr::pull(vaccine.type)
 
-      rm(polis.cache)
+    raw.data$metadata$most_recent_vdpv_class_change_date <- raw.data$pos$vdpvclassificationchangedate |>
+      lubridate::as_date() |>
+      max(na.rm = T)
 
-      cli::cli_process_done()
+    rm(polis.cache)
 
-      cli::cli_process_start("14) Clearing out unused memory")
-      gc()
-      cli::cli_process_done
+    cli::cli_process_done()
+
+    cli::cli_process_start("14) Clearing out unused memory")
+    gc()
+    cli::cli_process_done()
 
   }
 
-  }
-
-  print(fresh.cache)
-  print(afp.trunc)
-  if(!fresh.cache & !afp.trunc){
+  if(create.cache){
     cli::cli_process_start("13) Caching processed data")
-    edav_io(io = "write", file_loc = file.path(folder, "/analytic/raw.data.rds"), obj = raw.data, default_dir = NULL)
+
+    out <- split_concat_raw_data(action = "split", split.years = c(2000,2016,2019), raw.data.all = raw.data)
+
+    current.year <- lubridate::year(Sys.time())
+
+    out_files <- out$split.years |>
+      dplyr::mutate(file_name = ifelse(grepl(current.year, tag),'recent', stringr::str_replace_all(tag, "-", ".")),
+             file_name = paste0("raw.data.",file_name,".rds"))
+
+    if(!recreate.static.files){
+      out_files <- out_files |> dplyr::filter(grepl("recent", file_name))
+    }
+
+    for(i in 1:nrow(out_files)){
+      edav_io(
+        io = "write",
+        file_loc = file.path(folder, paste0("analytic/", dplyr::pull(out_files[i, ], file_name))),
+        obj = out[[dplyr::pull(out_files[i, ], tag)]],
+        default_dir = NULL
+      )
+    }
+
+    edav_io(
+      io = "write",
+      file_loc = file.path(folder, paste0("analytic/spatial.data.rds")),
+      obj = spatial.data, default_dir = NULL
+      )
+
     cli::cli_process_done()
   }
 
@@ -614,16 +725,21 @@ get_all_polio_data <- function(
 
 #' Extract country specific information from raw polio data
 #'
-#' @description Extract country specific data from raw data
+#' @description Extract country specific data from the CDC generated "raw.data" file from `get_all_polio_data`.
+#' The input will also need spatial data attached. Outputs list of country specific data and spatial objects.
 #' @import cli dplyr sf stringr
-#' @param .raw.data List of raw data sources
-#' @param .country String of a country name of interest
+#' @param .raw.data list: list of raw data sources that is output from `get_all_polio_data`. This raw.data file will also
+#' need to include all spatial data.
+#' @param .country str: a country name of interest
+#' @return list with country specific objects
 #' @export
 extract_country_data <- function(
     .country,
     .raw.data = raw.data
 ){
-  cli::cli_h1(paste0("--Processing country data for: ", .country, "--"))
+
+  .country <- stringr::str_to_upper(stringr::str_trim(.country))
+  cli::cli_h1(paste0("--Processing country data for: ", stringr::str_to_title(.country), "--"))
   cli::cli_process_start("1) Subsetting country spatial data")
   ctry.data <- list()
   ctry.data$ctry <- .raw.data$global.ctry |>
@@ -1042,3 +1158,154 @@ f.yrs.01 <- function(df, yrs) {
 
   return(shape01)
 }
+
+
+#' Split or concatenate raw.data by year
+#'
+#' @param action Can either be to `concat` or `split`
+#' @param split.years an array of years by which data should be split
+#' @param raw.data.all a list of data objects to be split
+#' @param raw.data.post.2019 a list of data objects to be concatenated
+#' @param raw.data.2016.2019 a list of data objects to be concatenated
+#' @param raw.data.2001.2016 a list of data objects to be concatenated
+#' @returns list of lists or a single concatenated list
+split_concat_raw_data <- function(
+    action,
+    split.years = NULL,
+    raw.data.all = NULL,
+    raw.data.post.2019 = NULL,
+    raw.data.2016.2019 = NULL,
+    raw.data.2001.2016 = NULL
+  ){
+
+  actions <- c("concat", "split")
+
+  if(!action %in% actions){
+    stop("`action` must be either `concat` or `split`")
+  }
+
+  current.year <- lubridate::year(Sys.time())
+
+  key.tables <- c("afp", "afp.epi", "para.case", "es", "sia", "pos", "other", "dist.pop", "prov.pop", "ctry.pop", "coverage")
+
+  static.tables <- c("metadata")
+
+  if(action == "split"){
+
+    if(is.null(split.years) | !is.numeric(split.years)){
+      stop("You must provide a numeric array of years to split by and the years must be between 2000-current year")
+    }
+
+    if(is.null(raw.data.all)){
+      stop("You must provide a complete raw.data dataset to be split")
+    }
+
+    if(!current.year %in% split.years){
+      split.years <- c(split.years, current.year) |> sort()
+    }
+
+    split.years <- lapply(1:(length(split.years)-1), function(x){
+      dplyr::tibble(
+        start.yr = split.years[x],
+        end.yr = ifelse(
+          split.years[x + 1] == current.year,
+          current.year,
+          split.years[x + 1] - 1)
+        )
+    }) |>
+      dplyr::bind_rows() |>
+      dplyr::mutate(tag = paste0(start.yr,"-",end.yr))
+
+    key.table.vars <- tibble(
+      "data" = key.tables,
+      "year.var" = c(rep("yronset",3), "collect.yr", "yr.sia", rep("yronset",2), rep("year", 4))
+    )
+
+
+    out <- list()
+
+    for(i in 1:nrow(split.years)){
+
+      for(j in 1:nrow(key.table.vars)){
+
+        out[[dplyr::pull(split.years[i, ], tag)]][[key.table.vars[j, ] |> dplyr::pull(data)]] <-
+          raw.data.all[[key.table.vars[j, ] |> dplyr::pull(data)]] |>
+          dplyr::filter(
+            !!sym(key.table.vars[j, ] |> dplyr::pull(year.var)) >= dplyr::pull(split.years[i, ], start.yr) &
+              !!sym(key.table.vars[j, ] |> dplyr::pull(year.var)) <= dplyr::pull(split.years[i, ], end.yr)
+          )
+
+
+
+      }
+
+
+      for(k in 1:length(static.tables)){
+
+        out[[dplyr::pull(split.years[i, ], tag)]][[static.tables[k]]] <-
+          raw.data.all[[static.tables[k]]]
+
+      }
+
+    }
+
+    out$split.years <- split.years
+
+    return(out)
+
+
+  }
+
+  if(action == "concat"){
+
+    if(sum(is.null(raw.data.post.2019), is.null(raw.data.2016.2019), is.null(raw.data.2001.2016)) > 1){
+      stop("You must include at least two subsets of raw.data files to concatenate")
+    }
+
+    input <- list()
+
+    if(!is.null(raw.data.post.2019)){
+      input[["raw.data.post.2019"]] <- raw.data.post.2019
+    }
+
+    if(!is.null(raw.data.post.2019)){
+      input[["raw.data.2016.2019"]] <- raw.data.2016.2019
+    }
+
+    if(!is.null(raw.data.2001.2016)){
+      input[["raw.data.2001.2016"]] <- raw.data.2001.2016
+    }
+
+    to.concat <- names(input)
+
+    out <- list()
+
+    key.table.vars <- tibble(
+      "data" = key.tables,
+      "year.var" = c(rep("yronset",3), "collect.yr", "yr.sia", rep("yronset",2), rep("year", 4))
+    )
+
+    for(i in key.table.vars$data){
+
+      out[[i]] <- lapply(to.concat, function(x){
+        input[[x]][[i]]
+      }) |>
+        dplyr::bind_rows()
+
+    }
+
+    for(i in static.tables){
+
+      out[[i]] <- raw.data.post.2019[[i]]
+
+    }
+
+    return(out)
+
+  }
+
+
+}
+
+
+

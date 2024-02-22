@@ -2,7 +2,7 @@
 % Please edit documentation in R/dal.R
 \name{edav_io}
 \alias{edav_io}
-\title{Helper function to read and write key data}
+\title{Helper function to read and write key data to the EDAV environment}
 \usage{
 edav_io(
   io,
@@ -14,20 +14,28 @@ edav_io(
 )
 }
 \arguments{
-\item{io}{str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list"}
+\item{io}{str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list".
+"read" - read a file from EDAV, must be an rds, csv, or rda;
+"write" - write a file from EDAV, must be an rds, csv or rda;
+"exists.dir" - returns a boolean after checking to see if a folder exists;
+"exists.file" - returns a boolean after checking to see if a file exists;
+"create" - creates a folder and all preceding folders
+"list" - returns a tibble with all objects in a folder}
 
-\item{default_dir}{str: "GID/PEB/SIR"}
+\item{default_dir}{str: "GID/PEB/SIR" - the default directory for all SIR data in EDAV, can be set to NULL
+if you provide the full directory path in \code{file_loc}}
 
-\item{file_loc}{str: location to "read", "write", "exists.dir", "exists.file", "create" or "list"}
+\item{file_loc}{str: location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
+the information in \code{default_dir} if you set that parameter to NULL.}
 
-\item{obj}{default NULL object to be saved}
+\item{obj}{default NULL object to be saved, needed for "write"}
 
-\item{azcontainer}{azure container object}
+\item{azcontainer}{azure container object returned from \code{get_azure_storage_connection()}}
 
-\item{force_delete}{boolean: use delete io without validation}
+\item{force_delete}{boolean: use delete io without verification in the command line}
 }
 \value{
-tibble
+output dependent on "io"
 }
 \description{
 Helper function read and write key data to EDAV
