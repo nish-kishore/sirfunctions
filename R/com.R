@@ -10,6 +10,7 @@
 #' @param channel str: channel where message should be sent
 #' @param attach str: local path of files to be attached in message
 #' @returns Success or error message
+#' @export
 send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL){
 
   team <- Microsoft365R::get_team(team_id)
@@ -31,6 +32,7 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #' @param site str: Sharepoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"
 #' @param drive str: Sharepoint drive to upload data to
 #' @returns Success or error message
+#' @export
 upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283", drive = "Documents"){
 
   tokens <- AzureAuth::list_azure_tokens()
@@ -74,6 +76,7 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 #' @param recipient str: semicolon separated list of recipients
 #' @param attachment str: path to local document to be attached to email, defaults to NULL
 #' @returns Success or error message
+#' @export
 send_outlook_email <- function(title, body, recipient, attachment = NULL){
 
   tokens <- AzureAuth::list_azure_tokens()
