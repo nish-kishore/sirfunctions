@@ -1192,7 +1192,7 @@ split_concat_raw_data <- function(
 
   if(action == "split"){
 
-    if(is.null(split.years) | class(split.years) != "numeric"){
+    if(is.null(split.years) | !is.numeric(split.years)){
       stop("You must provide a numeric array of years to split by and the years must be between 2000-current year")
     }
 
