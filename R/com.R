@@ -39,20 +39,26 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 
   token_hash_names <- tokens |> names()
 
-  token_list <- lapply(1:length(token_hash_names), function(x){
+  if(length(token_hash_names) > 0){
 
-    obj <- tokens[[token_hash_names[x]]]
+    token_list <- lapply(1:length(token_hash_names), function(x){
 
-    dplyr::tibble(
-      "token" = token_hash_names[x],
-      "resource" = obj$resource,
-      "scope" = obj$scope
-    )
-  }) |>
-    dplyr::bind_rows() |>
-    dplyr::filter(grepl("Sites.ReadWrite.All", scope))
+      obj <- tokens[[token_hash_names[x]]]
 
-  if(nrow(token_list == 0)){
+      dplyr::tibble(
+        "token" = token_hash_names[x],
+        "resource" = obj$resource,
+        "scope" = obj$scope
+      )
+    }) |>
+      dplyr::bind_rows() |>
+      dplyr::filter(grepl("Sites.ReadWrite.All", scope))
+
+  }else{
+    token_list <- dplyr::tibble()
+  }
+
+  if(nrow(token_list) == 0){
     site <- Microsoft365R::get_sharepoint_site(site_url = site)
 
   }else{
