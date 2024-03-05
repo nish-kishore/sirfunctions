@@ -216,7 +216,7 @@ edav_io <- function(
 #'
 #' @description Tests upload and download from EDAV by creating a temporary file
 #' of a given size and testing the time it takes to upload and download the file.
-#' @param azcontainer azure storage container provided by `get_azure_storage_connection()`
+#' @param azcontainer Azure storage container provided by `get_azure_storage_connection()`
 #' @param folder str: Location of folder in the EDAV environment that you want to download
 #' and upload data from
 #' @param test_size int: byte size of a theoretical file to be uploaded or downloaded
@@ -952,7 +952,7 @@ extract_country_data <- function(
 #' @description Pulls district shapefiles directly from the geodatabase
 #' @param fp str: Location of geodatabase
 #' @import stringr AzureStor dplyr lubridate
-#' @param azcontainer azure validated container object
+#' @param azcontainer Azure validated container object
 #' @param dist_guid array/str: Array of all district GUIDS that you want to pull
 #' @param ctry_name array/str: Array of all country names that you want to pull
 #' @param end.year int: last year you want to pull information for - default is current year
@@ -1033,7 +1033,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #'
 #' @description Pulls province shapefiles directly from the geodatabase
 #' @import stringr AzureStor lubridate dplyr tibble
-#' @param azcontainer azure validated container object
+#' @param azcontainer Azure validated container object
 #' @param fp str: Location of geodatabase
 #' @param prov_guid array/str: Array of all province GUIDS that you want to pull
 #' @param prov_name array/str: Array of all province names that you want to pull

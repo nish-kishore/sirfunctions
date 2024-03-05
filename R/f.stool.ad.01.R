@@ -10,7 +10,7 @@
 #' @import lubridate
 #' @import tibble
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
-#' formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all
+#' formatted as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all
 #' which includes "NOT-AFP"
 #' @param admin.data tibble: Full list of country administrative units by a given
 #' spatial scale including "year", "adm{0,1,2}guid, and "{ctry/prov/dist}"
@@ -20,7 +20,7 @@
 #' @param spatial.scale chr: "prov" or "dist" or "ctry"
 #' @param missing chr: "good" or "bad" or "missing"; default "good"
 #' @param bad.data chr: "remove" or "inadequate" or "adequate"; default "inadequate"
-#' @param rolling boolean: Should data be annualized or calculated within the time period alloted
+#' @param rolling boolean: Should data be annualized or calculated within the time period allotted
 #' @returns tibble: long format stool adequacy evaluations
 #' @export
 
