@@ -22,7 +22,10 @@ Imports:
     readr, 
     stringr, 
     AzureAuth, 
-    AzureStor
+    AzureStor,
+    Microsoft365R,
+    blastula,
+    flextable
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
