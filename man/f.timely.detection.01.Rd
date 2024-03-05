@@ -14,9 +14,9 @@ f.timely.detection.01(
 )
 }
 \arguments{
-\item{afp.data}{tibble: AFP data which includes classification of AFP cases with onset date and date of notification to HQ,}
+\item{afp.data}{tibble: AFP (acute flaccid paralysis) data which includes classification of AFP cases with onset date and date of notification to HQ,}
 
-\item{es.data}{tibble: ES data which includes classification of samples with collection date and date of notification to HQ,}
+\item{es.data}{tibble: ES (environmental surveillance ) data which includes classification of samples with collection date and date of notification to HQ,}
 
 \item{ctryseq.data}{tibble: countries with sequencing capacity within or outside of the country,
 country (ADM0_NAME),
@@ -24,14 +24,14 @@ classification of AFP cases & ES samples
 onset date of AFP cases and collection date of ES samples
 date of notification to HQ (date.notification.to.hq),}
 
-\item{start.date}{chr: "YYYY-MM-DD"}
+\item{start.date}{chr: "YYYY-MM-DD" - start date for evaluation}
 
-\item{end.date}{chr: "YYYY-MM-DD"}
+\item{end.date}{chr: "YYYY-MM-DD" - end date for evaluation}
 
 \item{rolling}{boolean: default FALSE}
 }
 \value{
-list
+list of two tibbles with global and sub-global AFP / ES detection timeliness evaluation
 }
 \description{
 Function to calculate the overall timeliness of detection in AFP & ES POLIS data

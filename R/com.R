@@ -3,10 +3,10 @@
 #' Send a message on Microsoft Teams
 #'
 #' @description
-#' Helper function to send message to validated MS Teams interface
+#' Helper function to send messages to validated MS Teams interface
 #' @import Microsoft365R AzureAuth
 #' @param msg str: message to be sent
-#' @param team_id str: Team id, defaults to "CGH-GID-PEB-SIR"
+#' @param team_id str: Teams id, defaults to "CGH-GID-PEB-SIR"
 #' @param channel str: channel where message should be sent
 #' @param attach str: local path of files to be attached in message
 #' @returns Success or error message
@@ -24,12 +24,12 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #' Upload file to Sharepoint
 #'
 #' @description
-#' Helper function to upload file to MS Sharepoint
+#' Helper function to upload file to MS SharePoint
 #' @import Microsoft365R AzureAuth dplyr
 #' @param file_to_upload str: local path of files to be uploaded
-#' @param sharepoint_file_loc str: location in sharepoint to upload file
-#' @param site str: Sharepoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"
-#' @param drive str: Sharepoint drive to upload data to
+#' @param sharepoint_file_loc str: location in SharePoint to upload file
+#' @param site str: SharePoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"
+#' @param drive str: SharePoint drive to upload data to
 #' @returns Success or error message
 upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283", drive = "Documents"){
 

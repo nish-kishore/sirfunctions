@@ -20,7 +20,7 @@
 #' @param spatial.scale chr: "prov" or "dist" or "ctry"
 #' @param missing chr: "good" or "bad" or "missing"; default "good"
 #' @param bad.data chr: "remove" or "inadequate" or "adequate"; default "inadequate"
-#' @param rolling boolean: Should data be annualized or calculated within the time period alloted
+#' @param rolling boolean: Should data be annualized or calculated within the time period allotted
 #' @returns tibble: long format stool adequacy evaluations
 #' @export
 

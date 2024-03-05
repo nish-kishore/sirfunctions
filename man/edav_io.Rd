@@ -27,8 +27,8 @@ edav_io(
 \item{force_delete}{boolean: use delete io without validation}
 }
 \value{
-tibble
+output dependent on "io"
 }
 \description{
-Helper function read and write key data to EDAV
+Helper function to read and write key data to EDAV
 }

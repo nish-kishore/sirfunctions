@@ -47,7 +47,7 @@ get_azure_storage_connection <- function(
 
 #' Helper function to read and write key data
 #'
-#' @description Helper function read and write key data to EDAV
+#' @description Helper function to read and write key data to EDAV
 #' @import cli AzureStor
 #' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list"
 #' @param default_dir str: "GID/PEB/SIR"
@@ -186,7 +186,7 @@ edav_io <- function(
 #' Test network connection to the EDAV
 #'
 #' @description Tests upload and download from EDAV
-#' @param azcontainer azure storage container
+#' @param azcontainer Azure storage container
 #' @param folder str: Location of download folder in EDAV
 #' @param test_size int: byte size of a theoretical folder
 #' @param return_list boolean: return a list of download time estimates, default F
@@ -915,7 +915,7 @@ extract_country_data <- function(
 #' @description Pulls district shapefiles directly from the geodatabase
 #' @param fp str: Location of geodatabase
 #' @import stringr AzureStor dplyr lubridate
-#' @param azcontainer azure validated container object
+#' @param azcontainer Azure validated container object
 #' @param dist_guid array/str: Array of all district GUIDS that you want to pull
 #' @param ctry_name array/str: Array of all country names that you want to pull
 #' @param end.year int: last year you want to pull information for - default is current year
@@ -1144,12 +1144,12 @@ f.yrs.01 <- function(df, yrs) {
 
 #' Split or concatenate raw.data by year
 #'
-#' @param action Can either be to `concat` or `split`
-#' @param split.years
-#' @param raw.data.all
-#' @param raw.data.post.2019
-#' @param raw.data.2016.2019
-#' @param raw.data.2001.2016
+#' @param action `str`: can either be to `concat` or `split`
+#' @param split.years `list`: a list containing years to split the data to
+#' @param raw.data.all `Rds`: raw data to be split
+#' @param raw.data.post.2019 `Rds`: 2019-present raw data
+#' @param raw.data.2016.2019 `Rds`: 2016-2019 raw data
+#' @param raw.data.2001.2016 `Rds`: 2001-2016 raw data
 #' @returns list of lists or a single concatenated list
 split_concat_raw_data <- function(
     action,

@@ -6,8 +6,8 @@
 #' @import dplyr
 #' @import lubridate
 #' @import tibble
-#' @param afp.data tibble: AFP data which includes classification of AFP cases with onset date and date of notification to HQ,
-#' @param es.data tibble: ES data which includes classification of samples with collection date and date of notification to HQ,
+#' @param afp.data tibble: AFP (acute flaccid paralysis) data which includes classification of AFP cases with onset date and date of notification to HQ,
+#' @param es.data tibble: ES (environmental surveillance ) data which includes classification of samples with collection date and date of notification to HQ,
 #' @param ctryseq.data tibble: countries with sequencing capacity within or outside of the country,
 #' country (ADM0_NAME),
 #' classification of AFP cases & ES samples

@@ -7,9 +7,9 @@
 extract_country_data(.country, .raw.data = raw.data)
 }
 \arguments{
-\item{.country}{String of a country name of interest}
+\item{.country}{str: a country name of interest}
 
-\item{.raw.data}{List of raw data sources}
+\item{.raw.data}{list: list of raw data sources}
 }
 \description{
 Extract country specific data from raw data

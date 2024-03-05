@@ -12,7 +12,7 @@ test_EDAV_connection(
 )
 }
 \arguments{
-\item{azcontainer}{azure storage container}
+\item{azcontainer}{Azure storage container}
 
 \item{folder}{str: Location of download folder in EDAV}
 
