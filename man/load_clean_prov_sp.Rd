@@ -17,7 +17,7 @@ load_clean_prov_sp(
 )
 }
 \arguments{
-\item{azcontainer}{azure validated container object}
+\item{azcontainer}{Azure validated container object}
 
 \item{fp}{str: Location of geodatabase}
 
