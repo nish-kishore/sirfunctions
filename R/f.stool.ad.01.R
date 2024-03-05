@@ -272,10 +272,6 @@ stool.data <- afp.data |>
     stool.data, year.data,
     by = c("year" = "year"))
 
-  # Preserving the original classifications
-  stool.data1 <- stool.data
-
-
   if(bad.data == "remove"){
     stool.data = stool.data %>%
       filter(adequacy.final != 77)
@@ -298,6 +294,8 @@ stool.data <- afp.data |>
       filter(adequacy.final != 99)
   }
 
+  # Preserving the original classifications
+  stool.data1 <- stool.data
 
   if (spatial.scale == "ctry") {
     if(rolling){
