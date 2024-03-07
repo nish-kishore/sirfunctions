@@ -13,9 +13,12 @@ get_all_polio_data(
 )
 }
 \arguments{
-\item{size}{str: "small", "medium", "large", defaults to "small"}
+\item{size}{str: "small", "medium", "large", defaults to "small";
+"small" - returns data from 2019 onwards;
+"medium" - returns data from 2016 onwards;
+"large" - returns data from 2001 onwards.}
 
-\item{folder}{str: location of the CDC pre-processed endpoint}
+\item{folder}{str: location of the CDC pre-processed endpoint, defaults to "GID/PEB/SIR/Data"}
 
 \item{force.new.run}{boolean: default F, if T will run recent data and cache}
 

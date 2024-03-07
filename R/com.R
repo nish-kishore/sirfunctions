@@ -10,6 +10,7 @@
 #' @param channel str: channel where message should be sent
 #' @param attach str: local path of files to be attached in message
 #' @returns Success or error message
+#' @export
 send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL){
 
   team <- Microsoft365R::get_team(team_id)
@@ -31,26 +32,33 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #' @param site str: Sharepoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"
 #' @param drive str: Sharepoint drive to upload data to
 #' @returns Success or error message
+#' @export
 upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283", drive = "Documents"){
 
   tokens <- AzureAuth::list_azure_tokens()
 
   token_hash_names <- tokens |> names()
 
-  token_list <- lapply(1:length(token_hash_names), function(x){
+  if(length(token_hash_names) > 0){
 
-    obj <- tokens[[token_hash_names[x]]]
+    token_list <- lapply(1:length(token_hash_names), function(x){
 
-    dplyr::tibble(
-      "token" = token_hash_names[x],
-      "resource" = obj$resource,
-      "scope" = obj$scope
-    )
-  }) |>
-    dplyr::bind_rows() |>
-    dplyr::filter(grepl("Sites.ReadWrite.All", scope))
+      obj <- tokens[[token_hash_names[x]]]
 
-  if(nrow(token_list == 0)){
+      dplyr::tibble(
+        "token" = token_hash_names[x],
+        "resource" = obj$resource,
+        "scope" = obj$scope
+      )
+    }) |>
+      dplyr::bind_rows() |>
+      dplyr::filter(grepl("Sites.ReadWrite.All", scope))
+
+  }else{
+    token_list <- dplyr::tibble()
+  }
+
+  if(nrow(token_list) == 0){
     site <- Microsoft365R::get_sharepoint_site(site_url = site)
 
   }else{
@@ -74,6 +82,7 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 #' @param recipient str: semicolon separated list of recipients
 #' @param attachment str: path to local document to be attached to email, defaults to NULL
 #' @returns Success or error message
+#' @export
 send_outlook_email <- function(title, body, recipient, attachment = NULL){
 
   tokens <- AzureAuth::list_azure_tokens()

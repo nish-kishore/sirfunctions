@@ -16,15 +16,15 @@ split_concat_raw_data(
 \arguments{
 \item{action}{Can either be to \code{concat} or \code{split}}
 
-\item{split.years}{years to split to}
+\item{split.years}{an array of years by which data should be split}
 
-\item{raw.data.all}{raw data for all years}
+\item{raw.data.all}{a list of data objects to be split}
 
-\item{raw.data.post.2019}{raw data from 2019 to present}
+\item{raw.data.post.2019}{a list of data objects to be concatenated}
 
-\item{raw.data.2016.2019}{raw data from 2016 to 2019}
+\item{raw.data.2016.2019}{a list of data objects to be concatenated}
 
-\item{raw.data.2001.2016}{raw data from 2001 to 2016}
+\item{raw.data.2001.2016}{a list of data objects to be concatenated}
 }
 \value{
 list of lists or a single concatenated list
