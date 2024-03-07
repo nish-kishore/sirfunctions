@@ -7,7 +7,8 @@
 f.plot.looks(type)
 }
 \arguments{
-\item{type}{String describing a value to be returned}
+\item{type}{String describing a value to be returned. Accepted values include:
+'02', 'epicurve', 'geomtile', 'gpln_type1', 'gpln_type2'}
 }
 \value{
 ggplot theme for addition into plot

@@ -18,5 +18,7 @@ get_azure_storage_connection(
 azure container verification
 }
 \description{
-Validate connection to CDC EDAV
+Generate token which connects to CDC EDAV resources and
+validates that the individual still has access. The current tenant ID
+is hard coded for CDC resources.
 }

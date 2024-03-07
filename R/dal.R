@@ -1145,11 +1145,11 @@ f.yrs.01 <- function(df, yrs) {
 #' Split or concatenate raw.data by year
 #'
 #' @param action Can either be to `concat` or `split`
-#' @param split.years
-#' @param raw.data.all
-#' @param raw.data.post.2019
-#' @param raw.data.2016.2019
-#' @param raw.data.2001.2016
+#' @param split.years years to split to
+#' @param raw.data.all raw data for all years
+#' @param raw.data.post.2019 raw data from 2019 to present
+#' @param raw.data.2016.2019 raw data from 2016 to 2019
+#' @param raw.data.2001.2016 raw data from 2001 to 2016
 #' @returns list of lists or a single concatenated list
 split_concat_raw_data <- function(
     action,

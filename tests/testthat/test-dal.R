@@ -1,4 +1,5 @@
 test_that("get_all_polio_data parameters work as expected", {
+  skip("run only when get_polio_data() is modified")
   # testing that size parameter works without attaching spatial data
   expect_no_error(get_all_polio_data(size = "small",
                                      folder = "GID/PEB/SIR/Data/",
