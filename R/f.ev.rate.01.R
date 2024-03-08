@@ -5,6 +5,8 @@
 #' @import dplyr
 #' @import lubridate
 #' @import tibble
+#' @import scales
+#' @import purrr
 #' @param es.data tibble: ES data which includes site name (site.name),
 #' country (ADM0_NAME),
 #' date of collection (collect.date), and a binary ev detection variable (ev.detect)
@@ -65,7 +67,7 @@ f.ev.rate.01 <- function(
     ) |>
     mutate(
       ev.rate = num.ev.pos/num.samples,
-      ev.percent = percent(ev.rate, accuracy=1),
+      ev.percent = map_chr(ev.rate, label_percent(accuracy=1)),
       ev.rate.cat = case_when(
         ev.rate < .50 ~ "<50%",
         ev.rate >= .50 & ev.rate < .80 ~ "50 to <80%",
