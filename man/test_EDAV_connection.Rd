@@ -12,7 +12,7 @@ test_EDAV_connection(
 )
 }
 \arguments{
-\item{azcontainer}{azure storage container provided by \code{get_azure_storage_connection()}}
+\item{azcontainer}{Azure storage container provided by \code{get_azure_storage_connection()}}
 
 \item{folder}{str: Location of folder in the EDAV environment that you want to download
 and upload data from}

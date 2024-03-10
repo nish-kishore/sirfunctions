@@ -14,15 +14,15 @@ upload_to_sharepoint(
 \arguments{
 \item{file_to_upload}{str: local path of files to be uploaded}
 
-\item{sharepoint_file_loc}{str: location in sharepoint to upload file}
+\item{sharepoint_file_loc}{str: location in SharePoint to upload file}
 
-\item{site}{str: Sharepoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"}
+\item{site}{str: SharePoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"}
 
-\item{drive}{str: Sharepoint drive to upload data to}
+\item{drive}{str: SharePoint drive to upload data to}
 }
 \value{
 Success or error message
 }
 \description{
-Helper function to upload file to MS Sharepoint
+Helper function to upload file to MS SharePoint
 }
