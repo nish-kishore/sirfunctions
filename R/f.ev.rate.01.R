@@ -67,7 +67,7 @@ f.ev.rate.01 <- function(
     ) |>
     mutate(
       ev.rate = num.ev.pos/num.samples,
-      ev.percent = map_chr(ev.rate, label_percent(accuracy=1)),
+      ev.percent = purrr::map_chr(ev.rate, label_percent(accuracy=1)),
       ev.rate.cat = case_when(
         ev.rate < .50 ~ "<50%",
         ev.rate >= .50 & ev.rate < .80 ~ "50 to <80%",
