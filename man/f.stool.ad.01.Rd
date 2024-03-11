@@ -17,7 +17,7 @@ f.stool.ad.01(
 }
 \arguments{
 \item{afp.data}{tibble: AFP data which includes GUID at a given spatial scale
-formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all
+formatted as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all
 which includes "NOT-AFP"}
 
 \item{admin.data}{tibble: Full list of country administrative units by a given
@@ -34,7 +34,7 @@ as appropriate}
 
 \item{bad.data}{chr: "remove" or "inadequate" or "adequate"; default "inadequate"}
 
-\item{rolling}{boolean: Should data be annualized or calculated within the time period alloted}
+\item{rolling}{boolean: Should data be annualized or calculated within the time period allotted}
 }
 \value{
 tibble: long format stool adequacy evaluations
