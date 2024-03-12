@@ -81,102 +81,94 @@ f.npafp.rate.01 <- function(
     stop("'spatial.scale' can only be 'ctry', 'prov', or 'dist'")
   }
 
-  #check input data based on spatial format
-  if(spatial.scale == "ctry"){
-    if(sum(!names.afp.ctry %in% names(afp.data)) > 0){
-      stop(paste0("The follow variables were not found in afp.data: ",
-                  paste0(names.afp.ctry[!names.afp.ctry %in% names(afp.data)], collapse = ", ")))
-    }
-    if(sum(!names.pop.ctry %in% names(pop.data)) > 0){
-      stop(paste0("The follow variables were not found in pop.data: ",
-                  paste0(names.pop.ctry[!names.pop.ctry %in% names(pop.data)], collapse = ", ")))
+  # Helper function to check for any missing variables and spatial scale validity
+  check_spatial_data <- function(spatial.scale, afp.names, pop.names) {
+    afp_missing <- setdiff(afp.names, names(afp.data))
+    pop_missing <- setdiff(pop.names, names(pop.data))
+
+    if (length(afp_missing) > 0) {
+      stop(paste0("The following variables were not found in afp.data: ", paste0(afp_missing, collapse = ", ")))
     }
 
-    #check if pop data is of a larger spatial scale than the parameter chosen
-    if(sum(c("adm1guid", "adm2guid") %in% names(pop.data)) > 0){
-      stop("Please check that the spatial scale of the pop data provided matches the `spatial.scale` chosen.")
+    if (length(pop_missing) > 0) {
+      stop(paste0("The following variables were not found in pop.data: ", paste0(pop_missing, collapse = ", ")))
     }
 
-    incomplete.adm <- pop.data |>
-      group_by(adm0guid) |>
-      summarize(freq = n()) |>
-      filter(freq < length(year(start.date):year(end.date))) |>
-      pull(adm0guid)
-
-    if(sp_continuity_validation){
-      pop.data <- filter(pop.data, !adm0guid %in% incomplete.adm)
-      afp.data <- filter(afp.data, !adm0guid %in% incomplete.adm)
+    # Check if pop data is of a larger spatial scale than the parameter chosen
+    if (spatial.scale == "ctry" && any(c("adm1guid", "adm2guid") %in% names(pop.data))) {
+      stop("Please check that the spatial scale of the pop data provided matches the 'spatial.scale' chosen.")
+    } else if (spatial.scale == "prov" && any(c("adm2guid") %in% names(pop.data))) {
+      stop("Please check that the spatial scale of the pop data provided matches the 'spatial.scale' chosen.")
     }
-
   }
 
-  if(spatial.scale == "prov"){
-    if(sum(!names.afp.prov %in% names(afp.data)) > 0){
-      stop(paste0("The follow variables were not found in afp.data: ",
-                  paste0(names.afp.prov[!names.afp.prov %in% names(afp.data)], collapse = ", ")))
+  # Check data set for missing required variables
+  switch(spatial.scale,
+         "ctry" = check_spatial_data("ctry", names.afp.ctry, names.pop.ctry),
+         "prov" = check_spatial_data("prov", names.afp.prov, names.pop.prov),
+         "dist" = check_spatial_data("dist", names.afp.dist, names.pop.dist)
+         )
+
+  # Check for invalid GUIDs and remove them if sp_continuity_validation = TRUE
+  incomplete.adm <- switch(spatial.scale,
+                           "ctry" = {
+                             pop.data |>
+                               group_by(adm0guid) |>
+                               summarize(freq = n()) |>
+                               filter(freq < length(year(start.date):year(end.date))) |>
+                               pull(adm0guid)
+                           },
+                           "prov" = {
+                             pop.data |>
+                               group_by(adm1guid) |>
+                               summarize(freq = n()) |>
+                               filter(freq < length(year(start.date):year(end.date))) |>
+                               pull(adm1guid)
+                           },
+                           "dist" = {
+                             pop.data |>
+                               group_by(adm2guid) |>
+                               summarize(freq = n()) |>
+                               filter(freq < length(year(start.date):year(end.date))) |>
+                               pull(adm2guid)
+                           }
+  )
+
+  if (sp_continuity_validation) {
+    pop.data <- switch(spatial.scale,
+                       "ctry" = {
+                         pop.data |> filter(!adm0guid %in% incomplete.adm)
+                       },
+                       "prov" = {
+                         pop.data |> filter(!adm1guid %in% incomplete.adm)
+                       },
+                       "dist" = {
+                         pop.data |> filter(!adm2guid %in% incomplete.adm)
+                       })
+    afp.data <- switch(spatial.scale,
+                       "ctry" = {
+                         afp.data |> filter(!adm0guid %in% incomplete.adm)
+                       },
+                       "prov" = {
+                         afp.data |> filter(!adm1guid %in% incomplete.adm)
+                       },
+                       "dist" = {
+                         afp.data |> filter(!adm2guid %in% incomplete.adm)
+                       }
+                       )
+    if (length(incomplete.adm) > 0) {
+      readline(paste0("The following GUIDS at the ", spatial.scale,
+                      " were not valid across the temporal scale:\n",
+                      paste0(incomplete.adm, collapse = ", "),
+                      "\n Please hit [ENTER] to continue"))
     }
-    if(sum(!names.pop.prov %in% names(pop.data)) > 0){
-      stop(paste0("The follow variables were not found in pop.data: ",
-                  paste0(names.pop.prov[!names.pop.prov %in% names(pop.data)], collapse = ", ")))
-    }
-
-    #check if pop data is of a larger spatial scale than the parameter chosen
-    if(sum(c("adm2guid") %in% names(pop.data)) > 0){
-      stop("Please check that the spatial scale of the pop data provided matches the `spatial.scale` chosen.")
-    }
-
-
-    incomplete.adm <- pop.data |>
-      group_by(adm1guid) |>
-      summarize(freq = n()) |>
-      filter(freq < length(year(start.date):year(end.date))) |>
-      pull(adm1guid)
-
-    if(sp_continuity_validation){
-      pop.data <- filter(pop.data, !adm1guid %in% incomplete.adm)
-      afp.data <- filter(afp.data, !adm1guid %in% incomplete.adm)
-    }
-
   }
 
-  if(spatial.scale == "dist"){
-    if(sum(!names.afp.dist %in% names(afp.data)) > 0){
-      stop(paste0("The follow variables were not found in afp.data: ",
-                  paste0(names.afp.dist[!names.afp.dist %in% names(afp.data)], collapse = ", ")))
-    }
-    if(sum(!names.pop.dist %in% names(pop.data)) > 0){
-      stop(paste0("The follow variables were not found in pop.data: ",
-                  paste0(names.pop.dist[!names.pop.dist %in% names(pop.data)], collapse = ", ")))
-    }
-
-    incomplete.adm <- pop.data |>
-      group_by(adm2guid) |>
-      summarize(freq = n()) |>
-      filter(freq < length(year(start.date):year(end.date))) |>
-      pull(adm2guid)
-
-    if(sp_continuity_validation){
-      pop.data <- filter(pop.data, !adm2guid %in% incomplete.adm)
-      afp.data <- filter(afp.data, !adm2guid %in% incomplete.adm)
-    }
-
-
-  }
-
-  if(length(incomplete.adm) > 0 & sp_continuity_validation){
-
-    readline(paste0("The following GUIDS at the ", spatial.scale,
-                   " were not valid across the temporal scale:\n",
-                   paste0(incomplete.adm, collapse = ", "),
-                   "\n Please hit [ENTER] to continue"))
-
-  }else{
-    if(length(incomplete.adm) > 0){
+  if(length(incomplete.adm) > 0){
       paste0("The following GUIDS at the ", spatial.scale,
              " were not valid across the temporal scale:\n",
              paste0(incomplete.adm, collapse = ", "))
     }
-  }
 
   #Warning message about non-overlapping dates
   if(start.date < as_date(afp.data$date |> min(na.rm = T))){
@@ -197,7 +189,7 @@ f.npafp.rate.01 <- function(
 
   # Filter population data to the years of the analysis date and to the
   # country of interest
-  pop.data <- pop.data %>%
+  pop.data <- pop.data |>
     filter(year >= year(start.date) &
       year <= year(end.date)) # Only years of analysis # Only country of analysis
 
@@ -294,9 +286,8 @@ f.npafp.rate.01 <- function(
       select(
         year, ctry, n_npafp, u15pop, n_days, days_in_year,
         weight, adm0guid, earliest_date, latest_date
-      ) %>% # Select columns to keep for output
-      {
-        if(rolling){
+      ) |> # Select columns to keep for output
+      {function(.) {if(rolling){
           mutate(., par = weight*u15pop) |>
             group_by(ctry, adm0guid) |>
             summarise(
@@ -314,6 +305,7 @@ f.npafp.rate.01 <- function(
           mutate(., npafp_rate = n_npafp / u15pop * 100000 / weight)
         }
       }
+  }()
   }
 
   # Province level calculation
@@ -351,8 +343,8 @@ f.npafp.rate.01 <- function(
       select( # Select columns to keep for output
         year, n_npafp, u15pop, n_days, days_in_year,
         weight, adm0guid, adm1guid, ctry, prov, earliest_date, latest_date
-      ) %>%
-      {
+      ) |>
+      {function(.){
         if(rolling){
           mutate(., par = weight*u15pop) |>
             group_by(ctry, prov, adm0guid, adm1guid) |>
@@ -371,6 +363,7 @@ f.npafp.rate.01 <- function(
           mutate(., npafp_rate = n_npafp / u15pop * 100000 / weight)
         }
       }
+        }()
   }
 
   # District level calculation
@@ -408,8 +401,8 @@ f.npafp.rate.01 <- function(
         by = c("year")
       ) |>
       select(year, ctry, prov, dist, n_npafp, u15pop, weight, n_days,
-             days_in_year, earliest_date, latest_date, adm0guid, adm1guid, adm2guid) %>%
-      {
+             days_in_year, earliest_date, latest_date, adm0guid, adm1guid, adm2guid) |>
+      {function(.){
         if(rolling){
           mutate(., par = weight*u15pop) |>
             group_by(ctry, prov, dist, adm0guid, adm1guid, adm2guid) |>
@@ -428,6 +421,7 @@ f.npafp.rate.01 <- function(
           mutate(., npafp_rate = n_npafp / u15pop * 100000 / weight)
         }
       }
+        }()
 
   }
 
