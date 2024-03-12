@@ -7,7 +7,7 @@
 #' @import lubridate
 #' @import tibble
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
-#' formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all which includes
+#' formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all2 which includes
 #' c("NPAFP", "PENDING", "LAB PENDING")
 #' @param pop.data tibble: Under 15 population data by a given spatial scale including
 #' "year", "adm{0,1,2}guid, "u15pop", and "{ctry/prov/dist}" as appropriate
@@ -30,8 +30,13 @@ f.npafp.rate.01 <- function(
     sp_continuity_validation = T
     ){
 
+  # check if afp.data and pop.data has arguments
+  if (!(hasArg(afp.data) & hasArg(pop.data)))  {
+    stop("Please include both afp.data and pop.data as arguments to the function.")
+  }
+
   #file names
-  names.afp.ctry <- c("adm0guid", "date", "cdc.classification.all")
+  names.afp.ctry <- c("adm0guid", "date", "cdc.classification.all2")
   names.afp.prov <- c(names.afp.ctry, "adm1guid")
   names.afp.dist <- c(names.afp.prov, "adm2guid")
 
@@ -47,13 +52,19 @@ f.npafp.rate.01 <- function(
 
   #Check data inputs
   # Analysis start and end date as defined by user (as a character)
-  start.date <- as_date(start.date)
-  end.date <- as_date(end.date)
+  tryCatch({
+    start.date <- as_date(start.date)
+    end.date <- as_date(end.date)
+    years <- year(start.date):year(end.date)
+    pop.years <- sort(unique(pop.data$year))
+  },
+  error = function(cond) {
+    cond$message <- paste0("Invalid date in either start.date or end.date. ",
+                      "Check if they are in 'YYYY-MM-DD' format and try again.")
+    stop(cond)
+  })
 
-  years <- year(start.date):year(end.date)
-  pop.years <- sort(unique(pop.data$year))
-
-  #check that pop data contains all the years necessary
+  # Check that pop data contains all the years necessary
   if(sum(!years %in% pop.years) > 0){
     unfound.years <- years[!(years %in% pop.years)]
     stop(paste0("There are no years of population data for: ", paste0(unfound.years, collapse = ", ")))
@@ -195,7 +206,7 @@ f.npafp.rate.01 <- function(
     npafp.data <- afp.data |>
       as_tibble() |>
       filter(
-        cdc.classification.all %in% c("NPAFP", "PENDING", "LAB PENDING")
+        cdc.classification.all2 %in% c("NPAFP", "PENDING", "LAB PENDING")
         ) |> # filter all AFP data such that only cases listed as NPAFP,
       # PENDING, or LAB PENDING are counted
       select(epid, date, ctry, adm0guid, prov, adm1guid, dist, adm2guid)
@@ -203,7 +214,7 @@ f.npafp.rate.01 <- function(
   }else{
     npafp.data <- afp.data |>
       as_tibble() |>
-      filter(cdc.classification.all == "NPAFP") |> # filter all AFP data such
+      filter(cdc.classification.all2 == "NPAFP") |> # filter all AFP data such
       # that only cases listed as NPAFP are counted
       select(epid, date, ctry, adm0guid, prov, adm1guid, dist, adm2guid)
     # Keep only the listed variables (removes all others)
