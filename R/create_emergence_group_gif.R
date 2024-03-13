@@ -2,6 +2,7 @@
 #' @description
 #' Generate the figures and stitch together a GIF to evaluate emergence group
 #' movement over time, generally aggregated as cumulative per month
+#' @import dplyr
 #' @param emergence_group str: designation of the emergence group to review
 #' @param pos tibble: positives data set
 #' @param dist sf: shapefile of all districts
@@ -22,5 +23,14 @@ create_emergence_group_gif <- function(
   dist <- data$global.dist
   ctry <- data$global.ctry
   out_file <- "C:/Users/ynm2/OneDrive - CDC/NIE_JIS_1.gif"
+
+  #set up data structures
+  emergence_group_pos <- pos |>
+    dplyr::filter(emergencegroup == emergence_group) |>
+    dplyr::select(adm0guid, admin2guid, dateonset, epid, source)
+
+  #group data by month country and district
+  emergence_group_pos |>
+    mutate(date = as.yearmon(date))
 
 }
