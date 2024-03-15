@@ -44,7 +44,7 @@ f.timely.detection.01 <- function(
 
   # Limit AFP data to the range described by the analysis start and end dates
   afp.data <- afp.data |>
-    filter(date >= start.date & date <= end.date)
+    filter(between(date, start.date, end.date))
 
   # Warning message about non-overlapping dates
   if(start.date < as_date(afp.data$date |> min(na.rm = T))){
@@ -61,7 +61,7 @@ f.timely.detection.01 <- function(
 
   # Limit ES data to the range described by the analysis start and end dates
   es.data <- es.data |>
-    filter(collect.date >= start.date & collect.date <= end.date)
+    filter(between(collect.date, start.date, end.date))
 
   # Warning message about non-overlapping dates
   if(start.date < as_date(es.data$collect.date |> min(na.rm = T))){
