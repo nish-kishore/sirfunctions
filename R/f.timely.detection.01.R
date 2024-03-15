@@ -29,8 +29,16 @@ f.timely.detection.01 <- function(
 ){
 
   # Analysis start and end date as defined by user (as a character)
-  start.date <- as_date(start.date)
-  end.date <- as_date(end.date)
+
+  # Check if dates entered are valid
+  tryCatch({
+    start.date <- as_date(start.date)
+    end.date <- as_date(end.date)
+  },
+  error = function(cond) {
+    cond$message = "Please enter dates in 'YYYY-MM-DD' format."
+    stop(e)
+  })
 
   years <- year(start.date):year(end.date)
 
@@ -97,8 +105,8 @@ f.timely.detection.01 <- function(
   #1. AFP detection
   afp.pos.detect.01 <- afp.data %>%
     ungroup() %>%
-    filter(!cdc.classification.all %in% c("COMPATIBLE" ,"NPAFP", "PENDING", "UNKNOWN", "VAPP", "LAB PENDING")) %>%
-    select(epid, ctry, year, cdc.classification.all, date, datenotificationtohq) %>%
+    filter(!cdc.classification.all.2.2 %in% c("COMPATIBLE" ,"NPAFP", "PENDING", "UNKNOWN", "VAPP", "LAB PENDING")) %>%
+    select(epid, ctry, year, cdc.classification.all.2.2, date, datenotificationtohq) %>%
     mutate(
       datenotifytohq = dmy(datenotificationtohq),
       ontonothq = as.numeric(datenotifytohq - date)
