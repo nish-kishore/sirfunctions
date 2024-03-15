@@ -74,7 +74,7 @@ f.npafp.rate.01 <- function(
 
   # Limit AFP data to the range described by the analysis start and end dates
   afp.data <- afp.data |>
-    filter(date >= start.date & date <= end.date)
+    filter(between(date, start.date, end.date))
 
   # check if spatial.data param in appropriate format
   if (!spatial.scale %in% c("ctry", "prov", "dist")) {
