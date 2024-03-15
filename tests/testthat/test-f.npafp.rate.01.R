@@ -1,6 +1,6 @@
 test_that("testing f.npafp.rate.01()", {
   # Initialize testing values
-  country_name <- "SIERRA LEONE"
+  country_name <- "PAKISTAN"
   raw_data <- sirfunctions::get_all_polio_data()
   country_data <- sirfunctions::extract_country_data(
     .country = country_name,
