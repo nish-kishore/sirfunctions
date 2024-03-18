@@ -9,11 +9,29 @@
 #' @returns a `ggplot` or `flextable` object with metadata added
 #' @export
 f.metadata.tag <- function(object,
-                           time_tag = ifelse(exists("raw.data"), raw.data$metadata$download_time, NA)) {
+                           raw_data = NA,
+                           time_tag = NA) {
   # flag to stop if time_tag not provided
-  if (is.na(time_tag)) {
-    stop("There is no raw.data file in the environment or it's named something else. Please either load the raw.data file or provide a values for 'time_tag'")
+  # use raw.data time_tag by default unless tag is explicitly stated
+  if (!is.na(time_tag)) {
+
+  } else if (!is.na(raw_data)) {
+    tryCatch(
+      {time_tag = raw_data$metadata$download_time
+      },
+      error = function(cond) {
+        cond$message <- "raw_data does not contain metadata$download_time."
+        stop(cond)
+        }
+      )
+  } else {
+    stop("Please provide the raw.data file or a value for 'time_tag'")
   }
+
+  #
+  # if (is.na(time_tag)) {
+  #   stop("There is no raw.data file in the environment or it's named something else. Please either load the raw.data file or provide a values for 'time_tag'")
+  # }
 
   # check to see if the object is either a ggplot or flextable
   if (!"ggplot" %in% class(object) &
