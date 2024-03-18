@@ -34,7 +34,7 @@ test_that("testing f.npafp.rate.01()", {
       "u15pop" = "u15pop.prov"
     ) |>
     filter(
-      ctry == str_trim(str_to_upper(country)),
+      ctry == str_trim(str_to_upper(ctry)),
       between(year, year(start_date), year(end_date))
     )
 
@@ -50,7 +50,7 @@ test_that("testing f.npafp.rate.01()", {
       "dist" = "ADM2_NAME"
     ) |>
     filter(
-      ctry == str_trim(str_to_upper(country)),
+      ctry == str_trim(str_to_upper(ctry)),
       between(year, year(start_date), year(end_date))
     )
 
@@ -75,7 +75,7 @@ test_that("testing f.npafp.rate.01()", {
       end.date = end_date,
       spatial.scale = "ctry"
     ),
-    info = "threw an error despite valid arguments."
+    message = "threw an error despite valid arguments."
   )
   start_date <- "01-1000-01"
   end_date <- "2022-12-31"
