@@ -2,6 +2,8 @@ test_that("testing f.npafp.rate.01()", {
   # Initialize testing values
   country_name <- "PAKISTAN"
   raw_data <- sirfunctions::get_all_polio_data()
+  start_date <- "2022-01-01"
+  end_date <- "2022-12-31"
   country_data <- sirfunctions::extract_country_data(
     .country = country_name,
     .raw.data = raw_data
@@ -51,10 +53,6 @@ test_that("testing f.npafp.rate.01()", {
       ctry == str_trim(str_to_upper(country)),
       between(year, year(start_date), year(end_date))
     )
-
-
-  start_date <- "2022-01-01"
-  end_date <- "2022-12-31"
 
   # Check if datasets are attached
   expect_error(f.npafp.rate.01(start.date = start_date, end.date = end_date, spatial.scale = "ctry"),
