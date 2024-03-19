@@ -117,10 +117,13 @@ test_that("testing f.npafp.rate.01()", {
     ),
     message = "Threw an error despite valid arguments"
   )
+
+  # test when the pop data doesn't contain all the years in AFP data
+  cpop_data_mod <- cpop_data |> filter(year <= 2021)
   expect_error(
     f.npafp.rate.01(
       afp.data = afp_data,
-      pop.data = cpop_data,
+      pop.data = cpop_data_mod,
       start.date = start_date,
       end.date = end_date,
       spatial.scale = "ctry"
