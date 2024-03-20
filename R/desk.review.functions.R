@@ -1,47 +1,81 @@
+# "private" methods ----
 
-initiate_research <- function(country_name, start_date, end_date) {
-  # Check for valid arguments
-  country_name <- stringr::str_trim(stringr::str_to_upper(country_name))
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
+#' Pull new data and write to the specified file path
+#'
+#' @param data_size `str` size of polio data to pull.
+#' "small" (>= 2019), "medium" (>= 2016), large" (full)
+#' @param country_name `str` name of the country to pull data from
+#' @param dr_data_path `str` path to save the data set to`
+#'
+#' @return `list` large list containing polio data
+copy_new_data <- function(data_size, country_name, dr_data_path) {
+  message("Saving a new copy of the dataset.")
+  path_to_save <- paste0(paste(dr_data_path, "saved_on", Sys.Date(), sep = "_"), ".Rds")
 
-  # Set up local directory for storing for data and metadata
-  df_name <- stringr::str_c(country_name, start_date, end_date, sep = "_")
+  # Overwrite the data
+  if (file.exists(path_to_save)) {
+    file.remove(path_to_save)
+  }
 
-  # Relative path of where data and metadata is stored
-  data_path <- file.path("data", "countries")
+  raw_data <- sirfunctions::get_all_polio_data(size = data_size)
+  country_data <- sirfunctions::extract_country_data(country_name, raw_data)
+  readr::write_rds(country_data, path_to_save)
+  return(country_data)
+}
 
-  # Determine the file size of the data to be downloaded
-  start_date_year <- lubridate::year(start_date)
-  data_size <- if (start_date_year >= 2019) {
+
+#' Loads .Rds file
+#'
+#' @param data_dir_path `str` data path
+#'
+#' @return `list` large list containing the polio data
+load_data <- function(data_dir_path) {
+  cli::cli_alert_info("Choose the file to load by entering the line number from above or type 'q' to quit: ")
+  load_data_response <- T
+  while (load_data_response) {
+    load_data <- readline("> ")
+    load_data <- stringr::str_trim(load_data)
+    if (load_data == "q") {
+      return(message("Aborting dataset loading..."))
+    }
+
+    load_data <- suppressWarnings(as.integer(load_data))
+    if (is.na(load_data) | load_data == 0) {
+      message("Invalid response. Please try again.")
+    } else if (load_data <= length(list.files(data_dir_path))) {
+      chosen_file <- list.files(data_dir_path)[load_data]
+      chosen_file_path <- file.path(data_dir_path, chosen_file)
+      message(paste0("Loading ", chosen_file))
+      country_data <- readr::read_rds(chosen_file_path)
+      return(country_data)
+    } else {
+      message("Invalid response. Please try again.")
+    }
+  }
+}
+
+
+#' Determine the size of data to pull
+#'
+#' @param year `int` start year of the desk review
+#'
+#' @return `str` size of the data
+set_data_size <- function(year) {
+  if (year >= 2019) {
     "small"
-  } else if (start_date_year >= 2016) {
+  } else if (year >= 2016) {
     "medium"
   } else {
     "large"
   }
-
-  # Set up folders
-  data_dir_path <- setup_local_folders(data_path, country_name)
-
-  # Create a local copy of the dataset in the folder, or update it.
-  dr_data_path <- file.path(data_dir_path, df_name)
-
-  # Instantiate variable containing country data
-  country_data <- initiate_research_main(data_dir_path, data_size, country_name, dr_data_path)
-
-  return(country_data)
 }
 
-# helper function
-copy_new_data <- function(data_size, country_name, dr_data_path) {
-  print("Saving a new copy of the dataset.")
-  raw.data <- sirfunctions::get_all_polio_data(size = data_size)
-  country_data <- sirfunctions::extract_country_data(country_name, raw.data)
-  readr::write_rds(country_data, paste(dr_data_path, "saved_on", Sys.Date(), sep = "_"))
-  return(country_data)
-}
-
+#' Sets up local folders in the current working directory for storing data and metadata
+#'
+#' @param data_path `str` path where data is/to be stored
+#' @param country_name `str` name of the country
+#'
+#' @return `str` returns the path containing containing the data set
 setup_local_folders <- function(data_path, country_name) {
   # Check if required directories exist locally and create it if it does not
   if (!dir.exists(data_path)) {
@@ -67,47 +101,84 @@ setup_local_folders <- function(data_path, country_name) {
   return(data_dir_path)
 }
 
-initiate_research_main <- function(data_dir_path, data_size, country_name, dr_data_path) {
-  country_data <- NA
+
+#' Handles the logic of which files to load in the current R session
+#'
+#' @param data_dir_path `str` path to the dataset
+#' @param data_size `str` "small", "medium", or "large"
+#' @param country_name `str` name of the country
+#' @param dr_data_path `str` path to save the dataset to
+#'
+#' @return `list` large list containing polio data
+initiate_research_logic <- function(data_dir_path, data_size, country_name, dr_data_path) {
   data_exists <- length(list.files(data_dir_path)) != 0
   if (data_exists) {
     response <- T
     while (response) {
-      create_new_save <- readline("Previous save(s) found. Save a new copy? Type 'y','n', or 'q' to exit. > ")
+      cli::cli_alert_info("Previous save(s) found:")
+
+      for (i in 1:length(list.files(data_dir_path))) {
+        message(paste0(i, ") ", list.files(data_dir_path)[i]))
+      }
+
+      message("Save a new copy? Type 'y','n', or 'q' to quit.")
+      create_new_save <- readline("> ")
       create_new_save <- stringr::str_trim(stringr::str_to_lower(create_new_save))
+
       if (create_new_save == "y") {
-        country_data <- copy_new_data(data_size, country_name, dr_data_path)
-        response <- F
-        break
+        message(paste0("Data saving at:\n", data_dir_path))
+        return(copy_new_data(data_size, country_name, dr_data_path))
       } else if (create_new_save == "n") {
-        print("Please choose the file to load: ")
-        tryCatch(
-          {
-            load_data <- file.choose()
-            country_data <- readr::read_rds(load_data)
-            response <- F
-            break
-          },
-          error = function(cond) {
-            cond$message <- "Aborting dataset loading..."
-            stop(cond)
-          }
-        )
+        return(load_data(data_dir_path))
       } else if (create_new_save == "q") {
-        print("Aborting dataset loading...")
+        message("Aborting dataset loading...")
         response <- F
-        break
       } else {
-        print("Invalid response. Please type 'y', 'n', or 'q' to exit.")
+        message("Invalid response. Please type 'y', 'n', or 'q' to quit.")
       }
     }
   } else {
-    country_data <- copy_new_data(data_size, country_name, dr_data_path)
+    message(paste0("Data saved at:\n", data_dir_path))
+    return(copy_new_data(data_size, country_name, dr_data_path))
   }
-
-  return(country_data)
 }
 
+# "public" methods ----
+#' Set up the folders and load polio data
+#'
+#' @param country_name `str` name of the country
+#' @param start_date `str` start date of the desk review
+#' @param end_date `str` end date of the desk review
+#'
+#' @return `list` large list containing all dataframe for all polio data
+initiate_research <- function(country_name, start_date, end_date) {
+  country_name <- stringr::str_trim(stringr::str_to_upper(country_name))
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  # Set up local directory for storing for data and metadata
+  df_name <- stringr::str_c(country_name, start_date, end_date, sep = "_")
+
+  # Relative path of where data and metadata is stored
+  data_path <- file.path("data", "countries")
+
+  # Set up local folders
+  data_dir_path <- setup_local_folders(data_path, country_name)
+
+  # Create a local copy of the dataset in the folder, or update it.
+  dr_data_path <- file.path(data_dir_path, df_name)
+
+  # Determine the file size of the data to be downloaded
+  start_date_year <- lubridate::year(start_date)
+  data_size <- set_data_size(start_date_year)
+
+  # Instantiate variable containing country data and desk review meta data
+  country_data <- initiate_research_logic(
+    data_dir_path, data_size, country_name,
+    dr_data_path
+  )
+  return(country_data)
+}
 
 initiate_desk_review <- function(country_name, start_date, end_date) {
   return(0)
