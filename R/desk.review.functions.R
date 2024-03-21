@@ -20,9 +20,26 @@ copy_new_data <- function(data_size, country_name, dr_data_path) {
   raw_data <- sirfunctions::get_all_polio_data(size = data_size)
   country_data <- sirfunctions::extract_country_data(country_name, raw_data)
   readr::write_rds(country_data, path_to_save)
+  message(paste0("Data saved at:\n", dr_data_path))
   return(country_data)
 }
 
+#' Creates a meta data file
+#'
+#' @param path location where the .txt file is located/should be created
+#'
+#' @return this function does not return anything
+create_metadata <- function(path) {
+  date_updated <- paste("Updated:", Sys.time(), sep = " ")
+  file_location <- paste("Project working directory:", getwd(), sep = " ")
+
+  if (!exists(path)) {
+    file.create(path)
+  }
+
+  write_lines(file = path,
+              x = c(date_updated, file_location))
+}
 
 #' Loads .Rds file
 #'
@@ -75,7 +92,7 @@ set_data_size <- function(year) {
 #' @param data_path `str` path where data is/to be stored
 #' @param country_name `str` name of the country
 #'
-#' @return `str` returns the path containing containing the data set
+#' @return `str` returns the path containing data for the country
 setup_local_folders <- function(data_path, country_name) {
   # Check if required directories exist locally and create it if it does not
   if (!dir.exists(data_path)) {
@@ -98,7 +115,7 @@ setup_local_folders <- function(data_path, country_name) {
   if (!dir.exists(metadata_dir_path)) {
     dir.create(metadata_dir_path, recursive = T)
   }
-  return(data_dir_path)
+  return(local_country_path)
 }
 
 
@@ -111,6 +128,7 @@ setup_local_folders <- function(data_path, country_name) {
 #'
 #' @return `list` large list containing polio data
 initiate_research_logic <- function(data_dir_path, data_size, country_name, dr_data_path) {
+
   data_exists <- length(list.files(data_dir_path)) != 0
   if (data_exists) {
     response <- T
@@ -163,18 +181,25 @@ initiate_research <- function(country_name, start_date, end_date) {
   data_path <- file.path("data", "countries")
 
   # Set up local folders
-  data_dir_path <- setup_local_folders(data_path, country_name)
+  country_dir_path <- setup_local_folders(data_path, country_name)
 
   # Create a local copy of the dataset in the folder, or update it.
-  dr_data_path <- file.path(data_dir_path, df_name)
+  dr_data_path <- file.path(country_dir_path, "data", df_name)
 
   # Determine the file size of the data to be downloaded
   start_date_year <- lubridate::year(start_date)
   data_size <- set_data_size(start_date_year)
 
+  # Create meta data
+  metadata_path <- file.path(country_dir_path,
+                             "metadata",
+                             paste0(paste(df_name, "metadata", sep = "_"), ".txt"))
+  create_metadata(file.path(metadata_path))
+
   # Instantiate variable containing country data and desk review meta data
+  data_path <- file.path(country_dir_path, "data")
   country_data <- initiate_research_logic(
-    data_dir_path, data_size, country_name,
+    data_path, data_size, country_name,
     dr_data_path
   )
   return(country_data)

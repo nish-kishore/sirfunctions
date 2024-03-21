@@ -12,7 +12,7 @@ setup_local_folders(data_path, country_name)
 \item{country_name}{\code{str} name of the country}
 }
 \value{
-\code{str} returns the path containing containing the data set
+\code{str} returns the path containing data for the country
 }
 \description{
 Sets up local folders in the current working directory for storing data and metadata
