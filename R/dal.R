@@ -821,21 +821,21 @@ extract_country_data <- function(
 
   cli::cli_process_start("3) Pulling data from OSM for Roads")
 
-  ctry.data$roads <- raw.data$roads |>
+  ctry.data$roads <- .raw.data$roads |>
     sf::st_intersection(ctry.data$ctry)
 
   cli::cli_process_done()
 
   cli::cli_process_start("4) Pulling data from OSM for Cities")
 
-  ctry.data$cities <- raw.data$cities |>
+  ctry.data$cities <- .raw.data$cities |>
     sf::st_intersection(ctry.data$ctry)
 
   cli::cli_process_done()
 
   cli::cli_process_start("5) Prepping AFP linelist data")
 
-  ctry.data$afp.all <- raw.data$afp |>
+  ctry.data$afp.all <- .raw.data$afp |>
     #filter(str_detect(place.admin.0, .country)) |>
     dplyr::filter(place.admin.0 == .country) |>
     dplyr::filter(!is.na(lon) & !is.na(lat)) |>
@@ -853,7 +853,7 @@ extract_country_data <- function(
       cdc.class = cdc.classification.all
     )
 
-  ctry.data$afp.all.2 <- raw.data$afp |>
+  ctry.data$afp.all.2 <- .raw.data$afp |>
     #filter(str_detect(place.admin.0, .country)) |>
     dplyr::filter(place.admin.0 == .country) |>
     dplyr::rename(
@@ -868,7 +868,7 @@ extract_country_data <- function(
       cdc.class = cdc.classification.all
     )
 
-  ctry.data$afp <- raw.data$afp |>
+  ctry.data$afp <- .raw.data$afp |>
     #filter(str_detect(place.admin.0, .country)) |>
     dplyr::filter(place.admin.0 == .country) |>
     dplyr::filter(!is.na(lon) & !is.na(lat)) |>
@@ -889,7 +889,7 @@ extract_country_data <- function(
       cdc.class = cdc.classification.all
     )
 
-  ctry.data$afp.2 <- raw.data$afp |>
+  ctry.data$afp.2 <- .raw.data$afp |>
     #filter(str_detect(place.admin.0, .country)) |>
     dplyr::filter(place.admin.0 == .country) |>
     dplyr::filter(!(
@@ -907,7 +907,7 @@ extract_country_data <- function(
       cdc.class = cdc.classification.all
     )
 
-  ctry.data$afp.epi <- raw.data$afp.epi |>
+  ctry.data$afp.epi <- .raw.data$afp.epi |>
     dplyr::filter(place.admin.0 == .country)
   #filter(str_detect(place.admin.0, .country))
 
@@ -920,7 +920,7 @@ extract_country_data <- function(
   cli::cli_process_done()
 
   cli::cli_process_start("6) Prepping population data")
-  ctry.data$dist.pop <- raw.data$dist.pop |>
+  ctry.data$dist.pop <- .raw.data$dist.pop |>
     dplyr::filter(ADM0_NAME == .country) |>
     #filter(str_detect(ADM0_NAME, .country)) |>
     dplyr::mutate(ADM0_NAME = .country) |>
@@ -934,7 +934,7 @@ extract_country_data <- function(
   cli::cli_process_done()
 
   cli::cli_process_start("7) Prepping positives data")
-  ctry.data$pos <- raw.data$pos |>
+  ctry.data$pos <- .raw.data$pos |>
     dplyr::filter(place.admin.0 == .country)
   #filter(str_detect(place.admin.0, .country)) |>
   cli::cli_process_done()
