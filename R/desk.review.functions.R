@@ -169,6 +169,7 @@ initiate_research_logic <- function(data_dir_path, data_size, country_name, dr_d
 #' @param end_date `str` end date of the desk review
 #'
 #' @return `list` large list containing all dataframe for all polio data
+#' @export
 initiate_research <- function(country_name, start_date, end_date) {
   country_name <- stringr::str_trim(stringr::str_to_upper(country_name))
   start_date <- lubridate::as_date(start_date)
