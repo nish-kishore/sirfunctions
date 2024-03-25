@@ -759,40 +759,50 @@ extract_country_data <- function(
 
   .country <- stringr::str_to_upper(stringr::str_trim(.country))
   cli::cli_h1(paste0("--Processing country data for: ", stringr::str_to_title(.country), "--"))
-  cli::cli_process_start("1) Subsetting country spatial data")
   ctry.data <- list()
   ctry.data$ctry <- .raw.data$global.ctry |>
     dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
 
   #Error checking for overlapping ADM0 Names
   ctrys <- sort(unique(ctry.data$ctry$ADM0_SOVRN))
-
   if(length(ctrys) > 1){
+    message("Multiple countries match that name")
 
-    ctry.options <- paste0(paste0("\n",  paste0(1:length(ctrys), ") "), ctrys), collapse = "")
+    response = T
+    attempts <- 5
+    while (response) {
+      ctry.options <- paste0(paste0("\n",  paste0(1:length(ctrys), ") "), ctrys), collapse = "")
+      message("Please choose one by designating a number or type 'q' to quit: ")
+      message(ctry.options)
 
-    message("Multiple countries match that name, please choose one by designating a number: ")
-    message(ctry.options)
+      chosen.country <- readline("Enter only the number to designate a country: \n")
 
-    chosen.country <- as.integer(readline("Enter only the number to designate a country: \n"))
-    i <- 1
+      if (chosen.country == "q" | attempts == 1) {
+        response = F
+        message("Exiting...")
+        return()
+      }
 
-    while(!chosen.country %in% 1:length(ctrys) & i < 5){
-      chosen.country <- as.integer(readline("Invalid choice, please only choose a number from the list and enter only that number as an integer: \n"))
-      i <- i + 1
+      chosen.country <- as.integer(stringr::str_trim(chosen.country))
+      if (is.na(chosen.country) | !(chosen.country %in% 1:length(ctrys))) {
+        message("Invalid choice, please try again.")
+        attempts <- attempts - 1
+        message(paste0(attempts), " attempt(s) remaining\n")
+        next
+      } else {
+        chosen.country <- ctrys[chosen.country]
+        print(chosen.country)
+        response = F
+      }
     }
-
-    if(i == 5){
-      stop("Invalid country choice, please verify input and try running the function again!")
-    }
-
-    chosen.country <- ctrys[chosen.country]
-
-  }else{
+  } else {
     chosen.country <- ctry.data$ctry$ADM0_SOVRN
   }
 
+  cli::cli_process_start("1) Subsetting country spatial data\n")
+
   ctry.data$ctry <- dplyr::filter(ctry.data$ctry, ADM0_SOVRN == chosen.country)
+  print(unique(ctry.data$ctry$ADM0_NAME))
   .country <- unique(ctry.data$ctry$ADM0_NAME)
 
   ctry.data$prov <- .raw.data$global.prov |>
