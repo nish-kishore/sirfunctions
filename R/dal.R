@@ -757,6 +757,10 @@ extract_country_data <- function(
     .raw.data = raw.data
 ){
   .country <- stringr::str_to_upper(stringr::str_trim(.country))
+  if (!(.country %in% unique(.raw.data$ctry.pop$ADM0_NAME))) {
+    stop("Invalid country name. Please try again.")
+  }
+
   cli::cli_h1(paste0("--Processing country data for: ", stringr::str_to_title(.country), "--"))
   #Error checking for overlapping ADM0 Names
   ctry.matches <- .raw.data$ctry.pop |>
@@ -817,7 +821,6 @@ extract_country_data <- function(
   ctry.data$ctry <- .raw.data$global.ctry |>
     dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
   ctry.data$ctry <- dplyr::filter(ctry.data$ctry, ADM0_SOVRN == chosen.country)
-  print(unique(ctry.data$ctry$ADM0_NAME))
   .country <- unique(ctry.data$ctry$ADM0_NAME)
 
   ctry.data$prov <- .raw.data$global.prov |>
@@ -834,28 +837,128 @@ extract_country_data <- function(
 
   steps <- steps + 1
   cli::cli_process_start(paste0(steps,") Extracting bordering geometries for reference"))
-  sf::sf_use_s2(F)
-  a <- sf::st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
-  sf::sf_use_s2(T)
-  ctry.data$proximal.dist <- .raw.data$global.dist[a, ]
 
-  sf::sf_use_s2(F)
-  a <- sf::st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
-  sf::sf_use_s2(T)
-  ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
+  error1 <- F
+  tryCatch({
+    a <- sf::st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
+    ctry.data$proximal.dist <- .raw.data$global.dist[a, ]
+  }, error = function(cond) {
+    message("There was an error in extracting district borders.")
+    error1 <<- T
+  })
+
+  if (error1) {
+    tryCatch({
+      message("Attempting fix by toggling sf_use_s2(F).")
+      sf_use_s2(F)
+      a <- sf::st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
+      ctry.data$proximal.dist <- .raw.data$global.dist[a, ]
+      sf_use_s2(T)
+    },
+    error = function(cond) {
+      message("Unable to fix spatial file errors for district borders.")
+    })
+  }
+
+  error2 <- F
+  tryCatch({
+    a <- sf::st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
+    ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
+  }, error = function(cond) {
+    message("There was an error in extracting country borders.")
+    error2 <<- T
+  })
+
+  if (error2) {
+    tryCatch({
+      message("Attempting fix by toggling sf_use_s2(F).")
+      sf_use_s2(F)
+      a <- sf::st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
+      ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
+      sf_use_s2(T)
+    }, error = function(cond) {
+      message("Unable to fix spatial file errors for district borders.")
+    })
+  }
+
   cli::cli_process_done()
   steps <- steps + 1
   cli::cli_process_start(paste0(steps,") Pulling data from OSM for Roads"))
 
-  ctry.data$roads <- .raw.data$roads |>
-    sf::st_intersection(ctry.data$ctry)
+  error3 <- F
+  tryCatch({
+    ctry.data$roads <- .raw.data$roads |>
+      sf::st_intersection(ctry.data$ctry)
+  }, error = function(cond) {
+    message("Unable to pull data for Roads. Toggling sf_use_s2(F).")
+    error3 <<- T
+  })
+
+  error4 <- F
+  if (error3) {
+    tryCatch({
+      sf_use_s2(F)
+      ctry.data$roads <- .raw.data$roads |>
+        sf::st_intersection(ctry.data$ctry)
+      sf_use_s2(T)
+    }, error = function(cond) {
+      message(paste0("sf_use_s2(F) failed. Using st_make_valid() on ctry.data$ctry.\n",
+                     " This fix in some cases can cause inaccurate road maps.\n",
+                     " If so, it is recommended to fix the spatial files."))
+      error4 <<- T
+    })
+  }
+
+  if (error4) {
+    tryCatch({
+      sf_use_s2(F)
+      ctry.data$roads <- raw.data$roads |>
+        sf::st_intersection(sf::st_make_valid(ctry.data$ctry))
+      sf_use_s2(T)
+    }, error = function(cond) {
+      message("Unable to fix spatial file errors in road maps.")
+    })
+  }
 
   cli::cli_process_done()
   steps <- steps + 1
   cli::cli_process_start(paste0(steps,") Pulling data from OSM for Cities"))
 
-  ctry.data$cities <- .raw.data$cities |>
-    sf::st_intersection(ctry.data$ctry)
+  error5 <- F
+  tryCatch({
+    ctry.data$cities <- .raw.data$cities |>
+      sf::st_intersection(ctry.data$ctry)
+  }, error = function(cond) {
+    message("Unable to pull data for Cities. Toggling sf_use_s2(F).")
+    error5 <<- T
+  })
+
+  error6 <- F
+  if (error5) {
+    tryCatch({
+      sf_use_s2(F)
+      ctry.data$cities <- .raw.data$cities |>
+        sf::st_intersection(ctry.data$ctry)
+      sf_use_s2(T)
+    }, error = function(cond) {
+      message(paste0("sf_use_s2(F) failed. Using st_make_valid() on the ctry.data$ctry.\n",
+                     " This fix in some cases can cause inaccurate city maps.\n",
+                     " If so, it is recommended to fix the spatial files."))
+      error6 <<- T
+    })
+  }
+
+  if (error6) {
+    tryCatch({
+      sf_use_s2(F)
+      ctry.data$cities <- raw.data$cities |>
+        sf::st_intersection(st_make_valid(ctry.data$ctry))
+      sf_use_s2(T)
+    },
+    error = function(cond) {
+      message("Unable to fix spatial file errors in city maps.")
+    })
+  }
 
   cli::cli_process_done()
   steps <- steps + 1
