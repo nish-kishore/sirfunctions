@@ -789,7 +789,7 @@ extract_country_data <- function(
         return()
       }
 
-      chosen.country <- as.integer(stringr::str_trim(chosen.country))
+      chosen.country <- suppressWarnings(as.integer(stringr::str_trim(chosen.country)))
       if (is.na(chosen.country) | !(chosen.country %in% 1:length(ctrys))) {
         message("Invalid choice, please try again.")
         attempts <- attempts - 1
@@ -801,7 +801,6 @@ extract_country_data <- function(
         next
       } else {
         chosen.country <- ctrys[chosen.country]
-        print(chosen.country)
         response = F
       }
     }
@@ -809,9 +808,10 @@ extract_country_data <- function(
     chosen.country <- ctrys[1]
   }
 
-  .country <- ctrys[chosen.country] |> stringr::str_to_upper()
+  .country <- chosen.country |> stringr::str_to_upper()
   ctry.data <- list()
   steps <- 1
+
   if (!is.null(.raw.data$global.ctry)) {
   cli::cli_process_start(paste0(steps,") Subsetting country spatial data\n"))
   ctry.data$ctry <- .raw.data$global.ctry |>
@@ -957,7 +957,26 @@ extract_country_data <- function(
            prov = ADM1_NAME,
            dist = ADM2_NAME,
            u15pop,
-           adm2guid)
+           adm2guid,
+           datasource)
+
+  ctry.data$ctry.pop <- .raw.data$ctry.pop |>
+    dplyr::filter(ADM0_NAME == .country) |>
+    dplyr::select(year,
+                  ctry = ADM0_NAME,
+                  u15pop,
+                  adm0guid,
+                  datasource)
+
+  ctry.data$prov.pop <- .raw.data$prov.pop |>
+    dplyr::filter(ADM0_NAME == .country) |>
+    dplyr::mutate(ADM0_NAME = .country) |>
+    dplyr::select(year,
+                  ctry = ADM0_NAME,
+                  prov = ADM1_NAME,
+                  u15pop = u15pop.prov,
+                  adm1guid,
+                  datasource)
 
   cli::cli_process_done()
   steps <- steps + 1
