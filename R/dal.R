@@ -756,28 +756,34 @@ extract_country_data <- function(
     .country,
     .raw.data = raw.data
 ){
-
   .country <- stringr::str_to_upper(stringr::str_trim(.country))
   cli::cli_h1(paste0("--Processing country data for: ", stringr::str_to_title(.country), "--"))
-  ctry.data <- list()
-  ctry.data$ctry <- .raw.data$global.ctry |>
-    dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
-
   #Error checking for overlapping ADM0 Names
-  ctrys <- sort(unique(ctry.data$ctry$ADM0_SOVRN))
+  ctry.matches <- .raw.data$ctry.pop |>
+    dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
+  ctrys <- sort(unique(ctry.matches$ADM0_NAME)) |>
+    stringr::str_to_title()
   if(length(ctrys) > 1){
     message("Multiple countries match that name")
 
     response = T
     attempts <- 5
+    chosen.country <- 0
     while (response) {
-      ctry.options <- paste0(paste0("\n",  paste0(1:length(ctrys), ") "), ctrys), collapse = "")
-      message("Please choose one by designating a number or type 'q' to quit: ")
-      message(ctry.options)
 
-      chosen.country <- readline("Enter only the number to designate a country: \n")
+      if (attempts == 0) {
+        response = F
+        message("Exiting...")
+        return()
+      } else {
+        ctry.options <- paste0(paste0("\n",  paste0(1:length(ctrys), ") "), ctrys), collapse = "")
+        message("Please choose one by designating a number or type 'q' to quit: ")
+        message(ctry.options)
 
-      if (chosen.country == "q" | attempts == 1) {
+        chosen.country <- readline("Enter only the number to designate a country: \n")
+      }
+
+      if (chosen.country == "q") {
         response = F
         message("Exiting...")
         return()
@@ -787,7 +793,11 @@ extract_country_data <- function(
       if (is.na(chosen.country) | !(chosen.country %in% 1:length(ctrys))) {
         message("Invalid choice, please try again.")
         attempts <- attempts - 1
-        message(paste0(attempts), " attempt(s) remaining\n")
+        if (attempts == 1) {
+          message(attempts, " attempt remaining\n")
+        } else {
+          message(attempts, " attempts remaining\n")
+        }
         next
       } else {
         chosen.country <- ctrys[chosen.country]
@@ -796,11 +806,16 @@ extract_country_data <- function(
       }
     }
   } else {
-    chosen.country <- ctry.data$ctry$ADM0_SOVRN
+    chosen.country <- ctrys[1]
   }
 
-  cli::cli_process_start("1) Subsetting country spatial data\n")
-
+  .country <- ctrys[chosen.country] |> stringr::str_to_upper()
+  ctry.data <- list()
+  steps <- 1
+  if (!is.null(.raw.data$global.ctry)) {
+  cli::cli_process_start(paste0(steps,") Subsetting country spatial data\n"))
+  ctry.data$ctry <- .raw.data$global.ctry |>
+    dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
   ctry.data$ctry <- dplyr::filter(ctry.data$ctry, ADM0_SOVRN == chosen.country)
   print(unique(ctry.data$ctry$ADM0_NAME))
   .country <- unique(ctry.data$ctry$ADM0_NAME)
@@ -817,7 +832,8 @@ extract_country_data <- function(
 
   cli::cli_process_done()
 
-  cli::cli_process_start("2) Extracting bordering geometries for reference")
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Extracting bordering geometries for reference"))
   sf::sf_use_s2(F)
   a <- sf::st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
   sf::sf_use_s2(T)
@@ -828,22 +844,24 @@ extract_country_data <- function(
   sf::sf_use_s2(T)
   ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
   cli::cli_process_done()
-
-  cli::cli_process_start("3) Pulling data from OSM for Roads")
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Pulling data from OSM for Roads"))
 
   ctry.data$roads <- .raw.data$roads |>
     sf::st_intersection(ctry.data$ctry)
 
   cli::cli_process_done()
-
-  cli::cli_process_start("4) Pulling data from OSM for Cities")
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Pulling data from OSM for Cities"))
 
   ctry.data$cities <- .raw.data$cities |>
     sf::st_intersection(ctry.data$ctry)
 
   cli::cli_process_done()
+  steps <- steps + 1
 
-  cli::cli_process_start("5) Prepping AFP linelist data")
+  }
+  cli::cli_process_start(paste0(steps,") Prepping AFP linelist data"))
 
   ctry.data$afp.all <- .raw.data$afp |>
     #filter(str_detect(place.admin.0, .country)) |>
@@ -928,8 +946,8 @@ extract_country_data <- function(
     dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
 
   cli::cli_process_done()
-
-  cli::cli_process_start("6) Prepping population data")
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Prepping population data"))
   ctry.data$dist.pop <- .raw.data$dist.pop |>
     dplyr::filter(ADM0_NAME == .country) |>
     #filter(str_detect(ADM0_NAME, .country)) |>
@@ -942,8 +960,8 @@ extract_country_data <- function(
            adm2guid)
 
   cli::cli_process_done()
-
-  cli::cli_process_start("7) Prepping positives data")
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Prepping positives data"))
   ctry.data$pos <- .raw.data$pos |>
     dplyr::filter(place.admin.0 == .country)
   #filter(str_detect(place.admin.0, .country)) |>
