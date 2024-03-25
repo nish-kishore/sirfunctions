@@ -745,10 +745,9 @@ get_all_polio_data <- function(
 #' Extract country specific information from raw polio data
 #'
 #' @description Extract country specific data from the CDC generated "raw.data" file from `get_all_polio_data`.
-#' The input will also need spatial data attached. Outputs list of country specific data and spatial objects.
+#' Outputs list of country specific data and spatial objects (if applicable).
 #' @import cli dplyr sf stringr
-#' @param .raw.data list: list of raw data sources that is output from `get_all_polio_data`. This raw.data file will also
-#' need to include all spatial data.
+#' @param .raw.data list: list of raw data sources that is output from `get_all_polio_data`.
 #' @param .country str: a country name of interest
 #' @return list with country specific objects
 #' @export
