@@ -107,7 +107,8 @@ f.color.schemes <- function(type) {
         "No AFP cases" = "lightgrey",
         "Missing" = "grey34"
       ),
-    "timeliness.col.vars" = c(
+    "timeliness.col.vars" =
+      c(
       "Paralysis onset to notification" = "#377eb8",
       "Case notification to investigation" = "#e41a1c",
       "Case investigation to stool 1 collection" = "#4daf4a",
