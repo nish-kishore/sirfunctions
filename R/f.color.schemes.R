@@ -2,7 +2,7 @@
 #' @description Utility function to return SIR colors
 #' @param type str: type of colors we can return. Accepted values include:
 #' 'epicurve', 'para.case', 'afp.prov', 'afp.dist', 'pot.comp', 'silence',
-#' 'silence.v2', 'cases', 'es'
+#' 'silence.v2', 'cases', 'es', 'mapval', 'timeliness.col.vars'
 #' @returns list: color sets
 #' @export
 f.color.schemes <- function(type) {
@@ -96,6 +96,24 @@ f.color.schemes <- function(type) {
         "50-79%" = "#feb24c",
         "80-100%" = "#0070c0",
         "<5 samples" = "black"
-      )
+      ),
+    "mapval" =
+      c(
+        "<20%" = "#D7191C",
+        "20-49%" = "#FDAE61",
+        "50-79%" = "#FFFFBF",
+        "80-89%" = "#A6D96A",
+        "90-100%" = "#1A9641",
+        "No AFP cases" = "lightgrey",
+        "Missing" = "grey34"
+      ),
+    "timeliness.col.vars" = c(
+      "Paralysis onset to notification" = "#377eb8",
+      "Case notification to investigation" = "#e41a1c",
+      "Case investigation to stool 1 collection" = "#4daf4a",
+      "Stool 1 collection to stool 2 collection" = "#984ea3",
+      "Last stool collection to received in lab" = "#ff7f00",
+      "Stool received lab to final culture results" = "#b55f04"
+    )
   )
 }
