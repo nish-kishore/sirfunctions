@@ -9,7 +9,7 @@ f.color.schemes(type)
 \arguments{
 \item{type}{str: type of colors we can return. Accepted values include:
 'epicurve', 'para.case', 'afp.prov', 'afp.dist', 'pot.comp', 'silence',
-'silence.v2', 'cases', 'es'}
+'silence.v2', 'cases', 'es', 'mapval', 'timeliness.col.vars'}
 }
 \value{
 list: color sets
