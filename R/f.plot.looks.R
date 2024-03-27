@@ -1,4 +1,3 @@
-
 #' Function to return specific plot looks
 #' @description Function to collate and return plot looks
 #' @import ggplot2
@@ -7,14 +6,13 @@
 #' @return ggplot theme for addition into plot
 #' @export
 f.plot.looks <- function(type) {
+  types <- c("02", "epicurve", "geomtile", "gpln_type1", "gpln_type2")
 
-  types <- c("02", "epicurve", "geomtile", "gpln_type1" ,"gpln_type2")
-
-  if (!type %in% types){
-
-    stop(paste0("Your selection is not one of the standard SIR plot looks, please choose one of the following: ",
-                paste0(types, collapse = ", ")))
-
+  if (!type %in% types) {
+    stop(paste0(
+      "Your selection is not one of the standard SIR plot looks, please choose one of the following: ",
+      paste0(types, collapse = ", ")
+    ))
   }
 
 

@@ -12,7 +12,8 @@ f.color.schemes <- function(type){
              "pot.comp", "silence", "silence.v2", "cases", "es")
 
   if(!type %in% types){
-    stop(paste0("Your selection is not one of the standard SIR color schemes, please choose one of the following: ",
+    stop(paste0("\nYour selection is not one of the standard SIR color schemes,",
+                "\nplease choose one of the following:\n",
                 paste0(types, collapse = ", ")))
   }
 
