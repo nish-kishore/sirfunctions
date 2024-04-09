@@ -33,7 +33,7 @@ f.npafp.rate.01 <- function(
     stop("Please include both afp.data and pop.data as arguments to the function.")
   }
 
-  # file names
+  #file names
   names.afp.ctry <- c("adm0guid", "date", "cdc.classification.all2")
   names.afp.prov <- c(names.afp.ctry, "adm1guid")
   names.afp.dist <- c(names.afp.prov, "adm2guid")
@@ -206,7 +206,9 @@ f.npafp.rate.01 <- function(
       as_tibble() |>
       filter(
         cdc.classification.all2 %in% c("NPAFP", "PENDING", "LAB PENDING")
-      ) |> # filter all AFP data such that only cases listed as NPAFP,
+
+        ) |> # filter all AFP data such that only cases listed as NPAFP,
+
       # PENDING, or LAB PENDING are counted
       select(epid, date, ctry, adm0guid, prov, adm1guid, dist, adm2guid)
     # Keep only the listed variables (removes all others)
