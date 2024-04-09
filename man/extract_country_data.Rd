@@ -9,13 +9,12 @@ extract_country_data(.country, .raw.data = raw.data)
 \arguments{
 \item{.country}{str: a country name of interest}
 
-\item{.raw.data}{list: list of raw data sources that is output from \code{get_all_polio_data}. This raw.data file will also
-need to include all spatial data.}
+\item{.raw.data}{list: list of raw data sources that is output from \code{get_all_polio_data}.}
 }
 \value{
 list with country specific objects
 }
 \description{
 Extract country specific data from the CDC generated "raw.data" file from \code{get_all_polio_data}.
-The input will also need spatial data attached. Outputs list of country specific data and spatial objects.
+Outputs list of country specific data and spatial objects (if applicable).
 }
