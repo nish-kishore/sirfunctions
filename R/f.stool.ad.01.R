@@ -10,7 +10,7 @@
 #' @import lubridate
 #' @import tibble
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
-#' formatted as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all
+#' formatted as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all2
 #' which includes "NOT-AFP"
 #' @param admin.data tibble: Full list of country administrative units by a given
 #' spatial scale including "year", "adm{0,1,2}guid, and "{ctry/prov/dist}"
@@ -36,7 +36,7 @@ f.stool.ad.01 <- function(
     ){
 
   #file names
-  names.afp.ctry <- c("adm0guid", "date", "cdc.classification.all")
+  names.afp.ctry <- c("adm0guid", "date", "cdc.classification.all2")
   names.afp.prov <- c(names.afp.ctry, "adm1guid")
   names.afp.dist <- c(names.afp.prov, "adm2guid")
 
@@ -55,11 +55,21 @@ f.stool.ad.01 <- function(
 
   #Check data inputs
   # Analysis start and end date as defined by user (as a character)
-  start.date <- as_date(start.date)
-  end.date <- as_date(end.date)
-
-  years <- year(start.date):year(end.date)
-  ctry.years <- sort(unique(admin.data$year))
+  tryCatch(
+    {
+      start.date <- as_date(start.date)
+      end.date <- as_date(end.date)
+      years <- year(start.date):year(end.date)
+      ctry.years <- sort(unique(admin.data$year))
+    },
+    error = function(cond) {
+      cond$message <- paste0(
+        "Invalid date in either start.date or end.date. ",
+        "Check if they are in 'YYYY-MM-DD' format and try again."
+      )
+      stop(cond)
+    }
+  )
 
   #check that country data contains all the years necessary
   if(sum(!years %in% ctry.years) > 0){
@@ -72,7 +82,7 @@ f.stool.ad.01 <- function(
 
   # Limit AFP data to the range described by the analysis start and end dates
   afp.data <- afp.data |>
-    filter(date >= start.date & date <= end.date)
+    filter(between(date, start.date, end.date))
 
   #check if spatial.data param in appropriate format
   if(!spatial.scale %in% c("ctry", "prov", "dist")){
@@ -194,8 +204,7 @@ f.stool.ad.01 <- function(
 
   # country of interest
   admin.data <- admin.data %>%
-    filter(year >= year(start.date) &
-             year <= year(end.date)) # Only years of analysis # Only country of analysis
+    filter(between(year, year(start.date), year(end.date))) # Only years of analysis # Only country of analysis
 
 
   year.data <- tibble(
@@ -233,7 +242,7 @@ f.stool.ad.01 <- function(
 
 stool.data <- afp.data |>
   as_tibble() |>
-  filter(cdc.classification.all != "NOT-AFP") |>
+  filter(cdc.classification.all2 != "NOT-AFP") |>
   mutate(adequacy.final = case_when(#Conditions for Bad Data
     bad.stool1 == "data entry error" |
       bad.stool1 == "date before onset" |
@@ -266,7 +275,7 @@ stool.data <- afp.data |>
   )) |>
     mutate(year = year(date)) |>
     select(year, adm0guid, adm1guid, adm2guid,
-           adequacy.final, cdc.classification.all)
+           adequacy.final, cdc.classification.all2)
 
   stool.data <- full_join( # Merge stool data with days in year
     stool.data, year.data,
@@ -303,14 +312,14 @@ stool.data <- afp.data |>
         select(names.ctry, -"year") %>%
         distinct(.)
 
-      baddy = stool.data1 %>%
+      baddy <- stool.data1 %>%
         group_by(adm0guid, adequacy.final)%>%
         summarize(bad.data = n()) %>%
         ungroup()%>%
         filter(adequacy.final == 77) %>%
         select(-adequacy.final)
 
-      missy = stool.data1 %>%
+      missy <- stool.data1 %>%
         group_by(adm0guid,adequacy.final)%>%
         summarize(missing.data = n()) %>%
         ungroup()%>%

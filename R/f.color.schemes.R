@@ -5,6 +5,7 @@
 #' 'silence.v2', 'cases', 'es', 'mapval', 'timeliness.col.vars'
 #' @returns list: color sets
 #' @export
+
 f.color.schemes <- function(type) {
   types <- c(
     "epicurve", "para.case", "afp.prov", "afp.dist",
