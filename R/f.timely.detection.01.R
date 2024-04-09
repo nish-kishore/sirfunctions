@@ -29,14 +29,22 @@ f.timely.detection.01 <- function(
 ){
 
   # Analysis start and end date as defined by user (as a character)
-  start.date <- as_date(start.date)
-  end.date <- as_date(end.date)
+
+  # Check if dates entered are valid
+  tryCatch({
+    start.date <- as_date(start.date)
+    end.date <- as_date(end.date)
+  },
+  error = function(cond) {
+    cond$message = "Please enter dates in 'YYYY-MM-DD' format."
+    stop(e)
+  })
 
   years <- year(start.date):year(end.date)
 
   # Limit AFP data to the range described by the analysis start and end dates
   afp.data <- afp.data |>
-    filter(date >= start.date & date <= end.date)
+    filter(between(date, start.date, end.date))
 
   # Warning message about non-overlapping dates
   if(start.date < as_date(afp.data$date |> min(na.rm = T))){
@@ -53,7 +61,7 @@ f.timely.detection.01 <- function(
 
   # Limit ES data to the range described by the analysis start and end dates
   es.data <- es.data |>
-    filter(collect.date >= start.date & collect.date <= end.date)
+    filter(between(collect.date, start.date, end.date))
 
   # Warning message about non-overlapping dates
   if(start.date < as_date(es.data$collect.date |> min(na.rm = T))){
