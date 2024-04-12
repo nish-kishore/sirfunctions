@@ -745,10 +745,9 @@ get_all_polio_data <- function(
 #' Extract country specific information from raw polio data
 #'
 #' @description Extract country specific data from the CDC generated "raw.data" file from `get_all_polio_data`.
-#' The input will also need spatial data attached. Outputs list of country specific data and spatial objects.
+#' Outputs list of country specific data and spatial objects (if applicable).
 #' @import cli dplyr sf stringr
-#' @param .raw.data list: list of raw data sources that is output from `get_all_polio_data`. This raw.data file will also
-#' need to include all spatial data.
+#' @param .raw.data list: list of raw data sources that is output from `get_all_polio_data`.
 #' @param .country str: a country name of interest
 #' @return list with country specific objects
 #' @export
@@ -756,42 +755,70 @@ extract_country_data <- function(
     .country,
     .raw.data = raw.data
 ){
-
   .country <- stringr::str_to_upper(stringr::str_trim(.country))
-  cli::cli_h1(paste0("--Processing country data for: ", stringr::str_to_title(.country), "--"))
-  cli::cli_process_start("1) Subsetting country spatial data")
-  ctry.data <- list()
-  ctry.data$ctry <- .raw.data$global.ctry |>
-    dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
-
-  #Error checking for overlapping ADM0 Names
-  ctrys <- sort(unique(ctry.data$ctry$ADM0_SOVRN))
-
-  if(length(ctrys) > 1){
-
-    ctry.options <- paste0(paste0("\n",  paste0(1:length(ctrys), ") "), ctrys), collapse = "")
-
-    message("Multiple countries match that name, please choose one by designating a number: ")
-    message(ctry.options)
-
-    chosen.country <- as.integer(readline("Enter only the number to designate a country: \n"))
-    i <- 1
-
-    while(!chosen.country %in% 1:length(ctrys) & i < 5){
-      chosen.country <- as.integer(readline("Invalid choice, please only choose a number from the list and enter only that number as an integer: \n"))
-      i <- i + 1
-    }
-
-    if(i == 5){
-      stop("Invalid country choice, please verify input and try running the function again!")
-    }
-
-    chosen.country <- ctrys[chosen.country]
-
-  }else{
-    chosen.country <- ctry.data$ctry$ADM0_SOVRN
+  if (!(.country %in% unique(.raw.data$ctry.pop$ADM0_NAME))) {
+    stop("Invalid country name. Please try again.")
   }
 
+  cli::cli_h1(paste0("--Processing country data for: ", stringr::str_to_title(.country), "--"))
+  #Error checking for overlapping ADM0 Names
+  ctry.matches <- .raw.data$ctry.pop |>
+    dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
+  ctrys <- sort(unique(ctry.matches$ADM0_NAME)) |>
+    stringr::str_to_title()
+  if(length(ctrys) > 1){
+    message("Multiple countries match that name")
+
+    response = T
+    attempts <- 5
+    chosen.country <- 0
+    while (response) {
+
+      if (attempts == 0) {
+        response = F
+        message("Exiting...")
+        return()
+      } else {
+        ctry.options <- paste0(paste0("\n",  paste0(1:length(ctrys), ") "), ctrys), collapse = "")
+        message("Please choose one by designating a number or type 'q' to quit: ")
+        message(ctry.options)
+
+        chosen.country <- readline("Enter only the number to designate a country: \n")
+      }
+
+      if (chosen.country == "q") {
+        response = F
+        message("Exiting...")
+        return()
+      }
+
+      chosen.country <- suppressWarnings(as.integer(stringr::str_trim(chosen.country)))
+      if (is.na(chosen.country) | !(chosen.country %in% 1:length(ctrys))) {
+        message("Invalid choice, please try again.")
+        attempts <- attempts - 1
+        if (attempts == 1) {
+          message(attempts, " attempt remaining\n")
+        } else {
+          message(attempts, " attempts remaining\n")
+        }
+        next
+      } else {
+        chosen.country <- ctrys[chosen.country]
+        response = F
+      }
+    }
+  } else {
+    chosen.country <- ctrys[1]
+  }
+
+  .country <- chosen.country |> stringr::str_to_upper()
+  ctry.data <- list()
+  steps <- 1
+
+  if (!is.null(.raw.data$global.ctry)) {
+  cli::cli_process_start(paste0(steps,") Subsetting country spatial data\n"))
+  ctry.data$ctry <- .raw.data$global.ctry |>
+    dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
   ctry.data$ctry <- dplyr::filter(ctry.data$ctry, ADM0_SOVRN == chosen.country)
   .country <- unique(ctry.data$ctry$ADM0_NAME)
 
@@ -807,33 +834,136 @@ extract_country_data <- function(
 
   cli::cli_process_done()
 
-  cli::cli_process_start("2) Extracting bordering geometries for reference")
-  sf::sf_use_s2(F)
-  a <- sf::st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
-  sf::sf_use_s2(T)
-  ctry.data$proximal.dist <- .raw.data$global.dist[a, ]
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Extracting bordering geometries for reference"))
 
-  sf::sf_use_s2(F)
-  a <- sf::st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
-  sf::sf_use_s2(T)
-  ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
+  error1 <- F
+  tryCatch({
+    a <- sf::st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
+    ctry.data$proximal.dist <- .raw.data$global.dist[a, ]
+  }, error = function(cond) {
+    message("There was an error in extracting district borders.")
+    error1 <<- T
+  })
+
+  if (error1) {
+    tryCatch({
+      message("Attempting fix by toggling sf_use_s2(F).")
+      sf_use_s2(F)
+      a <- sf::st_touches(ctry.data$ctry, .raw.data$global.dist, sparse = F)
+      ctry.data$proximal.dist <- .raw.data$global.dist[a, ]
+      sf_use_s2(T)
+    },
+    error = function(cond) {
+      message("Unable to fix spatial file errors for district borders.")
+    })
+  }
+
+  error2 <- F
+  tryCatch({
+    a <- sf::st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
+    ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
+  }, error = function(cond) {
+    message("There was an error in extracting country borders.")
+    error2 <<- T
+  })
+
+  if (error2) {
+    tryCatch({
+      message("Attempting fix by toggling sf_use_s2(F).")
+      sf_use_s2(F)
+      a <- sf::st_touches(ctry.data$ctry, .raw.data$global.ctry, sparse = F)
+      ctry.data$proximal.ctry <- .raw.data$global.ctry[a, ]
+      sf_use_s2(T)
+    }, error = function(cond) {
+      message("Unable to fix spatial file errors for district borders.")
+    })
+  }
+
   cli::cli_process_done()
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Pulling data from OSM for Roads"))
 
-  cli::cli_process_start("3) Pulling data from OSM for Roads")
+  error3 <- F
+  tryCatch({
+    ctry.data$roads <- .raw.data$roads |>
+      sf::st_intersection(ctry.data$ctry)
+  }, error = function(cond) {
+    message("Unable to pull data for Roads. Toggling sf_use_s2(F).")
+    error3 <<- T
+  })
 
-  ctry.data$roads <- .raw.data$roads |>
-    sf::st_intersection(ctry.data$ctry)
+  error4 <- F
+  if (error3) {
+    tryCatch({
+      sf_use_s2(F)
+      ctry.data$roads <- .raw.data$roads |>
+        sf::st_intersection(ctry.data$ctry)
+      sf_use_s2(T)
+    }, error = function(cond) {
+      message(paste0("sf_use_s2(F) failed. Using st_make_valid() on ctry.data$ctry.\n",
+                     " This fix in some cases can cause inaccurate road maps.\n",
+                     " If so, it is recommended to fix the spatial files."))
+      error4 <<- T
+    })
+  }
+
+  if (error4) {
+    tryCatch({
+      sf_use_s2(F)
+      ctry.data$roads <- raw.data$roads |>
+        sf::st_intersection(sf::st_make_valid(ctry.data$ctry))
+      sf_use_s2(T)
+    }, error = function(cond) {
+      message("Unable to fix spatial file errors in road maps.")
+    })
+  }
 
   cli::cli_process_done()
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Pulling data from OSM for Cities"))
 
-  cli::cli_process_start("4) Pulling data from OSM for Cities")
+  error5 <- F
+  tryCatch({
+    ctry.data$cities <- .raw.data$cities |>
+      sf::st_intersection(ctry.data$ctry)
+  }, error = function(cond) {
+    message("Unable to pull data for Cities. Toggling sf_use_s2(F).")
+    error5 <<- T
+  })
 
-  ctry.data$cities <- .raw.data$cities |>
-    sf::st_intersection(ctry.data$ctry)
+  error6 <- F
+  if (error5) {
+    tryCatch({
+      sf_use_s2(F)
+      ctry.data$cities <- .raw.data$cities |>
+        sf::st_intersection(ctry.data$ctry)
+      sf_use_s2(T)
+    }, error = function(cond) {
+      message(paste0("sf_use_s2(F) failed. Using st_make_valid() on the ctry.data$ctry.\n",
+                     " This fix in some cases can cause inaccurate city maps.\n",
+                     " If so, it is recommended to fix the spatial files."))
+      error6 <<- T
+    })
+  }
+
+  if (error6) {
+    tryCatch({
+      sf_use_s2(F)
+      ctry.data$cities <- raw.data$cities |>
+        sf::st_intersection(st_make_valid(ctry.data$ctry))
+      sf_use_s2(T)
+    },
+    error = function(cond) {
+      message("Unable to fix spatial file errors in city maps.")
+    })
+  }
 
   cli::cli_process_done()
+  steps <- steps + 1
 
-  cli::cli_process_start("5) Prepping AFP linelist data")
+  }
+  cli::cli_process_start(paste0(steps,") Prepping AFP linelist data"))
 
   ctry.data$afp.all <- .raw.data$afp |>
     #filter(str_detect(place.admin.0, .country)) |>
@@ -918,8 +1048,8 @@ extract_country_data <- function(
     dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
 
   cli::cli_process_done()
-
-  cli::cli_process_start("6) Prepping population data")
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Prepping population data"))
   ctry.data$dist.pop <- .raw.data$dist.pop |>
     dplyr::filter(ADM0_NAME == .country) |>
     #filter(str_detect(ADM0_NAME, .country)) |>
@@ -929,11 +1059,30 @@ extract_country_data <- function(
            prov = ADM1_NAME,
            dist = ADM2_NAME,
            u15pop,
-           adm2guid)
+           adm2guid,
+           datasource)
+
+  ctry.data$ctry.pop <- .raw.data$ctry.pop |>
+    dplyr::filter(ADM0_NAME == .country) |>
+    dplyr::select(year,
+                  ctry = ADM0_NAME,
+                  u15pop,
+                  adm0guid,
+                  datasource)
+
+  ctry.data$prov.pop <- .raw.data$prov.pop |>
+    dplyr::filter(ADM0_NAME == .country) |>
+    dplyr::mutate(ADM0_NAME = .country) |>
+    dplyr::select(year,
+                  ctry = ADM0_NAME,
+                  prov = ADM1_NAME,
+                  u15pop = u15pop.prov,
+                  adm1guid,
+                  datasource)
 
   cli::cli_process_done()
-
-  cli::cli_process_start("7) Prepping positives data")
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Prepping positives data"))
   ctry.data$pos <- .raw.data$pos |>
     dplyr::filter(place.admin.0 == .country)
   #filter(str_detect(place.admin.0, .country)) |>
