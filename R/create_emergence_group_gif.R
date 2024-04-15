@@ -2,7 +2,7 @@
 #' @description
 #' Generate the figures and stitch together a GIF to evaluate emergence group
 #' movement over time, generally aggregated as cumulative per month
-#' @import dplyr lubridatej ggplot ggpubr magick cli
+#' @import dplyr lubridate sf ggplot ggpubr magick cli
 #' @param emergence_group str: designation of the emergence group to review
 #' @param pos tibble: positives data set
 #' @param dist sf: shapefile of all districts
@@ -20,16 +20,17 @@ create_emergence_group_gif <- function(
   out_gif
   ){
 
-  # data <- sirfunctions::get_all_polio_data()
-  # pos <- data$pos
-  # emergence_group <- "NIE-JIS-1"
-  # dist <- data$global.dist
-  # ctry <- data$global.ctry
-  # include_env <- T
-  # cumulative <- F
-  # out_gif <- "C:/Users/ynm2/OneDrive - CDC/NIE_JIS_1.gif"
+  data <- sirfunctions::get_all_polio_data(size = "medium")
+  pos <- data$pos
+  emergence_group <- "NIE-JIS-1"
+  dist <- data$global.dist
+  ctry <- data$global.ctry
+  include_env <- T
+  cumulative <- F
+  out_gif <- "C:/Users/ynm2/OneDrive - CDC/NIE_JIS_1.gif"
 
   cli::cli_process_start("Setting up data structures")
+
   #set up data structures
   emergence_group_pos <- pos |>
     dplyr::filter(emergencegroup == emergence_group) |>
@@ -39,6 +40,10 @@ create_emergence_group_gif <- function(
     cli::cli_alert("Subsetting to only AFP detections")
     emergence_group_pos <- emergence_group_pos |>
       dplyr::filter(source == "AFP")
+  }else{
+    cli::cli_alert("Subsetting to only AFP/ENV detections")
+    emergence_group_pov <- emergence_group_pos |>
+      dplyr::filter(source %in% c("AFP", "ENV"))
   }
 
   #group data by month country and district
@@ -64,7 +69,7 @@ create_emergence_group_gif <- function(
                                unique()))
 
   country_bbox <- sf::st_bbox(countries_to_include) |>
-    f.expand.bbox(X = 100000, Y = 100000)
+    sirfunctions::f.expand.bbox(X = 100000, Y = 100000)
 
   districts_to_include <- dist |>
     dplyr::filter(GUID %in% (monthly_pos |>
@@ -107,12 +112,20 @@ create_emergence_group_gif <- function(
       by = c("GUID" = "admin2guid")
     )
 
+    if(nrow(plot_data) == 0){
+      plot_data <- dist |>
+        dplyr::mutate(n_det = -1) |>
+        dplyr::mutate(n_det_cat = cut(n_det, breaks = x, include.lowest = T)) |>
+        dplyr::slice(1)
+    }
+
     map <- ggplot2::ggplot() +
       ggplot2::geom_sf(data = ctry, fill = NA) +
       ggplot2::geom_sf(data = countries_to_include, fill = "grey") +
-      ggplot2::geom_sf(data = plot_data, aes(fill = n_det_cat), show.legend = T) +
-      ggplot2::scale_fill_brewer(palette = "YlOrRd", drop = F) +
-      ggplot2::coord_sf(xlim = country_bbox[c("xmin","xmax")], ylim = country_bbox[c("ymin","ymax")]) +
+      ggplot2::geom_sf(data = plot_data, ggplot2::aes(fill = n_det_cat), show.legend = T) +
+      ggplot2::scale_fill_brewer(palette = "YlOrRd", drop = F, na.translate = F) +
+      ggplot2::coord_sf(xlim = country_bbox[c("xmin","xmax")],
+                        ylim = country_bbox[c("ymin","ymax")]) +
       ggplot2::theme_bw() +
       ggplot2::labs(fill = "# detections")
 
