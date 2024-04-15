@@ -20,14 +20,14 @@ create_emergence_group_gif <- function(
   out_gif
   ){
 
-  data <- sirfunctions::get_all_polio_data(size = "medium")
-  pos <- data$pos
-  emergence_group <- "NIE-JIS-1"
-  dist <- data$global.dist
-  ctry <- data$global.ctry
-  include_env <- T
-  cumulative <- F
-  out_gif <- "C:/Users/ynm2/OneDrive - CDC/NIE_JIS_1.gif"
+  # data <- sirfunctions::get_all_polio_data(size = "medium")
+  # pos <- data$pos
+  # emergence_group <- "NIE-JIS-1"
+  # dist <- data$global.dist
+  # ctry <- data$global.ctry
+  # include_env <- T
+  # cumulative <- F
+  # out_gif <- "C:/Users/ynm2/OneDrive - CDC/NIE_JIS_1.gif"
 
   cli::cli_process_start("Setting up data structures")
 
