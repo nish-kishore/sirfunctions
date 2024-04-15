@@ -54,12 +54,23 @@ create_emergence_group_gif <- function(
 
   cli::cli_process_done()
 
+  min_date <- monthly_pos |> dplyr::pull(month_date) |> min()
+
+  max_date <- monthly_pos |> dplyr::pull(month_date) |> max()
+
+  date_seq <- seq(min_date, max_date, by = "month")
+
   if(cumulative){
     cli::cli_alert_info("Producing cumulative results")
-    monthly_pos <- monthly_pos |>
+    monthly_pos <- tidyr::expand_grid(
+      adm0guid = unique(monthly_pos$adm0guid),
+      admin2guid = unique(monthly_pos$admin2guid),
+      month_date = date_seq
+    ) |>
+      left_join(monthly_pos, by = c("adm0guid", "admin2guid", "month_date")) |>
       dplyr::group_by(adm0guid, admin2guid) |>
       dplyr::arrange(month_date) |>
-      dplyr::mutate(n_det = n_det + dplyr::lag(n_det, default = 0))
+      dplyr::mutate(n_det = sum(n_det, dplyr::lag(n_det, default = 0), na.rm = T))
   }
 
   cli::cli_process_start("Parsing spatial information")
@@ -75,12 +86,6 @@ create_emergence_group_gif <- function(
     dplyr::filter(GUID %in% (monthly_pos |>
                                dplyr::pull(admin2guid) |>
                                unique()))
-
-  min_date <- monthly_pos |> dplyr::pull(month_date) |> min()
-
-  max_date <- monthly_pos |> dplyr::pull(month_date) |> max()
-
-  date_seq <- seq(min_date, max_date, by = "month")
 
   cli::cli_process_done()
 
