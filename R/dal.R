@@ -1081,7 +1081,7 @@ extract_country_data <- function(
   cli::cli_process_done()
   steps <- steps + 1
   cli::cli_process_start(paste0(steps,") Attaching SIA data"))
-  ctry.data$es <- .raw.data$sia |>
+  ctry.data$sia <- .raw.data$sia |>
     dplyr::filter(place.admin.0 == .country)
   cli::cli_process_done()
 
