@@ -1073,6 +1073,11 @@ extract_country_data <- function(
     dplyr::filter(place.admin.0 == .country)
   #filter(str_detect(place.admin.0, .country)) |>
   cli::cli_process_done()
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Attaching ES data"))
+  ctry.data$es <- .raw.data$es |>
+    dplyr::filter(ADM0_NAME == .country)
+  cli::cli_process_done()
 
   gc()
 
