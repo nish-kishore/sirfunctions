@@ -57,6 +57,7 @@ set_data_size <- function(year) {
 #' @param country_name `str` name of the country to pull data from
 #' @param dr_data_path `str` path to save the data set to.
 #' Expected path is ./country/year/data
+#' @param attach_spatial_data whether to attach spatial data
 #'
 #' @return `list` large list containing polio data
 update_data <- function(data_size, country_name, dr_data_path, attach_spatial_data) {
@@ -112,7 +113,7 @@ load_data <- function(data_dir_path) {
 #' @return this function does not return anything
 create_metadata <- function(path) {
   date_updated <- paste("Updated:", Sys.time(), sep = " ")
-  file_location <- paste("Project working directory:", getwd(), sep = " ")
+  file_location <- paste("Project working directory:", path, sep = " ")
 
   if (!exists(path)) {
     file.create(path)
@@ -122,16 +123,13 @@ create_metadata <- function(path) {
               x = c(date_updated, file_location))
 }
 
-freeze_data <- function() {
-  return(0)
-}
-
 #' Handles the logic of which files to load in the current R session
 #'
 #' @param dr_data_path `str` path to the dataset
 #' @param data_size `str` "small", "medium", or "large"
 #' @param country_name `str` name of the country
-#' @param dr_data_path `str` path to save the dataset to
+#' @param data_path path of the data folder used in the desk review
+#' @param attach_spatial_data whether to attach spatial data
 #'
 #' @return `list` large list containing polio data
 generate_data <- function(data_path, data_size, country_name, dr_data_path, attach_spatial_data) {
@@ -164,7 +162,7 @@ generate_data <- function(data_path, data_size, country_name, dr_data_path, atta
     }
   } else {
     message(paste0("Data saved at:\n", dr_data_path))
-    return(update_data(data_size, country_name, dr_data_path))
+    return(update_data(data_size, country_name, dr_data_path, attach_spatial_data))
   }
 }
 
@@ -174,6 +172,9 @@ generate_data <- function(data_path, data_size, country_name, dr_data_path, atta
 #' @param country_name `str` name of the country
 #' @param start_date `str` start date of the desk review
 #' @param end_date `str` end date of the desk review
+#' @param local_dr_repo folder where the desk review code is located
+#' @param sg_dr_repo location of the local path for the sg-desk-review git repo
+#' @param attach_spatial_data boolean whether to include spatial data
 #'
 #' @return `list` large list containing all dataframe for all polio data
 #' @export
@@ -206,10 +207,34 @@ init_dr <- function(country_name, start_date, end_date, local_dr_repo, sg_dr_rep
 
   # Instantiate variable containing country data and desk review meta data
   data_path <- file.path(country_dir_path, "data")
-  country_data <- generate_data(
-    data_path, data_size, country_name,
-    dr_data_path, attach_spatial_data
-  )
+  country_data <- generate_data(data_path, data_size, country_name,
+                                dr_data_path, attach_spatial_data)
   return(country_data)
 }
 
+# upload_dr_to_github <- function(file_path, repo_path, message="updating file") {
+#
+#   # Check if the repository is initialized
+#   if (is.null(git2r::discover_repository(repo_path))) {
+#     stop("Git repository not found at ", repo_path)
+#   }
+#
+#   # Get the name of the current file
+#   file_name <- basename(file_path)
+#
+#   # Open the repository
+#   repo <- git2r::repository(repo_path)
+#
+#   # Add the file to the repository
+#   git2r::add(repo, path = file_path)
+#
+#   # Commit the changes with a message including the file name
+#   commit_msg <- paste0(message, ":", file_name)
+#   git2r::commit(repo, message = commit_msg)
+#
+#   # Push the changes to remote (if needed)
+#   git2r::push(repo)
+#
+#   # Close the repository
+#   git2r::close(repo)
+# }
