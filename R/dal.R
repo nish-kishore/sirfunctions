@@ -1059,6 +1059,8 @@ extract_country_data <- function(
            prov = ADM1_NAME,
            dist = ADM2_NAME,
            u15pop,
+           adm0guid,
+           adm1guid,
            adm2guid,
            datasource)
 
@@ -1077,6 +1079,7 @@ extract_country_data <- function(
                   ctry = ADM0_NAME,
                   prov = ADM1_NAME,
                   u15pop = u15pop.prov,
+                  adm0guid,
                   adm1guid,
                   datasource)
 
