@@ -59,12 +59,6 @@ f.timely.01 <- function(
   # Stool 2 collection date
   # Date stool received in lab
 
-  afp.data = ctry.data$afp.all.2
-  admin.data = dpop.ctry
-  start.date =  date_first
-  end.date = date_last
-
-
   admin.data <- admin.data %>%
     filter(year >= year(start.date) &
              year <= year(end.date))
