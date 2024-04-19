@@ -73,7 +73,7 @@ f.timely.01 <- function(
       is.na(datestool2) == FALSE ~ as.numeric(difftime(stooltolabdate, datestool2), units = "days"),
       is.na(datestool2) ~ as.numeric(difftime(stooltolabdate, datestool1), units = "days")
     )) %>%
-    filter(date >= date_first & date <= date_last)
+    filter(between(date, start.date, end.date))
 
   if(intervals.manual == F){
     afp.data1 <- afp.data1 %>%
