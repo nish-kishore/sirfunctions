@@ -188,7 +188,7 @@ init_dr <- function(country_name, start_date, end_date, local_dr_repo, sg_dr_rep
   df_name <- stringr::str_c(stringr::str_to_lower(country_name), start_date, end_date, sep = "_")
 
   # Relative path of where data and metadata is stored
-  dr_path <- file.path(local_dr_repo, stringr::str_to_lower(country_name), lubridate::year(end_date))
+  dr_path <- file.path(local_dr_repo, stringr::str_to_lower(country_name), lubridate::year(Sys.Date()))
 
   # Set up local folders
   country_dir_path <- set_dr_local_folders(dr_path)
