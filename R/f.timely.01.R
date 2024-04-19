@@ -60,8 +60,7 @@ f.timely.01 <- function(
   # Date stool received in lab
 
   admin.data <- admin.data %>%
-    filter(year >= year(start.date) &
-             year <= year(end.date))
+    filter(between(year, lubridate::year(start.date), lubridate::year(end.date))
 
   afp.data1 = afp.data
 
