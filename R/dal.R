@@ -1033,19 +1033,6 @@ extract_country_data <- function(
   cli::cli_process_done()
   steps <- steps + 1
   cli::cli_process_start(paste0(steps,") Prepping population data"))
-  ctry.data$dist.pop <- .raw.data$dist.pop |>
-    dplyr::filter(ADM0_NAME == .country) |>
-    #filter(str_detect(ADM0_NAME, .country)) |>
-    dplyr::mutate(ADM0_NAME = .country) |>
-    dplyr::select(year,
-           ctry = ADM0_NAME,
-           prov = ADM1_NAME,
-           dist = ADM2_NAME,
-           u15pop,
-           adm0guid,
-           adm1guid,
-           adm2guid,
-           datasource)
 
   ctry.data$ctry.pop <- .raw.data$ctry.pop |>
     dplyr::filter(ADM0_NAME == .country) |>
@@ -1062,8 +1049,22 @@ extract_country_data <- function(
                   ctry = ADM0_NAME,
                   prov = ADM1_NAME,
                   u15pop = u15pop.prov,
-                  adm0guid,
+                  adm0guid=ADM0_GUID,
                   adm1guid,
+                  datasource)
+
+  ctry.data$dist.pop <- .raw.data$dist.pop |>
+    dplyr::filter(ADM0_NAME == .country) |>
+    #filter(str_detect(ADM0_NAME, .country)) |>
+    dplyr::mutate(ADM0_NAME = .country) |>
+    dplyr::select(year,
+                  ctry = ADM0_NAME,
+                  prov = ADM1_NAME,
+                  dist = ADM2_NAME,
+                  u15pop,
+                  adm0guid = ADM0_GUID,
+                  adm1guid,
+                  adm2guid,
                   datasource)
 
   cli::cli_process_done()
