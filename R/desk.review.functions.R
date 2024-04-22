@@ -178,7 +178,7 @@ generate_data <- function(data_path, data_size, country_name, dr_data_path, atta
 #'
 #' @return `list` large list containing all dataframe for all polio data
 #' @export
-init_dr <- function(country_name, start_date, end_date, local_dr_repo, sg_dr_repo, attach_spatial_data) {
+init_dr <- function(country_name, start_date, end_date, local_dr_repo, attach_spatial_data) {
   country_name <- stringr::str_trim(stringr::str_to_upper(country_name))
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -212,29 +212,39 @@ init_dr <- function(country_name, start_date, end_date, local_dr_repo, sg_dr_rep
   return(country_data)
 }
 
-# upload_dr_to_github <- function(file_path, repo_path, message="updating file") {
-#
-#   # Check if the repository is initialized
-#   if (is.null(git2r::discover_repository(repo_path))) {
-#     stop("Git repository not found at ", repo_path)
-#   }
-#
-#   # Get the name of the current file
-#   file_name <- basename(file_path)
-#
-#   # Open the repository
-#   repo <- git2r::repository(repo_path)
-#
-#   # Add the file to the repository
-#   git2r::add(repo, path = file_path)
-#
-#   # Commit the changes with a message including the file name
-#   commit_msg <- paste0(message, ":", file_name)
-#   git2r::commit(repo, message = commit_msg)
-#
-#   # Push the changes to remote (if needed)
-#   git2r::push(repo)
-#
-#   # Close the repository
-#   git2r::close(repo)
-# }
+upload_dr_to_github <- function(file_path, repo_path, message="updating file") {
+
+  # Check if the repository is initialized
+  if (is.null(git2r::discover_repository(repo_path))) {
+    stop("Git repository not found at ", repo_path)
+  }
+
+  # Open the repository
+  repo <- git2r::repository(repo_path)
+
+  # Get the name of the current file
+  file_name <- basename(file_path)
+
+  # Copy over the file in the file_path to the repo_path
+  file.copy(file_path, repo_path, recursive = T)
+
+  # Add the file to the repository
+  tryCatch({
+    git2r::add(repo, path = file.path(repo_path, file_name))
+
+    # Commit the changes with a message including the file name
+    commit_msg <- paste0(message, ": ", file_name)
+    git2r::commit(repo, message = commit_msg)
+    message("Changes committed successfully. Please push using GitHub Desktop or command line ")
+  }, error = function(e) {
+    message("No changes to the file.")
+  })
+
+  # tryCatch({
+  #   git2r::push(repo)
+  #   message("Changes pushed successfully.")
+  # },
+  # error = function(e) {
+  #   stop(message("Unable to push changes. Check if Git is set up correctly."))
+  # })
+}
