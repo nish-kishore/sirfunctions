@@ -173,7 +173,6 @@ generate_data <- function(data_path, data_size, country_name, dr_data_path, atta
 #' @param start_date `str` start date of the desk review
 #' @param end_date `str` end date of the desk review
 #' @param local_dr_repo folder where the desk review code is located
-#' @param sg_dr_repo location of the local path for the sg-desk-review git repo
 #' @param attach_spatial_data boolean whether to include spatial data
 #'
 #' @return `list` large list containing all dataframe for all polio data
@@ -212,6 +211,14 @@ init_dr <- function(country_name, start_date, end_date, local_dr_repo, attach_sp
   return(country_data)
 }
 
+#' Upload desk review script to the sg-desk-review Github repository
+#'
+#' @param file_path location of the file to upload to the sg-desk-review repo
+#' @param repo_path local path of the sg-desk-review repo
+#' @param message message to include in the commit
+#'
+#' @return Status message
+#' @export
 upload_dr_to_github <- function(file_path, repo_path, message="updating file") {
 
   # Check if the repository is initialized
@@ -247,4 +254,88 @@ upload_dr_to_github <- function(file_path, repo_path, message="updating file") {
   # error = function(e) {
   #   stop(message("Unable to push changes. Check if Git is set up correctly."))
   # })
+}
+
+
+#' Freeze desk review data to the desk review folder in EDAV
+#'
+#' @param rds_obj Rds object loaded in R
+#' @param file_name name given to the Rds object
+#'
+#' @return A status message
+#' @export
+freeze_dr_data <- function(rds_obj, file_name) {
+
+  sirfunctions::edav_io(io="write", default_dir = NULL,
+                        file_loc = file.path("GID/PEB/SIR/Data/desk_review",
+                                             paste0(file_name,".rds")),
+                        obj = rds_obj)
+  message("File saved successfully.")
+}
+
+#' Fetch the Rds file to be used for a desk review
+#'
+#' @param country country name as a string
+#' @param year year as an integer
+#' @param local_dr_repo the local desk review repository
+#'
+#' @return A status message
+#' @export
+fetch_dr_data <- function(country, year, local_dr_repo) {
+  country <- stringr::str_to_lower(str_trim(country))
+  files <- sirfunctions::edav_io(io="list",
+                                 default_dir = NULL,
+                                 file_loc= file.path("GID/PEB/SIR/Data/desk_review",
+                                                     country, year)) |>
+    pull(name)
+
+  file_names <- basename(files)
+
+  if (length(file_names) == 0){
+    stop("This directory is empty.")
+  }
+
+  cli::cli_alert_info("Previous save(s) found:")
+  for (i in 1:length(file_names)) {
+      message(paste0(i, ") ", file_names[i]))
+  }
+
+  cli::cli_alert_info("Choose the file to load by entering the line number from above or type 'q' to quit: ")
+
+  load_data_response <- T
+  while (load_data_response) {
+    load_data <- readline("> ")
+    load_data <- stringr::str_trim(load_data)
+    if (load_data == "q") {
+      return(message("Aborting dataset loading..."))
+    }
+
+    load_data <- suppressWarnings(as.integer(load_data))
+    if (is.na(load_data) | load_data == 0) {
+      message("Invalid response. Please try again.")
+    } else if (load_data <= length(file_names)) {
+      chosen_file <- file_names[load_data]
+      message(paste0("Loading ", chosen_file))
+      rds_data <- sirfunctions::edav_io(io="read", default_dir = NULL,
+                                        file_loc = file.path(file.path("GID/PEB/SIR/Data/desk_review",
+                                                                    country, year), chosen_file))
+      message(paste0("Saving Rds data to: ", file.path(country, year, "data", chosen_file)))
+
+      repo_path <- file.path(local_dr_repo, country, year, "data")
+      file_path <- file.path(local_dr_repo, country, year, "data", chosen_file)
+
+      if (!dir.exists(repo_path)) {
+        dir.create(repo_path, recursive = T)
+      }
+
+      if (file.exists(file_path)) {
+        file.remove(file_path)
+      }
+
+      readr::write_rds(file=file_path, x=rds_data)
+      message("Rds file saved successfully.")
+    } else {
+      message("Invalid response. Please try again.")
+    }
+  }
 }
