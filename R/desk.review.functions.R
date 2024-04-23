@@ -260,14 +260,18 @@ upload_dr_to_github <- function(file_path, repo_path, message="updating file") {
 #' Freeze desk review data to the desk review folder in EDAV
 #'
 #' @param rds_obj Rds object loaded in R
-#' @param file_name name given to the Rds object
+#' @param file_name name given to the Rds object, do not append .rds
+#' @param country country as a string
+#' @param year year as an integer
 #'
 #' @return A status message
 #' @export
-freeze_dr_data <- function(rds_obj, file_name) {
+freeze_dr_data <- function(rds_obj, country, year, file_name) {
 
   sirfunctions::edav_io(io="write", default_dir = NULL,
                         file_loc = file.path("GID/PEB/SIR/Data/desk_review",
+                                             country,
+                                             year,
                                              paste0(file_name,".rds")),
                         obj = rds_obj)
   message("File saved successfully.")

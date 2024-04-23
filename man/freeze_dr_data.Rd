@@ -4,12 +4,16 @@
 \alias{freeze_dr_data}
 \title{Freeze desk review data to the desk review folder in EDAV}
 \usage{
-freeze_dr_data(rds_obj, file_name)
+freeze_dr_data(rds_obj, country, year, file_name)
 }
 \arguments{
 \item{rds_obj}{Rds object loaded in R}
 
-\item{file_name}{name given to the Rds object}
+\item{country}{country as a string}
+
+\item{year}{year as an integer}
+
+\item{file_name}{name given to the Rds object, do not append .rds}
 }
 \value{
 A status message
