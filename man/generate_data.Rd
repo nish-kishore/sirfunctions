@@ -21,7 +21,7 @@ generate_data(
 
 \item{dr_data_path}{\code{str} path to the dataset}
 
-\item{attach_spatial_data}{}
+\item{attach_spatial_data}{whether to attach spatial data}
 }
 \value{
 \code{list} large list containing polio data

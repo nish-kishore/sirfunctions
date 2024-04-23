@@ -4,14 +4,7 @@
 \alias{init_dr}
 \title{Set up the folders and load polio data}
 \usage{
-init_dr(
-  country_name,
-  start_date,
-  end_date,
-  local_dr_repo,
-  sg_dr_repo,
-  attach_spatial_data
-)
+init_dr(country_name, start_date, end_date, local_dr_repo, attach_spatial_data)
 }
 \arguments{
 \item{country_name}{\code{str} name of the country}
@@ -21,8 +14,6 @@ init_dr(
 \item{end_date}{\code{str} end date of the desk review}
 
 \item{local_dr_repo}{folder where the desk review code is located}
-
-\item{sg_dr_repo}{location of the local path for the sg-desk-review git repo}
 
 \item{attach_spatial_data}{boolean whether to include spatial data}
 }

@@ -15,7 +15,7 @@ update_data(data_size, country_name, dr_data_path, attach_spatial_data)
 \item{dr_data_path}{\code{str} path to save the data set to.
 Expected path is ./country/year/data}
 
-\item{attach_spatial_data}{}
+\item{attach_spatial_data}{whether to attach spatial data}
 }
 \value{
 \code{list} large list containing polio data
