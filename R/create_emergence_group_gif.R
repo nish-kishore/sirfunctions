@@ -42,7 +42,7 @@ create_emergence_group_gif <- function(
       dplyr::filter(source == "AFP")
   }else{
     cli::cli_alert("Subsetting to only AFP/ENV detections")
-    emergence_group_pov <- emergence_group_pos |>
+    emergence_group_pos <- emergence_group_pos |>
       dplyr::filter(source %in% c("AFP", "ENV"))
   }
 
