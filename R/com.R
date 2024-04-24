@@ -9,16 +9,18 @@
 #' @param team_id str: Team id, defaults to "CGH-GID-PEB-SIR"
 #' @param channel str: channel where message should be sent
 #' @param attach str: local path of files to be attached in message
+#' @param type str: "text" or "html"
 #' @returns Success or error message
 #' @export
-send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL){
+send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL, type = "text"){
 
   team <- Microsoft365R::get_team(team_id)
 
   channel <- team$get_channel(channel)
 
   channel$send_message(body = msg,
-                       attachments = attach)
+                       attachments = attach,
+                       content_type = type)
 
 }
 
