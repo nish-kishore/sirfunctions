@@ -1,3 +1,11 @@
+#' Generate stool adequacy columns in the AFP dataset
+#'
+#' @param afp.data tibble of AFP data (afp.all.2)
+#' @param start_date start date of the desk review
+#' @param end_date end date of the desk review
+#'
+#' @return a tibble containing stool adequacy columns
+#' @export
 generate_stool_data <- function(afp.data, start_date, end_date) {
 
   afp.data <- afp.data |>

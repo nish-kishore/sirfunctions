@@ -1,3 +1,10 @@
+#' Generate PowerPoint assumptions
+#'
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return list of strings
+#' @export
 generate_pptx_assumptions <- function(start_date, end_date) {
   pptx.assumptions <- c('Data sources:',
                         paste0('POLIS (Data as of ', format(start_date, '%d-%b-%Y'),
@@ -24,6 +31,37 @@ generate_pptx_assumptions <- function(start_date, end_date) {
 
 }
 
+#' Generate the desk review slide deck
+#'
+#' @param ppt_template_path path to the PowerPoint template
+#' @param ctry.data RDS file containing polio data for a country
+#' @param assump list of assumptions
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#' @param pop.map country pop map
+#' @param pop.map.prov prov pop map
+#' @param afp.case.map map of afp cases
+#' @param afp.epi.curve afp epicurv
+#' @param surv.ind.tab surveillance indicator table
+#' @param afp.dets.prov.year afp dets for province
+#' @param npafp.map npafp map for country level
+#' @param npafp.map.dist npafp map for district level
+#' @param stool.ad.maps stool adequacy maps at province
+#' @param stool.ad.maps.dist stool adequact maps at district
+#' @param inad.tab.flex inadequacy table
+#' @param tab.60d 60 day follow up table
+#' @param timely_nation timeliness at country level
+#' @param timely_prov timeliness at province level
+#' @param mapt_all map with all indicators
+#' @param es.site.det ES site viral detection
+#' @param es.det.map ES site detection maps
+#' @param es.timely ES timeliness
+#' @param es.table ES table
+#' @param country name of the country
+#' @param ppt_output_path path where the powerpoint should be outputted
+#'
+#' @return does not return anything
+#' @export
 generate_dr_ppt <- function(ppt_template_path, ctry.data, assump, start_date, end_date,
                             pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
                             surv.ind.tab, afp.dets.prov.year, npafp.map,

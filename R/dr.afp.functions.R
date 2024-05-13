@@ -229,9 +229,10 @@ add_zero_dose_col <- function(afp.data) {
 
 
 #' Generate AFP case counts by month
-#' @param afp.data
+#' @param afp.data tibble containing AFP data (afp.all.2)
 #'
 #' @return tibble containing summary of AFP data
+#' @export
 generate_afp_by_month <- function(afp.data, start_date, end_date) {
   summary <- afp.data |>
     drop_na(date.onset) |>
@@ -354,9 +355,10 @@ add_prov_npafp_table <- function(npafp.output) {
 #'
 #' @param npafp.output output of running f.npafp.rate.01
 #' @param afp.all.2 AFP linelist
-#' @param spatial.scale spatial scale to analyze
+#' @param spatial.scale spatial scale to analyze. Valid values are "ctry", "prov", "dist"
 #'
 #' @return table to be used in summary tables for NPAFP rates
+#' @export
 prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spatial.scale) {
 
   geo <- switch(
@@ -411,6 +413,16 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
   return(case.ind)
 }
 
+#' Generate a summary table for sample timeliness intervals
+#'
+#' @param ctry.data RDS object containing polio country data
+#' @param start_date start date of the desk review
+#' @param end_date end date of the desk review
+#' @param spatial.scale Scale to summarize to. Either "ctry" or "prov". "dist" not available currently.
+#' @param lab.data tibble of lab data
+#'
+#' @return a tibble summarizing median days for different intervals
+#' @export
 generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, lab.data=NULL) {
 
 
@@ -539,6 +551,14 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
   return(int.data)
 }
 
+#' Generate summary table for those requiring 60 day follow up
+#'
+#' @param stool.data AFP data with stool adequacy columns
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return a summary table for those requiring 60 day follow up
+#' @export
 generate_60_day_table_data <- function(stool.data, start_date, end_date) {
   stool.data.inad = stool.data %>%
     mutate(

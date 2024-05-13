@@ -1,9 +1,9 @@
-#' Clean the lab data that's been loaded
+#' Clean polio lab data
 #'
 #' @param lab.data raw lab data
-#' @param ctry.data country data
+#' @param ctry.data country data RDS object
 #'
-#' @return a tibble
+#' @return a tibble containing clean lab data
 #' @export
 clean_lab_data <- function(lab.data, ctry.data, start_date, end_date) {
 
@@ -20,7 +20,7 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date) {
     filter(year >= year(start_date) & year <= year(end_date),
            CaseOrContact == "1-Case")
   cli::cli_process_done()
-  # Missing year ----
+
   cli::cli_process_start("Imputing missing years")
   miss = filter(lab.data2, is.na(year))
 
@@ -41,7 +41,6 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date) {
   count(lab.data2, District)
 
   cli::cli_process_start("Correcting district and province names.")
-  # Adding guids ----
   lab.data2$Province = str_to_upper(lab.data2$Province)
   lab.data2$District = str_to_upper(lab.data2$District)
   lab.data2$Province = iconv(lab.data2$Province, to='ASCII//TRANSLIT')
@@ -49,9 +48,7 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date) {
   # !!! missing values for province in 13 entries for the date range specified
   count(lab.data2, Province, year)
 
-  # Match province and district by epid number ----
-  # DONT FORGET TO ADD COUNTRY AND ADM0GUID
-  # create new columns
+  # Match province and district by epid number -
   lab.data2$prov = NA
   lab.data2$dist = NA
   lab.data2$adm1guid = NA
@@ -91,7 +88,7 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date) {
   potential_errors2$Province
   potential_errors2$EpidNumber
 
-  # Totally random cases in potential_errors2; use potential_errors ----
+  # Totally random cases in potential_errors2
   lab.data2 = lab.data2 %>%
     mutate(prov = ifelse(is.na(prov), potential_errors$prov[match(lab.data2$EpidNumber,
                                                      potential_errors$EpidNumber)], prov)) %>%

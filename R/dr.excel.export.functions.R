@@ -52,6 +52,15 @@ create_afp_export <- function(stool.data, country, excel_output_path) {
 
 }
 
+#' Export stool adequacy data
+#'
+#' @param cstool stool adequacy at country level
+#' @param pstool stool adequacy at province level
+#' @param dstool stool adequacy at district level
+#' @param excel_output_path output path
+#'
+#' @return does not return anything
+#' @export
 create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_path) {
   sheets <- list(
     "country_npafp" = cstool,
@@ -64,6 +73,15 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
   ))
 }
 
+#' Export NPAFP data
+#'
+#' @param ctry.case.ind country NPAFP indicator
+#' @param prov.case.ind province NPAFP indicator
+#' @param dis.case.ind district NPAFP indicator
+#' @param excel_output_path output path
+#'
+#' @return does not return anything
+#' @export
 create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, excel_output_path) {
 
   sheets <- list(
@@ -79,6 +97,15 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, exce
 
 }
 
+#' File for checking population roll-ups
+#'
+#' @param ctry.data RDS file containing polio data for a country
+#' @param ctry.data.error.log error log of a country
+#' @param country name of the country
+#' @param excel_output_path output path
+#'
+#' @return does not return anything
+#' @export
 create_pop_check_export <- function(ctry.data, ctry.data.error.log, country, excel_output_path) {
   pop.check <-
     count(ungroup(filter(ctry.data$dist.pop, year >= min(year))), prov, dist,
@@ -99,6 +126,14 @@ create_pop_check_export <- function(ctry.data, ctry.data.error.log, country, exc
   ))
 }
 
+#' Output for 60-day follow ups
+#'
+#' @param cases.need60day table for 60 day follow up
+#' @param country name of the country
+#' @param excel_output_path output path
+#'
+#' @return does not return anything
+#' @export
 create_60_day_export <- function(cases.need60day, country, excel_output_path) {
   cases.need60day |>
     rename(
@@ -122,6 +157,14 @@ create_60_day_export <- function(cases.need60day, country, excel_output_path) {
     ))
 }
 
+#' Import potentially compatible and compatible summaries
+#'
+#' @param pot.c.clust potentially compatible cluster summary
+#' @param country name of the country
+#' @param excel_output_path output path
+#'
+#' @return does not return anything
+#' @export
 create_pot_comp_clust_export <- function(pot.c.clust, country, excel_output_path) {
   write_xlsx(pot.c.clust,
              file.path(

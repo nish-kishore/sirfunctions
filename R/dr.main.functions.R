@@ -447,7 +447,7 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 
 #' Checks data quality errors from the country data
 #'
-#' @param ctry.data country data
+#' @param ctry.data RDS object containing polio country data
 #'
 #' @return a list containing all the errors that are checked for
 #' @export
@@ -493,6 +493,16 @@ dr_data_errors <- function(ctry.data) {
 
 }
 
+#' Cleans and adds additional columns used in the desk reviews
+#'
+#' @param ctry.data country data RDS object
+#' @param start_date start date for desk review
+#' @param end_date end date for desk review
+#' @param es_start_date start date for environmental surveillance data
+#' @param es_end_date end date for environmental surveillance data
+#'
+#' @return cleaned country data RDS object
+#' @export
 clean_ctry_data <- function(ctry.data, start_date, end_date, es_start_date, es_end_date) {
   ctry.data$afp.all.2 <- impute_dist_afp(ctry.data$afp.all.2)
   ctry.data$afp.all.2 <- col_to_datecol(ctry.data$afp.all.2)
@@ -505,9 +515,9 @@ clean_ctry_data <- function(ctry.data, start_date, end_date, es_start_date, es_e
 
 #' Function to load the raw lab data
 #'
-#' @param lab_data_path
+#' @param lab_data_path file path as a string to the lab data
 #'
-#' @return a tibble
+#' @return a tibble containing lab data
 #' @export
 load_lab_data <- function(lab_data_path) {
   lab_data <- readxl::read_excel(lab_data_path)

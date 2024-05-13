@@ -69,6 +69,12 @@ clean_es_data <- function(es.data, es_start_date, es_end_date) {
   return(es.data)
 }
 
+#' Generate ES data with viral detection columns
+#'
+#' @param es.data tibble containing ES data
+#'
+#' @return tibble of ES data with viral detection columns
+#' @export
 generate_es_data_long <- function(es.data) {
   es.data.long <- es.data %>%
     select(site.name, ADM1_NAME, collect.date, early.dat, ev.detect, all_dets) %>%

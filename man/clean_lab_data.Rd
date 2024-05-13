@@ -2,18 +2,18 @@
 % Please edit documentation in R/dr.lab.functions.R
 \name{clean_lab_data}
 \alias{clean_lab_data}
-\title{Clean the lab data that's been loaded}
+\title{Clean polio lab data}
 \usage{
 clean_lab_data(lab.data, ctry.data, start_date, end_date)
 }
 \arguments{
 \item{lab.data}{raw lab data}
 
-\item{ctry.data}{country data}
+\item{ctry.data}{country data RDS object}
 }
 \value{
-a tibble
+a tibble containing clean lab data
 }
 \description{
-Clean the lab data that's been loaded
+Clean polio lab data
 }

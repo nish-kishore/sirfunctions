@@ -7,10 +7,10 @@
 load_lab_data(lab_data_path)
 }
 \arguments{
-\item{lab_data_path}{}
+\item{lab_data_path}{file path as a string to the lab data}
 }
 \value{
-a tibble
+a tibble containing lab data
 }
 \description{
 Function to load the raw lab data

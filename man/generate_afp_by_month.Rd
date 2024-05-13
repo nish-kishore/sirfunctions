@@ -7,7 +7,7 @@
 generate_afp_by_month(afp.data, start_date, end_date)
 }
 \arguments{
-\item{afp.data}{}
+\item{afp.data}{tibble containing AFP data (afp.all.2)}
 }
 \value{
 tibble containing summary of AFP data

@@ -1,3 +1,9 @@
+#' Timeliness bar graph at the country level
+#'
+#' @param int.data summary table with timeliness intervals at the country level
+#'
+#' @return ggplot object bar graph with timeliness intervals
+#' @export
 generate_ctry_timeliness_graph <- function(int.data) {
   ggplot() +
     geom_bar(
@@ -35,6 +41,13 @@ generate_ctry_timeliness_graph <- function(int.data) {
           legend.background = element_blank())
 }
 
+#' Timeliness interval bar graph at a province level
+#'
+#' @param int.data summary table of median timeliness intervals at a province level
+#' @param afp.prov.year labels for AFP dataset summarized by year
+#'
+#' @return a ggplot object of timeliness interval at the province level
+#' @export
 generate_prov_timeliness_graph <- function(int.data, afp.prov.year) {
   prov.time.2 = left_join(
     int.data,
@@ -86,6 +99,14 @@ generate_prov_timeliness_graph <- function(int.data, afp.prov.year) {
   return(timely_prov)
 }
 
+#' Generate a map of population data
+#'
+#' @param ctry.data RDS object
+#' @param prov.shape province of most recent shape file
+#' @param end_date end date of the desk review
+#'
+#' @return a ggplot object containing map of population data
+#' @export
 generate_pop_map <- function(ctry.data, prov.shape, end_date) {
   prov.pop <- ctry.data$prov.pop %>%
     filter(year == year(end_date) & ctry == country)
@@ -142,6 +163,15 @@ generate_pop_map <- function(ctry.data, prov.shape, end_date) {
   return(pop.map)
 }
 
+#' Generate a map of population by district
+#'
+#' @param ctry.data RDS file of polio country data
+#' @param prov.shape recent shape file of province
+#' @param dist.shape recent shape file of district
+#' @param end_date end date of the desk review
+#'
+#' @return a ggplot object
+#' @export
 generate_dist_pop_map <- function(ctry.data, prov.shape, dist.shape, end_date) {
   prov.pop <- ctry.data$prov.pop %>%
     filter(year == year(end_date) & ctry == country)
@@ -191,6 +221,16 @@ generate_dist_pop_map <- function(ctry.data, prov.shape, dist.shape, end_date) {
   return(pop.map.provn)
 }
 
+#' Generate a map of AFP cases
+#'
+#' @param ctry.data RDS object containing polio country data
+#' @param ctry.shape recent country shapefile
+#' @param prov.shape  recent province shapefile
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return ggplot object containing the map of AFP cases
+#' @export
 generate_afp_case_map <- function(ctry.data, ctry.shape, prov.shape, start_date, end_date) {
   afp.case.map.filter <- ctry.data$afp.all %>%
     filter(between(as.Date(date.onset), start_date, end_date)) |>
@@ -223,6 +263,14 @@ generate_afp_case_map <- function(ctry.data, ctry.shape, prov.shape, start_date,
 
 }
 
+#' Generate epicurve of AFP cases by year
+#'
+#' @param ctry.data RDS data countaining polio data for a country
+#' @param start_date start date of the desk review
+#' @param end_date end date of the desk review
+#'
+#' @return ggplot object containing the epicurve data
+#' @export
 generate_afp_epicurve <- function(ctry.data, start_date, end_date) {
   afp.epi.date.filter <- ctry.data$afp.epi %>%
     filter(between(yronset, as.numeric(year(start_date)), as.numeric(year(end_date))))
@@ -250,6 +298,14 @@ generate_afp_epicurve <- function(ctry.data, start_date, end_date) {
   return(afp.epi.curve)
 }
 
+#' Generate the ISS/eSURV barplot
+#'
+#' @param iss.data tibble of ISS data
+#' @param start_date start date of the desk review
+#' @param end_date end date of the desk review
+#'
+#' @return ggplot object of a barplot
+#' @export
 generate_iss_barplot <- function(iss.data, start_date, end_date) {
 
   issy2 <- iss.data |>
@@ -308,6 +364,14 @@ generate_iss_barplot <- function(iss.data, start_date, end_date) {
   return(issy.vis)
 }
 
+#' Generate ISS map
+#'
+#' @param iss.data tibble of ISS/eSurv data
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return a ggplot map
+#' @export
 generate_iss_map <- function(iss.data, start_date, end_date) {
   issy2 <- iss.data |>
     mutate(today_date = as_date(today, format = "%m/%d/%Y"),
@@ -341,7 +405,17 @@ generate_iss_map <- function(iss.data, start_date, end_date) {
   return(issy.map)
 }
 
-generate_surv_ind_tab <- function(ctry.data, dis.extract, dist.ind.afp, cstool, dstool, afp.case) {
+#' Title
+#'
+#' @param ctry.data RDS file countaining polio data of a country
+#' @param dis.extract district NPAFP rate
+#' @param cstool stool adequacy at country level
+#' @param dstool stool adequact at a district level
+#' @param afp.case AFP cases
+#'
+#' @return a flex table object for timeliness indicators
+#' @export
+generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.case) {
   dist.ind.afp <- left_join(dis.extract,
                             dstool,
                             by = c(
@@ -461,6 +535,15 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, dist.ind.afp, cstool, 
   return(surv.ind.tab)
 }
 
+#' Generate table for population
+#'
+#' @param prov.case.ind  case indicator at province level
+#' @param pstool stool adequacy at porvince level
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return a flextable containing population indicators
+#' @export
 generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
 
   sub.prov.case.ind = prov.case.ind %>%
@@ -593,6 +676,16 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
   return(pop.tab)
 }
 
+#' Map of NPAFP rate by province
+#'
+#' @param prov.extract province NPAFP rate
+#' @param ctry.shape recent country shape
+#' @param prov.shape recent province shape
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return a map of NPAFP rates by province
+#' @export
 generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape, start_date, end_date) {
   provnpafp <- prov.extract
 
@@ -718,6 +811,17 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape, start_date
 
 }
 
+#' Generate map of NPAFP rates by district
+#'
+#' @param dist.extract NPAFP rates by district
+#' @param ctry.shape recent country shapefile
+#' @param prov.shape recent province shapefile
+#' @param dist.shape recent district shapefile
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return ggplot map
+#' @export
 generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.shape, start_date, end_date) {
   distnpafp <- dis.extract
 
@@ -841,6 +945,17 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
   return(npafp.maps.dist)
 }
 
+#' Stool adequacy maps by province
+#'
+#' @param ctry.data RDS file for polio data of a country
+#' @param pstool stool adequacy at province level
+#' @param ctry.shape recent country shapefile
+#' @param prov.shape recent province shapefile
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return a ggplot map containing stool adequacy by province
+#' @export
 generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape, start_date, end_date) {
   allafp = ctry.data$afp.all.2 %>%
     filter(date >= start_date & date <= end_date) %>%
@@ -958,6 +1073,18 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape, st
   return(stool.ad.maps)
 }
 
+#' Stool adequacy map by district
+#'
+#' @param ctry.data RDS file of polio data for a country
+#' @param dstool district stool adequacy
+#' @param ctry.shape recent country shapefile
+#' @param dist.shape recent district shapefile
+#' @param prov.shape recent province shapefile
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return ggplot map
+#' @export
 generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, dist.shape, prov.shape, start_date, end_date) {
   # Get coordinates for maps that are plotted
   ctcoord <- as.data.frame(st_coordinates(ctry.shape))
@@ -1082,6 +1209,16 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, dist.shape
   return(stool.ad.maps.dist)
 }
 
+#' Table containing stool adequacy at the country level
+#'
+#' @param ctry.data RDS file containing polio data for a country
+#' @param stool.data AFP data with stool adequacy columns
+#' @param cstool stool adequacy at the country level
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return a flextable containing stool adequacy at the country level
+#' @export
 generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_date) {
   stool.sub = cstool[, c("year",
                          "num.adj.w.miss",
@@ -1300,6 +1437,12 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
   return(inad.tab.flex)
 }
 
+#' Table used for those requiring 60 day follow up
+#'
+#' @param cases.need60day summary table containing those that need 60 day follow-up
+#'
+#' @return a flextable with 60 day follow up data
+#' @export
 generate_60_day_tab <- function(cases.need60day) {
   comp.by.year <- cases.need60day |>
     group_by(year) |>
@@ -1365,6 +1508,16 @@ generate_60_day_tab <- function(cases.need60day) {
   return(tab.60d)
 }
 
+#' Map containing timeliness of samples
+#'
+#' @param ctry.data RDS file containing polio data for a country
+#' @param ctry.shape recent country shapefile
+#' @param prov.shape recent province shapefile
+#' @param start_date start date of desk review
+#' @param end_date end dtae of desk review
+#'
+#' @return a map of timeliness of samples
+#' @export
 generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_date, end_date) {
   long.timely <- ctry.data$afp.all.2 %>%
     select(epid,
@@ -1613,6 +1766,15 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_da
   return(mapt_all)
 }
 
+#' Dot plot of virus detections in ES sites
+#'
+#' @param ctry.data RDS file of polio data for a country
+#' @param es.data.long AFP data with viral detection columns
+#' @param es_start_date start date of ES data
+#' @param es_end_date end date of ES data
+#'
+#' @return ggplot object dot plot
+#' @export
 generate_es_site_det <- function(ctry.data, es.data.long, es_start_date, es_end_date) {
   sias = ctry.data$sia %>%
     filter(status == "Done") %>%
@@ -1717,6 +1879,16 @@ generate_es_site_det <- function(ctry.data, es.data.long, es_start_date, es_end_
   return(es.site.det)
 }
 
+#' Generate ES detection map
+#'
+#' @param es.data ES data for a country
+#' @param ctry.shape recent country shapefile
+#' @param prov.shape recent province shapefile
+#' @param es_start_date ES start date
+#' @param es_end_date ES end date
+#'
+#' @return ggplot map of ES detections
+#' @export
 generate_es_det_map <- function(es.data, ctry.shape, prov.shape, es_start_date, es_end_date) {
   det.rate <- summarize(
     group_by(es.data.long, site.name),
@@ -1805,6 +1977,14 @@ generate_es_det_map <- function(es.data, ctry.shape, prov.shape, es_start_date, 
   return(es.det.map)
 }
 
+#' Generate ES timeliness scatterplot
+#'
+#' @param es.data ES data
+#' @param es_start_date start date of ES
+#' @param es_end_date end date of ES
+#'
+#' @return ggplot scatterplot for timeliness
+#' @export
 generate_es_timely <- function(es.data, es_start_date, es_end_date) {
   es.data$timely <-
     difftime(
@@ -1874,6 +2054,14 @@ generate_es_timely <- function(es.data, es_start_date, es_end_date) {
   return(es.timely)
 }
 
+#' ES table with indicators
+#'
+#' @param es.data ES data
+#' @param es_start_date ES start date
+#' @param es_end_date ES end date
+#'
+#' @return flextable with ES indicators
+#' @export
 generate_es_table <- function(es.data, es_start_date, es_end_date) {
   # Big table that needs calculating
   # Cols = province, district, site name, earliest sample collected in POLIS,
@@ -1980,6 +2168,14 @@ generate_es_table <- function(es.data, es_start_date, es_end_date) {
   return(es.table)
 }
 
+#' Generate zero-dose children barcharts
+#'
+#' @param ctry.data RDS file containing polio data of country
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return ggplot barplot
+#' @export
 generate_case_num_dose_g <- function(ctry.data, start_date, end_date) {
   dose.num.cols = c(
     "0" = "#C00000",
@@ -1989,7 +2185,7 @@ generate_case_num_dose_g <- function(ctry.data, start_date, end_date) {
     "Missing" = "#A5A5A5"
   )
 
-  ### Create zero dose graphs ----
+  ### Create zero dose graphs
   # Cats - 0, 1-2, 3, 4+
   dcat.yr.prov = summarize(group_by(
     ctry.data$afp.all.2 |>

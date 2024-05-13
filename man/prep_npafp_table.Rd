@@ -11,7 +11,7 @@ prep_npafp_table(npafp.output, afp.all.2, start_date, end_date, spatial.scale)
 
 \item{afp.all.2}{AFP linelist}
 
-\item{spatial.scale}{spatial scale to analyze}
+\item{spatial.scale}{spatial scale to analyze. Valid values are "ctry", "prov", "dist"}
 }
 \value{
 table to be used in summary tables for NPAFP rates

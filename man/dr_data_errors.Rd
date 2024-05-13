@@ -7,7 +7,7 @@
 dr_data_errors(ctry.data)
 }
 \arguments{
-\item{ctry.data}{country data}
+\item{ctry.data}{RDS object containing polio country data}
 }
 \value{
 a list containing all the errors that are checked for
