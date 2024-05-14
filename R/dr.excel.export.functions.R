@@ -47,7 +47,7 @@ create_afp_export <- function(stool.data, country, excel_output_path) {
              "adequacy.final2"
     ))
 
-  write_xl::write_xlsx(stool.data.export,
+  writexl::write_xlsx(stool.data.export,
                        file.path(excel_output_path, paste0(Sys.Date(), "_",
                                                            "AFP Linelist_",country, ".xlsx")))
 
