@@ -701,13 +701,14 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
   return(cases.need60day)
 }
 
-#' Title
+#' Creating a table of compatible and potentially compatible cases.
 #'
 #' @param cases.need60day summary table of cases that need 60 day follow-up
+#' @param create_cluster whether to use clustering algorithm. Default to F.
 #'
 #' @return summary table with clustering info
 #' @export
-generate_potentially_compatibles_cluster <- function(cases.need60day) {
+generate_potentially_compatibles_cluster <- function(cases.need60day, create_cluster  = F) {
   pot.c.clust = filter(cases.need60day,
                        pot.compatible == 1 | classification == "Compatible") %>%
     mutate(
@@ -725,6 +726,12 @@ generate_potentially_compatibles_cluster <- function(cases.need60day) {
 
   # All compatible and potentially compatibles that are within 30 days of another case - clust
   pot.c.clust = arrange(pot.c.clust, date) # arrange by onset date
+
+  if (!create_cluster) {
+    return(pot.c.clust)
+  }
+
+  cli::cli_process_start("Performing clustering assignment.")
   pot.c.clust$clust = NA
   pot.c.clust$clust[1] = 1
 
@@ -745,6 +752,9 @@ generate_potentially_compatibles_cluster <- function(cases.need60day) {
     y = bind_rows(y, x)
   }
   #If there is a province that is the same, geo.clust.prov will be TRUE
+
+  cli::cli_process_done()
+
   return(y)
 
 }

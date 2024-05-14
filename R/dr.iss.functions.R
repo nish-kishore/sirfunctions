@@ -8,17 +8,31 @@ load_iss_data <-function(iss_path) {
   return(read_csv(iss_path))
 }
 
-clean_iss_data <- function(iss.data, start_date, end_date) {
+#' Perform common cleaning tasks for ISS/eSURV data
+#'
+#' @param iss.data tibble of ISS data
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#' @param priority_col column representing priority level as a string
+#' @param start_time_col column representing start time as a string
+#' @param unreported_cases_col column representing unreported cases as a string
+#' @param prov_col column representing province as a string
+#' @param dist_col column representing district as a string
+#' @param hf_col column representing the health facility name as a string
+#'
+#' @return a tibble of cleaned ISS data
+#' @export
+clean_iss_data <- function(iss.data, start_date, end_date, priority_col,
+                           start_time_col, unreported_cases_col, prov_col,
+                           dist_col, hf_col) {
   cli::cli_process_start("Standardizing priority levels")
   issy2 <- iss.data %>%
     mutate(priority_level = case_when(
-      get(priority_col)=="high" ~ "High",
-      get(priority_col) == "highest" ~ "High",
-      get(priority_col)=="medium" ~ "Medium",
-      get(priority_col)=="low" ~ "Low",
-      get(priority_col)=="n/a" ~ "Not Focal Site",
-      get(priority_col)=="none" ~ "Not Focal Site",
-      T ~ get(priority_col)
+      str_to_lower(substr(get(priority_col), 1, 1)) == "h" ~ "High",
+      str_to_lower(substr(get(priority_col), 1, 1)) == "m" ~ "Medium",
+      str_to_lower(substr(get(priority_col), 1, 1)) == "l" ~ "Low",
+      str_to_lower(substr(get(priority_col), 1, 1)) %in% c("n", "x") ~ "Not Focal Site",
+      TRUE ~ get(priority_col)
     )) %>%
     mutate(priority_level = factor(priority_level, levels = c(
       "High", "Medium", "Low", "Not Focal Site"
@@ -26,19 +40,29 @@ clean_iss_data <- function(iss.data, start_date, end_date) {
   cli::cli_process_done()
 
   cli::cli_process_start("Adding date columns")
-  # add month
-  issy2$monyear <- as.yearmon(as.Date(issy2$starttime))
-  issy2$month <- month(as.Date(issy2$starttime))
-  issy2$year <- year(as.Date(issy2$starttime))
+  issy2 <- issy2 |>
+    mutate(
+      monyear = as.yearmon(as.Date(.data[[start_time_col]])),
+      month = month(as.Date(.data[[start_time_col]])),
+      year = year(as.Date(.data[[start_time_col]]))
+    )
   cli::cli_process_done()
 
+  cli::cli_process_start("counting unreported AFP cases")
   # Unreported AFP
-  issy2$unrep_afp <- as.numeric(issy2$num_unreportedcases)
-  # Province
-  issy2$prov <- toupper(issy2$states_province)
-  # District
-  issy2$dists <- iconv(issy2$district,to="ASCII//TRANSLIT")
-  issy2$dists <- toupper(issy2$dists)
+  issy2 <- issy2 %>%
+    mutate(unrep_afp = as.numeric(.data[[unreported_cases_col]])) |>
+    suppressWarnings()
+  cli::cli_process_done()
+
+  # Province and District
+  cli::cli_process_start("Standardizing province and district names")
+  issy2 <- issy2 %>%
+    mutate(
+      prov = toupper(.data[[prov_col]]),
+      dists = toupper(iconv(.data[[dist_col]], to = "ASCII//TRANSLIT"))
+    )
+  cli::cli_process_done()
 
   # Convert "n/a" characters to actual null values
   cli::cli_process_start("Converting n/a characters to actual null values")
@@ -49,10 +73,10 @@ clean_iss_data <- function(iss.data, start_date, end_date) {
   cli::cli_process_done()
 
   # Remove accents
-  cli::cli_process_start("Performing for names")
+  cli::cli_process_start("Performing cleaning for names")
   issy2 <- issy2 %>%
-    mutate(facility_name2 = iconv(issy2$hf,
-                                  to="ASCII//TRANSLIT"))
+    mutate(facility_name2 = iconv(.data[[hf_col]],
+                                  to = "ASCII//TRANSLIT"))
 
   # Make all capital letters and remove extra whitespace
   issy2 <- issy2 %>%
@@ -60,27 +84,5 @@ clean_iss_data <- function(iss.data, start_date, end_date) {
     mutate(facility_name2 = str_squish(facility_name2))
   cli::cli_process_done()
 
-  # ISS graphs ------
-  wrongsy = count(issy2, today_date>=end_date)
-
-  wrongsy
-
-  issy2.1 = issy2 %>%
-    filter(today_date<=Sys.Date() &
-             today_date>= start_date)
-  issy3 = issy2.1 %>%
-    #filter(is_priority_afp=="Yes") %>%
-    group_by(month, year, priority_level) %>%
-    summarize(freq = n()) %>%
-    filter(year<=year(Sys.Date()) &
-             year>= year(start_date))
-
-  count(issy3, month, year) # One is 2033
-
-  issy3$labs = month.abb[issy3$month] %>%
-    factor(., levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
-                         "Aug", "Sep", "Oct", "Nov", "Dec"))
-  issy3 <- issy3 |>
-    filter(between(year, year(start_date), year(end_date)))
-
+  return(issy2)
 }

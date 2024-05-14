@@ -292,6 +292,7 @@ init_dr <-
                                   country_name,
                                   dr_data_path,
                                   attach_spatial_data)
+
     return(country_data)
   }
 
@@ -478,7 +479,7 @@ dr_data_errors <- function(ctry.data) {
     spatial_validation(ctry.data$dist.pop, "dist")
 
   cli::cli_process_done(msg_done = "Check returned list for error specifics.")
-  cli::cli_alert("Run dr_data_cleaning() to attempt data fixes and perform the check again.")
+  cli::cli_alert("Run clean_ctry_data() to attempt data fixes and perform the check again.")
 
   error_log <- list()
   error_log$missing_ctry <- missing_ctry
@@ -508,6 +509,11 @@ clean_ctry_data <- function(ctry.data, start_date, end_date, es_start_date, es_e
   ctry.data$afp.all.2 <- col_to_datecol(ctry.data$afp.all.2)
   ctry.data$afp.all.2 <- add_zero_dose_col(ctry.data$afp.all.2)
   ctry.data$es <- clean_es_data(ctry.data$es, es_start_date, es_end_date)
+
+  cli::cli_process_start("Filtering AFP dataset dates used for the desk review.")
+  ctry.data$afp.all.2 <- ctry.data$afp.all.2 |>
+    filter(between(date.onset, start_date, end_date))
+  cli::cli_process_done()
 
   return(ctry.data)
 }

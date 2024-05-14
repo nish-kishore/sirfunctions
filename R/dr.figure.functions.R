@@ -308,41 +308,27 @@ generate_afp_epicurve <- function(ctry.data, start_date, end_date) {
 #' @export
 generate_iss_barplot <- function(iss.data, start_date, end_date) {
 
-  issy2 <- iss.data |>
-    mutate(today_date = as_date(today, format = "%m/%d/%Y"),
-           date_of_visit = as_date(date_of_visit, format = "%m/%d/%Y"))
+  iss.data2.1 = iss.data %>%
+    filter(between(today_date, start_date, end_date))
 
-  issy2.1 = issy2 %>%
-    filter(today_date<=Sys.Date() &
-             today_date>= start_date)
-
-  count(issy2, issy2$year<=as.yearmon(Sys.Date()))
-
-  issy3 = issy2.1 %>%
-    #filter(is_priority_afp=="Yes") %>%
+  iss.data3 = iss.data2.1 %>%
     group_by(month, year, priority_level) %>%
     summarize(freq = n()) %>%
-    filter(year<=year(Sys.Date()) &
-             year>= year(start_date))
+    filter(between(year, year(start_date), year(end_date)))
 
-  issy3$labs = month.abb[issy3$month] %>%
+  iss.data3$labs = month.abb[iss.data3$month] %>%
     factor(., levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
                          "Aug", "Sep", "Oct", "Nov", "Dec"))
-  issy3 <- issy3 |>
+  iss.data3 <- iss.data3 |>
     filter(between(year, year(start_date), year(end_date)))
-  # red = "#d73027"
-  # orange = "#fdae61"
-  # blue = #4575b4
-  # grey = #878787
 
-  totty = issy3 %>%
+  totty = iss.data3 %>%
     group_by(year, month) %>%
     summarize(totty = sum(freq))
 
   mtot = max(totty$totty)
 
-
-  issy.vis = ggplot(data = issy3) +
+  iss.data.vis = ggplot(data = iss.data3) +
     geom_bar(aes(x = factor(labs), y = freq,
                  fill = priority_level), stat = "identity",
              position = "stack", col = "black")+
@@ -361,7 +347,7 @@ generate_iss_barplot <- function(iss.data, start_date, end_date) {
     facet_wrap(~year) +
     theme_bw()
 
-  return(issy.vis)
+  return(iss.data.vis)
 }
 
 #' Generate ISS map
@@ -372,21 +358,18 @@ generate_iss_barplot <- function(iss.data, start_date, end_date) {
 #'
 #' @return a ggplot map
 #' @export
-generate_iss_map <- function(iss.data, start_date, end_date) {
-  issy2 <- iss.data |>
-    mutate(today_date = as_date(today, format = "%m/%d/%Y"),
-           date_of_visit = as_date(date_of_visit, format = "%m/%d/%Y"))
+generate_iss_map <- function(iss.data, prov.shape, start_date, end_date) {
 
-  pryr = count(issy2, priority_level,year) %>%
+  pryr = count(iss.data, priority_level,year) %>%
     filter(priority_level == "High")
 
-  issy4 = full_join(issy2, pryr)
+  iss.data2 = full_join(iss.data, pryr)
 
-  issy4$labs = paste0(issy2$year, "\n(n = ",issy4$n,")")
+  iss.data2$labs = paste0(iss.data$year, "\n(n = ",iss.data2$n,")")
 
-  issy.map = ggplot()+
+  iss.data.map = ggplot()+
     geom_sf(data = prov.shape, color = "black", fill = NA, size = .5) +
-    geom_point(data = issy4|>
+    geom_point(data = iss.data2 |>
                  filter(year<=year(end_date) &
                           year>= year(start_date) &
                           priority_level=="High"),
@@ -402,7 +385,7 @@ generate_iss_map <- function(iss.data, start_date, end_date) {
       axis.ticks = element_blank()
     )
 
-  return(issy.map)
+  return(iss.data.map)
 }
 
 #' Title

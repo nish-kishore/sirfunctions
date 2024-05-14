@@ -1085,6 +1085,10 @@ extract_country_data <- function(
     dplyr::filter(place.admin.0 == .country)
   cli::cli_process_done()
 
+  cli::cli_process_start("Attaching metadata from get_all_polio_data()")
+  ctry.data$metadata <- .raw.data$metadata
+  cli::cli_process_done()
+
   gc()
 
   return(ctry.data)

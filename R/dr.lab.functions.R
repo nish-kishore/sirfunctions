@@ -1,3 +1,67 @@
+#' Checks for common data errors in lab data
+#'
+#' @param lab.data lab.data from WHO
+#' @param ctry.data RDS object containing polio data from a country
+#' @param start_date start date of desk review
+#' @param end_date end date of desk review
+#'
+#' @return a list containing the errors
+#' @export
+lab_data_errors <- function(lab.data, ctry.data, start_date, end_date) {
+  lab.data <- lab.data |> filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
+
+  cli::cli_process_start("Checking for invalid dates from cases.")
+  invalid_dates <- lab.data |>
+    filter((days.collect.lab < 0) &
+             (days.lab.culture < 0) &
+             (days.seq.ship < 0) &
+             (days.lab.seq < 0) &
+             (days.itd.seqres < 0) &
+             (days.itd.arriveseq < 0) &
+             (days.seq.rec.res < 0)
+  ) |> filter(year >= year(start_date) & year <= year(end_date),
+                         CaseOrContact == "1-Case")
+
+  if (nrow(invalid_dates) != 0) {
+    cli::cli_alert_warning(paste0("There are ", nrow(invalid_dates), " cases with invalid dates."))
+  } else {
+    cli::cli_alert_success("No invalid dates detected.")
+  }
+
+  cli::cli_process_done()
+
+  cli::cli_process_start("Checking for missing years")
+  missing_years <- lab.data |> filter(is.na(year)) |>
+    filter(year >= year(start_date) & year <= year(end_date),
+           CaseOrContact == "1-Case")
+
+  if (nrow(missing_years) != 0) {
+    cli::cli_alert_warning(paste0("There are ", nrow(missing_years), " cases with missing years."))
+  } else {
+    cli::cli_alert_success("No cases with missing years.")
+  }
+  cli::cli_process_done()
+
+  cli::cli_process_start("Checking for missing EPIDs in the AFP dataset.")
+  missing_epids = lab.data |> filter(!(EpidNumber %in% ctry.data$afp.all.2$epid))
+
+  if (nrow(missing_epids) != 0) {
+    cli::cli_alert_warning(paste0("There are ", nrow(missing_epids), " lab cases not in the AFP linelist."))
+  } else {
+    cli::cli_alert_success("No lab cases missing in the AFP linelist.")
+  }
+  cli::cli_process_done()
+
+  cli::cli_alert("Run clean_lab_data() to attempt data fixes and perform the check again.")
+
+  error_log <- list()
+  error_log$invalid_dates <- invalid_dates
+  error_log$missing_years <- missing_years
+  error_log$missing_epids <- missing_epids
+
+  return(error_log)
+}
+
 #' Clean polio lab data
 #'
 #' @param lab.data raw lab data
@@ -6,6 +70,10 @@
 #' @return a tibble containing clean lab data
 #' @export
 clean_lab_data <- function(lab.data, ctry.data, start_date, end_date) {
+
+  cli::cli_process_start("Filtering country-specific lab data")
+  lab.data <- lab.data |> filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
+  cli::cli_process_done()
 
   cli::cli_process_start("Filtering for cases with valid dates")
   lab.data2 = lab.data %>%
