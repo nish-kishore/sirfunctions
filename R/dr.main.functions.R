@@ -255,7 +255,7 @@ init_dr <-
       stringr::str_trim(stringr::str_to_upper(country_name))
     start_date <- lubridate::as_date(start_date)
     end_date <- lubridate::as_date(end_date)
-    year <- lubridate::year(start_date)
+    year <- lubridate::year(end_date)
 
     # Set up local directory for storing for data and metadata
     df_name <-
@@ -287,6 +287,31 @@ init_dr <-
 
     # Instantiate variable containing country data and desk review meta data
     data_path <- file.path(country_dir_path, "data")
+
+    country_data <- NULL
+    response <- TRUE
+
+    while (response) {
+      cli::cli_alert_info("Load data from EDAV? y/n")
+      edav_response <- readline("Enter a response: ")
+      edav_response <- str_trim(str_to_lower(edav_response))
+
+      if (!(edav_response %in% c("y", "n"))) {
+        message("Invalid response, please try again.")
+        next
+      } else if (edav_response == "y") {
+        tryCatch({
+          country_data <- fetch_dr_data(country_name, year, local_dr_repo)
+        }, error = function(error) {
+          message("No relevant files available for this desk review on EDAV.")
+          response <- FALSE
+        })
+        response <- FALSE
+      } else if (edav_response == "n") {
+        response <- FALSE
+      }
+    }
+
     country_data <- generate_data(data_path,
                                   data_size,
                                   country_name,
@@ -387,7 +412,8 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
   file_names <- basename(files)
 
   if (length(file_names) == 0) {
-    stop("This directory is empty.")
+    message("No files related to the desk review found on EDAV.")
+    return(NULL)
   }
 
   cli::cli_alert_info("Previous save(s) found:")
