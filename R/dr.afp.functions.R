@@ -701,6 +701,12 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
   return(cases.need60day)
 }
 
+#' Title
+#'
+#' @param cases.need60day summary table of cases that need 60 day follow-up
+#'
+#' @return summary table with clustering info
+#' @export
 generate_potentially_compatibles_cluster <- function(cases.need60day) {
   pot.c.clust = filter(cases.need60day,
                        pot.compatible == 1 | classification == "Compatible") %>%

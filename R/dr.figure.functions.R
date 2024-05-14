@@ -535,6 +535,46 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
   return(surv.ind.tab)
 }
 
+#' AFP cases by province and year
+#'
+#' @param afp.by.month.prov table summarizing afp cases by month and province
+#'
+#' @return ggplot object
+#' @export
+generate_afp_prov_year <- function(afp.by.month.prov) {
+  afp.month.prov.g = afp.by.month.prov |> filter(year >= year(start_date) &
+                                                   year <= year(Sys.Date()))
+
+
+
+  afp.month.prov.g$case.cat = factor(afp.month.prov.g$case.cat, levels = c(c("0", "1", "2-5", "6-9", "10+")))
+
+  # changed to u15pop.prov instead
+  # prov is not a column at afp.month.prov.g (fixed by adding to the groupby)
+  # !!! address
+  afp.dets.prov.year <- ggplot(
+    afp.month.prov.g |>
+      arrange(u15pop),
+    aes(x = mon.year2,
+        y = fct_inorder(prov),
+        fill = case.cat)
+  ) +
+    geom_tile(color = "black") +
+    sirfunctions::f.plot.looks("geomtile") +
+    scale_fill_manual(
+      values = sirfunctions::f.color.schemes("afp.prov"),
+      name = "AFP Cases",
+      drop = F
+    ) +
+    ggtitle("Number of AFP Cases by Province") +
+    sirfunctions::f.plot.looks("geomtile") +
+    theme(plot.caption = element_text(hjust = 0)) +
+    labs(caption = "Provinces are ordered by under 15 population, with highest on top")
+
+  return(afp.dets.prov.year)
+}
+
+
 #' Generate table for population
 #'
 #' @param prov.case.ind  case indicator at province level
