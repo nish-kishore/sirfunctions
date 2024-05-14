@@ -4,7 +4,7 @@
 \alias{generate_iss_map}
 \title{Generate ISS map}
 \usage{
-generate_iss_map(iss.data, start_date, end_date)
+generate_iss_map(iss.data, prov.shape, start_date, end_date)
 }
 \arguments{
 \item{iss.data}{tibble of ISS/eSurv data}

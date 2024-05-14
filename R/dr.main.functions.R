@@ -191,47 +191,84 @@ generate_data <-
     }
   }
 
-generate_pptx_assumptions <- function(date_first, date_last) {
-  pptx.assumptions <- c(
-    'Data sources:',
-    paste0(
-      'POLIS (Data as of ',
-      format(start_date, '%d-%b-%Y'),
-      ' to ',
-      format(end_date, '%d-%b-%Y') ,
-      ')'
-    ),
-    'Missing population estimated from the UNDP growth factor from previous year’s population.',
-    paste0(
-      'Timeframe for analysis: ',
-      format(start_date, '%d-%b-%Y'),
-      ' to ',
-      format(end_date, '%d-%b-%Y')
-    ),
-    paste0(
-      'Some selected figures include additional data (',
-      format(start_date, "%b %Y"),
-      "-",
-      format(Sys.Date(), "%b %Y"),
-      ")"
-    ),
-    # UPDATE AS NEEDED
-    'NPAFP Assumptions',
-    'NPAFP cases with all pending cases included (Pending Lab and Pending Classification)',
-    'Stool Adequacy Assumptions',
-    'All AFP cases',
-    'Samples with missing stool condition were considered good quality',
-    'Samples with bad date data (e.g. collection before onset) were considered inadequate'
-  )
+#' Fetch the Rds file to be used for a desk review
+#'
+#' @param country country name as a string
+#' @param year year as an integer
+#' @param local_dr_repo the local desk review repository
+#'
+#' @return A status message
+fetch_dr_data <- function(country, year, local_dr_repo) {
+  country <- stringr::str_to_lower(str_trim(country))
+  files <- sirfunctions::edav_io(
+    io = "list",
+    default_dir = NULL,
+    file_loc = file.path("GID/PEB/SIR/Data/desk_review",
+                         country, year)
+  ) |>
+    pull(name)
 
-  assump = unordered_list(
-    level_list = c(1, 2, 2, 1, 2, 1, 2, 1, 2, 2, 2),
-    #Indentation level for each bullet
-    str_list = pptx.assumptions,
-    style = fp_text(color = "black", font.size = 18)
-  )
+  file_names <- basename(files)
 
-  return(assump)
+  if (length(file_names) == 0) {
+    message("No files related to the desk review found on EDAV.")
+    return(NULL)
+  }
+
+  cli::cli_alert_info("Previous save(s) found:")
+  for (i in 1:length(file_names)) {
+    message(paste0(i, ") ", file_names[i]))
+  }
+
+  cli::cli_alert_info("Choose the file to load by entering the line number from above or type 'q' to quit: ")
+
+  load_data_response <- T
+  while (load_data_response) {
+    load_data <- readline("> ")
+    load_data <- stringr::str_trim(load_data)
+    if (load_data == "q") {
+      return(message("Aborting dataset loading..."))
+    }
+
+    load_data <- suppressWarnings(as.integer(load_data))
+    if (is.na(load_data) | load_data == 0) {
+      message("Invalid response. Please try again.")
+    } else if (load_data <= length(file_names)) {
+      chosen_file <- file_names[load_data]
+      message(paste0("Loading ", chosen_file))
+      rds_data <-
+        sirfunctions::edav_io(
+          io = "read",
+          default_dir = NULL,
+          file_loc = file.path(
+            file.path("GID/PEB/SIR/Data/desk_review",
+                      country, year),
+            chosen_file
+          )
+        )
+      message(paste0(
+        "Saving Rds data to: ",
+        file.path(country, year, "data", chosen_file)
+      ))
+
+      repo_path <- file.path(local_dr_repo, country, year, "data")
+      file_path <-
+        file.path(local_dr_repo, country, year, "data", chosen_file)
+
+      if (!dir.exists(repo_path)) {
+        dir.create(repo_path, recursive = T)
+      }
+
+      if (file.exists(file_path)) {
+        file.remove(file_path)
+      }
+
+      readr::write_rds(file = file_path, x = rds_data)
+      message("Rds file saved successfully.")
+    } else {
+      message("Invalid response. Please try again.")
+    }
+  }
 }
 
 # "public" methods ----
@@ -389,87 +426,6 @@ freeze_dr_data <- function(rds_obj, country, year, file_name) {
     obj = rds_obj
   )
   message("File saved successfully.")
-}
-
-#' Fetch the Rds file to be used for a desk review
-#'
-#' @param country country name as a string
-#' @param year year as an integer
-#' @param local_dr_repo the local desk review repository
-#'
-#' @return A status message
-#' @export
-fetch_dr_data <- function(country, year, local_dr_repo) {
-  country <- stringr::str_to_lower(str_trim(country))
-  files <- sirfunctions::edav_io(
-    io = "list",
-    default_dir = NULL,
-    file_loc = file.path("GID/PEB/SIR/Data/desk_review",
-                         country, year)
-  ) |>
-    pull(name)
-
-  file_names <- basename(files)
-
-  if (length(file_names) == 0) {
-    message("No files related to the desk review found on EDAV.")
-    return(NULL)
-  }
-
-  cli::cli_alert_info("Previous save(s) found:")
-  for (i in 1:length(file_names)) {
-    message(paste0(i, ") ", file_names[i]))
-  }
-
-  cli::cli_alert_info("Choose the file to load by entering the line number from above or type 'q' to quit: ")
-
-  load_data_response <- T
-  while (load_data_response) {
-    load_data <- readline("> ")
-    load_data <- stringr::str_trim(load_data)
-    if (load_data == "q") {
-      return(message("Aborting dataset loading..."))
-    }
-
-    load_data <- suppressWarnings(as.integer(load_data))
-    if (is.na(load_data) | load_data == 0) {
-      message("Invalid response. Please try again.")
-    } else if (load_data <= length(file_names)) {
-      chosen_file <- file_names[load_data]
-      message(paste0("Loading ", chosen_file))
-      rds_data <-
-        sirfunctions::edav_io(
-          io = "read",
-          default_dir = NULL,
-          file_loc = file.path(
-            file.path("GID/PEB/SIR/Data/desk_review",
-                      country, year),
-            chosen_file
-          )
-        )
-      message(paste0(
-        "Saving Rds data to: ",
-        file.path(country, year, "data", chosen_file)
-      ))
-
-      repo_path <- file.path(local_dr_repo, country, year, "data")
-      file_path <-
-        file.path(local_dr_repo, country, year, "data", chosen_file)
-
-      if (!dir.exists(repo_path)) {
-        dir.create(repo_path, recursive = T)
-      }
-
-      if (file.exists(file_path)) {
-        file.remove(file_path)
-      }
-
-      readr::write_rds(file = file_path, x = rds_data)
-      message("Rds file saved successfully.")
-    } else {
-      message("Invalid response. Please try again.")
-    }
-  }
 }
 
 #' Checks data quality errors from the country data
