@@ -42,7 +42,7 @@ create_afp_export <- function(stool.data, country, excel_output_path) {
              "bad.invest","bad.stool1","bad.stool2","bad.followup","stool2missing",
              "stool1missing","stoolmissing","need60day","got60day","timeto60day",
              "ontime.60day","adm0guid","adm1guid","adm2guid","totalnumberofdosesipvopv",
-             "cdc.classification.all","daysstooltolab","noti.7d.on",
+             "cdc.classification.all2","daysstooltolab","noti.7d.on",
              "inv.2d.noti","coll.3d.inv","ship.3d.coll","adequacy.final",
              "adequacy.final2"
     ))
