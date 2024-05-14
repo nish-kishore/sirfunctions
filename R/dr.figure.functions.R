@@ -232,16 +232,18 @@ generate_dist_pop_map <- function(ctry.data, prov.shape, dist.shape, end_date) {
 #' @return ggplot object containing the map of AFP cases
 #' @export
 generate_afp_case_map <- function(ctry.data, ctry.shape, prov.shape, start_date, end_date) {
-  afp.case.map.filter <- ctry.data$afp.all %>%
+  afp.case.map.filter <- ctry.data$afp.all.2 %>%
     filter(between(as.Date(date.onset), start_date, end_date)) |>
     mutate(year = as.factor(year))
+
+  afp.case.map.filter <- afp.case.map.filter |>
+    filter(!(cdc.class %in% c("PENDING", "NPAFP", "UNKNOWN", "NOT-AFP", "LAB PENDING")))
 
   afp.case.map <- ggplot() +
     geom_sf(data = ctry.shape, color = "black", fill = NA, size = 1) +
     geom_sf(data = prov.shape, color = "black", fill = NA, size = .5) +
     geom_sf(
-      data = afp.case.map.filter |>
-        filter(!(cdc.class %in% c("PENDING", "NPAFP", "UNKNOWN", "NOT-AFP", "LAB PENDING"))),
+      data = afp.case.map.filter,
       aes(color = cdc.classification.all2), size = 1
     ) +
     scale_color_manual(
@@ -252,12 +254,16 @@ generate_afp_case_map <- function(ctry.data, ctry.shape, prov.shape, start_date,
                   year(start_date), "-", year(end_date))) +
     # NOTE: IF THERE ARE NONE IT NEEDS TO THROW AN ERROR
     sirfunctions::f.plot.looks("epicurve") +
-    facet_wrap(~year, ncol = 4) +
     theme(
       axis.text.x = element_blank(),
       axis.text.y = element_blank(),
       axis.ticks = element_blank()
     )
+
+    if (nrow(afp.case.map.filter != 0)) {
+      afp.case.map  <- afp.case.map +
+        facet_wrap(~year, ncol = 4)
+    }
 
   return(afp.case.map)
 

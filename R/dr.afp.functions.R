@@ -717,8 +717,6 @@ generate_potentially_compatibles_cluster <- function(cases.need60day) {
       )
     )
 
-
-
   # add 30 days to the first case --> pull out all of the cases that fall within
   # 30 days of that case --> label them as #1 --> then take the subset that is #1 -->
   # add 30 days to the max of that --> pull out any that fit etc --> once you
@@ -729,12 +727,13 @@ generate_potentially_compatibles_cluster <- function(cases.need60day) {
   pot.c.clust = arrange(pot.c.clust, date) # arrange by onset date
   pot.c.clust$clust = NA
   pot.c.clust$clust[1] = 1
-  for (i in 2:nrow(pot.c.clust)) {
-    pot.c.clust$clust[i] = ifelse(
-      pot.c.clust$date[i] <= pot.c.clust$date[i - 1] + 30,
-      max(pot.c.clust$clust, na.rm = T),
-      max(pot.c.clust$clust, na.rm = T) + 1
-    )
+
+  if (nrow(pot.c.clust) > 1) {
+    for(i in 2:nrow(pot.c.clust)){
+      pot.c.clust$clust[i] = if_else(pot.c.clust$date[i]<=pot.c.clust$date[i-1]+30,
+                                     max(pot.c.clust$clust[1:i-1], na.rm = T),
+                                     max(pot.c.clust$clust[1:i-1], na.rm = T)+1)
+    }
   }
 
   # Rolling cluster assignment
