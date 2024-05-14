@@ -2,6 +2,7 @@
 #'
 #' @param stool.data afp data with final adequacy columns
 #' @param excel_output_path output path of the Excel file
+#' @export
 create_afp_export <- function(stool.data, country, excel_output_path) {
   stool.data.export=stool.data |>
     mutate(nvaccine.2 = NA) |>
