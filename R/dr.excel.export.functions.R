@@ -170,9 +170,6 @@ create_pot_comp_clust_export <- function(pot.c.clust, country, excel_output_path
   write_xlsx(pot.c.clust,
              file.path(
                excel_output_path,
-               str_to_lower(country),
-               year(Sys.Date()),
-               "data",
                paste0("compatible_pot_compatible_cases_",
                       country, ".xlsx")
              ))

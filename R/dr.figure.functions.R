@@ -57,7 +57,8 @@ generate_prov_timeliness_graph <- function(int.data, afp.prov.year) {
       "adm1guid" = "adm1guid",
       "prov" = "prov"
     )
-  )
+  ) |>
+    filter(medi >= 0)
 
   timely_prov <- ggplot(prov.time.2 |>
                           filter(is.na(medi) == F & is.na(prov) == F)) +
@@ -90,11 +91,10 @@ generate_prov_timeliness_graph <- function(int.data, afp.prov.year) {
     ) +
     facet_grid(prov ~ . ,
                scales = "free_y" ,
-               space = "free",
-               switch = "y") +
+               space = "free") +
     theme(legend.position = "bottom",
-          legend.background = element_blank()) +
-    theme(strip.text.y = element_text(size = 5))
+          legend.background = element_blank(),
+          strip.text.y = element_text(size = 5, angle = 0))
 
   return(timely_prov)
 }
@@ -109,7 +109,7 @@ generate_prov_timeliness_graph <- function(int.data, afp.prov.year) {
 #' @export
 generate_pop_map <- function(ctry.data, prov.shape, end_date) {
   prov.pop <- ctry.data$prov.pop %>%
-    filter(year == year(end_date) & ctry == country)
+    filter(year == year(end_date))
 
   # Merge with province
   shape.prov.pop <-
@@ -117,7 +117,7 @@ generate_pop_map <- function(ctry.data, prov.shape, end_date) {
 
   pop.map <- ggplot() +
     geom_sf(
-      data = ctry.shape,
+      data = ctry.data$ctry,
       color = "black",
       fill = NA,
       size = 1
@@ -130,12 +130,6 @@ generate_pop_map <- function(ctry.data, prov.shape, end_date) {
       size = 3,
       color = "blue"
     ) +
-    geom_sf(
-      data = ctry.shape,
-      color = "black",
-      fill = NA,
-      size = 15
-    ) +
     geom_sf_label_repel(data = filter(ctry.data$cities,
                                       toupper(CNTRY_NAME) == ctry.data$name),
                         aes(label = CITY_NAME)) +
@@ -146,10 +140,10 @@ generate_pop_map <- function(ctry.data, prov.shape, end_date) {
       "Major Cities and Roads - Province Level Population - ",
       year(end_date)
     )) +
-    labs(fill = "Under-15 pop") +
+    labs(fill = "Under-15 pop",
+         caption = "- Under 15 population is shown at the province level\n- Major roads are shown in black\n- Population centers are shown in blue") +
     sirfunctions::f.plot.looks("epicurve") +
     scale_size_identity() +
-    labs(caption = "- Under 15 population is shown at the province level\n- Major roads are shown in black\n- Population centers are shown in blue") +
     theme(
       plot.title = element_text(size = 15, face = "bold", hjust = 0.5),
       axis.text.x = element_blank(),
@@ -174,10 +168,10 @@ generate_pop_map <- function(ctry.data, prov.shape, end_date) {
 #' @export
 generate_dist_pop_map <- function(ctry.data, prov.shape, dist.shape, end_date) {
   prov.pop <- ctry.data$prov.pop %>%
-    filter(year == year(end_date) & ctry == country)
+    filter(year == year(end_date))
 
   dist.pop <- ctry.data$dist.pop %>%
-    filter(year == year(end_date) & ctry == country)
+    filter(year == year(end_date))
 
   shape.prov.pop <-
     left_join(prov.shape, prov.pop, by = c("GUID" = "adm1guid"))
@@ -1137,21 +1131,21 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, dist.shape
   # Put text at 10% below the minimum X and Y coords for each map
   adjy <- (range(ctcoord$Y)[1] - range(ctcoord$Y)[2])*.1
 
-  allafp.d = ctry.data$afp.all.2 %>%
+  allafp.d <- ctry.data$afp.all.2 %>%
     filter(date >= start_date & date <= end_date) %>%
     reframe(group_by(ctry.data$afp.all.2, cdc.classification.all2,
                      adm2guid, year),
             freq = n()) %>%
     filter(cdc.classification.all2 != "NOT-AFP")
 
-  alldist = ctry.data$dist.pop[, c("adm2guid", "year", "prov", "dist")] %>%
+  alldist <- ctry.data$dist.pop[, c("adm2guid", "year", "prov", "dist")] %>%
     filter(year >= year(start_date) & year <= year(end_date))
 
-  all.dist.afp = left_join(alldist, allafp.d) %>%
+  all.dist.afp <- left_join(alldist, allafp.d) %>%
     group_by(year, adm2guid, prov, dist) %>%
     summarize(allafp = sum(freq, na.rm = T))
 
-  stoolad.d = left_join(
+  stoolad.d <- left_join(
     all.dist.afp,
     dstool,
     by = c(
@@ -1162,7 +1156,7 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, dist.shape
     )
   )
 
-  stoolad.d = stoolad.d %>%
+  stoolad.d <- stoolad.d %>%
     tibble() %>%
     mutate(
       prop.cat = case_when(
@@ -1180,7 +1174,7 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, dist.shape
       levels = c("Zero AFP cases", "<40%", "40-59%", "60-79%", "80%+")
     ))
 
-  stoolad.nums.d = stoolad.d %>%
+  stoolad.nums.d <- stoolad.d %>%
     group_by(year, adm2guid, dist) %>%
     summarize(meet.stool = sum(per.stool.ad >= 80)) %>%
     ungroup() %>%
@@ -1989,7 +1983,7 @@ generate_es_det_map <- function(es.data, ctry.shape, prov.shape, es_start_date, 
                  x = as.numeric(lng),
                  y = as.numeric(lat),
                  color = cats
-               )) +
+               ), show.legend = T) +
     geom_label_repel(
       data = subset(det.rate, site.name != "OSHIKANGO TREATMENT PLANT"),
       aes(
