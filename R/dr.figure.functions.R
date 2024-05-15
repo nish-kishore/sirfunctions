@@ -362,6 +362,12 @@ generate_iss_barplot <- function(iss.data, start_date, end_date) {
 #' @export
 generate_iss_map <- function(iss.data, prov.shape, start_date, end_date) {
 
+  bbox <- sf::st_bbox(prov.shape)
+
+  iss.data <- iss.data |>
+    filter(between(`_gps_ending_longitude`, bbox$xmin, bbox$xmax),
+           between(`_gps_ending_latitude`, bbox$ymin, bbox$ymax))
+
   pryr = count(iss.data, priority_level,year) %>%
     filter(priority_level == "High")
 
