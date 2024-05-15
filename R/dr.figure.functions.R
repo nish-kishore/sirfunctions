@@ -308,6 +308,8 @@ generate_afp_epicurve <- function(ctry.data, start_date, end_date) {
 #' @export
 generate_iss_barplot <- function(iss.data, start_date, end_date) {
 
+  iss.data <- iss.data |> mutate(today_date = today)
+
   iss.data2.1 = iss.data %>%
     filter(between(today_date, start_date, end_date))
 
