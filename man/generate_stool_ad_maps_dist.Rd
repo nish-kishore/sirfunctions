@@ -8,8 +8,8 @@ generate_stool_ad_maps_dist(
   ctry.data,
   dstool,
   ctry.shape,
-  dist.shape,
   prov.shape,
+  dist.shape,
   start_date,
   end_date
 )
@@ -21,9 +21,9 @@ generate_stool_ad_maps_dist(
 
 \item{ctry.shape}{recent country shapefile}
 
-\item{dist.shape}{recent district shapefile}
-
 \item{prov.shape}{recent province shapefile}
+
+\item{dist.shape}{recent district shapefile}
 
 \item{start_date}{start date of desk review}
 

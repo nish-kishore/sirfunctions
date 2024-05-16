@@ -551,14 +551,13 @@ generate_afp_prov_year <- function(afp.by.month.prov) {
         fill = case.cat)
   ) +
     geom_tile(color = "black") +
+    ggtitle("Number of AFP Cases by Province") +
     sirfunctions::f.plot.looks("geomtile") +
     scale_fill_manual(
       values = sirfunctions::f.color.schemes("afp.prov"),
       name = "AFP Cases",
-      drop = F
+      drop = T
     ) +
-    ggtitle("Number of AFP Cases by Province") +
-    sirfunctions::f.plot.looks("geomtile") +
     theme(plot.caption = element_text(hjust = 0)) +
     labs(caption = "Provinces are ordered by under 15 population, with highest on top")
 
@@ -780,7 +779,7 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape, start_date
         " (",
         round(100 * num.meet2 / len.year, 0),
         "%)",
-        " provinces \nwith >= 2 cases of NPAFP \nper 100,000 population"
+        " provinces with >= 2 cases of NPAFP \nper 100,000 population"
       )
     )
 
@@ -812,9 +811,9 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape, start_date
         y = min(ctcoord$Y) + adjy,
         label = labs
       ),
-      size = 3,
+      size = 3.5,
       check_overlap = TRUE,
-      hjust = 0
+      hjust = 0,
     ) +
     scale_fill_manual(
       name = "NPAFP rate",
@@ -827,7 +826,7 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape, start_date
         "Missing Pop" = "#2C83C7",
         "Silent (u15pop >= 100K)" = "#5e3c99"
       ),
-      drop = F
+      drop = T
     ) +
     ggtitle("NPAFP Rate Annualized - Province") +
     sirfunctions::f.plot.looks("epicurve") +
@@ -835,7 +834,9 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape, start_date
     theme(
       axis.text.x = element_blank(),
       axis.text.y = element_blank(),
-      axis.ticks = element_blank()
+      axis.ticks = element_blank(),
+      legend.position =  c(0.5,-0.23),
+      legend.direction = "horizontal"
     )
 
   return(npafp.maps)
@@ -914,7 +915,7 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
         " (",
         round(100 * num.meet2 / len.year, 0),
         "%)",
-        " districts \nwith >= 2 cases of NPAFP \nper 100,000 population"
+        " districts with >= 2 cases of NPAFP \nper 100,000 population"
       )
     )
 
@@ -961,7 +962,7 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
         "Missing Pop" = "#2C83C7",
         "Silent (u15pop >= 100K)" = "#5e3c99"
       ),
-      drop = F
+      drop = T
     ) +
     # scale_color_manual(values = sirfunctions::f.color.schemes("para.case"), name = "Case type",
     #                  drop = F) +
@@ -1078,6 +1079,7 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape, st
         y = min(ctcoord$Y) + adjy,
         label = labs
       ),
+      size = 3,
       check_overlap = TRUE,
       hjust = 0
     ) +
@@ -1116,7 +1118,7 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape, st
 #'
 #' @return ggplot map
 #' @export
-generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, dist.shape, prov.shape, start_date, end_date) {
+generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape, dist.shape, start_date, end_date) {
   # Get coordinates for maps that are plotted
   ctcoord <- as.data.frame(st_coordinates(ctry.shape))
   # Put text at 10% below the minimum X and Y coords for each map
@@ -1214,6 +1216,7 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, dist.shape
         y = min(ctcoord$Y) + adjy,
         label = labs
       ),
+      size = 3,
       check_overlap = TRUE,
       hjust = 0
     ) +
@@ -1227,7 +1230,7 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, dist.shape
         "80%+" = "#2c7bb6",
         "Unable to Assess" = "white"
       ),
-      drop = F
+      drop = T
     ) +
     ggtitle("Stool Adequacy - District") +
     sirfunctions::f.plot.looks("epicurve") +
@@ -1237,6 +1240,7 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, dist.shape
       axis.text.y = element_blank(),
       axis.ticks = element_blank()
     )
+
   return(stool.ad.maps.dist)
 }
 
@@ -1793,7 +1797,7 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_da
 
   mapt_all = annotate_figure(mapt_all,
                              bottom = text_grob("Provinces marked by an X have reported 5 or less AFP cases",
-                                                hjust = 1))
+                                                hjust = 1.5))
   return(mapt_all)
 }
 
@@ -2243,6 +2247,8 @@ generate_case_num_dose_g <- function(ctry.data, start_date, end_date) {
     scale_fill_manual("Number of doses - IPV/OPV", values = dose.num.cols, drop = F) +
     scale_y_continuous(labels = scales::percent)  +
     labs(title="OPV/IPV Status of NP AFP cases, 6-59 months") +
+    geom_text(data = dcat.yr.prov |> group_by(year) |> summarise(freq = sum(freq)),
+              aes(label = paste0("n = ", freq), x = year, y = 1.02), check_overlap = TRUE) +
     theme_pubr()
 
   return(case.num.dose.g)
