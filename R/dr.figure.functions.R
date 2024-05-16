@@ -226,16 +226,20 @@ generate_dist_pop_map <- function(ctry.data, prov.shape, dist.shape, end_date) {
 #' @return ggplot object containing the map of AFP cases
 #' @export
 generate_afp_case_map <- function(ctry.data, ctry.shape, prov.shape, start_date, end_date) {
-  afp.case.map.filter <- ctry.data$afp.all.2 %>%
+  afp.case.map.filter <- ctry.data$afp.all %>%
     filter(between(as.Date(date.onset), start_date, end_date)) |>
     mutate(year = as.factor(year))
+
+  if (nrow(afp.case.map.filter) == 0) {
+    stop("No data available for the specified date range.")
+  }
 
   afp.case.map.filter <- afp.case.map.filter |>
     filter(!(cdc.class %in% c("PENDING", "NPAFP", "UNKNOWN", "NOT-AFP", "LAB PENDING")))
 
   afp.case.map <- ggplot() +
-    geom_sf(data = ctry.shape, color = "black", fill = NA, size = 1) +
-    geom_sf(data = prov.shape, color = "black", fill = NA, size = .5) +
+    geom_sf(data = ctry.shape, aes(), color = "black", fill = NA, size = 1) +
+    geom_sf(data = prov.shape, aes(), color = "black", fill = NA, size = .5) +
     geom_sf(
       data = afp.case.map.filter,
       aes(color = cdc.classification.all2), size = 1
@@ -254,7 +258,7 @@ generate_afp_case_map <- function(ctry.data, ctry.shape, prov.shape, start_date,
       axis.ticks = element_blank()
     )
 
-    if (nrow(afp.case.map.filter != 0)) {
+  if (nrow(afp.case.map.filter) != 0) {
       afp.case.map  <- afp.case.map +
         facet_wrap(~year, ncol = 4)
     }
@@ -811,7 +815,7 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape, start_date
         y = min(ctcoord$Y) + adjy,
         label = labs
       ),
-      size = 3.5,
+      size = 2,
       check_overlap = TRUE,
       hjust = 0,
     ) +
@@ -947,7 +951,7 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
         y = min(ctcoord$Y) + adjy,
         label = labs
       ),
-      size = 3,
+      size = 2,
       check_overlap = TRUE,
       hjust = 0
     ) +

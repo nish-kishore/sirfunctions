@@ -467,10 +467,6 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
                          ))
                      })
 
-  if (!is.null(lab.data)) {
-    int.data <- int.data |> select(!daysstooltolab)
-  }
-
   int.data <- switch(spatial.scale,
                      "ctry" = {
                        int.data <- int.data |>
