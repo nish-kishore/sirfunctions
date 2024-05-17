@@ -1155,26 +1155,17 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
       }
     }
 
-  if(data.only & is.null(type)){
-    out <- tibble::tibble(out)
-
+  if (data.only) {
+    out <- tibble::as_tibble(out)
     return(out)
   }
 
-  if(!data.only & is.null(type)){
-    return(out)
+  if (!is.null(type) && type == "long") {
+    df.list <- lapply(st.year:end.year, function(i) f.yrs.01(out, i))
+    out <- do.call(rbind, df.list)
   }
 
-  if(ifelse(!is.null(type), type == "long", F)){
-
-    df.list <- list()
-
-    for (i in st.year:end.year) {
-      df.list <- c(df.list, list(i = f.yrs.01(out, i)))
-    }
-
-    return(do.call(rbind, df.list))
-  }
+  return(out)
 
 }
 
@@ -1227,23 +1218,17 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
       }
     }
 
-  if(data.only & is.null(type)){
-    out <- tibble::tibble(out)
-
+  if (data.only) {
+    out <- tibble::as_tibble(out)
     return(out)
   }
-  if(!data.only & is.null(type)){
-    return(out)
-  }
-  if(ifelse(!is.null(type), type == "long", F)){
-    df.list <- list()
 
-    for (i in st.year:end.year) {
-      df.list <- c(df.list, list(i = f.yrs.01(out, i)))
-    }
-
-    return(do.call(rbind, df.list))
+  if (!is.null(type) && type == "long") {
+    df.list <- lapply(st.year:end.year, function(i) f.yrs.01(out, i))
+    out <- do.call(rbind, df.list)
   }
+
+  return(out)
 
 }
 
@@ -1289,23 +1274,17 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
       }
     }
 
-  if(data.only & is.null(type)){
+  if (data.only) {
     out <- tibble::as_tibble(out)
-
     return(out)
   }
 
-  if(!data.only & is.null(type)){
-    return(out)
+  if (!is.null(type) && type == "long") {
+    df.list <- lapply(st.year:end.year, function(i) f.yrs.01(out, i))
+    out <- do.call(rbind, df.list)
   }
 
-  if(ifelse(!is.null(type), type == "long", F)){
-    df.list <- list()
-    for (i in st.year:end.year) {
-      df.list <- c(df.list, list(i = f.yrs.01(out, i)))
-    }
-    return(dplyr::bind_rows(df.list))
-  }
+  return(out)
 
 }
 
