@@ -282,11 +282,12 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, assump, start_date, en
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Summary by Province",
             location = ph_location_type("title"))
+
+  gc()
+
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    str_to_lower(country),
-    year(Sys.Date()),
     paste0("draft_output_", Sys.Date(), "_", country, ".pptx")
   ))
 
