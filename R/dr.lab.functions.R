@@ -69,7 +69,7 @@ lab_data_errors <- function(lab.data, ctry.data, start_date, end_date) {
 #'
 #' @return a tibble containing clean lab data
 #' @export
-clean_lab_data <- function(lab.data, ctry.data, start_date, end_date) {
+clean_lab_data <- function(lab.data, ctry.data, start_date, end_date, delim = "-") {
 
   cli::cli_process_start("Filtering country-specific lab data")
   lab.data <- lab.data |> filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
@@ -170,9 +170,10 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date) {
   #---- Additional data cleaning steps
   geo_lookup_table <- ctry.data$afp.all.2 |>
     select(epid, matches("guid"), contains("$adm"), ctry, prov, dist, year) |>
-    separate_wider_delim(cols=epid, delim = "-",
+    separate_wider_delim(cols=epid, delim = delim,
                          names = c("epid_ctry", "epid_prov", "epid_dist",
-                                   "epid_04", "epid_05")
+                                   "epid_04", "epid_05"),
+                         too_many = "merge"
     ) |>
     select(contains("epid"), ctry, prov, dist, matches("adm[0-3]guid"), year) |>
     distinct()
@@ -187,9 +188,11 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date) {
 
   # geomatching algorithm
   lab.data2 <- lab.data2 |>
-    separate_wider_delim(cols=EpidNumber, delim = "-",
+    separate_wider_delim(cols=EpidNumber, delim = delim,
                          names = c("epid_ctry", "epid_prov", "epid_dist",
-                                   "epid_04", "epid_05"), too_many = "debug",
+                                   "epid_04", "epid_05"),
+                         names_repair = "unique",
+                         too_many = "merge",
                          too_few = "debug")
   test <- lab.data2
 
