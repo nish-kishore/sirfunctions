@@ -835,5 +835,9 @@ stool.data <- afp.data |>
 
     }
   }
+
+  int.data <- int.data |>
+    mutate(per.stool.ad = if_else(afp.cases == 0, NA, per.stool.ad))
+
   return(int.data)
 }
