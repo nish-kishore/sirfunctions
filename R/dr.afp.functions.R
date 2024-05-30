@@ -21,6 +21,8 @@ check_missing_geo <- function(afp.data, spatial.scale) {
       " data."
     ))
   }
+
+  return(missing_geo)
 }
 
 #' Imputation algorithm to fill in missing district data from EPID
