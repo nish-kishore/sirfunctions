@@ -1503,10 +1503,10 @@ generate_60_day_tab <- function(cases.need60day) {
       per.comp.2 = paste(compatible, " ", "(", per.comp, "%", ")", sep = ""),
       per.pot.comp.2 = paste(pot.compatible, " ", "(", per.pot.comp, "%", ")", sep = ""),
       per.missing.fu.date = paste(
-        round(missing.fu.date / inadequate * 100),
+        missing.fu.date,
         " ",
         "(",
-        missing.fu.date,
+        round(missing.fu.date / inadequate * 100),
         "%",
         ")",
         sep = ""
@@ -2123,7 +2123,28 @@ generate_es_table <- function(es.data, es_start_date, es_end_date) {
       unit = "days"
     )
 
+  # get values with negative intervals
+  neg_interval_data <- es.data |>
+    filter(timely < 0 | is.na(timely)) |>
+    group_by(ADM1_NAME, ADM2_NAME, site.name) |>
+    summarize(neg_intervals = n())
+  #sample summary
+  sample_summary <- es.data |>
+    group_by(ADM1_NAME, ADM2_NAME, site.name) |>
+    summarize(samples = n())
+
+  neg_interval_data <- neg_interval_data |>
+    left_join(sample_summary)
+
+  neg_interval_data <- neg_interval_data |>
+    mutate(bad_samples = round(neg_intervals / samples * 100, 2))
+
+  # turn negative timely intervals to NA to exclude from calculations
+  es.data <- es.data |>
+    mutate(timely = if_else(timely < 0, NA, timely))
+
   es.tab1 <- es.data %>%
+    filter(!is.na(timely)) |>
     #filter(year(collect.date) == year(end_date)) %>%
     group_by(site.name, ADM1_NAME, ADM2_NAME) %>%
     reframe(
@@ -2203,6 +2224,22 @@ generate_es_table <- function(es.data, es_start_date, es_end_date) {
       med.trans = "Median lab transport time (d)",
       num.wpv.or.vdpv = "No. VDPV or WPV"
     )
+
+  if ((neg_interval_data |> nrow()) > 0) {
+    cli::cli_alert_info(paste0("The following sample sites had bad data. ",
+                               "Bad data points were excluded from analysis:\n"))
+    for (i in 1:nrow(neg_interval_data)) {
+      row = neg_interval_data[i, ]
+      message = paste0(
+             "\nProvince: ", row$ADM1_NAME, "\n",
+             "District: ", row$ADM2_NAME, "\n",
+             "Site Name: ", row$site.name, "\n",
+             "Bad samples: ", row$neg_intervals, "\nTotal samples: ",
+             row$samples, "\n",
+             "Bad Data (%): ", row$bad_samples)
+      cli::cli_alert(message)
+    }
+  }
 
   return(es.table)
 }
