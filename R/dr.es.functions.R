@@ -1,3 +1,77 @@
+impute_site_coord <- function(ctry.data) {
+  df01 <- ctry.data$es %>%
+    distinct(ADM0_NAME, site.name, dist.guid, lat, lng) %>%
+    filter(is.na(lat) | is.na(lng))
+
+  cli::cli_process_start("Adding coordinates to sites in their home district")
+
+  dist.shape <- set_shapefiles(ctry.data, "dist")
+  shape.dist.pop <- left_join(dist.shape,
+                              ctry.data$dist.pop |> filter(year == max(year)),
+                              by = c("GUID" = "adm2guid"))
+
+  df01.shape <- right_join(shape.dist.pop %>% select(GUID),
+                           df01 %>% filter(!is.na(dist.guid)),
+                           by = c("GUID" = "dist.guid")) %>%
+    mutate(empty.01 = st_is_empty(.)) %>%
+    filter(empty.01 == 0)
+
+
+  df02 <- df01.shape %>%
+    group_by(GUID) %>%
+    summarise(nperarm = n()) %>%
+    arrange(GUID) %>%
+    mutate(id = row_number())
+
+
+  pt01 <- st_sample(df02, df02$nperarm, exact = TRUE)
+  pt01_sf <- st_sf(pt01)
+  pt01_joined <- st_join(pt01_sf, df02)
+
+
+  df03 <- pt01_joined %>%
+    select(-nperarm, -id) %>%
+    group_by(GUID) %>%
+    arrange(GUID, .by_group = TRUE) %>%
+    mutate(id = row_number()) %>%
+    as.data.frame()
+
+
+  df04 <- df01.shape %>%
+    group_by(GUID) %>%
+    arrange(GUID, .by_group = TRUE) %>%
+    mutate(id = row_number())
+
+
+  df05 <- full_join(df04, df03) %>%
+    filter(!is.na(empty.01)) %>%
+    separate(.,
+             col = pt01,
+             into = c("lon", "lat"),
+             sep = "[,]") %>%
+    mutate(lon = readr::parse_number(lon),
+           lat = readr::parse_number(lat),)
+
+
+  st_geometry(df05) <- NULL
+
+
+  df06 <- df05 %>%
+    select(ADM0_NAME, site.name, "lng" = lon, lat) %>%
+    mutate_at(c("lng", "lat"), as.character)
+
+  es.data <- ctry.data$es %>%
+    left_join(., df06, by = c("ADM0_NAME", "site.name")) %>%
+    mutate(lat = ifelse(is.na(lat.x), lat.y, lat.x),
+           lng = ifelse(is.na(lng.x), lng.y, lng.x)) %>%
+    select(-c(lat.x, lat.y, lng.x, lng.y))
+
+  cli::cli_process_done()
+
+  return(es.data)
+
+}
+
 #' Transform ES data cleaning with additional columns
 #'
 #' @param es.data tibble of ES data from ctry.data
@@ -5,7 +79,27 @@
 #' @param end_date end date of analysis
 #'
 #' @return tibble of cleaned ES data
-clean_es_data <- function(es.data, es_start_date, es_end_date) {
+clean_es_data <- function(ctry.data, es_start_date, es_end_date) {
+  es.data <- NA
+  cli::cli_process_start("Checking for missing site coordinates")
+
+  df01 <- ctry.data$es %>%
+    distinct(ADM0_NAME, site.name, dist.guid, lat, lng) %>%
+    filter(is.na(lat) | is.na(lng))
+
+  if(nrow(df01) != 0) {
+    cli::cli_alert_warning("These sites are missing coordinates:")
+
+    for (i in df01$site.name) {
+      cli::cli_alert_info(i)
+    }
+    es.data <- impute_site_coord(ctry.data)
+
+  } else {
+    cli::cli_alert_success("No sites with missing coordinates.")
+  }
+
+  cli::cli_process_done()
 
   cli::cli_process_start("Cleaning ES data")
   es.data.earlidat <- es.data %>%
