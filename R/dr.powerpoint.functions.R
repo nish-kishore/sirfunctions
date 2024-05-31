@@ -355,23 +355,18 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
     # Reference map of country  ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(
-      value = paste("Reference Map 1", start_date, "-", end_date),
+      value = paste("Reference Maps", start_date, "-", end_date),
       location = ph_location_type("title")
     ) %>%
-    ph_with(external_img(file.path(fig.path, "pop.map.png")), location = ph_location_type("body")) %>%
-    add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
-    ph_with(
-      value = paste("Reference Map 2", start_date, "-", end_date),
-      location = ph_location_type("title")
-    ) %>%
-    ph_with(external_img(file.path(fig.path, "pop.map.prov.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "pop.map.png")), location = ph_location(top = 2, width = 4, height = 4)) %>%
+    ph_with(external_img(file.path(fig.path, "pop.map.prov.png")), location = ph_location(top = 2, left = 7, width = 4, height = 4)) %>%
     # Paralytic polio and compatible cases map ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(
       value = paste("Paralytic Polio and Compatible cases", start_date, "-", end_date),
       location = ph_location_type("title")
     ) %>%
-    ph_with(external_img(file.path(fig.path, "afp.case.map.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "afp.case.map.png")), location = ph_location(top = 2, left = 5, width = 5.5, height = 5.5)) %>%
     # Phylogenetic tree ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Phylogenetic Tree",
@@ -389,7 +384,7 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
       value = paste("Epicurve", start_date, "-", end_date),
       location = ph_location_type("title")
     ) %>%
-    ph_with(external_img(file.path(fig.path, "afp.epi.curve.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "afp.epi.curve.png")), location = ph_location(top = 2, left = 1, width = 14, height = 5)) %>%
     # POLIS screen shot ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Key message: AFP Surveillance Tracking",
@@ -405,7 +400,7 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
     ph_with(value = "AFP Detections by Province",
             location = ph_location_type("title")) %>%
     ph_with(external_img(file.path(fig.path, "afp.dets.prov.year.png")),
-            location = ph_location_label("Content Placeholder 2")) %>%
+            location = ph_location(top = 2, left = 1, height = 5, width = 14)) %>%
     add_slide(layout = "Two Content", master = "1_Office Theme") %>%
     ph_with(value = "AFP Detections by Province and Year",
             location = ph_location_type("title")) %>%
@@ -414,22 +409,22 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "NPAFP Rate by Province",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "npafp.map.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "npafp.map.png")), location = ph_location(top = 2, left = 1, height = 8, width = 14)) %>%
     # NPAFP rate/AFP detection by district by year (maps) ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "NPAFP Rate by District",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "npafp.map.dist.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "npafp.map.dist.png")), location = ph_location(top = 2, left = 1, height = 8, width = 14)) %>%
     # Stool adequacy by province by year (maps) ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Stool Adequacy by Province",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "stool.ad.maps.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "stool.ad.maps.png")), location = ph_location(top = 2, left = 1, height = 8, width = 14)) %>%
     # Stool adequacy by dist by year (maps) ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Stool Adequacy by District",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "stool.ad.maps.dist.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "stool.ad.maps.dist.png")), location = ph_location(top = 2, left = 1, height = 8, width = 14)) %>%
     # Main issues with stool adequacy table (NOT DONE) ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Main issues with stool adequacy",
@@ -466,7 +461,7 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Immunization Status Among NPAFP cases",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "case.num.dose.g.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "case.num.dose.g.png")), location = ph_location(top = 2, left = 1, height = 8, width = 9)) %>%
     # Key Points on AFP surveillance ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Key Points on AFP Surveillance",
@@ -493,17 +488,17 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "National timeliness",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "timely_nation.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "timely_nation.png")), location = ph_location(top = 2, left = 1, height = 4, width = 14)) %>%
     # Timeliness at provincial level (bar graph) ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Timeliness by province and year",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "timely_prov.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "timely_prov.png")), location = ph_location(top = 2, left = 1, height = 10, width = 14)) %>%
     # Timeliness across provinces (multi map) ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Timeliness by province and year",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "mapt_all.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "mapt_all.png")), location = ph_location_type(top = 2, left = 1, height = 8, width = 14)) %>%
     # Key points on AFP Surveillance Timeliness ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Key Points on AFP Surveillance Timeliness",
@@ -515,18 +510,20 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "ES Sites and Detection 1",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "es.site.det.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "es.site.det.png")), location = ph_location(top = 2, left = 1, height = 8, width = 14)) %>%
     #ph_with(dml(ggobj = es.site.det.facet), location = ph_location_type("body")) %>%
     # ES sites and detection map ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "ES Sites and Detection 2",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "es.det.map.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "es.det.map.png")), location = ph_location(top = 2, left = 1, height = 8, width = 9)) %>%
+    ph_with(value = "Sites with missing coordinates are randomly assigned points in their home district.",
+            location = ph_location_type("ftr")) %>%
     # ES timeliness sample collection to lab ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "Timeliness of ES sample transport",
             location = ph_location_type("title")) %>%
-    ph_with(external_img(file.path(fig.path, "es.timely.png")), location = ph_location_type("body")) %>%
+    ph_with(external_img(file.path(fig.path, "es.timely.png")), location = ph_location(top = 2, left = 1, height = 8, width = 14)) %>%
     # ES site details (table)----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(value = "ES Site Details",
