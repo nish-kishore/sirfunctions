@@ -490,7 +490,7 @@ clean_ctry_data <- function(ctry.data, start_date, end_date, es_start_date, es_e
   ctry.data$afp.all.2 <- impute_dist_afp(ctry.data$afp.all.2)
   ctry.data$afp.all.2 <- col_to_datecol(ctry.data$afp.all.2)
   ctry.data$afp.all.2 <- add_zero_dose_col(ctry.data$afp.all.2)
-  ctry.data$es <- clean_es_data(ctry.data$es, es_start_date, es_end_date)
+  ctry.data$es <- clean_es_data(ctry.data, es_start_date, es_end_date)
 
   cli::cli_process_start("Filtering AFP dataset dates used for the desk review.")
   ctry.data$afp.all.2 <- ctry.data$afp.all.2 |>
