@@ -5,7 +5,7 @@ impute_site_coord <- function(ctry.data) {
 
   cli::cli_process_start("Adding coordinates to sites in their home district")
 
-  dist.shape <- set_shapefiles(ctry.data, "dist")
+  dist.shape <- ctry.data$dist
   shape.dist.pop <- left_join(dist.shape,
                               ctry.data$dist.pop |> filter(year == max(year)),
                               by = c("GUID" = "adm2guid"))
@@ -14,8 +14,13 @@ impute_site_coord <- function(ctry.data) {
                            df01 %>% filter(!is.na(dist.guid)),
                            by = c("GUID" = "dist.guid")) %>%
     mutate(empty.01 = st_is_empty(.)) %>%
-    filter(empty.01 == 0)
+    filter(empty.01 == 0) |>
+    distinct()
 
+  if(nrow(df01.shape) == 0) {
+    cli::cli_alert_warning("Unable to find shapefile associated with site(s)")
+    return(ctry.data$es)
+  }
 
   df02 <- df01.shape %>%
     group_by(GUID) %>%
@@ -80,10 +85,10 @@ impute_site_coord <- function(ctry.data) {
 #'
 #' @return tibble of cleaned ES data
 clean_es_data <- function(ctry.data, es_start_date, es_end_date) {
-  es.data <- NA
+  es.data <- ctry.data$es
   cli::cli_process_start("Checking for missing site coordinates")
 
-  df01 <- ctry.data$es %>%
+  df01 <- es.data %>%
     distinct(ADM0_NAME, site.name, dist.guid, lat, lng) %>%
     filter(is.na(lat) | is.na(lng))
 
