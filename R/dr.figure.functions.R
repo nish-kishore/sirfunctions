@@ -17,7 +17,7 @@ generate_ctry_timeliness_graph <- function(int.data) {
       stat = "identity"
     ) +
     geom_text(
-      data = filter(int.data, medi != 0),
+      data = int.data,
       aes(
         x = factor(year),
         y = medi,
@@ -1557,7 +1557,7 @@ generate_60_day_tab <- function(cases.need60day) {
 #'
 #' @return a map of timeliness of samples
 #' @export
-generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_date, end_date) {
+generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_date, end_date, mark_x = T, pt_size = 4) {
   long.timely <- ctry.data$afp.all.2 %>%
     select(epid,
            noti.7d.on,
@@ -1654,17 +1654,21 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_da
       color = "black",
       aes(fill = prop)
     ) +
-    geom_sf(data = st_centroid(filter(low.case.prov, type == "noti.7d.on")),
-            pch = 4,
-            size = 4) +
     scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
     # scale_color_manual(values = sirfunctions::f.color.schemes("para.case"), name = "Case type",
     #                  drop = F) +
     ggtitle("Proportion of cases with notification within 7 days of onset") +
-    sirfunctions::f.plot.looks("epicurve") +
-    #labs(caption = "Provinces marked by an X have reported 5 or less AFP cases")+
+    sirfunctions::f.plot.looks("epicurve")
+
+    if (mark_x) {
+      mapt1 <- mapt1 +
+        geom_sf(data = st_centroid(filter(low.case.prov, type == "noti.7d.on")),
+                pch = 4,
+                size = pt_size)
+    }
+  mapt1 <- mapt1 +
     facet_wrap( ~ year, ncol = 4) +
     theme(
       axis.text.x = element_blank(),
@@ -1691,10 +1695,15 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_da
       data = filter(time.map, type == "inv.2d.noti"),
       color = "black",
       aes(fill = prop)
-    ) +
-    geom_sf(data = st_centroid(filter(low.case.prov, type == "inv.2d.noti")),
-            pch = 4,
-            size = 4) +
+    )
+
+  if (mark_x) {
+    mapt2 <- mapt2 +
+      geom_sf(data = st_centroid(filter(low.case.prov, type == "inv.2d.noti")),
+              pch = 4,
+              size = pt_size)
+  }
+    mapt2 <- mapt2 +
     scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
@@ -1729,15 +1738,17 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_da
       data = filter(time.map, type == "coll.3d.inv"),
       color = "black",
       aes(fill = prop)
-    ) +
-    geom_sf(data = st_centroid(filter(low.case.prov, type == "coll.3d.inv")),
-            pch = 4,
-            size = 4) +
+    )
+  if (mark_x) {
+    mapt3 <- mapt3 +
+      geom_sf(data = st_centroid(filter(low.case.prov, type == "coll.3d.inv")),
+              pch = 4,
+              size = pt_size)
+  }
+   mapt3 <- mapt3 +
     scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
-    # scale_color_manual(values = sirfunctions::f.color.schemes("para.case"), name = "Case type",
-    #                  drop = F) +
     ggtitle("Proportion of cases with collection within 3 days of investigation") +
     sirfunctions::f.plot.looks("epicurve") +
     #labs(caption = "Provinces marked by an X have reported 5 or less AFP cases")+
@@ -1767,10 +1778,14 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_da
       data = filter(time.map, type == "ship.3d.coll"),
       color = "black",
       aes(fill = prop)
-    ) +
-    geom_sf(data = st_centroid(filter(low.case.prov, type == "ship.3d.coll")),
-            pch = 4,
-            size = 4) +
+    )
+  if (mark_x) {
+    mapt4 <- mapt4 +
+      geom_sf(data = st_centroid(filter(low.case.prov, type == "ship.3d.coll")),
+              pch = 4,
+              size = pt_size)
+  }
+    mapt4 <- mapt4 +
     scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
@@ -1799,9 +1814,11 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape, start_da
       legend = "bottom"
     )
 
-  mapt_all = annotate_figure(mapt_all,
-                             bottom = text_grob("Provinces marked by an X have reported 5 or less AFP cases",
-                                                hjust = 1.5))
+  if (mark_x) {
+    mapt_all = annotate_figure(mapt_all,
+                               bottom = text_grob("Provinces marked by an X have reported 5 or less AFP cases",
+                                                  hjust = 1.5))
+  }
   return(mapt_all)
 }
 
@@ -1921,6 +1938,7 @@ generate_es_site_det <- function(ctry.data, es.data.long, es_start_date, es_end_
 #' Generate ES detection map
 #'
 #' @param es.data ES data for a country
+#' @param es.data.long ES data summary and in long format
 #' @param ctry.shape recent country shapefile
 #' @param prov.shape recent province shapefile
 #' @param es_start_date ES start date
@@ -1928,7 +1946,7 @@ generate_es_site_det <- function(ctry.data, es.data.long, es_start_date, es_end_
 #'
 #' @return ggplot map of ES detections
 #' @export
-generate_es_det_map <- function(es.data, ctry.shape, prov.shape, es_start_date, es_end_date) {
+generate_es_det_map <- function(es.data, es.data.long, ctry.shape, prov.shape, es_start_date, es_end_date) {
   det.rate <- summarize(
     group_by(es.data.long, site.name),
     det.rate = 100 * sum(as.numeric(ev.detect), na.rm = TRUE) / n(),
@@ -1984,7 +2002,7 @@ generate_es_det_map <- function(es.data, ctry.shape, prov.shape, es_start_date, 
                  color = cats
                ), show.legend = T) +
     geom_label_repel(
-      data = subset(det.rate, site.name != "OSHIKANGO TREATMENT PLANT"),
+      data = subset(det.rate),
       aes(
         x = as.numeric(lng),
         y = as.numeric(lat),
@@ -2144,7 +2162,6 @@ generate_es_table <- function(es.data, es_start_date, es_end_date) {
     mutate(timely = if_else(timely < 0, NA, timely))
 
   es.tab1 <- es.data %>%
-    filter(!is.na(timely)) |>
     #filter(year(collect.date) == year(end_date)) %>%
     group_by(site.name, ADM1_NAME, ADM2_NAME) %>%
     reframe(
@@ -2154,6 +2171,8 @@ generate_es_table <- function(es.data, es_start_date, es_end_date) {
       # percent ev detected
       num.spec = n(),
       # number of specimens
+      num.spec.bad = sum(is.na(timely)),
+      # no of bad specimens excluded
       condition.pct = 100 * sum(sample.condition == "Good", na.rm = T) / n(),
       # specimens in good condition
       trans.pct = 100 * sum(as.numeric(timely) <= 3, na.rm = TRUE) / n(),
@@ -2182,6 +2201,7 @@ generate_es_table <- function(es.data, es_start_date, es_end_date) {
         "site.name",
         "early.dat",
         "num.spec",
+        "num.spec.bad",
         "ev.pct",
         "condition.pct",
         "trans.pct",
@@ -2218,6 +2238,7 @@ generate_es_table <- function(es.data, es_start_date, es_end_date) {
       early.dat = "Earliest date reporting to POLIS",
       site.name = "Site name",
       num.spec = "No. samples collected",
+      num.spec.bad = "Excluded samples with bad data",
       ev.pct = "% detected EV",
       condition.pct = "% good condition",
       trans.pct = "% arriving within 3 days",
