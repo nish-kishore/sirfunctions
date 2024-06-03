@@ -6,6 +6,7 @@
 \usage{
 generate_es_det_map(
   es.data,
+  es.data.long,
   ctry.shape,
   prov.shape,
   es_start_date,
@@ -14,6 +15,8 @@ generate_es_det_map(
 }
 \arguments{
 \item{es.data}{ES data for a country}
+
+\item{es.data.long}{ES data summary and in long format}
 
 \item{ctry.shape}{recent country shapefile}
 

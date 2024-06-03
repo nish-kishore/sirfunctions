@@ -1,3 +1,15 @@
+#' Function to load the raw lab data
+#'
+#' @param lab_data_path file path as a string to the lab data
+#'
+#' @return a tibble containing lab data
+#' @export
+load_lab_data <- function(lab_data_path) {
+  lab_data <- readxl::read_excel(lab_data_path)
+  return(lab_data)
+}
+
+
 #' Checks for common data errors in lab data
 #'
 #' @param lab.data lab.data from WHO

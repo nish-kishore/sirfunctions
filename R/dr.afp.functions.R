@@ -237,6 +237,7 @@ add_zero_dose_col <- function(afp.data) {
 #' @return a column containing age group categories
 #'
 add_age_group <- function(age.months) {
+  cli::cli_process_start("Adding age_group column")
   age.months <- tibble(age.months) |>
     mutate(age.months = as.integer(age.months)) |>
     mutate(age_group = case_when(
@@ -247,6 +248,7 @@ add_age_group <- function(age.months) {
       age.months >= 180 ~ "≥180"
     )) |>
     select(age_group)
+  cli::cli_process_done()
 
   return(age.months)
 }
@@ -777,4 +779,78 @@ generate_potentially_compatibles_cluster <- function(cases.need60day, create_clu
 
   return(y)
 
+}
+
+#' Checks data quality errors from the country data
+#'
+#' @param ctry.data RDS object containing polio country data
+#'
+#' @return a list containing all the errors that are checked for
+#' @export
+ctry_data_errors <- function(ctry.data) {
+  message("Checking for data quality issues")
+
+  # afp.all.2
+  cli::cli_progress_step("Performing checks for afp.all.2")
+  missing_ctry <- check_missing_geo(ctry.data$afp.all.2, "ctry")
+  missing_prov <- check_missing_geo(ctry.data$afp.all.2, "prov")
+  missing_dist <- check_missing_geo(ctry.data$afp.all.2, "dist")
+
+  # population check
+  cli::cli_progress_step("Performing checks for population files.\n")
+  pop_file <- check_pop_rollout(ctry.data)
+
+  # spatial validation check across country, province, lab
+  cli::cli_progress_step("Spatial validation for country")
+  incomplete.adm.ctry <-
+    spatial_validation(ctry.data$ctry.pop, "ctry")
+
+  cli::cli_progress_step("Spatial validation for province")
+  incomplete.adm.prov <-
+    spatial_validation(ctry.data$prov.pop, "prov")
+
+  cli::cli_progress_step("Spatial validation for district")
+  incomplete.adm.dist <-
+    spatial_validation(ctry.data$dist.pop, "dist")
+
+  cli::cli_process_done(msg_done = "Check returned list for error specifics.")
+  cli::cli_alert("Run clean_ctry_data() to attempt data fixes and perform the check again.")
+
+  error_log <- list()
+  error_log$missing_ctry <- missing_ctry
+  error_log$missing_prov <- missing_prov
+  error_log$missing_dist <- missing_dist
+  error_log$pop_rollup_diff <- pop_file
+  error_log$invalid_adm0 <- incomplete.adm.ctry
+  error_log$invalid_adm1 <- incomplete.adm.prov
+  error_log$invalid_adm2 <- incomplete.adm.dist
+
+  return(error_log)
+
+}
+
+#' Cleans and adds additional columns used in the desk reviews
+#'
+#' @param ctry.data country data RDS object
+#' @param start_date start date for desk review
+#' @param end_date end date for desk review
+#' @param es_start_date start date for environmental surveillance data
+#' @param es_end_date end date for environmental surveillance data
+#'
+#' @return cleaned country data RDS object
+#' @export
+clean_ctry_data <- function(ctry.data, start_date, end_date, es_start_date, es_end_date) {
+  ctry.data$afp.all.2 <- impute_dist_afp(ctry.data$afp.all.2)
+  ctry.data$afp.all.2 <- col_to_datecol(ctry.data$afp.all.2)
+  ctry.data$afp.all.2 <- ctry.data$afp.all.2 |>
+    mutate(age_group = add_age_group(age.months))
+  ctry.data$afp.all.2 <- add_zero_dose_col(ctry.data$afp.all.2)
+  ctry.data$es <- clean_es_data(ctry.data, es_start_date, es_end_date)
+
+  cli::cli_process_start("Filtering AFP dataset dates used for the desk review.")
+  ctry.data$afp.all.2 <- ctry.data$afp.all.2 |>
+    filter(between(date.onset, start_date, end_date))
+  cli::cli_process_done()
+
+  return(ctry.data)
 }

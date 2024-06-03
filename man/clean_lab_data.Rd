@@ -4,7 +4,7 @@
 \alias{clean_lab_data}
 \title{Clean polio lab data}
 \usage{
-clean_lab_data(lab.data, ctry.data, start_date, end_date)
+clean_lab_data(lab.data, ctry.data, start_date, end_date, delim = "-")
 }
 \arguments{
 \item{lab.data}{raw lab data}

@@ -9,7 +9,9 @@ generate_timeliness_maps(
   ctry.shape,
   prov.shape,
   start_date,
-  end_date
+  end_date,
+  mark_x = T,
+  pt_size = 4
 )
 }
 \arguments{

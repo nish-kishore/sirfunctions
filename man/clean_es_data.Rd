@@ -4,7 +4,7 @@
 \alias{clean_es_data}
 \title{Transform ES data cleaning with additional columns}
 \usage{
-clean_es_data(es.data, es_start_date, es_end_date)
+clean_es_data(ctry.data, es_start_date, es_end_date)
 }
 \arguments{
 \item{es.data}{tibble of ES data from ctry.data}
