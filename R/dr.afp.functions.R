@@ -230,6 +230,28 @@ add_zero_dose_col <- function(afp.data) {
 }
 
 
+#' Create age group categories
+#'
+#' @param age.months column containing age in months
+#'
+#' @return a column containing age group categories
+#'
+add_age_group <- function(age.months) {
+  age.months <- tibble(age.months) |>
+    mutate(age.months = as.integer(age.months)) |>
+    mutate(age_group = case_when(
+      age.months < 6 ~ "<6",
+      age.months >= 6 & age.months < 60 ~ "6-59",
+      age.months >= 60 & age.months < 145 ~ "60-144",
+      age.months >= 145 & age.months < 180 ~ "145-179",
+      age.months >= 180 ~ "≥180"
+    )) |>
+    select(age_group)
+
+  return(age.months)
+}
+
+
 #' Generate AFP case counts by month
 #' @param afp.data tibble containing AFP data (afp.all.2)
 #'
