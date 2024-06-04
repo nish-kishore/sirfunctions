@@ -442,7 +442,7 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
     ph_with(value = paste0("* Defined as inadequate cases with: ",
                            "1) FU finding (Residual weakness, Lost to FU, Died) or no FU visit; ",
                            "2) Discarded or Pending Lab / Pending Classification; ",
-                           '3) Filtered for "Age: <5 years", and 4)"OPV/IPV status: <3 doses, or Unknown"'),
+                           '3) Filtered for "OPV/IPV status: <3 doses, or Unknown"'),
             location = ph_location_type(type = "ftr")) %>%
     # Possible clusters of potential compatibles (table) (NOT DONE) ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
@@ -451,7 +451,7 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
     ph_with(value = paste0("* Defined as inadequate cases with: ",
                            "1) FU finding (Residual weakness, Lost to FU, Died) or no FU visit; ",
                            "2) Discarded or Pending Lab / Pending Classification; ",
-                           '3) Filtered for "Age: <5 years", and 4)"OPV/IPV status: <3 doses, or Unknown"'),
+                           '3) Filtered for "OPV/IPV status: <3 doses, or Unknown"'),
             location = ph_location_type(type = "ftr")) %>%
     # Contact sampling (table) (NOT DONE) ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
