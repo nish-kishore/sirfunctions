@@ -621,8 +621,6 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
     mutate(need60day.v2 = ifelse(adequacy.final2 != "Adequate", 1, 0)) |>
     filter(need60day.v2 == 1 |
              cdc.classification.all2 == "COMPATIBLE") |>
-    filter(age.months < 60 |
-             is.na(age.months)) |> # only children under 5 or missing age
     mutate(
       got60day =
         case_when(
