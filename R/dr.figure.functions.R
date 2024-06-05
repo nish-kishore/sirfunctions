@@ -422,11 +422,12 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
 
   # population meeting both >=2 NPAFP rate and >=80% stool adequacy
   tot.dist.pop <- dist.ind.afp %>%
+    filter(u15pop >= 100000) |>
     group_by(year) %>%
     summarize(tot.dist.pop = sum(u15pop, na.rm = T))
 
   dist.adeq.ind <- dist.ind.afp %>%
-    filter(npafp_rate >= 2 & per.stool.ad >= 80) %>%
+    filter(npafp_rate >= 2 & per.stool.ad >= 80, u15pop >= 100000) %>%
     group_by(year) %>%
     summarize(tot.dist.adeq = sum(u15pop, na.rm = T))
 
@@ -448,10 +449,10 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
     filter(u15pop >= 100000)
 
   unique.dist.100k <- ctry.data$dist.pop %>%
-    filter(ctry == country & u15pop > 100000) %>%
+    filter(ctry == str_to_upper(country) & u15pop >= 100000) %>%
     unique() %>%
     group_by(year, u15pop, adm2guid) %>%
-    filter(u15pop > 100000) %>%
+    filter(u15pop >= 100000) %>%
     filter(year >= year(start_date) &
              year <= year(end_date))
 
