@@ -422,12 +422,14 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
 
   # population meeting both >=2 NPAFP rate and >=80% stool adequacy
   tot.dist.pop <- dist.ind.afp %>%
-    filter(u15pop >= 100000) |>
+    #filter(u15pop >= 100000) |>
     group_by(year) %>%
     summarize(tot.dist.pop = sum(u15pop, na.rm = T))
 
   dist.adeq.ind <- dist.ind.afp %>%
-    filter(npafp_rate >= 2 & per.stool.ad >= 80, u15pop >= 100000) %>%
+    filter(npafp_rate >= 2 & per.stool.ad >= 80,
+           u15pop >= 100000
+           ) %>%
     group_by(year) %>%
     summarize(tot.dist.adeq = sum(u15pop, na.rm = T))
 
@@ -435,8 +437,8 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
                         by = c("year" = "year")) %>%
     mutate(across(tot.dist.adeq, ~ replace_na(.x, 0)))
 
-  meet.ind$prop.dist.adeq <-
-    100 * meet.ind$tot.dist.adeq / meet.ind$tot.dist.pop
+  meet.ind <- meet.ind |>
+    mutate(prop.dist.adeq = tot.dist.adeq / tot.dist.pop * 100)
 
   ctry.ind.afp <- left_join(ctry.extract, cstool,
                             by = c("year", "adm0guid"))
@@ -502,8 +504,8 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
         type == "npafp_rate" ~ "NPAFP rate*",
         type == "afp.cases" ~ "AFP cases",
         type == "per.stool.ad" ~ "Stool adequacy**",
-        type == "prop.dist.adeq" ~ "Population U15 living in districts that met both indicators",
-        type == "prop" ~ "Districts >= 100,000 U15 that met both indicators",
+        type == "prop.dist.adeq" ~ "Population living in districts ≥ 100,000 U15 that met both indicators",
+        type == "prop" ~ "Districts ≥ 100,000 U15 that met both indicators",
         FALSE ~ type
       )
     )
