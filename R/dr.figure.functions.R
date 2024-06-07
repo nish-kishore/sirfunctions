@@ -422,7 +422,7 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
 
   # population meeting both >=2 NPAFP rate and >=80% stool adequacy
   tot.dist.pop <- dist.ind.afp %>%
-    #filter(u15pop >= 100000) |>
+    filter(u15pop >= 100000) |>
     group_by(year) %>%
     summarize(tot.dist.pop = sum(u15pop, na.rm = T))
 
@@ -504,7 +504,7 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
         type == "npafp_rate" ~ "NPAFP rate*",
         type == "afp.cases" ~ "AFP cases",
         type == "per.stool.ad" ~ "Stool adequacy**",
-        type == "prop.dist.adeq" ~ "Population living in districts ≥ 100,000 U15 that met both indicators",
+        type == "prop.dist.adeq" ~ "% Population living in districts ≥ 100,000 U15 that met both indicators",
         type == "prop" ~ "Districts ≥ 100,000 U15 that met both indicators",
         FALSE ~ type
       )
