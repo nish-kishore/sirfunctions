@@ -74,7 +74,7 @@ lab_data_errors <- function(lab.data, ctry.data, start_date, end_date) {
   return(error_log)
 }
 
-#' Clean polio lab data
+#' Clean polio lab data from WHO
 #'
 #' @param lab.data raw lab data
 #' @param ctry.data country data RDS object
@@ -238,6 +238,339 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date, delim = "-
   cli::cli_process_done()
   return(lab.data2)
 }
+
+#' Clean lab data from the regional offices.
+#' Regional data have different columns compared to the WHO lab data. The cleaning
+#' of the regional data is adapted from the lab data cleaning code from the GPSAP
+#' indicator script.
+#'
+#' @param lab.data tibble lab data to be cleaned
+#' @param ctry.data Rds polio data at the country level
+#' @param region AFRO or EMRO
+#' @param start_date start date of the desk review
+#' @param end_date end date of the desk review
+#' @param delim delimiter used for EPIDs. Default is "-".
+#'
+#' @return tibble of lab data
+#' @export
+
+clean_lab_data_regional <- function(lab.data, ctry.data, region, lab.locs, start_date, end_date, delim = "-") {
+
+  # Check for correct region
+  if (!region %in% c("EMRO", "AFRO")) {
+    stop("Valid regions are EMRO or AFRO. Please try again.")
+  }
+
+  lab.locs <- lab.locs |>
+    mutate(country = str_to_upper(country))
+
+  if (region == "EMRO") {
+
+    emro.lab.01 <- lab.data %>%
+      dplyr::rename(country = Name) %>%
+      #make country names long
+      mutate(country = ifelse(country == "AFG", "AFGHANISTAN", country),
+             country = ifelse(country == "BAH", "BAHRAIN", country),
+             country = ifelse(country == "DJI", "DJIBOUTI", country),
+             country = ifelse(country == "EGY", "EGYPT", country),
+             country = ifelse(country == "IRN", "IRAN (ISLAMIC REPUBLIC OF)", country),
+             country = ifelse(country == "IRQ", "IRAQ", country),
+             country = ifelse(country == "JOR", "JORDAN", country),
+             country = ifelse(country == "KUW", "KUWAIT", country),
+             country = ifelse(country == "LEB", "LEBANON", country),
+             country = ifelse(country == "LIB", "LIBYA", country),
+             country = ifelse(country == "MOR", "MOROCCO", country),
+             country = ifelse(country == "OMA", "OMAN", country),
+             country = ifelse(country == "PAK", "PAKISTAN", country),
+             country = ifelse(country == "PNA", "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM", country),
+             country = ifelse(country == "QAT", "QATAR", country),
+             country = ifelse(country == "SAA", "SAUDI ARABIA", country),
+             country = ifelse(country == "SOM", "SOMALIA", country),
+             country = ifelse(country == "SUD", "SUDAN", country),
+             country = ifelse(country == "SYR", "SYRIAN ARAB REPUBLIC", country),
+             country = ifelse(country == "TUN", "TUNISIA", country),
+             country = ifelse(country == "UAE", "UNITED ARAB EMIRATES", country),
+             country = ifelse(country == "YEM", "YEMEN", country)
+      ) %>%
+      mutate_at(
+        c(
+          "CaseDate",
+          "ParalysisOnsetDate",
+          "DateStoolCollected",
+          "StoolDateSentToLab",
+          "DateStoolReceivedinLab",
+          "DateFinalCellCultureResult",
+          "DateFinalrRTPCRResults",
+          "ReportDateSequenceResultSent",
+          "DateIsolateRcvdForSeq",
+          "DateLArmIsolate",
+          "DateRArmIsolate",
+          "DateofSequencing",
+          "DateNotificationtoHQ"
+        ),
+        as.Date.character, "%m/%d/%Y")
+
+
+    #lab locations read in with AFRO cleaning script
+
+    # clean lab data -
+    # This is a very quick clean and can be improved upon with futher steps such as:
+    #  - eliminating nonsensical dates
+    #  - check for more duplicates (same epid and specimen number)
+    #  - if a date is missing, replace it with a proxy date
+    #  - clean/match all countries with lab loc df; I filtered both df to priority countries
+
+
+    # de-dup
+    emro.lab.02 <- emro.lab.01 %>%
+      filter(between(ParalysisOnsetDate, start_date, end_date),
+             country == ctry.data$ctry$ADM0_NAME) %>%
+      distinct()
+
+    # Additional cleaning steps
+    # need data dictionary, in order to standardize names
+    emro.lab.03 <- emro.lab.02 %>%
+      # Dropping rows with Specimen number 0 or >2
+      filter(SpecimenNumber %in% c(1,2)) %>%
+      mutate(
+        country = str_to_upper(country),
+        year = ifelse(!is.na(ParalysisOnsetDate), year(ParalysisOnsetDate), YYYY),
+        whoregion = "EMRO"
+      )
+
+    # Join lab locations
+    emro.lab.04 <- full_join(
+      emro.lab.03,
+      lab.locs %>% filter(who.region == "EMRO") %>% select(country:num.ship.seq.samples),
+      by = "country") %>%
+
+      #count duplicates with same epid and specimen number
+      #there should be 2 records for each EPID, specimen 1 and 2
+
+      group_by(EPID, SpecimenNumber) %>%
+      mutate(n= n()) %>%
+      ungroup()
+
+    #seperate blank epids from rest of emro.lab.04 in order to de dupe based on epid and specimen number, join back after dedup
+    blank.epid <- emro.lab.04 %>%
+      filter(is.na(EPID))
+
+    emro.lab.04 <- emro.lab.04 %>%
+      filter(!is.na(EPID)) %>%
+      select(-n)
+
+    emro.lab.04 <- emro.lab.04[!duplicated(emro.lab.04[c("EPID", "SpecimenNumber")]), ]
+
+    # Create intervals (currently using subset of those I need for SC PPT)
+    emro.lab.05 <- emro.lab.04 %>%
+      mutate(
+        # Intervals
+        days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
+        days.lab.culture = DateFinalCellCultureResult - DateStoolReceivedinLab,
+        days.seq.ship = DateIsolateRcvdForSeq- ReportDateSequenceResultSent,
+        days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
+
+        days.itd.seqres = DateofSequencing -DateFinalrRTPCRResults,
+        days.itd.arriveseq = DateIsolateRcvdForSeq -DateFinalrRTPCRResults,
+        days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,
+
+        # Met target yes/no
+        met.targ.collect.lab = ifelse(days.collect.lab<3, 1, 0),
+        negative.spec = ifelse(!str_detect(FinalCellCultureResult, "ITD") & FinalITDResult=="NULL", 1, 0),
+        met.lab.culture= ifelse(days.lab.culture<14, 1, 0),
+      ) %>%
+      #filtering out negative time intervals
+      filter((days.collect.lab >= 0 | is.na(days.collect.lab)) &
+               (days.lab.culture >= 0 | is.na(days.lab.culture)) &
+                (days.seq.ship >= 0 | is.na(days.seq.ship)) &
+               (days.lab.seq >= 0 | is.na(days.lab.seq)) &
+               (days.itd.seqres >= 0 | is.na(days.itd.seqres)) &
+              (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
+              (days.seq.rec.res >= 0 | is.na(days.seq.rec.res))
+      ) %>%
+      #filtering out nonsensical dates
+      # 1. stool can't be collected before Paralysis
+      filter((DateStoolCollected >= ParalysisOnsetDate | is.na(ParalysisOnsetDate))) %>%
+      mutate(seq.capacity = ifelse(seq.capacity == "yes", "Sequencing capacity", "No sequencing capacity")
+      ) %>%
+      select(-contains("cIntratypeIs"))
+
+    lab.data <- emro.lab.05
+    rm(emro.lab.01, emro.lab.02, emro.lab.03, emro.lab.04, emro.lab.05)
+  } else if (region == "AFRO") {
+
+    afro.lab.01b <- lab.data %>%
+      mutate(
+        DateStoolCollected = ifelse(DateStoolCollected == "NULL", NA, DateStoolCollected),
+        StoolDateSentToLab = ifelse(StoolDateSentToLab == "NULL", NA, StoolDateSentToLab),
+        DateStoolReceivedinLab = ifelse(DateStoolReceivedinLab == "NULL", NA, DateStoolReceivedinLab),
+        DateFinalCellCultureResult = ifelse(
+          DateFinalCellCultureResult == "NULL",
+          NA,
+          DateFinalCellCultureResult
+        ),
+        DateFinalrRTPCRResults = ifelse(DateFinalrRTPCRResults == "NULL", NA, DateFinalrRTPCRResults),
+        ReportDateSequenceResultSent = ifelse(
+          ReportDateSequenceResultSent == "NULL",
+          NA,
+          ReportDateSequenceResultSent
+        ),
+        DateIsolateRcvdForSeq = ifelse(DateIsolateRcvdForSeq == "NULL", NA, DateIsolateRcvdForSeq),
+        DateLArmIsolate = ifelse(DateLArmIsolate == "NULL", NA, DateLArmIsolate),
+        DateRArmIsolate = ifelse(DateRArmIsolate == "NULL", NA, DateRArmIsolate),
+        DateofSequencing = ifelse(DateofSequencing == "NULL", NA, DateofSequencing),
+        DateNotificationtoHQ = ifelse(DateNotificationtoHQ == "NULL", NA, DateNotificationtoHQ)) |>
+      mutate_at(
+        c(
+          "CaseDate",
+          "ParalysisOnsetDate",
+          "DateStoolCollected",
+          "StoolDateSentToLab",
+          "DateStoolReceivedinLab",
+          "DateFinalCellCultureResult",
+          "DateFinalrRTPCRResults",
+          "ReportDateSequenceResultSent",
+          "DateIsolateRcvdForSeq",
+          "DateLArmIsolate",
+          "DateRArmIsolate",
+          "DateofSequencing",
+          "DateNotificationtoHQ"
+        ),
+        as.Date.character, "%m/%d/%Y")
+
+    # This is a very quick clean and can be improved upon with futher steps such as:
+    #  - eliminating nonsensical dates
+    #  - check for more duplicates (same epid and specimen number)
+    #  - if a date is missing, replace it with a proxy date
+    #  - clean/match all countries with lab loc df; I filtered both df to priority countries
+
+
+    # de-dup
+    afro.lab.02 <- afro.lab.01b %>%
+      filter(between(ParalysisOnsetDate, start_date, end_date)) %>%
+      distinct()
+
+
+    # Additional cleaning steps
+    afro.lab.03 <- afro.lab.02 %>%
+      # Dropping rows with Specimen number 0 or >2
+      filter(SpecimenNumber %in% c(1,2)) %>%
+      # replacing "NULL" with NA
+      # mutate_at(vars(DateStoolCollected:VDPV3), ~na_if(., "NULL")) %>%
+      mutate(
+        country = str_to_upper(Name),
+        country = ifelse(str_detect(country, "IVOIRE"), "COTE D IVOIRE", country),
+        year = year(ParalysisOnsetDate),
+        whoregion = "AFRO"
+      ) %>%
+      filter(country == ctry.data$ctry$ADM0_NAME) %>%
+      select(-Name)
+
+
+    # Join lab locations
+    afro.lab.04 <- full_join(
+      afro.lab.03,
+      lab.locs %>% select(country:num.ship.seq.samples),
+      by = "country") %>%
+
+      #count duplicates with same epid and specimen number
+      #there should be 2 records for each EPID, specimen 1 and 2
+      group_by(EPID, SpecimenNumber) %>%
+      mutate(n= n()) %>%
+      ungroup()
+
+
+    afro.lab.04 <- afro.lab.04[!duplicated(afro.lab.04[c("EPID", "SpecimenNumber")]), ]
+
+    # Create intervals (currently using subset of those I need for SC PPT)
+    afro.lab.05 <- afro.lab.04 %>%
+      select(-n) %>%
+      mutate(
+        # Intervals
+        days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
+        days.lab.culture = DateFinalCellCultureResult - DateStoolReceivedinLab,
+        days.seq.ship = DateIsolateRcvdForSeq- ReportDateSequenceResultSent,
+        days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
+
+        days.itd.seqres = DateofSequencing -DateFinalrRTPCRResults,
+        days.itd.arriveseq = DateIsolateRcvdForSeq -DateFinalrRTPCRResults,
+        days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,
+
+        # Met target yes/no
+        met.targ.collect.lab = ifelse(days.collect.lab<3, 1, 0),
+        negative.spec = ifelse(!str_detect(FinalCellCultureResult, "ITD") & FinalITDResult=="NULL", 1, 0),
+        met.lab.culture= ifelse(days.lab.culture<14, 1, 0),
+      ) %>%
+      #filtering out negative time intervals
+      filter((days.collect.lab >= 0 | is.na(days.collect.lab)) &
+               (days.lab.culture >= 0 | is.na(days.lab.culture)) &
+               (days.seq.ship >= 0 | is.na(days.seq.ship)) &
+               (days.lab.seq >= 0 | is.na(days.lab.seq)) &
+               (days.itd.seqres >= 0 | is.na(days.itd.seqres)) &
+               (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
+               (days.seq.rec.res >= 0 | is.na(days.seq.rec.res))
+      ) %>%
+      #filtering out nonsensical dates
+      # 1. stool can't be collected before Paralysis
+      # 2. remove out of bounds years in Date final cell culture result
+      filter((DateStoolCollected >= ParalysisOnsetDate | is.na(ParalysisOnsetDate)),
+             (year(DateFinalCellCultureResult) <= 2023 | is.na(DateFinalCellCultureResult)),
+             #remove a blank specimen row
+             !is.na(EPID)) %>%
+      #renaming culture.itd.lab for Nigeria which has two labs in lab.locs, simply naming Nigeria
+      mutate(culture.itd.lab = ifelse(country == "NIGERIA", "Nigeria", culture.itd.lab),
+             ParalysisOnsetDate = ymd(ParalysisOnsetDate),
+             seq.capacity = ifelse(seq.capacity == "yes", "Sequencing capacity", "No sequencing capacity")
+      ) %>%
+      select(-contains("cIntratypeIs"))
+
+    lab.data <- afro.lab.05
+    rm(afro.lab.01b, afro.lab.02, afro.lab.03, afro.lab.04, afro.lab.05)
+  }
+
+  lab.data <- lab.data |>
+    separate_wider_delim(
+      cols = EPID,
+      delim = "/",
+      names = c("epid_ctry", "epid_prov", "epid_dist",
+                "epid_04", "epid_05"),
+      too_many = "debug",
+      too_few = "debug"
+    )
+
+  geo_lookup_table <- ctry.data$afp.all.2 |>
+    select(epid, matches("guid"), contains("$adm"), ctry, prov, dist, year) |>
+    separate_wider_delim(
+      cols = epid,
+      delim = delim,
+      names = c("epid_ctry", "epid_prov", "epid_dist",
+                "epid_04", "epid_05"),
+      too_many = "debug",
+      too_few = "align_start"
+    ) |>
+    select(contains("epid"),
+           ctry,
+           prov,
+           dist,
+           matches("adm[0-3]guid"),
+           year) |>
+    distinct()
+
+  lab.data <- lab.data |> left_join(geo_lookup_table, by = join_by(epid_ctry, epid_prov, epid_dist, year))
+  lab.data <- lab.data |>
+    rename(ctry.code2 = epid_ctry)
+  lab.data <- lab.data |>
+    mutate(CaseOrContact = "1-Case")
+  lab.data <- lab.data |>
+    rename(EpidNumber  = EPID)
+  lab.data <- lab.data |>
+    rename(District = dist, Province = prov)
+  lab.data <- lab.data |>
+    rename(DateOfOnset = CaseDate)
+
+  return(lab.data)
+}
+
 
 #' Generate timeliness intervals with lab data
 #'
