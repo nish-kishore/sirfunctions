@@ -12,7 +12,8 @@ f.stool.ad.01(
   spatial.scale,
   missing = "good",
   bad.data = "inadequate",
-  rolling = F
+  rolling = F,
+  sp_continuity_validation = T
 )
 }
 \arguments{

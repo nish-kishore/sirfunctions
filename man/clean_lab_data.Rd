@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.lab.functions.R
 \name{clean_lab_data}
 \alias{clean_lab_data}
-\title{Clean polio lab data}
+\title{Clean polio lab data from WHO}
 \usage{
 clean_lab_data(lab.data, ctry.data, start_date, end_date, delim = "-")
 }
@@ -15,5 +15,5 @@ clean_lab_data(lab.data, ctry.data, start_date, end_date, delim = "-")
 a tibble containing clean lab data
 }
 \description{
-Clean polio lab data
+Clean polio lab data from WHO
 }

@@ -3,6 +3,7 @@
 export(clean_ctry_data)
 export(clean_iss_data)
 export(clean_lab_data)
+export(clean_lab_data_regional)
 export(create_60_day_export)
 export(create_afp_export)
 export(create_npafp_export)
