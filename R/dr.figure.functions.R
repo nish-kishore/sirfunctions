@@ -1039,10 +1039,10 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape, st
 
   stoolad.nums.p = stoolad.p %>%
     group_by(year, adm1guid, prov) %>%
-    summarize(meet.stool = sum(per.stool.ad >= 80)) %>%
+    summarize(meet.stool = sum(per.stool.ad >= 80, na.rm = T)) %>%
     ungroup() %>%
     group_by(year) %>%
-    summarize(num.meet.stool = sum(meet.stool),
+    summarize(num.meet.stool = sum(meet.stool, na.rm = T),
               len.year = length(year)) %>%
     mutate(
       labs = paste0(
@@ -1176,10 +1176,10 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape
 
   stoolad.nums.d <- stoolad.d %>%
     group_by(year, adm2guid, dist) %>%
-    summarize(meet.stool = sum(per.stool.ad >= 80)) %>%
+    summarize(meet.stool = sum(per.stool.ad >= 80, na.rm = T)) %>%
     ungroup() %>%
     group_by(year) %>%
-    summarize(num.meet.stool = sum(meet.stool),
+    summarize(num.meet.stool = sum(meet.stool, na.rm = T),
               len.year = length(year)) %>%
     mutate(
       labs = paste0(
