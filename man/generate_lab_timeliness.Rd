@@ -11,9 +11,9 @@ generate_lab_timeliness(lab.data, spatial.scale, start.date, end.date)
 
 \item{spatial.scale}{spatial scale to analyze the data. Valid values are "ctry", "prov", "dist"}
 
-\item{start_date}{start date of analysis}
+\item{start.date}{start date of analysis}
 
-\item{end_date}{end date of analysis}
+\item{end.date}{end date of analysis}
 }
 \value{
 a table with timeliness data summary

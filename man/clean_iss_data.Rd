@@ -5,7 +5,7 @@
 \title{Perform common cleaning tasks for ISS/eSURV data}
 \usage{
 clean_iss_data(
-  iss.data,
+  ctry.data,
   start_date = start_date,
   end_date = end_date,
   priority_col = "priority_level",
@@ -17,8 +17,6 @@ clean_iss_data(
 )
 }
 \arguments{
-\item{iss.data}{tibble of ISS data}
-
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end date of desk review}
@@ -34,6 +32,8 @@ clean_iss_data(
 \item{dist_col}{column representing district as a string}
 
 \item{hf_col}{column representing the health facility name as a string}
+
+\item{iss.data}{tibble of ISS data}
 }
 \value{
 a tibble of cleaned ISS data

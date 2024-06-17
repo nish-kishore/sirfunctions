@@ -4,12 +4,7 @@
 \alias{clean_lab_data_who}
 \title{Clean polio lab data from WHO}
 \usage{
-clean_lab_data_who(
-  ctry.data,
-  start.date = start_date,
-  end.date = end_date,
-  delim = "-"
-)
+clean_lab_data_who(ctry.data, start.date, end.date, delim = "-")
 }
 \arguments{
 \item{ctry.data}{country data RDS object}

@@ -9,25 +9,22 @@ indicator script.}
 \usage{
 clean_lab_data_regional(
   ctry.data,
-  region,
-  lab.locs,
-  start.date = start_date,
-  end.date = end_date,
-  delim = "-"
+  start.date,
+  end.date,
+  delim = "-",
+  lab_locs_path = NULL
 )
 }
 \arguments{
-\item{ctry.data}{Rds polio data at the country level}
+\item{ctry.data}{Rds polio data at the country level with lab data attached}
 
-\item{region}{AFRO or EMRO}
+\item{start.date}{start date of the desk review}
 
-\item{lab.locs}{location of labs}
+\item{end.date}{end date of the desk review}
 
 \item{delim}{delimiter used for EPIDs. Default is "-".}
 
-\item{start_date}{start date of the desk review}
-
-\item{end_date}{end date of the desk review}
+\item{lab_locs_path}{path to CSV file containing lab location. Will pull from EDAV if not attached}
 }
 \value{
 tibble of lab data
