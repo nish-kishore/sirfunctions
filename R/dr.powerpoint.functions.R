@@ -4,7 +4,6 @@
 #' @param end_date end date of desk review
 #'
 #' @return list of strings
-#' @export
 generate_pptx_assumptions <- function(start_date, end_date) {
   pptx.assumptions <- c('Data sources:',
                         paste0('POLIS (Data as of ', format(start_date, '%d-%b-%Y'),
@@ -31,11 +30,31 @@ generate_pptx_assumptions <- function(start_date, end_date) {
 
 }
 
+#' Get path of the PowerPoint template
+#'
+#' @param path path to the PowerPoint template. If NULL, will download from the sg-desk-review GitHub repository
+#' @param filename name of the PowerPoint template
+#'
+#' @return a string containing the path of the PowerPoint template
+#' @export
+get_ppt_template <- function(path=NULL, filename="desk_review_template.pptx") {
+
+  if (is.null(path)) {
+    url = "https://github.com/nish-kishore/sg-desk-reviews/blob/4264bd2729fbcc7a9d88490ae60cb9677ec7eab5/resources/desk_review_template.pptx"
+    temp_dir = tempdir()
+    download.file(url, destfile = file.path(temp_dir, filename))
+
+    return(file.path(temp_dir, filename))
+  } else {
+    return(file.path(path))
+  }
+}
+
+
 #' Generate the desk review slide deck
 #'
 #' @param ppt_template_path path to the PowerPoint template
 #' @param ctry.data RDS file containing polio data for a country
-#' @param assump list of assumptions
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param pop.map country pop map
@@ -62,7 +81,7 @@ generate_pptx_assumptions <- function(start_date, end_date) {
 #'
 #' @return does not return anything
 #' @export
-generate_dr_ppt <- function(ppt_template_path, ctry.data, assump, start_date, end_date,
+generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
                             pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
                             surv.ind.tab, afp.dets.prov.year, npafp.map,
                             npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
@@ -70,6 +89,8 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, assump, start_date, en
                             mapt_all, es.site.det, es.det.map, es.timely,
                             es.table, country, ppt_output_path
                             ) {
+
+  assump <- generate_pptx_assumptions(start_date, end_date)
 
   if (!dir.exists(ppt_output_path)) {
     stop("Output path does not exist. Please try again.")
@@ -301,26 +322,34 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, assump, start_date, en
 #' Generating the PowerPoint from the figures folder is generally faster and allows
 #' figures to remain consistent. Tables remain as PowerPoint tables.
 #'
-#' @param ppt_template_path path to the PowerPoint template
 #' @param ctry.data RDS file containing polio data for a country
-#' @param assump list of assumptions
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
-#' @param fig.path file path to the figures folder
 #' @param surv.ind.tab surveillance indicator table
 #' @param inad.tab.flex inadequacy table
 #' @param tab.60d 60 day follow up table
 #' @param es.table ES table
+#' @param ppt_template_path path to the PowerPoint template
+#' @param fig.path file path to the figures folder
 #' @param country name of the country
 #' @param ppt_output_path path where the powerpoint should be outputted
 #'
 #' @return does not return anything
 #' @export
-generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, end_date,
-                             fig.path,
+generate_dr_ppt2 <- function(ctry.data,
+                             start_date, end_date,
                              surv.ind.tab,
-                             inad.tab.flex, tab.60d,
-                             es.table, country, ctry.data.error.log, ppt_output_path) {
+                             inad.tab.flex,
+                             tab.60d,
+                             es.table,
+                             ppt_template_path=NULL,
+                             fig.path=Sys.getenv("DR_FIGURE_PATH"),
+                             country=Sys.getenv("DR_COUNTRY"),
+                             ppt_output_path=Sys.getenv("DR_POWERPOINT_PATH")) {
+
+  ppt_template_path <- get_ppt_template()
+  assump <- generate_pptx_assumptions(start_date, end_date)
+  incomplete.adm.dist <- spatial_validation(ctry.data$dist.pop, "dist")
 
   if (!dir.exists(ppt_output_path)) {
     stop("Output path does not exist. Please try again.")
@@ -614,7 +643,7 @@ generate_dr_ppt2 <- function(ppt_template_path, ctry.data, assump, start_date, e
         fpar(ftext("If EPID prov and dist code match with previously reported case in the same onset year, then backfill prov and dist",fp_text(font.size = 17))),
           fpar(ftext("If no match, expand search to any year, then backfill prov and dist",fp_text(font.size = 17))),
           fpar(ftext("If there are multiple guids identified with the same prov and dist for the match, then do not match and leave blank (cannot tell which GUID to use)",fp_text(font.size = 17))),
-      fpar(ftext(paste0("There are ", (ctry.data.error.log$invalid_adm2 |> length()), " missing district from raw data"), fp_text(font.size = 17))),
+      fpar(ftext(paste0("There are ", (incomplete.adm.dist |> length()), " missing district from raw data"), fp_text(font.size = 17))),
         fpar(ftext("Able to extract district from EPID for (manually fill here) cases.", fp_text(font.size = 17)))
     ),
     location = ph_location_type("body"),
