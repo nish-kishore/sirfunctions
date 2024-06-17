@@ -13,7 +13,8 @@ init_dr(
   lab_data_path = NULL,
   iss_data_path = NULL,
   attach_spatial_data = T,
-  branch = "main"
+  branch = "main",
+  source = F
 )
 }
 \arguments{
@@ -32,6 +33,10 @@ init_dr(
 \item{iss_data_path}{location of the ISS data}
 
 \item{attach_spatial_data}{boolean whether to include spatial data}
+
+\item{branch}{what branch to download the DR functions from GitHub}
+
+\item{source}{whether to source local functions or use sirfunctions}
 }
 \value{
 \code{list} large list containing all dataframe for all polio data
