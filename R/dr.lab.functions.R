@@ -16,11 +16,16 @@ load_lab_data <- function(lab_data_path) {
 #' @param ctry.data RDS object containing polio data from a country
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
-#'
-#' @return a list containing the errors
 #' @export
-lab_data_errors <- function(lab.data, ctry.data, start_date, end_date) {
-  lab.data <- lab.data |> filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
+lab_data_errors_who <- function(ctry.data, start.date = start_date, end.date = end_date,
+                                error_path = Sys.getenv("DR_ERROR_PATH")) {
+
+  if (is.null(ctry.data$lab.data)) {
+    message("No lab data attached.")
+    return(NULL)
+  }
+
+  lab.data <- ctry.data$lab.data |> filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
 
   cli::cli_process_start("Checking for invalid dates from cases.")
   invalid_dates <- lab.data |>
@@ -44,7 +49,7 @@ lab_data_errors <- function(lab.data, ctry.data, start_date, end_date) {
 
   cli::cli_process_start("Checking for missing years")
   missing_years <- lab.data |> filter(is.na(year)) |>
-    filter(year >= year(start_date) & year <= year(end_date),
+    filter(year >= year(start.date) & year <= year(end.date),
            CaseOrContact == "1-Case")
 
   if (nrow(missing_years) != 0) {
@@ -71,7 +76,7 @@ lab_data_errors <- function(lab.data, ctry.data, start_date, end_date) {
   error_log$missing_years <- missing_years
   error_log$missing_epids <- missing_epids
 
-  return(error_log)
+  writexl::write_xlsx(error_log, path = file.path(error_path, "lab.errors.xlsx"))
 }
 
 #' Clean polio lab data from WHO
@@ -81,10 +86,16 @@ lab_data_errors <- function(lab.data, ctry.data, start_date, end_date) {
 #'
 #' @return a tibble containing clean lab data
 #' @export
-clean_lab_data <- function(lab.data, ctry.data, start_date, end_date, delim = "-") {
+clean_lab_data_who <- function(ctry.data, start.date = start_date,
+                               end.date = end_date, delim = "-") {
+
+  if (is.null(ctry.data$lab.data)) {
+    message("Lab data not attached to country data.")
+    return(NULL)
+  }
 
   cli::cli_process_start("Filtering country-specific lab data")
-  lab.data <- lab.data |> filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
+  lab.data <- ctry.data$lab.data |> filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
   cli::cli_process_done()
 
   cli::cli_process_start("Filtering for cases with valid dates")
@@ -97,7 +108,7 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date, delim = "-
              (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
              (days.seq.rec.res >= 0 | is.na(days.seq.rec.res))
     ) |>
-    filter(year >= year(start_date) & year <= year(end_date),
+    filter(year >= year(start.date) & year <= year(end.date),
            CaseOrContact == "1-Case")
   cli::cli_process_done()
 
@@ -244,9 +255,9 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date, delim = "-
 #' of the regional data is adapted from the lab data cleaning code from the GPSAP
 #' indicator script.
 #'
-#' @param lab.data tibble lab data to be cleaned
 #' @param ctry.data Rds polio data at the country level
 #' @param region AFRO or EMRO
+#' @param lab.locs location of labs
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
 #' @param delim delimiter used for EPIDs. Default is "-".
@@ -254,7 +265,16 @@ clean_lab_data <- function(lab.data, ctry.data, start_date, end_date, delim = "-
 #' @return tibble of lab data
 #' @export
 
-clean_lab_data_regional <- function(lab.data, ctry.data, region, lab.locs, start_date, end_date, delim = "-") {
+clean_lab_data_regional <- function(ctry.data, region, lab.locs,
+                                    start.date=start_date, end.date=end_date,
+                                    delim = "-") {
+
+  if (is.null(ctry.data$lab.data)) {
+    message("No lab data attached.")
+    return(NULL)
+  }
+
+  lab.data <- ctry.data$lab.data
 
   # Check for correct region
   if (!region %in% c("EMRO", "AFRO")) {
@@ -266,8 +286,8 @@ clean_lab_data_regional <- function(lab.data, ctry.data, region, lab.locs, start
 
   if (region == "EMRO") {
 
-    emro.lab.01 <- lab.data %>%
-      dplyr::rename(country = Name) %>%
+    emro.lab.01 <- lab.data |>
+      dplyr::rename(country = "Name") |>
       #make country names long
       mutate(country = ifelse(country == "AFG", "AFGHANISTAN", country),
              country = ifelse(country == "BAH", "BAHRAIN", country),
@@ -322,10 +342,10 @@ clean_lab_data_regional <- function(lab.data, ctry.data, region, lab.locs, start
 
 
     # de-dup
-    emro.lab.02 <- emro.lab.01 %>%
-      filter(between(ParalysisOnsetDate, start_date, end_date),
-             country == ctry.data$ctry$ADM0_NAME) %>%
-      distinct()
+    emro.lab.02 <- emro.lab.01 |>
+      dplyr::filter(dplyr::between(ParalysisOnsetDate, start.date, end.date)) |>
+      dplyr::filter(country == ctry.data$ctry$ADM0_NAME) |>
+      dplyr::distinct()
 
     # Additional cleaning steps
     # need data dictionary, in order to standardize names
@@ -447,7 +467,7 @@ clean_lab_data_regional <- function(lab.data, ctry.data, region, lab.locs, start
 
     # de-dup
     afro.lab.02 <- afro.lab.01b %>%
-      filter(between(ParalysisOnsetDate, start_date, end_date)) %>%
+      dplyr::filter(dplyr::between(ParalysisOnsetDate, start.date, end.date)) |>
       distinct()
 
 
@@ -571,6 +591,38 @@ clean_lab_data_regional <- function(lab.data, ctry.data, region, lab.locs, start
   return(lab.data)
 }
 
+#' Main lab data cleaning function. Automatically detects whether the dataset
+#' came from WHO or the regional office
+#'
+#' @param ctry.data Rds file containing country polio data with lab.data attached
+#' @param start_date start date of the desk review
+#' @param end_date end date of the desk review
+#' @param delim delimiter for EPIDs. Default is "-".
+#' @param lab_locs_path location of testing lab locations. Default is NULL. Will download from EDAV, if necessary.
+#'
+#' @return a tibble containing the cleaned lab data
+#' @export
+clean_lab_data <- function(ctry.data, start_date, end_date, delim="-", lab_locs_path=NULL) {
+  # Check if the lab data is attached
+  if (is.null(ctry.data$lab.data)) {
+    stop("Lab data not attached to ctry.data. Please attach and try again.")
+  }
+
+  # Variable to hold onto lab data
+  lab.data <- NULL
+
+  # Determine the type of cleaning to do
+  lab.data.cols <- names(ctry.data$lab.data)
+
+  if ("ctry.code2" %in% lab.data.cols) {
+    lab.data <- clean_lab_data_who(ctry.data, start_date, end_date, delim)
+  } else {
+    lab.data <- clean_lab_data_regional(ctry.data, start_date, end_date, delim, lab_locs_path)
+  }
+
+  return(lab.data)
+}
+
 
 #' Generate timeliness intervals with lab data
 #'
@@ -584,8 +636,8 @@ clean_lab_data_regional <- function(lab.data, ctry.data, region, lab.locs, start
 generate_lab_timeliness <-
   function(lab.data,
            spatial.scale,
-           start_date,
-           end_date) {
+           start.date,
+           end.date) {
     geo <- switch(
       spatial.scale,
       "ctry" = "adm0guid",
@@ -594,7 +646,7 @@ generate_lab_timeliness <-
     )
 
     lab1 <- lab.data |>
-      filter(between(as.Date(DateOfOnset), start_date, end_date)) |>
+      filter(between(as.Date(DateOfOnset), start.date, end.date)) |>
       group_by(year, get(geo)) |>
       summarize(medi = median(days.collect.lab, na.rm = T),
                 freq = n()) |>
@@ -603,8 +655,8 @@ generate_lab_timeliness <-
       mutate(medi = as.numeric(medi))
 
     lab2 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start_date &
-               as.Date(DateOfOnset) <= end_date) |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
       group_by(year, get(geo)) |>
       summarize(medi = median(days.lab.culture, na.rm = T),
                 freq = n()) |>
@@ -614,8 +666,8 @@ generate_lab_timeliness <-
 
 
     lab3 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start_date &
-               as.Date(DateOfOnset) <= end_date) |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
       group_by(year, get(geo)) |>
       summarize(medi = median(days.seq.ship, na.rm = T),
                 freq = n()) |>
@@ -624,8 +676,8 @@ generate_lab_timeliness <-
       mutate(medi = as.numeric(medi))
 
     lab4 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start_date &
-               as.Date(DateOfOnset) <= end_date) |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
       group_by(year, get(geo)) |>
       summarize(medi = median(days.lab.seq, na.rm = T),
                 freq = n()) |>
@@ -634,8 +686,8 @@ generate_lab_timeliness <-
       mutate(medi = as.numeric(medi))
 
     lab5 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start_date &
-               as.Date(DateOfOnset) <= end_date) |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
       group_by(year, get(geo)) |>
       summarize(medi = median(days.itd.seqres, na.rm = T),
                 freq = n()) |>
@@ -644,8 +696,8 @@ generate_lab_timeliness <-
       mutate(medi = as.numeric(medi))
 
     lab6 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start_date &
-               as.Date(DateOfOnset) <= end_date) |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
       group_by(year, get(geo)) |>
       summarize(medi = median(days.itd.arriveseq, na.rm = T),
                 freq = n()) |>
@@ -654,8 +706,8 @@ generate_lab_timeliness <-
       mutate(medi = as.numeric(medi))
 
     lab7 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start_date &
-               as.Date(DateOfOnset) <= end_date) |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
       group_by(year, get(geo)) |>
       summarize(medi = median(days.seq.rec.res, na.rm = T),
                 freq = n()) |>
