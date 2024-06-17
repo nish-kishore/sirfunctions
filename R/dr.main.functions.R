@@ -409,6 +409,8 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 #' @param sg_dr_folder folder where the local git repository is located
 #' @param lab_data_path location of the lab data
 #' @param iss_data_path location of the ISS data
+#' @param branch what branch to download the DR functions from GitHub
+#' @param source whether to source local functions or use sirfunctions
 #'
 #' @return `list` large list containing all dataframe for all polio data
 #' @export
@@ -421,7 +423,8 @@ init_dr <-
            lab_data_path=NULL,
            iss_data_path=NULL,
            attach_spatial_data=T,
-           branch="main"
+           branch="main",
+           source=F
            ) {
 
     country_name <-
@@ -537,12 +540,16 @@ init_dr <-
     copy_dr_template_code()
 
     # Source the functions used in the Desk Review
-    # cli::cli_process_start("Sourcing functions")
-    # dr_func_scripts <- list.files(Sys.getenv("DR_FUNC_PATH"))
-    # for (i in dr_func_scripts) {
-    #   source(file.path(Sys.getenv("DR_FUNC_PATH"), i))
-    # }
-    # cli::cli_process_done()
+    if (source) {
+
+      cli::cli_process_start("Sourcing functions")
+      dr_func_scripts <- list.files(Sys.getenv("DR_FUNC_PATH"))
+      for (i in dr_func_scripts) {
+        source(file.path(Sys.getenv("DR_FUNC_PATH"), i))
+      }
+      cli::cli_process_done()
+
+    }
 
     return(country_data)
   }
