@@ -6,19 +6,18 @@
 \usage{
 create_pop_check_export(
   ctry.data,
-  ctry.data.error.log,
-  country,
-  excel_output_path
+  country = country_name,
+  excel_output_path = Sys.getenv("DR_TABLE_PATH")
 )
 }
 \arguments{
 \item{ctry.data}{RDS file containing polio data for a country}
 
-\item{ctry.data.error.log}{error log of a country}
-
 \item{country}{name of the country}
 
 \item{excel_output_path}{output path}
+
+\item{ctry.data.error.log}{error log of a country}
 }
 \value{
 does not return anything

@@ -4,7 +4,14 @@
 \alias{generate_afp_case_map}
 \title{Generate a map of AFP cases}
 \usage{
-generate_afp_case_map(ctry.data, ctry.shape, prov.shape, start_date, end_date)
+generate_afp_case_map(
+  ctry.data,
+  ctry.shape,
+  prov.shape,
+  start_date,
+  end_date = lubridate::today(),
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{ctry.data}{RDS object containing polio country data}
@@ -16,9 +23,11 @@ generate_afp_case_map(ctry.data, ctry.shape, prov.shape, start_date, end_date)
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end date of desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
-ggplot object containing the map of AFP cases
+ggplot object
 }
 \description{
 Generate a map of AFP cases

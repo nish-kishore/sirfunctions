@@ -4,7 +4,13 @@
 \alias{generate_dist_pop_map}
 \title{Generate a map of population by district}
 \usage{
-generate_dist_pop_map(ctry.data, prov.shape, dist.shape, end_date)
+generate_dist_pop_map(
+  ctry.data,
+  prov.shape,
+  dist.shape,
+  end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{ctry.data}{RDS file of polio country data}
@@ -14,9 +20,11 @@ generate_dist_pop_map(ctry.data, prov.shape, dist.shape, end_date)
 \item{dist.shape}{recent shape file of district}
 
 \item{end_date}{end date of the desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
-a ggplot object
+ggplot object
 }
 \description{
 Generate a map of population by district

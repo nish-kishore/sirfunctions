@@ -4,7 +4,12 @@
 \alias{generate_iss_barplot}
 \title{Generate the ISS/eSURV barplot}
 \usage{
-generate_iss_barplot(iss.data, start_date, end_date)
+generate_iss_barplot(
+  iss.data = NULL,
+  start_date,
+  end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{iss.data}{tibble of ISS data}
@@ -12,6 +17,8 @@ generate_iss_barplot(iss.data, start_date, end_date)
 \item{start_date}{start date of the desk review}
 
 \item{end_date}{end date of the desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
 ggplot object of a barplot

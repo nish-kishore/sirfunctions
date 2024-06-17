@@ -9,8 +9,9 @@ generate_es_det_map(
   es.data.long,
   ctry.shape,
   prov.shape,
-  es_start_date,
-  es_end_date
+  es_start_date = (end_date - lubridate::years(1)),
+  es_end_date = end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ generate_es_det_map(
 \item{es_start_date}{ES start date}
 
 \item{es_end_date}{ES end date}
+
+\item{output_path}{where to save the figure}
 }
 \value{
 ggplot map of ES detections

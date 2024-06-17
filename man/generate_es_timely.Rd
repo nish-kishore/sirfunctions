@@ -4,7 +4,12 @@
 \alias{generate_es_timely}
 \title{Generate ES timeliness scatterplot}
 \usage{
-generate_es_timely(es.data, es_start_date, es_end_date)
+generate_es_timely(
+  es.data,
+  es_start_date = (end_date - lubridate::years(1)),
+  es_end_date = end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{es.data}{ES data}

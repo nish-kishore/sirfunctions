@@ -2,9 +2,16 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_surv_ind_tab}
 \alias{generate_surv_ind_tab}
-\title{Title}
+\title{Generate surveillance indicator table}
 \usage{
-generate_surv_ind_tab(ctry.data, dis.extract, cstool, dstool, afp.case)
+generate_surv_ind_tab(
+  ctry.data,
+  dis.extract,
+  cstool,
+  dstool,
+  afp.case,
+  country_name = Sys.getenv("DR_COUNTRY")
+)
 }
 \arguments{
 \item{ctry.data}{RDS file countaining polio data of a country}
@@ -21,5 +28,5 @@ generate_surv_ind_tab(ctry.data, dis.extract, cstool, dstool, afp.case)
 a flex table object for timeliness indicators
 }
 \description{
-Title
+Generate surveillance indicator table
 }

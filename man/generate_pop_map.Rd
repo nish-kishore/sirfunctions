@@ -4,7 +4,12 @@
 \alias{generate_pop_map}
 \title{Generate a map of population data}
 \usage{
-generate_pop_map(ctry.data, prov.shape, end_date)
+generate_pop_map(
+  ctry.data,
+  prov.shape,
+  end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{ctry.data}{RDS object}
@@ -12,9 +17,11 @@ generate_pop_map(ctry.data, prov.shape, end_date)
 \item{prov.shape}{province of most recent shape file}
 
 \item{end_date}{end date of the desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
-a ggplot object containing map of population data
+ggplot object
 }
 \description{
 Generate a map of population data

@@ -4,7 +4,11 @@
 \alias{create_afp_export}
 \title{Exports AFP linelist with adequacy.final2 column}
 \usage{
-create_afp_export(stool.data, country, excel_output_path)
+create_afp_export(
+  stool.data,
+  country = country_name,
+  excel_output_path = Sys.getenv("DR_TABLE_PATH")
+)
 }
 \arguments{
 \item{stool.data}{afp data with final adequacy columns}

@@ -4,7 +4,12 @@
 \alias{generate_case_num_dose_g}
 \title{Generate zero-dose children barcharts}
 \usage{
-generate_case_num_dose_g(ctry.data, start_date, end_date)
+generate_case_num_dose_g(
+  ctry.data,
+  start_date,
+  end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{ctry.data}{RDS file containing polio data of country}
@@ -12,6 +17,8 @@ generate_case_num_dose_g(ctry.data, start_date, end_date)
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end date of desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
 ggplot barplot

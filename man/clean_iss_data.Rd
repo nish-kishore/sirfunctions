@@ -6,14 +6,14 @@
 \usage{
 clean_iss_data(
   iss.data,
-  start_date,
-  end_date,
-  priority_col,
-  start_time_col,
-  unreported_cases_col,
-  prov_col,
-  dist_col,
-  hf_col
+  start_date = start_date,
+  end_date = end_date,
+  priority_col = "priority_level",
+  start_time_col = "starttime",
+  unreported_cases_col = "num_unreportedcases",
+  prov_col = "states",
+  dist_col = "districts",
+  hf_col = "name_of_facility_visited"
 )
 }
 \arguments{

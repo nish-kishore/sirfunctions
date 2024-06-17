@@ -4,7 +4,11 @@
 \alias{create_60_day_export}
 \title{Output for 60-day follow ups}
 \usage{
-create_60_day_export(cases.need60day, country, excel_output_path)
+create_60_day_export(
+  cases.need60day,
+  country = country_name,
+  excel_output_path = Sys.getenv("DR_TABLE_PATH")
+)
 }
 \arguments{
 \item{cases.need60day}{table for 60 day follow up}

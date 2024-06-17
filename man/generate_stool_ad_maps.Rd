@@ -10,7 +10,8 @@ generate_stool_ad_maps(
   ctry.shape,
   prov.shape,
   start_date,
-  end_date
+  end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
 )
 }
 \arguments{
@@ -25,9 +26,11 @@ generate_stool_ad_maps(
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end date of desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
-a ggplot map containing stool adequacy by province
+ggplot object
 }
 \description{
 Stool adequacy maps by province

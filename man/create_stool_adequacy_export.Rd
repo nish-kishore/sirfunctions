@@ -4,7 +4,12 @@
 \alias{create_stool_adequacy_export}
 \title{Export stool adequacy data}
 \usage{
-create_stool_adequacy_export(cstool, pstool, dstool, excel_output_path)
+create_stool_adequacy_export(
+  cstool,
+  pstool,
+  dstool,
+  excel_output_path = Sys.getenv("DR_TABLE_PATH")
+)
 }
 \arguments{
 \item{cstool}{stool adequacy at country level}

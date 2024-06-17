@@ -11,7 +11,8 @@ generate_stool_ad_maps_dist(
   prov.shape,
   dist.shape,
   start_date,
-  end_date
+  end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
 )
 }
 \arguments{
@@ -28,9 +29,11 @@ generate_stool_ad_maps_dist(
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end date of desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
-ggplot map
+ggplot object
 }
 \description{
 Stool adequacy map by district

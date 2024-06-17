@@ -7,7 +7,6 @@
 generate_dr_ppt(
   ppt_template_path,
   ctry.data,
-  assump,
   start_date,
   end_date,
   pop.map,
@@ -37,8 +36,6 @@ generate_dr_ppt(
 \item{ppt_template_path}{path to the PowerPoint template}
 
 \item{ctry.data}{RDS file containing polio data for a country}
-
-\item{assump}{list of assumptions}
 
 \item{start_date}{start date of desk review}
 

@@ -4,7 +4,14 @@
 \alias{generate_npafp_maps}
 \title{Map of NPAFP rate by province}
 \usage{
-generate_npafp_maps(prov.extract, ctry.shape, prov.shape, start_date, end_date)
+generate_npafp_maps(
+  prov.extract,
+  ctry.shape,
+  prov.shape,
+  start_date,
+  end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{prov.extract}{province NPAFP rate}
@@ -16,9 +23,11 @@ generate_npafp_maps(prov.extract, ctry.shape, prov.shape, start_date, end_date)
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end date of desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
-a map of NPAFP rates by province
+ggplot object
 }
 \description{
 Map of NPAFP rate by province

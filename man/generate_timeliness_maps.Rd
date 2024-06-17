@@ -11,7 +11,8 @@ generate_timeliness_maps(
   start_date,
   end_date,
   mark_x = T,
-  pt_size = 4
+  pt_size = 4,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
 )
 }
 \arguments{
@@ -24,9 +25,15 @@ generate_timeliness_maps(
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end dtae of desk review}
+
+\item{mark_x}{whether to put X on where AFP cases are less than 5}
+
+\item{pt_size}{size of the marks}
+
+\item{output_path}{where to save the figure}
 }
 \value{
-a map of timeliness of samples
+ggplot object
 }
 \description{
 Map containing timeliness of samples

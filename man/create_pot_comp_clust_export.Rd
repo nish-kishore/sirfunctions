@@ -4,7 +4,11 @@
 \alias{create_pot_comp_clust_export}
 \title{Import potentially compatible and compatible summaries}
 \usage{
-create_pot_comp_clust_export(pot.c.clust, country, excel_output_path)
+create_pot_comp_clust_export(
+  pot.c.clust,
+  country = country_name,
+  excel_output_path = Sys.getenv("DR_TABLE_PATH")
+)
 }
 \arguments{
 \item{pot.c.clust}{potentially compatible cluster summary}

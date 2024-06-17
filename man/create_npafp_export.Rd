@@ -8,7 +8,7 @@ create_npafp_export(
   ctry.case.ind,
   prov.case.ind,
   dis.case.ind,
-  excel_output_path
+  excel_output_path = Sys.getenv("DR_TABLE_PATH")
 )
 }
 \arguments{

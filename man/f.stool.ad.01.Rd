@@ -36,6 +36,8 @@ as appropriate}
 \item{bad.data}{chr: "remove" or "inadequate" or "adequate"; default "inadequate"}
 
 \item{rolling}{boolean: Should data be annualized or calculated within the time period allotted}
+
+\item{sp_continuity_validation}{boolean: Should data excluded temporaliry inconsistent GUIDs? Default T.}
 }
 \value{
 tibble: long format stool adequacy evaluations

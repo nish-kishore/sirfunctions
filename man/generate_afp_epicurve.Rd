@@ -4,7 +4,12 @@
 \alias{generate_afp_epicurve}
 \title{Generate epicurve of AFP cases by year}
 \usage{
-generate_afp_epicurve(ctry.data, start_date, end_date)
+generate_afp_epicurve(
+  ctry.data,
+  start_date,
+  end_date = lubridate::today(),
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{ctry.data}{RDS data countaining polio data for a country}
@@ -12,9 +17,11 @@ generate_afp_epicurve(ctry.data, start_date, end_date)
 \item{start_date}{start date of the desk review}
 
 \item{end_date}{end date of the desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
-ggplot object containing the epicurve data
+ggplot object
 }
 \description{
 Generate epicurve of AFP cases by year

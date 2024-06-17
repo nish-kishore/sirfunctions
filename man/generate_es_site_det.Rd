@@ -4,7 +4,13 @@
 \alias{generate_es_site_det}
 \title{Dot plot of virus detections in ES sites}
 \usage{
-generate_es_site_det(ctry.data, es.data.long, es_start_date, es_end_date)
+generate_es_site_det(
+  ctry.data,
+  es.data.long,
+  es_start_date = (end_date - lubridate::years(1)),
+  es_end_date = end_date,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{ctry.data}{RDS file of polio data for a country}
@@ -14,6 +20,8 @@ generate_es_site_det(ctry.data, es.data.long, es_start_date, es_end_date)
 \item{es_start_date}{start date of ES data}
 
 \item{es_end_date}{end date of ES data}
+
+\item{output_path}{where to save the figure}
 }
 \value{
 ggplot object dot plot

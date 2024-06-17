@@ -4,13 +4,18 @@
 \alias{generate_ctry_timeliness_graph}
 \title{Timeliness bar graph at the country level}
 \usage{
-generate_ctry_timeliness_graph(int.data)
+generate_ctry_timeliness_graph(
+  int.data,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{int.data}{summary table with timeliness intervals at the country level}
+
+\item{output_path}{path where to output the figure}
 }
 \value{
-ggplot object bar graph with timeliness intervals
+ggplot object
 }
 \description{
 Timeliness bar graph at the country level

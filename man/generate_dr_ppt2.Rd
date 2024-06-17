@@ -7,33 +7,25 @@ Generating the PowerPoint from the figures folder is generally faster and allows
 figures to remain consistent. Tables remain as PowerPoint tables.}
 \usage{
 generate_dr_ppt2(
-  ppt_template_path,
   ctry.data,
-  assump,
   start_date,
   end_date,
-  fig.path,
   surv.ind.tab,
   inad.tab.flex,
   tab.60d,
   es.table,
-  country,
-  ctry.data.error.log,
-  ppt_output_path
+  ppt_template_path = NULL,
+  fig.path = Sys.getenv("DR_FIGURE_PATH"),
+  country = Sys.getenv("DR_COUNTRY"),
+  ppt_output_path = Sys.getenv("DR_POWERPOINT_PATH")
 )
 }
 \arguments{
-\item{ppt_template_path}{path to the PowerPoint template}
-
 \item{ctry.data}{RDS file containing polio data for a country}
-
-\item{assump}{list of assumptions}
 
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end date of desk review}
-
-\item{fig.path}{file path to the figures folder}
 
 \item{surv.ind.tab}{surveillance indicator table}
 
@@ -42,6 +34,10 @@ generate_dr_ppt2(
 \item{tab.60d}{60 day follow up table}
 
 \item{es.table}{ES table}
+
+\item{ppt_template_path}{path to the PowerPoint template}
+
+\item{fig.path}{file path to the figures folder}
 
 \item{country}{name of the country}
 

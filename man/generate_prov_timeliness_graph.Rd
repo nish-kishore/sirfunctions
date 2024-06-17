@@ -4,15 +4,21 @@
 \alias{generate_prov_timeliness_graph}
 \title{Timeliness interval bar graph at a province level}
 \usage{
-generate_prov_timeliness_graph(int.data, afp.prov.year)
+generate_prov_timeliness_graph(
+  int.data,
+  afp.prov.year,
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{int.data}{summary table of median timeliness intervals at a province level}
 
 \item{afp.prov.year}{labels for AFP dataset summarized by year}
+
+\item{output_path}{where to save the figure}
 }
 \value{
-a ggplot object of timeliness interval at the province level
+ggplot object
 }
 \description{
 Timeliness interval bar graph at a province level

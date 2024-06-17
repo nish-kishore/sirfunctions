@@ -4,7 +4,7 @@
 \alias{clean_ctry_data}
 \title{Cleans and adds additional columns used in the desk reviews}
 \usage{
-clean_ctry_data(ctry.data, start_date, end_date, es_start_date, es_end_date)
+clean_ctry_data(ctry.data)
 }
 \arguments{
 \item{ctry.data}{country data RDS object}

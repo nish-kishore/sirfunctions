@@ -8,27 +8,26 @@ of the regional data is adapted from the lab data cleaning code from the GPSAP
 indicator script.}
 \usage{
 clean_lab_data_regional(
-  lab.data,
   ctry.data,
   region,
   lab.locs,
-  start_date,
-  end_date,
+  start.date = start_date,
+  end.date = end_date,
   delim = "-"
 )
 }
 \arguments{
-\item{lab.data}{tibble lab data to be cleaned}
-
 \item{ctry.data}{Rds polio data at the country level}
 
 \item{region}{AFRO or EMRO}
 
+\item{lab.locs}{location of labs}
+
+\item{delim}{delimiter used for EPIDs. Default is "-".}
+
 \item{start_date}{start date of the desk review}
 
 \item{end_date}{end date of the desk review}
-
-\item{delim}{delimiter used for EPIDs. Default is "-".}
 }
 \value{
 tibble of lab data

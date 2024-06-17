@@ -4,7 +4,7 @@
 \alias{generate_lab_timeliness}
 \title{Generate timeliness intervals with lab data}
 \usage{
-generate_lab_timeliness(lab.data, spatial.scale, start_date, end_date)
+generate_lab_timeliness(lab.data, spatial.scale, start.date, end.date)
 }
 \arguments{
 \item{lab.data}{lab data}

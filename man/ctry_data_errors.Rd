@@ -4,13 +4,12 @@
 \alias{ctry_data_errors}
 \title{Checks data quality errors from the country data}
 \usage{
-ctry_data_errors(ctry.data)
+ctry_data_errors(ctry.data, error_path = Sys.getenv("DR_ERROR_PATH"))
 }
 \arguments{
 \item{ctry.data}{RDS object containing polio country data}
-}
-\value{
-a list containing all the errors that are checked for
+
+\item{error_path}{path where to store errors in ctry.data}
 }
 \description{
 Checks data quality errors from the country data

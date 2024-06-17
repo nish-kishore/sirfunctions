@@ -8,6 +8,12 @@ generate_afp_prov_year(afp.by.month.prov, start_date, end_date)
 }
 \arguments{
 \item{afp.by.month.prov}{table summarizing afp cases by month and province}
+
+\item{start_date}{start date of the desk review}
+
+\item{end_date}{cutoff date of calculating the number of cases}
+
+\item{output_path}{where to save the figure}
 }
 \value{
 ggplot object
