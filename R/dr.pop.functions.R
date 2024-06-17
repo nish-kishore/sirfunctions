@@ -110,7 +110,7 @@ spatial_validation <- function(pop.data, spatial.scale) {
     )
   }
 
-  return(incomplete.adm)
+  return(tibble::as_tibble(incomplete.adm))
 }
 
 #' Get the most recent shapefile at a given spatial scale

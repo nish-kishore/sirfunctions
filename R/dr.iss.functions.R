@@ -22,9 +22,19 @@ load_iss_data <-function(iss_path) {
 #'
 #' @return a tibble of cleaned ISS data
 #' @export
-clean_iss_data <- function(iss.data, start_date, end_date, priority_col,
-                           start_time_col, unreported_cases_col, prov_col,
-                           dist_col, hf_col) {
+clean_iss_data <- function(iss.data, start_date = start_date, end_date = end_date,
+                           priority_col="priority_level",
+                           start_time_col="starttime",
+                           unreported_cases_col="num_unreportedcases",
+                           prov_col="states",
+                           dist_col="districts",
+                           hf_col="name_of_facility_visited") {
+
+  if (is.null(iss.data)) {
+    message("No ISS data attached.")
+    return(NULL)
+  }
+
   cli::cli_process_start("Standardizing priority levels")
   issy2 <- iss.data %>%
     mutate(priority_level = case_when(
@@ -36,7 +46,8 @@ clean_iss_data <- function(iss.data, start_date, end_date, priority_col,
     )) %>%
     mutate(priority_level = factor(priority_level, levels = c(
       "High", "Medium", "Low", "Not Focal Site"
-    )))
+    ))) |>
+    mutate(priority_level = if_else(is.na(priority_level), "Not Focal Site", priority_level))
   cli::cli_process_done()
 
   cli::cli_process_start("Adding date columns")
@@ -45,7 +56,9 @@ clean_iss_data <- function(iss.data, start_date, end_date, priority_col,
       monyear = as.yearmon(as.Date(.data[[start_time_col]])),
       month = month(as.Date(.data[[start_time_col]])),
       year = year(as.Date(.data[[start_time_col]]))
-    )
+    ) |>
+    mutate(today_date = as_date(today, format = "%m/%d/%Y"),
+           date_of_visit = as_date(date_of_visit, format = "%m/%d/%Y"))
   cli::cli_process_done()
 
   cli::cli_process_start("counting unreported AFP cases")

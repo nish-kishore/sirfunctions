@@ -3,7 +3,7 @@
 #' @param stool.data afp data with final adequacy columns
 #' @param excel_output_path output path of the Excel file
 #' @export
-create_afp_export <- function(stool.data, country, excel_output_path) {
+create_afp_export <- function(stool.data, country=country_name, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   stool.data.export=stool.data |>
     mutate(nvaccine.2 = NA) |>
     select(c("polis.case.id","epid","followup.date","followup.findings",
@@ -62,13 +62,13 @@ create_afp_export <- function(stool.data, country, excel_output_path) {
 #'
 #' @return does not return anything
 #' @export
-create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_path) {
+create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   sheets <- list(
     "country_npafp" = cstool,
     "province_npafp" = pstool,
     "district_npafp" = dstool
   )
-  write_xlsx(sheets, file.path(
+  writexl::write_xlsx(sheets, file.path(
     excel_output_path,
     paste0(Sys.Date(), "_", "stool_adequacy_indicators.xlsx")
   ))
@@ -83,7 +83,7 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
 #'
 #' @return does not return anything
 #' @export
-create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, excel_output_path) {
+create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
 
   sheets <- list(
     "country_npafp" = ctry.case.ind,
@@ -91,7 +91,7 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, exce
     "district_npafp" = dis.case.ind
   )
   # !!! need to be put into a condition where it would create the folder if it doesn't already exist
-  write_xlsx(sheets, file.path(
+  writexl::write_xlsx(sheets, file.path(
     excel_output_path,
     paste0(Sys.Date(), "_", "npafp_indicators.xlsx")
   ))
@@ -107,7 +107,8 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, exce
 #'
 #' @return does not return anything
 #' @export
-create_pop_check_export <- function(ctry.data, ctry.data.error.log, country, excel_output_path) {
+create_pop_check_export <- function(ctry.data, country=country_name,
+                                    excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   pop.check <-
     count(ungroup(filter(ctry.data$dist.pop, year >= min(year))), prov, dist,
           adm1guid, adm2guid, year, u15pop)
@@ -116,10 +117,12 @@ create_pop_check_export <- function(ctry.data, ctry.data.error.log, country, exc
                                          names_from = year,
                                          values_from = u15pop))
 
-  sheets <- list("districts_by_year" = pop.check1,
-                 "population_comparison" = ctry.data.error.log$pop_rollup_diff)
+  pop_rollup_diff <- suppressMessages(check_pop_rollout(ctry.data))
 
-  write_xlsx(sheets,  file.path(
+  sheets <- list("districts_by_year" = pop.check1,
+                 "population_comparison" = pop_rollup_diff)
+
+  writexl::write_xlsx(sheets,  file.path(
     excel_output_path,
     paste0(Sys.Date(), "_",
            "population_check_",
@@ -135,7 +138,7 @@ create_pop_check_export <- function(ctry.data, ctry.data.error.log, country, exc
 #'
 #' @return does not return anything
 #' @export
-create_60_day_export <- function(cases.need60day, country, excel_output_path) {
+create_60_day_export <- function(cases.need60day, country=country_name, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   cases.need60day |>
     rename(
       Year = year,
@@ -152,7 +155,7 @@ create_60_day_export <- function(cases.need60day, country, excel_output_path) {
       "Potentially Compatible" = pot.compatible,
       "Missing followup date but have findings" = missing.fu.date
     ) |>
-    write_csv(file.path(
+    readr::write_csv(file.path(
       excel_output_path,
       paste0(Sys.Date(), "_", str_to_lower(country), "_60day_followup.csv")
     ))
@@ -166,8 +169,8 @@ create_60_day_export <- function(cases.need60day, country, excel_output_path) {
 #'
 #' @return does not return anything
 #' @export
-create_pot_comp_clust_export <- function(pot.c.clust, country, excel_output_path) {
-  write_xlsx(pot.c.clust,
+create_pot_comp_clust_export <- function(pot.c.clust, country=country_name, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
+  writexl::write_xlsx(pot.c.clust,
              file.path(
                excel_output_path,
                paste0("compatible_pot_compatible_cases_",

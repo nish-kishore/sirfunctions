@@ -5,6 +5,11 @@ impute_site_coord <- function(ctry.data) {
 
   cli::cli_process_start("Adding coordinates to sites in their home district")
 
+  if (is.null(ctry.data$dist)) {
+    message("ctry.data does not have spatial data. Please attach spatial data to continue")
+    return(NULL)
+  }
+
   dist.shape <- ctry.data$dist
   shape.dist.pop <- left_join(dist.shape,
                               ctry.data$dist.pop |> filter(year == max(year)),
@@ -80,15 +85,13 @@ impute_site_coord <- function(ctry.data) {
 #' Transform ES data cleaning with additional columns
 #'
 #' @param es.data tibble of ES data from ctry.data
-#' @param start_date start date of analysis
-#' @param end_date end date of analysis
 #'
 #' @return tibble of cleaned ES data
-clean_es_data <- function(ctry.data, es_start_date, es_end_date) {
+clean_es_data <- function(ctry.data) {
   es.data <- ctry.data$es
   cli::cli_process_start("Checking for missing site coordinates")
 
-  df01 <- es.data %>%
+  df01 <- es.data |>
     distinct(ADM0_NAME, site.name, dist.guid, lat, lng) %>%
     filter(is.na(lat) | is.na(lng))
 
@@ -112,11 +115,7 @@ clean_es_data <- function(ctry.data, es_start_date, es_end_date) {
     summarize(early.dat = min(collect.date)) %>%
     ungroup()
 
-  start_date <- as_date(es_start_date)
-  end_date <- as_date(es_end_date)
-
   es.data <- es.data %>%
-    filter(between(collect.date, start_date, end_date)) %>%
     left_join(es.data.earlidat, by = c("site.name" = "site.name")) |>
     mutate(nvaccine.2 = NA)
 
