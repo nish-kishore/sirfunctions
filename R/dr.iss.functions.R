@@ -22,7 +22,7 @@ load_iss_data <-function(iss_path) {
 #'
 #' @return a tibble of cleaned ISS data
 #' @export
-clean_iss_data <- function(iss.data, start_date = start_date, end_date = end_date,
+clean_iss_data <- function(ctry.data, start_date = start_date, end_date = end_date,
                            priority_col="priority_level",
                            start_time_col="starttime",
                            unreported_cases_col="num_unreportedcases",
@@ -30,13 +30,13 @@ clean_iss_data <- function(iss.data, start_date = start_date, end_date = end_dat
                            dist_col="districts",
                            hf_col="name_of_facility_visited") {
 
-  if (is.null(iss.data)) {
+  if (is.null(ctry.data$iss.data)) {
     message("No ISS data attached.")
     return(NULL)
   }
 
   cli::cli_process_start("Standardizing priority levels")
-  issy2 <- iss.data %>%
+  iss.02 <- ctry.data$iss.data %>%
     mutate(priority_level = case_when(
       str_to_lower(substr(get(priority_col), 1, 1)) == "h" ~ "High",
       str_to_lower(substr(get(priority_col), 1, 1)) == "m" ~ "Medium",
@@ -51,7 +51,7 @@ clean_iss_data <- function(iss.data, start_date = start_date, end_date = end_dat
   cli::cli_process_done()
 
   cli::cli_process_start("Adding date columns")
-  issy2 <- issy2 |>
+  iss.02 <- iss.02 |>
     mutate(
       monyear = as.yearmon(as.Date(.data[[start_time_col]])),
       month = month(as.Date(.data[[start_time_col]])),
@@ -63,14 +63,14 @@ clean_iss_data <- function(iss.data, start_date = start_date, end_date = end_dat
 
   cli::cli_process_start("counting unreported AFP cases")
   # Unreported AFP
-  issy2 <- issy2 %>%
+  iss.02 <- iss.02 %>%
     mutate(unrep_afp = as.numeric(.data[[unreported_cases_col]])) |>
     suppressWarnings()
   cli::cli_process_done()
 
   # Province and District
   cli::cli_process_start("Standardizing province and district names")
-  issy2 <- issy2 %>%
+  iss.02 <- iss.02 %>%
     mutate(
       prov = toupper(.data[[prov_col]]),
       dists = toupper(iconv(.data[[dist_col]], to = "ASCII//TRANSLIT"))
@@ -79,7 +79,7 @@ clean_iss_data <- function(iss.data, start_date = start_date, end_date = end_dat
 
   # Convert "n/a" characters to actual null values
   cli::cli_process_start("Converting n/a characters to actual null values")
-  issy2 <- issy2 |>
+  iss.02 <- iss.02 |>
     mutate(dists = if_else(dists == "N/A", NA, dists),
            prov = if_else(prov == "N/A", NA, prov)
     )
@@ -87,15 +87,15 @@ clean_iss_data <- function(iss.data, start_date = start_date, end_date = end_dat
 
   # Remove accents
   cli::cli_process_start("Performing cleaning for names")
-  issy2 <- issy2 %>%
+  iss.02 <- iss.02 %>%
     mutate(facility_name2 = iconv(.data[[hf_col]],
                                   to = "ASCII//TRANSLIT"))
 
   # Make all capital letters and remove extra whitespace
-  issy2 <- issy2 %>%
+  iss.02 <- iss.02 %>%
     mutate(facility_name2 = toupper(facility_name2)) %>%
     mutate(facility_name2 = str_squish(facility_name2))
   cli::cli_process_done()
 
-  return(issy2)
+  return(issy.02)
 }
