@@ -9,6 +9,7 @@
 #' @import dplyr
 #' @import lubridate
 #' @import tibble
+#'
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
 #' formatted as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all2
 #' which includes "NOT-AFP"
@@ -21,6 +22,8 @@
 #' @param missing chr: "good" or "bad" or "missing"; default "good"
 #' @param bad.data chr: "remove" or "inadequate" or "adequate"; default "inadequate"
 #' @param rolling boolean: Should data be annualized or calculated within the time period allotted
+#' @param sp_continuity_validation boolean: Should data excluded temporaliry inconsistent GUIDs? Default T.
+#'
 #' @returns tibble: long format stool adequacy evaluations
 #' @export
 
