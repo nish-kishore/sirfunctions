@@ -134,8 +134,8 @@ generate_afp_epicurve <- function(ctry.data, start_date,
                                     by = c("yronset" = "yronset"))
 
   afp.epi.curve <- ggplot(afp.epi.date.filter1,
-                           aes(fill = cdc.classification.all2,
-                               y = afp.cases, x = epi.week)) +
+                          aes(fill = cdc.classification.all2,
+                              y = afp.cases, x = epi.week)) +
     geom_bar(position = "stack", stat = "identity") +
     scale_fill_manual(
       values = sirfunctions::f.color.schemes(type = "epicurve"),
@@ -209,34 +209,102 @@ generate_afp_prov_year <- function(afp.by.month.prov,
 #' @param es.data.long AFP data with viral detection columns
 #' @param es_start_date start date of ES data
 #' @param es_end_date end date of ES data
+#' @param vaccine_types named list with vaccine types with color associations
+#' @param detection_types named list with detection types with color associations
 #' @param output_path where to save the figure
+#'
 #' @return ggplot object dot plot
 #' @export
-generate_es_site_det <- function(ctry.data, es.data.long, es_start_date=(end_date - lubridate::years(1)),
-                                 es_end_date=end_date, output_path=Sys.getenv("DR_FIGURE_PATH")) {
-  sias = ctry.data$sia %>%
+generate_es_site_det <- function(ctry.data, es.data.long,
+                                 es_start_date=(end_date - lubridate::years(1)),
+                                 es_end_date=end_date,
+                                 output_path=Sys.getenv("DR_FIGURE_PATH"),
+                                 vaccine_types=NULL,
+                                 detection_types=NULL) {
+  sias <- ctry.data$sia %>%
     filter(status == "Done") %>%
     filter(yr.sia >= year(es_start_date) &
              yr.sia <= year(es_end_date)) %>%
     filter(province %in% es.data.long$ADM1_NAME)
 
-  sias$activity.start.date = as.Date(sias$activity.start.date)
-  sias$activity.end.date = as.Date(sias$activity.end.date)
+  sias$activity.start.date <- as.Date(sias$activity.start.date)
+  sias$activity.end.date <- as.Date(sias$activity.end.date)
 
-  count(sias,
-        yr.sia,
-        province,
-        activity.start.date,
-        activity.end.date,
-        vaccine.type)
   minsy = count(sias,
                 yr.sia,
                 province,
                 activity.start.date,
                 activity.end.date,
-                vaccine.type) #%>%
+                vaccine.type)
 
   colnames(minsy)[colnames(minsy) == "province"] <- "ADM1_NAME"
+
+  default_vaccine_type <- c(
+    "nOPV2" = "blue",
+    "bOPV" = "coral1",
+    "mOPV2" = "purple")
+
+  default_detections <- c(
+    "No EV isolated" = "#f2f2f2",
+    "NPEV only" = "darkgrey",
+    "VDPV2" = "darkred",
+    "Sabin 1" = scales::brewer_pal(palette = "Set1")(9)[1],
+    "Sabin 2" = scales::brewer_pal(palette = "Set1")(9)[8],
+    "Sabin 1/Sabin 3" = scales::brewer_pal(palette = "Set1")(9)[2],
+    "Sabin 3" = scales::brewer_pal(palette = "Set1")(9)[3],
+    "Sabin 1/Sabin 3/VDPV2" = scales::brewer_pal(palette = "Set1")(9)[4],
+    "Sabin 1/VDPV2" = scales::brewer_pal(palette = "Set1")(9)[5],
+    "Sabin 3/VDPV2" = scales::brewer_pal(palette = "Set1")(9)[6],
+    "Sabin 1 or Sabin 3" = scales::brewer_pal(palette = "Set1")(9)[6],
+    "Sabin 1/3" = scales::brewer_pal(palette = "Set1")(9)[2],
+    "Sabin 1/3 and VDPV2"  = scales::brewer_pal(palette = "Set1")(9)[5]
+  )
+
+  if (is.null(vaccine_types)) {
+    vaccine_types <- default_vaccine_type
+  }
+
+  if (is.null(detection_types)) {
+    detection_types <- default_detections
+  }
+
+  # Check whether the vaccine types and detections are present in the ggplot
+  minsy_vaccine_types <- minsy |>
+    select(vaccine.type) |>
+    unique() |> pull()
+
+  es.data.long_all_dets <- es.data.long |>
+    select(all_dets) |>
+    unique() |> pull()
+
+  miss_vaccine <- minsy_vaccine_types[!(minsy_vaccine_types %in% names(default_vaccine_type))]
+  miss_dets <- es.data.long_all_dets[!(es.data.long_all_dets %in% names(default_detections))]
+
+
+  if (length(miss_vaccine > 0)) {
+    warning_message <- paste0(
+      "There are values of vaccine.types missing from default. ",
+      "Please pass a named list with the vaccine types to the vaccine_types parameter and try again.",
+      "Missing types are listed below:\n"
+    )
+
+    cli::cli_alert_warning(warning_message)
+    print(miss_vaccine)
+
+  }
+
+  if(length(miss_dets) > 0) {
+    warning_message <- paste0(
+      "There are values of all_dets missing from default. ",
+      "Please pass a named list with the detection types to the detection_types parameter and try again.",
+      "Missing types are listed below:\n"
+    )
+
+    cli::cli_alert_warning(warning_message)
+    print(miss_vaccine)
+  }
+
+
 
   ## 22.1 ES sites & detection (es.site.det)
 
@@ -287,27 +355,10 @@ generate_es_site_det <- function(ctry.data, es.data.long, es_start_date=(end_dat
     ylab(label = "Detection Sites") +
     scale_x_date(limits = c(es_start_date, es_end_date)) +
     scale_fill_manual(name = "SIAs",
-                      values = c(
-                        "nOPV2" = "blue",
-                        "bOPV" = "coral1",
-                        "mOPV2" = "purple"))+
+                      values = vaccine_types) +
     scale_color_manual(
       name = "ES detections",
-      values = c(
-        "No EV isolated" = "#f2f2f2",
-        "NPEV only" = "darkgrey",
-        "VDPV2" = "darkred",
-        "Sabin 1" = brewer_pal(palette = "Set1")(9)[1],
-        "Sabin 2" = brewer_pal(palette = "Set1")(9)[8],
-        "Sabin 1/Sabin 3" = brewer_pal(palette = "Set1")(9)[2],
-        "Sabin 3" = brewer_pal(palette = "Set1")(9)[3],
-        "Sabin 1/Sabin 3/VDPV2" = brewer_pal(palette = "Set1")(9)[4],
-        "Sabin 1/VDPV2" = brewer_pal(palette = "Set1")(9)[5],
-        "Sabin 3/VDPV2" = brewer_pal(palette = "Set1")(9)[6],
-        "Sabin 1 or Sabin 3" = brewer_pal(palette = "Set1")(9)[6],
-        "Sabin 1/3" = brewer_pal(palette = "Set1")(9)[2],
-        "Sabin 1/3 and VDPV2"  = brewer_pal(palette = "Set1")(9)[5]
-      )) +
+      values = detection_types) +
     facet_grid(ADM1_NAME ~ . ,
                scales = "free_y" ,
                space = "free",
@@ -379,7 +430,7 @@ generate_es_timely <- function(es.data, es_start_date=(end_date - lubridate::yea
       position = position_jitter(height = .2, width = 0.5),
       size = 3
     ) +
-    scale_y_continuous(labels = number_format(accuracy = 1),
+    scale_y_continuous(labels = scales::number_format(accuracy = 1),
                        breaks = c(seq(0, max(
                          pretty(es.data$timely)
                        ), 6))) +
@@ -516,6 +567,8 @@ generate_iss_barplot <- function(iss.data=NULL, start_date,
     theme_bw()
 
 
+  ggsave("iss.barplot.png", path = output_path,
+         width = 14, height = 8)
 
   return(iss.data.vis)
 }
@@ -1667,7 +1720,7 @@ generate_es_det_map <- function(es.data, es.data.long, ctry.shape, prov.shape,
 generate_iss_map <- function(iss.data, prov.shape, start_date, end_date,
                              output_path = Sys.getenv("DR_FIGURE_PATH")) {
 
-  if(is.null(iss.data) | nrow(iss.data) == 0) {
+  if (is.null(iss.data) | nrow(iss.data) == 0) {
     stop("No ISS data attached.")
   }
 
@@ -1797,7 +1850,7 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
     ))
 
   temp.ind.tab.flex <- as.data.frame(t(temp.ind.tab2)) %>%
-    row_to_names(row_number = 1) %>%
+    janitor::row_to_names(row_number = 1) %>%
     rownames_to_column("type") %>%
     filter(type %in% c(
       "afp.cases",
@@ -1821,21 +1874,21 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
     temp.ind.tab.flex[c(2, 1, 3, 4, 5),] # Reorder the table to be in the correct order
 
   ## Flextable of surveillance indicators (surv.ind.tab)
-  surv.ind.tab <- flextable(temp.ind.tab.flex) %>%
-    theme_booktabs() %>%
-    bold(bold = TRUE, part = "header") %>%
-    colformat_double(
+  surv.ind.tab <- flextable::flextable(temp.ind.tab.flex) %>%
+    flextable::theme_booktabs() %>%
+    flextable::bold(bold = TRUE, part = "header") %>%
+    flextable::colformat_double(
       j = 2:ncol(temp.ind.tab.flex),
       digits = 1,
       na_str = "---"
     ) %>%
-    set_header_labels(type = "") %>%
-    add_footer_row(
+    flextable::set_header_labels(type = "") %>%
+    flextable::add_footer_row(
       top = F,
       "*Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND ≤14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
       colwidths = ncol(temp.ind.tab.flex)
     ) %>%
-    autofit()
+    flextable::autofit()
 
   return(surv.ind.tab)
 }
@@ -1854,20 +1907,19 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
   sub.prov.case.ind = prov.case.ind %>%
     select(year, n_npafp, u15pop, prov, npafp_rate)
 
-  # only 6 provinces
-  sub.pstool = pstool %>%
+  sub.pstool <- pstool %>%
     select(year, per.stool.ad, prov) |>
     filter(!is.na(prov))
 
-  sub.prov.join = full_join(sub.prov.case.ind, sub.pstool, by = c("year", "prov")) %>%
+  sub.prov.join <- full_join(sub.prov.case.ind, sub.pstool, by = c("year", "prov")) %>%
     arrange(prov, year)
 
   sub.prov.join = sub.prov.join %>%
     group_by(prov) %>%
     mutate(diff = lag(n_npafp)) %>%
     mutate(diff_per = round(100*(n_npafp - lag(n_npafp))/lag(n_npafp), 1)) %>%
-    mutate(across(c(per.stool.ad, diff, diff_per, n_npafp),round, 0)) %>%
-    mutate(across(c(npafp_rate), round, 1)) |>
+    mutate(across(c(per.stool.ad, diff, diff_per, n_npafp),\(x) round(x, 0))) %>%
+    mutate(across(c(npafp_rate), \(x) round(x, 1))) |>
     filter(!is.na(prov))
 
   sub.prov.join
@@ -1896,18 +1948,18 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
   # NPAFP table
   col_palette <- c("#FF9999", "white")
   col.npafp.rate =  sub.prov.join.wide[,c(paste0("npafp_rate_", date.analysis))] %>%
-    mutate(across(everything(),~ replace_na(.x, 0)))%>%
-    mutate(across(c(everything()), cut, breaks = c(0,2),
-                  right = F, label = FALSE))
+    mutate(across(everything(),\(x) replace_na(x, 0))) %>%
+    mutate(across(c(everything()), \(x) cut(x, breaks = c(0,2),
+                                            right = F, label = FALSE)))
 
   npafp.rate.colors <- col_palette[as.matrix(col.npafp.rate)]
 
   # Stool adequacy
   col_palette <- c("#FF9999", "white")
   col.stool.ad =  sub.prov.join.wide[,c(paste0("per.stool.ad_", date.analysis))] %>%
-    mutate(across(everything(),~ replace_na(.x, 0)))%>%
-    mutate(across(c(everything()), cut, breaks = c(0,80),
-                  right = F, label = FALSE))
+    mutate(across(everything(), \(x) replace_na(x, 0))) %>%
+    mutate(across(c(everything()), \(x) cut(x, breaks = c(0,80),
+                                            right = F, label = FALSE)))
 
   stool.ad.colors <- col_palette[as.matrix(col.stool.ad)]
 
@@ -1958,25 +2010,25 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
              date.analysis, date.analysis)
 
 
-  small_border = fp_border_default(color="black", width = 1)
+  small_border = flextable::fp_border_default(color="black", width = 1)
   # pop.tab flextable
-  pop.tab = flextable(sub.prov.join.wide) %>%
-    theme_booktabs() %>%
-    bg(j = colnames(sub.prov.join.wide), bg = col.mat) %>%
-    color(j = colnames(sub.prov.join.wide), col = col.mat.txt) %>%
-    align(align = "center", part = "all") %>%
-    set_header_df(mapping = data.frame(keys = names1,
-                                       values = names2,
-                                       stringsAsFactors = FALSE),
-                  key = "keys" ) %>%
-    add_header_row(values = c("", "# NP AFP Cases", "NP AFP rate", "% Stool Adequacy"),
-                   colwidths = c(2, npafp.case.length, stool.ad.length,
-                                 stool.ad.length), top = TRUE) %>%
-    vline(j = c(2,2+npafp.case.length,2+npafp.case.length+stool.ad.length),
-          border = small_border)%>%
-    hline(part = "header") %>%
-    bold(bold = TRUE, part = "header") %>%
-    align(align = "center", part = "all")
+  pop.tab = flextable::flextable(sub.prov.join.wide) %>%
+    flextable::theme_booktabs() %>%
+    flextable::bg(j = colnames(sub.prov.join.wide), bg = col.mat) %>%
+    flextable::color(j = colnames(sub.prov.join.wide), col = col.mat.txt) %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::set_header_df(mapping = data.frame(keys = names1,
+                                                  values = names2,
+                                                  stringsAsFactors = FALSE),
+                             key = "keys" ) %>%
+    flextable::add_header_row(values = c("", "# NP AFP Cases", "NP AFP rate", "% Stool Adequacy"),
+                              colwidths = c(2, npafp.case.length, stool.ad.length,
+                                            stool.ad.length), top = TRUE) %>%
+    flextable::vline(j = c(2,2+npafp.case.length,2+npafp.case.length+stool.ad.length),
+                     border = small_border)%>%
+    flextable::hline(part = "header") %>%
+    flextable::bold(bold = TRUE, part = "header") %>%
+    flextable::align(align = "center", part = "all")
 
   return(pop.tab)
 }
@@ -2000,7 +2052,7 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
 
   # Late collection (%) among inadequate
   inads <- stool.data %>%
-    filter(date >= start_date & date <= end_date) %>%
+    filter(between(date, start_date, end_date)) %>%
     filter(adequacy.final == "Inadequate")
 
   # Timeliness
@@ -2045,11 +2097,11 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
 
   cond.poor.num = count(cond.poor, year)
   cond.poor.num = left_join(yrs, cond.poor.num, by = c("year" = "year")) %>%
-    mutate(across(c(n), ~ replace_na(.x, 0)))
+    mutate(across(c(n), \(x) replace_na(x, 0)))
 
   # ALL AFP
   afps.all = ctry.data$afp.all.2 %>%
-    filter(date >= start_date & date <= end_date)
+    filter(between(date, start_date, end_date))
 
   # 1 stool within 14 days of onset (+condition)
   good.cond.1 = count(
@@ -2077,8 +2129,8 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
          is.na(stool.2.condition)),
     year
   )
-  colnames(good.cond.2)[1] = "conds"
-  good.cond.2 = good.cond.2 %>%
+  colnames(good.cond.2)[1] <- "conds"
+  good.cond.2 <- good.cond.2 %>%
     filter(conds == TRUE)
 
   # Time to lab
@@ -2089,7 +2141,7 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
   )
 
   # Bind together tables
-  allinadstool = left_join(stool.sub, late.stool, by = "year") %>%
+  allinadstool <- left_join(stool.sub, late.stool, by = "year") %>%
     select(-timelystool) %>%
     rename("timelystool" = "n") %>%
     left_join(stool.miss.any, by = "year") %>%
@@ -2102,13 +2154,13 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
     select(-conds) %>%
     rename("good.cond.2" = "n")
 
-  allinadstool$timelyper = paste0(
+  allinadstool$timelyper <- paste0(
     allinadstool$timelystool,
     " (",
     round(100 * allinadstool$timelystool / allinadstool$num.inadequate, 0),
     "%)"
   )
-  allinadstool$poorper = paste0(
+  allinadstool$poorper <- paste0(
     allinadstool$cond.poor.num,
     " (",
     round(
@@ -2117,13 +2169,13 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
     ),
     "%)"
   )
-  allinadstool$missingper = paste0(
+  allinadstool$missingper <- paste0(
     allinadstool$stoolmiss,
     " (",
     round(100 * allinadstool$stoolmiss / allinadstool$num.inadequate, 0),
     "%)"
   )
-  allinadstool$good.cond.1per = paste0(
+  allinadstool$good.cond.1per <- paste0(
     round(100 * allinadstool$good.cond.1 / allinadstool$afp.cases, 0),
     "% (",
     allinadstool$good.cond.1,
@@ -2131,7 +2183,7 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
     allinadstool$afp.cases,
     " cases)"
   )
-  allinadstool$good.cond.2per = paste0(
+  allinadstool$good.cond.2per <- paste0(
     round(100 * allinadstool$good.cond.2 / allinadstool$afp.cases, 0),
     "% (",
     allinadstool$good.cond.2,
@@ -2149,8 +2201,8 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
   #NPENT (%)
 
 
-  inad.tab = as.data.frame(t(allinadstool)) %>%
-    row_to_names(row_number = 1) %>%
+  inad.tab <- as.data.frame(t(allinadstool)) %>%
+    janitor::row_to_names(row_number = 1) %>%
     rownames_to_column("type") %>%
     filter(
       type %in% c(
@@ -2193,18 +2245,18 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
     "Among All Cases"
   )
 
-  inad.tab.flex.a = as_grouped_data(inad.tab, groups = c("sub"))
-  inad.tab.flex <- flextable(inad.tab.flex.a) %>%
-    theme_booktabs() %>%
-    bold(bold = TRUE, part = "header") %>%
-    set_header_labels(type = "",
-                      sub = "") %>%
-    add_footer_row(
+  inad.tab.flex.a = flextable::as_grouped_data(inad.tab, groups = c("sub"))
+  inad.tab.flex <- flextable::flextable(inad.tab.flex.a) |>
+    flextable::theme_booktabs() |>
+    flextable::bold(bold = TRUE, part = "header") |>
+    flextable::set_header_labels(type = "",
+                                 sub = "") |>
+    flextable::add_footer_row(
       top = F,
       "*Pending included\n**Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND ≤14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
       colwidths = ncol(inad.tab)
     ) %>%
-    autofit()
+    flextable::autofit()
 
   return(inad.tab.flex)
 }
@@ -2260,10 +2312,10 @@ generate_60_day_tab <- function(cases.need60day) {
   # flex table
 
   tab.60d <- comp.by.year |>
-    flextable() |>
-    theme_booktabs() |>
-    bold(bold = TRUE, part = "header") |>
-    set_header_labels(
+    flextable::flextable() |>
+    flextable::theme_booktabs() |>
+    flextable::bold(bold = TRUE, part = "header") |>
+    flextable::set_header_labels(
       year = "Year",
       inadequate = "No. inadequate cases",
       per.got60.2 = "Recorded 60-day follow-up",
@@ -2272,10 +2324,10 @@ generate_60_day_tab <- function(cases.need60day) {
       per.pot.comp.2 = "Potentially compatible cases",
       per.missing.fu.date = "No. Missing follow up date with findings"
     ) |>
-    align(j = 2:7, align = "center", part = "all") |>
-    align(j = 1:1, align = "left", part = "all") |>
-    fontsize(size = 11, part = "all") |>
-    width(j = 1:7, width = 2) #|>
+    flextable::align(j = 2:7, align = "center", part = "all") |>
+    flextable::align(j = 1:1, align = "left", part = "all") |>
+    flextable::fontsize(size = 11, part = "all") |>
+    flextable::width(j = 1:7, width = 2) #|>
 
   return(tab.60d)
 }
@@ -2288,7 +2340,9 @@ generate_60_day_tab <- function(cases.need60day) {
 #'
 #' @return flextable with ES indicators
 #' @export
-generate_es_tab <- function(es.data, es_start_date, es_end_date) {
+generate_es_tab <- function(es.data,
+                            es_start_date=(end_date - lubridate::years(1)),
+                            es_end_date=end_date) {
   # Big table that needs calculating
   # Cols = province, district, site name, earliest sample collected in POLIS,
   # n samples collected (earliest to analysis date), % EV detected, % good condition
@@ -2363,7 +2417,7 @@ generate_es_tab <- function(es.data, es_start_date, es_end_date) {
     arrange(ADM1_NAME, ADM2_NAME, site.name)
 
   es.table <- es.tab1 %>%
-    flextable(
+    flextable::flextable(
       col_keys = c(
         "ADM1_NAME",
         "ADM2_NAME",
@@ -2378,30 +2432,30 @@ generate_es_tab <- function(es.data, es_start_date, es_end_date) {
         "num.wpv.or.vdpv"
       )
     ) %>%
-    theme_booktabs() %>%
-    add_header_lines(values = paste0(
+    flextable::theme_booktabs() %>%
+    flextable::add_header_lines(values = paste0(
       format(es_start_date, "%B %Y"),
       " - ",
       format(es_end_date, "%B %Y")
     )) %>%
     # hline(part="all", border = gray.border ) %>%
-    bold(bold = TRUE, part = "header") %>%
+    flextable::bold(bold = TRUE, part = "header") %>%
     # hline(part = "header", border = std.border) %>%
-    align(j = 4:9, align = "center", part = "all") %>%
-    align(j = 1:3, align = "left", part = "all") %>%
+    flextable::align(j = 4:9, align = "center", part = "all") %>%
+    flextable::align(j = 1:3, align = "left", part = "all") %>%
     # hline(part = "header", border = std.border) %>%
     # hline_bottom(part = "body", border = std.border ) %>%
-    colformat_double(j = 5:8,
-                     digits = 0,
-                     na_str = "NA") %>%
-    width(width = 1) %>%
-    width(j = 3, width = 2.5) %>%
-    width(j = 1:2, width = 1.5) %>%
+    flextable::colformat_double(j = 5:8,
+                                digits = 0,
+                                na_str = "NA") %>%
+    flextable::width(width = 1) %>%
+    flextable::width(j = 3, width = 2.5) %>%
+    flextable::width(j = 1:2, width = 1.5) %>%
     # width(j=10, width = .1) %>%
     #add_footer(province = "Red = indicator not met, * and gray = missing data for >25% of samples, NA = data unavailable; Indicator targets: >=50% for EV (NPEV, vaccine, VDPV, or WPV) detection, =>80% for sample condition and transport time. Sites with <6 months of sample collection are labeled as 'new'.") %>%
     #merge_at(j = 1:9, part = "footer") %>%
-    fontsize(size = 11, part = "all") %>%
-    set_header_labels(
+    flextable::fontsize(size = 11, part = "all") %>%
+    flextable::set_header_labels(
       ADM1_NAME = "Province",
       ADM2_NAME = "District",
       early.dat = "Earliest date reporting to POLIS",
