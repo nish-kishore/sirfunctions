@@ -29,7 +29,7 @@ load_iss_data <- function(iss_path, sheet_name=NULL) {
 #'
 #' @return a tibble of cleaned ISS data
 #' @export
-clean_iss_data <- function(ctry.data, start_date = start_date, end_date = end_date,
+clean_iss_data <- function(ctry.data, start_date, end_date,
                            priority_col="priority_level",
                            start_time_col="starttime",
                            unreported_cases_col="num_unreportedcases",
@@ -60,7 +60,7 @@ clean_iss_data <- function(ctry.data, start_date = start_date, end_date = end_da
   cli::cli_process_start("Adding date columns")
   iss.02 <- iss.02 |>
     mutate(
-      monyear = as.yearmon(as.Date(.data[[start_time_col]])),
+      monyear = zoo::as.yearmon(as.Date(.data[[start_time_col]])),
       month = month(as.Date(.data[[start_time_col]])),
       year = year(as.Date(.data[[start_time_col]]))
     ) |>
@@ -104,5 +104,5 @@ clean_iss_data <- function(ctry.data, start_date = start_date, end_date = end_da
     mutate(facility_name2 = str_squish(facility_name2))
   cli::cli_process_done()
 
-  return(issy.02)
+  return(iss.02)
 }
