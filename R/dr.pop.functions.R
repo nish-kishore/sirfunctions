@@ -1,3 +1,42 @@
+#' Checks missing population at each geographic level
+#'
+#' @param pop.data population data
+#' @param spatial.scale "ctry", "prov", or "dist"
+#'
+#' @return tibble with missing population data
+check_missing_pop <- function(pop.data, spatial.scale) {
+  valid.spatial.scales <- c("ctry", "prov", "dist")
+
+  if (!spatial.scale %in% valid.spatial.scales) {
+    stop("Please enter a valid spatial scale.")
+  }
+
+  geo <- switch(
+    spatial.scale,
+    "ctry" = "country",
+    "prov" = "province",
+    "dist" = "district"
+  )
+
+  missing.pop <- pop.data |>
+        filter(is.na(u15pop))
+
+  if (nrow(missing.pop) > 0) {
+    cli::cli_alert_warning(
+      paste0(
+        nrow(missing.pop),
+        " ",
+        geo,
+        "(s)",
+        " missing population data.\n"
+      )
+    )
+  }
+
+  return(missing.pop)
+}
+
+
 #' Check the population data in country data from a roll up in province and
 #' district population data
 #'
