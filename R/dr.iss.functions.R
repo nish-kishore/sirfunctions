@@ -1,11 +1,18 @@
 #' Read ISS/eSURV data
 #'
-#' @param iss_path path to the .csv file
+#' @param iss_path path to the excel or csv file
+#' @param sheet_name optional name of the ISS data
 #'
 #' @return a tibble containing ISS/eSURV data
 #' @export
-load_iss_data <-function(iss_path) {
-  return(read_csv(iss_path))
+load_iss_data <- function(iss_path, sheet_name=NULL) {
+  if (stringr::str_ends(iss_path, ".csv")) {
+    return(readr::read_csv(iss_path))
+  } else if (stringr::str_ends(iss_path, ".xlsx")) {
+    return(readxl::read_excel(iss_path, sheet = sheet_name))
+  } else {
+    stop("Not a csv or .xlsx file. Try again.")
+  }
 }
 
 #' Perform common cleaning tasks for ISS/eSURV data
