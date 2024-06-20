@@ -72,7 +72,7 @@ impute_dist_afp <- function(afp.data) {
   for (i in seq_len(nrow(missy3))) {
     x <- afp.data |>
       dplyr::filter(grepl(missy3$epid.check[i], afp.data$epid) == T &
-               !is.na(adm2guid))
+                      !is.na(adm2guid))
 
     #print(dim(x))
     if (dim(x)[1] > 0 & length(unique(x$adm2guid)) == 1) {
@@ -93,7 +93,7 @@ impute_dist_afp <- function(afp.data) {
   for (i in seq_len(nrow(missy3))) {
     x <- afp.data |>
       dplyr::filter(grepl(missy3$epid.check[i], afp.data$epid) == T &
-               !is.na(adm2guid))
+                      !is.na(adm2guid))
 
     y <- x |>
       dplyr::filter(prov == missy3$prov[i])
@@ -109,9 +109,9 @@ impute_dist_afp <- function(afp.data) {
   # add dist in to missy2
   missy2 = missy2 |>
     dplyr::mutate(dist = dplyr::case_when(is.na(dist) & is.na(adm2guid) == F ~
-                              afp.data$dist[match(missy2$adm2guid,
-                                                  afp.data$adm2guid)],
-                            T ~ dist))
+                                            afp.data$dist[match(missy2$adm2guid,
+                                                                afp.data$adm2guid)],
+                                          T ~ dist))
 
   # Update dist and adm2guid
   afp.data$dist[match(missy2$epid, afp.data$epid)] = missy2$dist
@@ -222,10 +222,10 @@ add_zero_dose_col <- function(afp.data) {
       )
     ) %>%
     dplyr::mutate(dose.cat = factor(dose.cat, levels = c("Unknown",
-                                                  "4+",
-                                                  "3",
-                                                  "1-2",
-                                                  "0")))
+                                                         "4+",
+                                                         "3",
+                                                         "1-2",
+                                                         "0")))
 
   afp.data$dose.cat = forcats::fct_na_value_to_level(afp.data$dose.cat, "Missing")
   cli::cli_process_done()
@@ -299,8 +299,8 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
                                      dplyr::mutate(year = year(mon.year)) |>
                                      # join this to the original  province population dataset
                                      dplyr::left_join(ctry.data$prov.pop[, c("adm1guid", "year", "prov", "u15pop")],
-                                               by = c("adm1guid" = "adm1guid",
-                                                      "year" = "year")) |>
+                                                      by = c("adm1guid" = "adm1guid",
+                                                             "year" = "year")) |>
                                      dplyr::mutate(cases = dplyr::if_else(is.na(cases), 0, cases)) |>
                                      dplyr::mutate(
                                        mon.year2 = lubridate::as_date(zoo::as.yearmon(mon.year, "%b-%y")),
@@ -334,8 +334,8 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
                                      dplyr::ungroup() |>
                                      dplyr::mutate(year = lubridate::year(mon.year)) |>
                                      dplyr::left_join(ctry.data$dist.pop[, c("adm2guid", "year", "prov", "u15pop")],
-                                               by = c("adm2guid" = "adm2guid",
-                                                      "year" = "year")) |>
+                                                      by = c("adm2guid" = "adm2guid",
+                                                             "year" = "year")) |>
                                      dplyr::mutate(cases = dplyr::if_else(is.na(cases), 0, cases)) |>
                                      dplyr::mutate(
                                        mon.year2 = lubridate::as_date(zoo::as.yearmon(mon.year, "%b-%y")),
@@ -400,47 +400,47 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
   afp.all.2 <- afp.all.2 |> dplyr::filter(dplyr::between(date, start_date, end_date))
   cases <- afp.all.2 |> dplyr::group_by(get(geo), year) |>
     dplyr::summarize(afp.case = n(),
-              num.wpv.cases = sum(wild.1 == TRUE, wild.3 == TRUE, na.rm = T),
-              num.vdpv1.cases	= sum(vdpv.1  == TRUE,na.rm = T),
-              num.vdpv2.cases	= sum(vdpv.2 == TRUE, na.rm = T),
-              num.vdpv3.cases = sum(vdpv.3  == TRUE, na.rm = T))
+                     num.wpv.cases = sum(wild.1 == TRUE, wild.3 == TRUE, na.rm = T),
+                     num.vdpv1.cases	= sum(vdpv.1  == TRUE,na.rm = T),
+                     num.vdpv2.cases	= sum(vdpv.2 == TRUE, na.rm = T),
+                     num.vdpv3.cases = sum(vdpv.3  == TRUE, na.rm = T))
 
   cases <- switch(spatial.scale,
-                "ctry" = {
-                  cases <- cases |>
-                    dplyr::rename(ctry = `get(geo)`)
-                },
-                "prov" = {
-                  cases <- cases |>
-                    dplyr::rename(adm1guid = `get(geo)`)
-                },
-                "dist" = {
-                  cases <- cases |>
-                    dplyr::rename(adm2guid = `get(geo)`)
-                }
+                  "ctry" = {
+                    cases <- cases |>
+                      dplyr::rename(ctry = `get(geo)`)
+                  },
+                  "prov" = {
+                    cases <- cases |>
+                      dplyr::rename(adm1guid = `get(geo)`)
+                  },
+                  "dist" = {
+                    cases <- cases |>
+                      dplyr::rename(adm2guid = `get(geo)`)
+                  }
   )
 
   case.ind <- switch(spatial.scale,
-         "ctry" = {
-           case.ind <-
-             dplyr::left_join(npafp.output, cases, by = c("ctry" = "ctry",
-                                                       "year" = "year"))
-         },
-         "prov" = {
-           case.ind <- dplyr::full_join(npafp.output,
-                                        cases,
-                                        by = c("adm1guid" = "adm1guid",
-                                               "year" = "year")) |>
-           dplyr::select(-adm1guid)
-         },
-         "dist" = {
-           case.ind <-
-             dplyr::full_join(npafp.output,
-                       cases,
-                       by = c("adm2guid" = "adm2guid",
-                              "year" = "year")) |>
-             dplyr::select(-adm1guid, -adm2guid)
-         })
+                     "ctry" = {
+                       case.ind <-
+                         dplyr::left_join(npafp.output, cases, by = c("ctry" = "ctry",
+                                                                      "year" = "year"))
+                     },
+                     "prov" = {
+                       case.ind <- dplyr::full_join(npafp.output,
+                                                    cases,
+                                                    by = c("adm1guid" = "adm1guid",
+                                                           "year" = "year")) |>
+                         dplyr::select(-adm1guid)
+                     },
+                     "dist" = {
+                       case.ind <-
+                         dplyr::full_join(npafp.output,
+                                          cases,
+                                          by = c("adm2guid" = "adm2guid",
+                                                 "year" = "year")) |>
+                         dplyr::select(-adm1guid, -adm2guid)
+                     })
 
   return(case.ind)
 }
@@ -504,8 +504,8 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
                      "ctry" = {
                        int.data <- int.data |>
                          tidyr::pivot_longer(!c(epid, year, adm0guid, ctry),
-                                      names_to = "type",
-                                      values_to = "value") |>
+                                             names_to = "type",
+                                             values_to = "value") |>
                          dplyr::group_by(year, type, adm0guid, ctry) |>
                          dplyr::summarize(medi = median(value, na.rm = T), freq = n())
                      },
@@ -563,15 +563,15 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 
   int.data <- int.data |>
     dplyr::filter(
-    type %in% c(
-      "Paralysis onset to notification",
-      "Case notification to investigation",
-      "Case investigation to stool 1 collection",
-      "Stool 1 collection to stool 2 collection",
-      "Last stool collection to received in lab",
-      "Stool received lab to final culture results"
+      type %in% c(
+        "Paralysis onset to notification",
+        "Case notification to investigation",
+        "Case investigation to stool 1 collection",
+        "Stool 1 collection to stool 2 collection",
+        "Last stool collection to received in lab",
+        "Stool received lab to final culture results"
+      )
     )
-  )
 
   # Remove columns containing only NA values
   int.data <- int.data |>
@@ -627,7 +627,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
     dplyr::filter(date >= start_date) |>
     dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final2 != "Adequate", 1, 0)) |>
     dplyr::filter(need60day.v2 == 1 |
-             cdc.classification.all2 == "COMPATIBLE") |>
+                    cdc.classification.all2 == "COMPATIBLE") |>
     dplyr::mutate(
       got60day =
         dplyr::case_when(
@@ -784,8 +784,8 @@ generate_potentially_compatibles_cluster <- function(cases.need60day, create_clu
   if (nrow(pot.c.clust) > 1) {
     for (i in 2:nrow(pot.c.clust)) {
       pot.c.clust$clust[i] = dplyr::if_else(pot.c.clust$date[i] <= pot.c.clust$date[i - 1] + 30,
-                                     max(pot.c.clust$clust[1:i - 1], na.rm = T),
-                                     max(pot.c.clust$clust[1:i - 1], na.rm = T) + 1)
+                                            max(pot.c.clust$clust[1:i - 1], na.rm = T),
+                                            max(pot.c.clust$clust[1:i - 1], na.rm = T) + 1)
     }
   }
 
@@ -828,14 +828,20 @@ ctry_data_errors <- function(ctry.data,
   cli::cli_progress_step("Spatial validation for country")
   incomplete.adm.ctry <-
     spatial_validation(ctry.data$ctry.pop, "ctry")
+  missing.pop.ctry <-
+    check_missing_pop(ctry.data$ctry.pop, "ctry")
 
   cli::cli_progress_step("Spatial validation for province")
   incomplete.adm.prov <-
     spatial_validation(ctry.data$prov.pop, "prov")
+  missing.pop.prov <-
+    check_missing_pop(ctry.data$prov.pop, "prov")
 
   cli::cli_progress_step("Spatial validation for district")
   incomplete.adm.dist <-
     spatial_validation(ctry.data$dist.pop, "dist")
+  missing.pop.dist <-
+    check_missing_pop(ctry.data$dist.pop, "dist")
 
   cli::cli_process_done(msg_done = "Check returned list for error specifics.")
   cli::cli_alert("Run clean_ctry_data() to attempt data fixes and perform the check again.")
@@ -848,6 +854,9 @@ ctry_data_errors <- function(ctry.data,
   error_log$invalid_adm0 <- incomplete.adm.ctry
   error_log$invalid_adm1 <- incomplete.adm.prov
   error_log$invalid_adm2 <- incomplete.adm.dist
+  error_log$missing_pop_ctry <- missing.pop.ctry
+  error_log$missing_pop_prov <- missing.pop.prov
+  error_log$missing_pop_dist <- missing.pop.dist
 
   writexl::write_xlsx(error_log, path = file.path(error_path, "ctry_data_error_log.xlsx"))
 
