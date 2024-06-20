@@ -75,12 +75,18 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
 #' Function to load the raw lab data
 #'
 #' @param lab_data_path file path as a string to the lab data
+#' @param sheet_name name of the sheet to load
 #'
 #' @return a tibble containing lab data
 #' @export
-load_lab_data <- function(lab_data_path) {
-  lab_data <- readxl::read_excel(lab_data_path)
-  return(lab_data)
+load_lab_data <- function(lab_data_path, sheet_name = NULL) {
+  if (stringr::str_ends(lab_data_path, ".csv")) {
+    return(readr::read_csv(lab_data_path))
+  } else if (stringr::str_ends(lab_data_path, ".xlsx")) {
+    return(readxl::read_excel(lab_data_path, sheet = sheet_name))
+  } else {
+    stop("Not a csv or .xlsx file. Try again.")
+  }
 }
 
 
@@ -283,8 +289,8 @@ lab_data_errors_who <- function(ctry.data, start.date, end.date,
              (days.itd.seqres < 0) &
              (days.itd.arriveseq < 0) &
              (days.seq.rec.res < 0)
-  ) |> filter(year >= year(start.date) & year <= year(end.date),
-                         CaseOrContact == "1-Case")
+    ) |> filter(year >= year(start.date) & year <= year(end.date),
+                CaseOrContact == "1-Case")
 
   if (nrow(invalid_dates) != 0) {
     cli::cli_alert_warning(paste0("There are ", nrow(invalid_dates), " cases with invalid dates."))
@@ -339,8 +345,20 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
     return(NULL)
   }
 
+  if (nrow(ctry.data$lab.data) == 0) {
+    message("There are no entries for lab data.")
+    return(NULL)
+  }
+
   cli::cli_process_start("Filtering country-specific lab data")
+
   lab.data <- ctry.data$lab.data |> filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
+
+  if (nrow(lab.data) == 0) {
+    message("Filtering resulted in zero records. Please check that the ctry.code2 in lab.data matches ctry.data$ctry$ISO_3_CODE")
+    return(NULL)
+  }
+
   cli::cli_process_done()
 
   cli::cli_process_start("Filtering for cases with valid dates")
@@ -427,9 +445,9 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   # Totally random cases in potential_errors2
   lab.data2 = lab.data2 %>%
     mutate(prov = ifelse(is.na(prov), potential_errors$prov[match(lab.data2$EpidNumber,
-                                                     potential_errors$EpidNumber)], prov)) %>%
+                                                                  potential_errors$EpidNumber)], prov)) %>%
     mutate(adm1guid = ifelse(is.na(adm1guid), potential_errors$adm1guid[match(lab.data2$EpidNumber,
-                                                                 potential_errors$EpidNumber)], adm1guid))
+                                                                              potential_errors$EpidNumber)], adm1guid))
   count(lab.data2, prov, adm1guid)
 
   count(lab.data2, prov)
@@ -441,7 +459,8 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
     separate_wider_delim(cols=epid, delim = delim,
                          names = c("epid_ctry", "epid_prov", "epid_dist",
                                    "epid_04", "epid_05"),
-                         too_many = "merge"
+                         too_many = "merge",
+                         too_few = "align_start"
     ) |>
     select(contains("epid"), ctry, prov, dist, matches("adm[0-3]guid"), year) |>
     distinct()
@@ -461,7 +480,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
                                    "epid_04", "epid_05"),
                          names_repair = "unique",
                          too_many = "merge",
-                         too_few = "debug")
+                         too_few = "align_start", cols_remove = F)
   test <- lab.data2
 
   test <- test |>
@@ -530,7 +549,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     filter(Name == Sys.getenv("DR_COUNTRY"))
 
   # Assign the region
-  region <- get_region(lab.data)
+  region <- get_region()
 
   # Download lab.locs if not assigned
   lab.locs <- get_lab_locs(lab_locs_path)
@@ -1008,7 +1027,7 @@ generate_lab_timeliness <-
                   "dist" = {
                     lab <- lab |> rename(adm2guid = `get(geo)`)
                   }
-                  )
+    )
 
     return(lab)
   }
