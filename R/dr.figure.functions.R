@@ -1412,7 +1412,6 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
     filter(case.num <= 5)
 
   # noti.7d.on
-
   mapt1 <- ggplot() +
     geom_sf(
       data = ctry.shape,
@@ -1434,8 +1433,6 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
     scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
-    # scale_color_manual(values = sirfunctions::f.color.schemes("para.case"), name = "Case type",
-    #                  drop = F) +
     ggtitle("Proportion of cases with notification within 7 days of onset") +
     sirfunctions::f.plot.looks("epicurve")
 
@@ -1484,11 +1481,8 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
     scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
-    # scale_color_manual(values = sirfunctions::f.color.schemes("para.case"), name = "Case type",
-    #                  drop = F) +
     ggtitle("Proportion of cases with investigation within 2 days of notification") +
     sirfunctions::f.plot.looks("epicurve") +
-    #labs(caption = "Provinces marked by an X have reported 5 or less AFP cases")+
     facet_wrap( ~ year, ncol = 4) +
     theme(
       axis.text.x = element_blank(),
@@ -1515,7 +1509,12 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
       data = filter(time.map, type == "coll.3d.inv"),
       color = "black",
       aes(fill = prop)
-    )
+    ) + scale_fill_manual(name = "Proportion",
+                          values = f.color.schemes("mapval"),
+                          drop = T) +
+    ggtitle("Proportion of cases with collection within 3 days of investigation") +
+    sirfunctions::f.plot.looks("epicurve")
+
   if (mark_x) {
     mapt3 <- mapt3 +
       geom_sf(data = st_centroid(filter(low.case.prov, type == "coll.3d.inv")),
@@ -1523,12 +1522,6 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
               size = pt_size)
   }
   mapt3 <- mapt3 +
-    scale_fill_manual(name = "Proportion",
-                      values = f.color.schemes("mapval"),
-                      drop = T) +
-    ggtitle("Proportion of cases with collection within 3 days of investigation") +
-    sirfunctions::f.plot.looks("epicurve") +
-    #labs(caption = "Provinces marked by an X have reported 5 or less AFP cases")+
     facet_wrap( ~ year, ncol = 4) +
     theme(
       axis.text.x = element_blank(),
@@ -1555,22 +1548,23 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
       data = filter(time.map, type == "ship.3d.coll"),
       color = "black",
       aes(fill = prop)
-    )
+    ) +
+    scale_fill_manual(name = "Proportion",
+                      values = f.color.schemes("mapval"),
+                      drop = T) +
+    ggtitle("Proportion of stool shipped to lab within 3 days of collection") +
+    sirfunctions::f.plot.looks("epicurve")
+
+
+
   if (mark_x) {
     mapt4 <- mapt4 +
       geom_sf(data = st_centroid(filter(low.case.prov, type == "ship.3d.coll")),
               pch = 4,
               size = pt_size)
   }
+
   mapt4 <- mapt4 +
-    scale_fill_manual(name = "Proportion",
-                      values = f.color.schemes("mapval"),
-                      drop = T) +
-    # scale_color_manual(values = sirfunctions::f.color.schemes("para.case"), name = "Case type",
-    #                  drop = F) +
-    ggtitle("Proportion of stool shipped to lab within 3 days of collection") +
-    sirfunctions::f.plot.looks("epicurve") +
-    #labs(caption = "Provinces marked by an X have reported 5 or less AFP cases")+
     facet_wrap( ~ year, ncol = 4) +
     theme(
       axis.text.x = element_blank(),
@@ -1578,6 +1572,37 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
       axis.ticks = element_blank(),
       plot.caption = element_text(hjust = 0)
     )
+
+  mapt_dummy <- ggplot() +
+    geom_sf(
+      data = ctry.shape,
+      color = "black",
+      fill = NA,
+      size = 1
+    ) +
+    geom_sf(
+      data = prov.shape,
+      color = "black",
+      fill = "lightgrey",
+      size = .5
+    ) +
+    geom_sf(
+      data = time.map |> filter(!is.na(year), !is.na(type)),
+      color = "black",
+      aes(fill = prop)
+    ) +
+    scale_fill_manual(name = "Proportion",
+                      values = f.color.schemes("mapval"),
+                      drop = T) +
+    facet_wrap( ~ year, ncol = 4) +
+    theme(
+      axis.text.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks = element_blank(),
+      plot.caption = element_text(hjust = 0)
+    ) +
+    sirfunctions::f.plot.looks("epicurve")
+
 
   mapt_all <-
     ggpubr::ggarrange(
@@ -1587,7 +1612,8 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
       mapt4,
       ncol = 2,
       nrow = 2,
-      common.legend = TRUE,
+      common.legend = T,
+      legend.grob = ggpubr::get_legend(mapt_dummy),
       legend = "bottom"
     )
 
