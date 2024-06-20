@@ -6,8 +6,7 @@
 #' @return list of strings
 generate_pptx_assumptions <- function(start_date, end_date) {
   pptx.assumptions <- c('Data sources:',
-                        paste0('POLIS (Data as of ', format(start_date, '%d-%b-%Y'),
-                               ' to ',format(end_date, '%d-%b-%Y') ,')'),
+                        paste0('POLIS (data as of ', format(end_date, '%d-%b-%Y') ,')', " unless specified otherwise"),
                         'Missing population estimated from the UNDP growth factor from previous year’s population.',
                         paste0('Timeframe for analysis: ', format(start_date, '%d-%b-%Y'),
                                ' to ',format(end_date, '%d-%b-%Y')),
@@ -24,7 +23,7 @@ generate_pptx_assumptions <- function(start_date, end_date) {
   assump = officer::unordered_list(
     level_list = c(1, 2, 2, 1,2,1,2,1,2,2,2), #Indentation level for each bullet
     str_list = pptx.assumptions,
-    style = fp_text(color = "black", font.size = 17))
+    style = officer::fp_text(color = "black", font.size = 17))
 
   return(assump)
 
