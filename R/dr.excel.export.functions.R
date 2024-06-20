@@ -3,7 +3,7 @@
 #' @param stool.data afp data with final adequacy columns
 #' @param excel_output_path output path of the Excel file
 #' @export
-create_afp_export <- function(stool.data, country=country_name, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
+create_afp_export <- function(stool.data, country=Sys.getenv("DR_COUNTRY"), excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   stool.data.export=stool.data |>
     mutate(nvaccine.2 = NA) |>
     select(c("polis.case.id","epid","followup.date","followup.findings",
@@ -107,7 +107,7 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, exce
 #'
 #' @return does not return anything
 #' @export
-create_pop_check_export <- function(ctry.data, country=country_name,
+create_pop_check_export <- function(ctry.data, country=Sys.getenv("DR_COUNTRY"),
                                     excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   pop.check <-
     count(ungroup(filter(ctry.data$dist.pop, year >= min(year))), prov, dist,
@@ -138,7 +138,7 @@ create_pop_check_export <- function(ctry.data, country=country_name,
 #'
 #' @return does not return anything
 #' @export
-create_60_day_export <- function(cases.need60day, country=country_name, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
+create_60_day_export <- function(cases.need60day, country=Sys.getenv("DR_COUNTRY"), excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   cases.need60day |>
     rename(
       Year = year,
@@ -169,7 +169,7 @@ create_60_day_export <- function(cases.need60day, country=country_name, excel_ou
 #'
 #' @return does not return anything
 #' @export
-create_pot_comp_clust_export <- function(pot.c.clust, country=country_name, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
+create_pot_comp_clust_export <- function(pot.c.clust, country=Sys.getenv("DR_COUNTRY"), excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   writexl::write_xlsx(pot.c.clust,
              file.path(
                excel_output_path,
