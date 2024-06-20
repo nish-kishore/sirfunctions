@@ -51,7 +51,7 @@ copy_dr_functions <- function(branch="main", output_folder=Sys.getenv("DR_FUNC_P
                             "\n\nWould you like to update them? (Y/N)\n\n",
                             "(NOTE: Updating will overwrite changes to the function scripts in the R folder of the associated country desk review. ",
                             "If you changed a function, it is recommended to place changes in a new script file.")
-    cli::cli_alert_info(alert_message)
+    cli::cli_alert_warning(alert_message)
 
     wait <- T
     response <- NULL
@@ -91,7 +91,7 @@ copy_dr_functions <- function(branch="main", output_folder=Sys.getenv("DR_FUNC_P
 #'
 #' @return boolean whether to use cache or not
 #' @export
-check_cache <- function(param_path, start_date, end_date, country_name) {
+check_cache <- function(param_path, start_date, end_date, country_name=Sys.getenv("DR_COUNTRY")) {
   if (file.exists(param_path)) {
     cli::cli_alert_info("There is a param file from a previous run. Use this? (Y/N)")
     response <- T
@@ -108,16 +108,37 @@ check_cache <- function(param_path, start_date, end_date, country_name) {
     }
 
     if (use == "y") {
+
       cli::cli_alert("Loading previous parameters")
-      load(param_path)
-      return(TRUE)
+      load(param_path, envir = .GlobalEnv)
+
     } else {
-      return(FALSE)
+
+      cli::cli_alert("Update the previous param file? (Y/N)")
+
+      response <- T
+      update <- NULL
+
+      while (response) {
+        update <- readline("> ")
+        update <- stringr::str_trim(stringr::str_to_lower(update))
+
+        if (!update %in% c("y", "n")) {
+          message("Invalid response. Try again.")
+        } else {
+          response <- F
+        }
+      }
+
+      if (update == "y") {
+        save(start_date, end_date, country_name, file = param_path)
+      } else {
+        return(FALSE)
+      }
     }
   } else {
     cli::cli_alert("Creating paramaters file")
     save(start_date, end_date, country_name, file = param_path)
-
   }
 }
 
@@ -431,16 +452,23 @@ init_dr <-
       stringr::str_trim(stringr::str_to_upper(country_name))
 
     if (is.null(end_date)) {
+
       end_date <- Sys.Date() - lubridate::weeks(6)
+      end_date <<- end_date
+    } else {
+      end_date <- lubridate::as_date(end_date)
+      end_date <<- end_date
     }
 
     if (is.null(start_date)) {
       start_date <- (end_date - lubridate::years(3)) |>
         lubridate::floor_date("year")
+      start_date <<- start_date
+    } else {
+      start_date <- lubridate::as_date(start_date)
+      start_date <<- start_date
     }
 
-    start_date <- lubridate::as_date(start_date)
-    end_date <- lubridate::as_date(end_date)
     year <- lubridate::year(end_date)
 
     # Set up local directory for storing for data and metadata
@@ -519,11 +547,9 @@ init_dr <-
 
     # Check if previous params should be loaded or update a new cache file
     check_cache(file.path(country_dir_path, "parameters", "parameters.RData"),
-                as.character(start_date), as.character(end_date), country_name)
+                start_date, end_date, country_name)
 
     # Setting environmental variables
-    start_date <<- lubridate::as_date(start_date)
-    end_date <<- lubridate::as_date(end_date)
     Sys.setenv(DR_PATH = file.path(country_dir_path))
     Sys.setenv(DR_DATA_PATH = file.path(country_dir_path, "data"))
     Sys.setenv(DR_ERROR_PATH = file.path(country_dir_path, "errors"))
