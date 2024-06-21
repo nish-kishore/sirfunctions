@@ -76,14 +76,14 @@ impute_dist_afp <- function(afp.data) {
 
     #print(dim(x))
     if (dim(x)[1] > 0 & length(unique(x$adm2guid)) == 1) {
-      missy3$adm2guid.2[i] = unique(x$adm2guid)
+      missy3$adm2guid.2[i] <- unique(x$adm2guid)
     }
 
   }
 
   # Backfill missy2 with new data
-  missy2$dist[match(missy3$epid, missy2$epid)] = missy3$dist
-  missy2$adm2guid[match(missy3$epid, missy2$epid)] = missy3$adm2guid.2
+  missy2$dist[match(missy3$epid, missy2$epid)] <- missy3$dist
+  missy2$adm2guid[match(missy3$epid, missy2$epid)] <- missy3$adm2guid.2
 
   # For those that have multiple adm2guids
   # Match province and take the adm2guid that goes with the province
@@ -99,8 +99,7 @@ impute_dist_afp <- function(afp.data) {
       dplyr::filter(prov == missy3$prov[i])
 
     if (dim(x)[1] > 0 & dim(y)[1] > 0) {
-      print(dim(y))
-      missy3$adm2guid.2[i] = unique(y$adm2guid)
+      missy3$adm2guid.2[i] <- unique(y$adm2guid)
     }
   }
 
@@ -114,8 +113,8 @@ impute_dist_afp <- function(afp.data) {
                                           T ~ dist))
 
   # Update dist and adm2guid
-  afp.data$dist[match(missy2$epid, afp.data$epid)] = missy2$dist
-  afp.data$adm2guid[match(missy2$epid, afp.data$epid)] = missy2$adm2guid
+  afp.data$dist[match(missy2$epid, afp.data$epid)] <- missy2$dist
+  afp.data$adm2guid[match(missy2$epid, afp.data$epid)] <- missy2$adm2guid
 
   #!!! no NAs should be present anymore
   dist_na <- sum(is.na(afp.data$dist))
