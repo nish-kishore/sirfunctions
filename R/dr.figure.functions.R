@@ -165,9 +165,10 @@ generate_afp_epicurve <- function(ctry.data, start_date,
 generate_afp_prov_year <- function(afp.by.month.prov,
                                    start_date, end_date = lubridate::today(),
                                    output_path=Sys.getenv("DR_FIGURE_PATH")) {
-  afp.month.prov.g = afp.by.month.prov |> filter(between(year, year(start_date),year(end_date)))
+  afp.month.prov.g <- afp.by.month.prov |> 
+  filter(between(year, year(start_date),year(end_date)),!is.na(prov))
 
-  afp.month.prov.g$case.cat = factor(afp.month.prov.g$case.cat, levels = c(c("0", "1", "2-5", "6-9", "10+")))
+  afp.month.prov.g$case.cat <- factor(afp.month.prov.g$case.cat, levels = c(c("0", "1", "2-5", "6-9", "10+")))
 
   # changed to u15pop.prov instead
   # prov is not a column at afp.month.prov.g (fixed by adding to the groupby)
