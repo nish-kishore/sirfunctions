@@ -114,3 +114,48 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
 
   return(iss.02)
 }
+
+#' Checks for errors in the iss.data.
+#' Currently reports the number of missing priority levels.
+#'
+#' @param iss.data ISS/eSurv data
+#'
+#' @return error message
+#' @export
+iss_data_errors <- function(iss.data) {
+
+  # Check if ISS data is attached
+  if (is.null(iss.data)) {
+    stop("Lab data not attached to ctry.data. Please attach and try again.")
+  }
+
+  # Check for rows without any priority_levels (N/A)
+  cli::cli_process_start("Checking for missing priority levels.")
+  total_records <- nrow(iss.data)
+  na_priority <- NULL
+  if ("priority_level" %in% names(iss.data)) {
+    na_priority <- iss.data |>
+      mutate(priority_level = stringr::str_to_lower(priority_level)) |>
+      select(priority_level) |>
+      filter(priority_level %in% c("na", "n/a", "")) |>
+      nrow()
+  } else if ("hf_rating" %in% names(iss.data)) {
+    na_priority <- iss.data |>
+      mutate(hf_rating = stringr::str_to_lower(hf_rating)) |>
+      select(hf_rating) |>
+      filter(hf_rating %in% c("na", "n/a", "")) |>
+      nrow()
+  }
+
+  if (na_priority > 0) {
+    message <- paste0("There are ", na_priority,
+                      " records missing priority levels (",
+                      round(na_priority/total_records * 100, 2),
+                      "% of the total dataset.)")
+    cli::cli_alert_warning(message)
+  } else {
+    cli::cli_alert_success("No records missing priority levels.")
+  }
+
+  cli::cli_process_done()
+}
