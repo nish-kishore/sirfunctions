@@ -526,7 +526,10 @@ generate_iss_barplot <- function(iss.data=NULL, start_date,
 
   }
 
-  iss.data <- iss.data |> mutate(today_date = today)
+  if (!"today_date" %in% names(iss.data)) {
+    iss.data <- iss.data |> mutate(today_date = today)
+  }
+
 
   iss.data2.1 = iss.data %>%
     filter(between(today_date, start_date, end_date))
@@ -1749,6 +1752,16 @@ generate_iss_map <- function(iss.data, prov.shape, start_date, end_date,
 
   if (is.null(iss.data) | nrow(iss.data) == 0) {
     stop("No ISS data attached.")
+  }
+
+  if(!"_gps_ending_longitude" %in% names(iss.data)) {
+    iss.data <- iss.data |>
+      mutate(`_gps_ending_longitude` = .data[["_gps_longitude"]])
+  }
+
+  if(!"_gps_ending_latitude" %in% names(iss.data)) {
+    iss.data <- iss.data |>
+      mutate(`_gps_ending_latitude` = .data[["_gps_latitude"]])
   }
 
   bbox <- sf::st_bbox(prov.shape)

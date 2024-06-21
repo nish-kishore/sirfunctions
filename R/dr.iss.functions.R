@@ -17,7 +17,7 @@ load_iss_data <- function(iss_path, sheet_name=NULL) {
 
 #' Perform common cleaning tasks for ISS/eSURV data
 #'
-#' @param iss.data tibble of ISS data
+#' @param ctry.data ctry.data containing iss.data
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param priority_col column representing priority level as a string
@@ -26,6 +26,8 @@ load_iss_data <- function(iss_path, sheet_name=NULL) {
 #' @param prov_col column representing province as a string
 #' @param dist_col column representing district as a string
 #' @param hf_col column representing the health facility name as a string
+#' @param today_col column representing when info was recorded
+#' @param date_of_visit_col column representing date of visit
 #'
 #' @return a tibble of cleaned ISS data
 #' @export
@@ -35,7 +37,9 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
                            unreported_cases_col="num_unreportedcases",
                            prov_col="states",
                            dist_col="districts",
-                           hf_col="name_of_facility_visited") {
+                           hf_col="name_of_facility_visited",
+                           today_col="today",
+                           date_of_visit_col="date_of_visit") {
 
   if (is.null(ctry.data$iss.data)) {
     message("No ISS data attached.")
@@ -64,15 +68,19 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
       month = month(as.Date(.data[[start_time_col]])),
       year = year(as.Date(.data[[start_time_col]]))
     ) |>
-    mutate(today_date = as_date(today, format = "%m/%d/%Y"),
-           date_of_visit = as_date(date_of_visit, format = "%m/%d/%Y"))
+    mutate(today_date = as_date(.data[[today_col]], format = "%m/%d/%Y"),
+           date_of_visit = as_date(.data[[date_of_visit_col]], format = "%m/%d/%Y"))
   cli::cli_process_done()
 
   cli::cli_process_start("counting unreported AFP cases")
-  # Unreported AFP
-  iss.02 <- iss.02 %>%
-    mutate(unrep_afp = as.numeric(.data[[unreported_cases_col]])) |>
-    suppressWarnings()
+  if (is.null(unreported_cases_col)) {
+    message("Column for unreported AFP cases unavailable.")
+  } else {
+    # Unreported AFP
+    iss.02 <- iss.02 %>%
+      mutate(unrep_afp = as.numeric(.data[[unreported_cases_col]])) |>
+      suppressWarnings()
+  }
   cli::cli_process_done()
 
   # Province and District
