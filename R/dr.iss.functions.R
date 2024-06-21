@@ -118,14 +118,14 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
 #' Checks for errors in the iss.data.
 #' Currently reports the number of missing priority levels.
 #'
-#' @param iss.data ISS/eSurv data
+#' @param ctry.data ctry.data with ISS/eSurv data attached
 #'
 #' @return error message
 #' @export
-iss_data_errors <- function(iss.data) {
+iss_data_errors <- function(ctry.data) {
 
   # Check if ISS data is attached
-  if (is.null(iss.data)) {
+  if (is.null(ctry.data$iss.data)) {
     stop("Lab data not attached to ctry.data. Please attach and try again.")
   }
 
