@@ -445,7 +445,7 @@ init_dr <-
            iss_data_path=NULL,
            attach_spatial_data=T,
            branch="main",
-           source=F
+           source=T
            ) {
 
     country_name <-
