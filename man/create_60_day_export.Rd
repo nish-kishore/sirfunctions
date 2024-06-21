@@ -6,7 +6,7 @@
 \usage{
 create_60_day_export(
   cases.need60day,
-  country = country_name,
+  country = Sys.getenv("DR_COUNTRY"),
   excel_output_path = Sys.getenv("DR_TABLE_PATH")
 )
 }

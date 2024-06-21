@@ -4,10 +4,12 @@
 \alias{load_iss_data}
 \title{Read ISS/eSURV data}
 \usage{
-load_iss_data(iss_path)
+load_iss_data(iss_path, sheet_name = NULL)
 }
 \arguments{
-\item{iss_path}{path to the .csv file}
+\item{iss_path}{path to the excel or csv file}
+
+\item{sheet_name}{optional name of the ISS data}
 }
 \value{
 a tibble containing ISS/eSURV data

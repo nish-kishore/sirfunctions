@@ -4,7 +4,12 @@
 \alias{check_cache}
 \title{Checks the cache file and see if it should load parameters from it}
 \usage{
-check_cache(param_path, start_date, end_date, country_name)
+check_cache(
+  param_path,
+  start_date,
+  end_date,
+  country_name = Sys.getenv("DR_COUNTRY")
+)
 }
 \arguments{
 \item{param_path}{path to parameters.RData}

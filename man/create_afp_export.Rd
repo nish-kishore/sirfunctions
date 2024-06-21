@@ -6,7 +6,7 @@
 \usage{
 create_afp_export(
   stool.data,
-  country = country_name,
+  country = Sys.getenv("DR_COUNTRY"),
   excel_output_path = Sys.getenv("DR_TABLE_PATH")
 )
 }

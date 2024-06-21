@@ -4,7 +4,11 @@
 \alias{generate_es_tab}
 \title{ES table with indicators}
 \usage{
-generate_es_tab(es.data, es_start_date, es_end_date)
+generate_es_tab(
+  es.data,
+  es_start_date = (end_date - lubridate::years(1)),
+  es_end_date = end_date
+)
 }
 \arguments{
 \item{es.data}{ES data}

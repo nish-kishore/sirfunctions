@@ -9,7 +9,9 @@ generate_es_site_det(
   es.data.long,
   es_start_date = (end_date - lubridate::years(1)),
   es_end_date = end_date,
-  output_path = Sys.getenv("DR_FIGURE_PATH")
+  output_path = Sys.getenv("DR_FIGURE_PATH"),
+  vaccine_types = NULL,
+  detection_types = NULL
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ generate_es_site_det(
 \item{es_end_date}{end date of ES data}
 
 \item{output_path}{where to save the figure}
+
+\item{vaccine_types}{named list with vaccine types with color associations}
+
+\item{detection_types}{named list with detection types with color associations}
 }
 \value{
 ggplot object dot plot

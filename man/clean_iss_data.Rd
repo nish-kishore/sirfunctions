@@ -6,17 +6,21 @@
 \usage{
 clean_iss_data(
   ctry.data,
-  start_date = start_date,
-  end_date = end_date,
+  start_date,
+  end_date,
   priority_col = "priority_level",
   start_time_col = "starttime",
   unreported_cases_col = "num_unreportedcases",
   prov_col = "states",
   dist_col = "districts",
-  hf_col = "name_of_facility_visited"
+  hf_col = "name_of_facility_visited",
+  today_col = "today",
+  date_of_visit_col = "date_of_visit"
 )
 }
 \arguments{
+\item{ctry.data}{ctry.data containing iss.data}
+
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end date of desk review}
@@ -33,7 +37,9 @@ clean_iss_data(
 
 \item{hf_col}{column representing the health facility name as a string}
 
-\item{iss.data}{tibble of ISS data}
+\item{today_col}{column representing when info was recorded}
+
+\item{date_of_visit_col}{column representing date of visit}
 }
 \value{
 a tibble of cleaned ISS data

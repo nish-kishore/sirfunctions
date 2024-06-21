@@ -4,7 +4,12 @@
 \alias{generate_afp_prov_year}
 \title{AFP cases by province and year}
 \usage{
-generate_afp_prov_year(afp.by.month.prov, start_date, end_date)
+generate_afp_prov_year(
+  afp.by.month.prov,
+  start_date,
+  end_date = lubridate::today(),
+  output_path = Sys.getenv("DR_FIGURE_PATH")
+)
 }
 \arguments{
 \item{afp.by.month.prov}{table summarizing afp cases by month and province}

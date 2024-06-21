@@ -4,10 +4,12 @@
 \alias{load_lab_data}
 \title{Function to load the raw lab data}
 \usage{
-load_lab_data(lab_data_path)
+load_lab_data(lab_data_path, sheet_name = NULL)
 }
 \arguments{
 \item{lab_data_path}{file path as a string to the lab data}
+
+\item{sheet_name}{name of the sheet to load}
 }
 \value{
 a tibble containing lab data
