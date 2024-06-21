@@ -532,7 +532,7 @@ init_dr <-
     # Attaching lab data if available and creating a copy to data folder
     if (!is.null(lab_data_path)) {
       country_data$lab.data <- load_lab_data(lab_data_path)
-      dr_lab_data_path <- file.path(dr_data_path, "lab_data.csv")
+      dr_lab_data_path <- file.path(data_path, "lab_data.csv")
       file.copy(lab_data_path, dr_lab_data_path)
       Sys.setenv(DR_LAB_PATH = dr_lab_data_path)
     }
@@ -548,7 +548,9 @@ init_dr <-
     # Check if previous params should be loaded or update a new cache file
     check_cache(file.path(country_dir_path, "parameters", "parameters.RData"),
                 start_date, end_date, country_name)
-
+                
+    end_date <<- lubridate::as_date(end_date)
+    start_date <<- lubridate::as_date(start_date)
     # Setting environmental variables
     Sys.setenv(DR_PATH = file.path(country_dir_path))
     Sys.setenv(DR_DATA_PATH = file.path(country_dir_path, "data"))
