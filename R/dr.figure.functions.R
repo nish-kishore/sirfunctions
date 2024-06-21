@@ -886,7 +886,7 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
       axis.text.x = element_blank(),
       axis.text.y = element_blank(),
       axis.ticks = element_blank(),
-      legend.position =  c(0.5,-0.23),
+      legend.position.inside =  c(0.5,-0.23),
       legend.direction = "horizontal"
     )
 
