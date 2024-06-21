@@ -2509,6 +2509,8 @@ generate_es_tab <- function(es.data,
         "Bad Data (%): ", row$bad_samples)
       cli::cli_alert(message)
     }
+    cli::cli_alert_info("Additional info in es.table.errors.csv at the errors folder.")
+    readr::write_csv(neg_interval_data, file = file.path(Sys.getenv("DR_ERROR_PATH"), "es.table.errors.csv"))
   }
 
   return(es.table)
