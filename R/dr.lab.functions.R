@@ -93,6 +93,11 @@ load_lab_data <- function(lab_data_path, sheet_name = NULL) {
 lab_data_errors <- function(ctry.data, start.date=start_date, end.date=end_date,
                             error_path = Sys.getenv("DR_ERROR_PATH")) {
 
+  # Check if the lab data is attached
+  if (is.null(ctry.data$lab.data)) {
+    stop("Lab data not attached to ctry.data. Please attach and try again.")
+  }
+
   # Determine the type of cleaning to do
   lab.data.cols <- names(ctry.data$lab.data)
 
@@ -943,6 +948,11 @@ generate_lab_timeliness <-
       "prov" = "adm1guid",
       "dist" = "adm2guid"
     )
+
+  # Check if the lab data is attached
+  if (is.null(ctry.data$lab.data)) {
+    stop("Lab data not attached to ctry.data. Please attach and try again.")
+  }
 
     lab1 <- lab.data |>
       filter(between(as.Date(DateOfOnset), start.date, end.date)) |>
