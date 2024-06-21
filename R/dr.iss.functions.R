@@ -126,7 +126,7 @@ iss_data_errors <- function(ctry.data, error_path=Sys.getenv("DR_ERROR_PATH")) {
 
   # Check if ISS data is attached
   if (is.null(ctry.data$iss.data)) {
-    stop("Lab data not attached to ctry.data. Please attach and try again.")
+    stop("ISS data not attached to ctry.data. Please attach and try again.")
   }
 
   iss.data <- ctry.data$iss.data
