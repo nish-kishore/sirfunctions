@@ -165,7 +165,7 @@ generate_afp_epicurve <- function(ctry.data, start_date,
 generate_afp_prov_year <- function(afp.by.month.prov,
                                    start_date, end_date = lubridate::today(),
                                    output_path=Sys.getenv("DR_FIGURE_PATH")) {
-  afp.month.prov.g <- afp.by.month.prov |> 
+  afp.month.prov.g <- afp.by.month.prov |>
   filter(between(year, year(start_date),year(end_date)),!is.na(prov))
 
   afp.month.prov.g$case.cat <- factor(afp.month.prov.g$case.cat, levels = c(c("0", "1", "2-5", "6-9", "10+")))
@@ -874,12 +874,12 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
       name = "NPAFP rate",
       values = c(
         "No cases (u15pop < 100K)" = "lightgrey",
-        "<1" = "#d7191c",
+        "<1" = "#dc582a",
         "1-<2" = "#fdae61",
         "2-<3" = "#a6d96a",
         "3+" = "#1a9641",
         "Missing Pop" = "#2C83C7",
-        "Silent (u15pop >= 100K)" = "#5e3c99"
+        "Silent (u15pop >= 100K)" = "#d7191c"
       ),
       drop = T
     ) +
@@ -1012,14 +1012,14 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
     ) +
     scale_fill_manual(
       name = "NPAFP rate",
-      values = c(
+      values =  c(
         "No cases (u15pop < 100K)" = "lightgrey",
-        "<1" = "#d7191c",
+        "<1" = "#dc582a",
         "1-<2" = "#fdae61",
         "2-<3" = "#a6d96a",
         "3+" = "#1a9641",
         "Missing Pop" = "#2C83C7",
-        "Silent (u15pop >= 100K)" = "#5e3c99"
+        "Silent (u15pop >= 100K)" = "#d7191c"
       ),
       drop = T
     ) +
@@ -1154,9 +1154,9 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape,
       name = "Stool Adequacy",
       values = c(
         "Zero AFP cases" = "lightgrey",
-        "<40%" = "#fdae61",
-        "40-59%" = "#ffffbf",
-        "60-79%" = "#abd9e9",
+        "<40%" = "#dc582a",
+        "40-59%" = "#fdae61",
+        "60-79%" = "#ffffbf",
         "80%+" = "#2c7bb6",
         "Unable to Assess" = "white"
       ),
@@ -1297,9 +1297,9 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape
       name = "Stool Adequacy",
       values = c(
         "Zero AFP cases" = "lightgrey",
-        "<40%" = "#fdae61",
-        "40-59%" = "#ffffbf",
-        "60-79%" = "#abd9e9",
+        "<40%" = "#dc582a",
+        "40-59%" = "#fdae61",
+        "60-79%" = "#ffffbf",
         "80%+" = "#2c7bb6",
         "Unable to Assess" = "white"
       ),
@@ -2315,12 +2315,12 @@ generate_60_day_tab <- function(cases.need60day) {
       got60day = sum(got60day == 1, na.rm = T),
       ontime60day = sum(ontime.60day == 1, na.rm = T),
       compatible = sum(cdc.classification.all2 == "COMPATIBLE"),
-      pot.compatible = sum(pot.compatible == 1, na.rm = T),
+      pot.compatible = sum(pot.compatible == 1,  na.rm = T),
       missing.fu.date = sum(missing.fu.date == 1, na.rm = T)
     ) |>
     mutate(
       per.got60 = round(got60day / inadequate * 100),
-      per.ontime60day = round(ontime60day / inadequate * 100),
+      per.ontime60day = round(ontime60day / got60day * 100),
       per.comp = round(compatible / inadequate * 100),
       per.pot.comp = round(pot.compatible / inadequate * 100),
       per.got60.2 = paste(got60day, " ", "(", per.got60, "%", ")", sep = ""),
@@ -2342,11 +2342,12 @@ generate_60_day_tab <- function(cases.need60day) {
       inadequate,
       per.got60.2,
       per.ontime60day.2,
+      per.missing.fu.date,
       per.comp.2,
-      per.pot.comp.2,
-      per.missing.fu.date
+      per.pot.comp.2
     ) |>
-    mutate(year = as.character(year))
+    mutate(year = as.character(year)) |>
+    arrange(desc(year))
 
 
   # flex table
@@ -2359,10 +2360,10 @@ generate_60_day_tab <- function(cases.need60day) {
       year = "Year",
       inadequate = "No. inadequate cases",
       per.got60.2 = "Recorded 60-day follow-up",
-      per.ontime60day.2 = "Recorded 60-day ontime",
+      per.ontime60day.2 = "Recorded 60-day ontime (out of those visited)",
+      per.missing.fu.date = "No. Missing follow up date with findings",
       per.comp.2 = "Compatible cases",
-      per.pot.comp.2 = "Potentially compatible cases",
-      per.missing.fu.date = "No. Missing follow up date with findings"
+      per.pot.comp.2 = "Potentially compatible cases*"
     ) |>
     flextable::align(j = 2:7, align = "center", part = "all") |>
     flextable::align(j = 1:1, align = "left", part = "all") |>
