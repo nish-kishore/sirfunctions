@@ -670,7 +670,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
             classification %in% c("Discarded", "Pending") |
               is.na(classification) == T
           ) &
-          (age.months < 60),
+          (age.months < 60 | is.na(age.months)),
         1,
         0
       ),
