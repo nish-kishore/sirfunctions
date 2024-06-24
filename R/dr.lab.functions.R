@@ -357,7 +357,8 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   cli::cli_process_start("Filtering country-specific lab data")
 
-  lab.data <- ctry.data$lab.data |> filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
+  lab.data <- ctry.data$lab.data |>
+    filter(ctry.code2 == ctry.data$ctry$ISO_3_CODE)
 
   if (nrow(lab.data) == 0) {
     message("Filtering resulted in zero records. Please check that the ctry.code2 in lab.data matches ctry.data$ctry$ISO_3_CODE")
@@ -516,6 +517,13 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   lab.data2 <- test
 
   cli::cli_process_done()
+
+  # remove time portion of any date time columns
+  cli::cli_process_start("Converting date/date-time character columns to date columns")
+  lab.data2 <- lab.data2 |>
+    dplyr::mutate(dplyr::across(dplyr::starts_with("Date"), \(x) lubridate::as_date(x)))
+  cli::cli_process_done()
+
   return(lab.data2)
 }
 
