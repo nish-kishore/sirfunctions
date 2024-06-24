@@ -2325,8 +2325,8 @@ generate_60_day_tab <- function(cases.need60day) {
       per.pot.comp = round(pot.compatible / inadequate * 100),
       per.got60.2 = paste(got60day, " ", "(", per.got60, "%", ")", sep = ""),
       per.ontime60day.2 = paste(ontime60day, " ", "(", per.ontime60day, "%", ")", sep = ""),
-      per.comp.2 = paste(compatible, " ", "(", per.comp, "%", ")", sep = ""),
-      per.pot.comp.2 = paste(pot.compatible, " ", "(", per.pot.comp, "%", ")", sep = ""),
+      per.comp.2 = compatible,
+      per.pot.comp.2 = pot.compatible,
       per.missing.fu.date = paste(
         missing.fu.date,
         " ",
