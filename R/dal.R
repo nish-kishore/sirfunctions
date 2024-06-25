@@ -803,7 +803,7 @@ extract_country_data <- function(
   ctry.data$ctry <- .raw.data$global.ctry |>
     dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
   ctry.data$ctry <- dplyr::filter(ctry.data$ctry, ADM0_SOVRN == chosen.country)
-  .country <- unique(ctry.data$ctry$ADM0_NAME)
+  #.country <- unique(ctry.data$ctry$ADM0_NAME)
 
   ctry.data$prov <- .raw.data$global.prov |>
     dplyr::filter(ADM0_NAME == .country)
