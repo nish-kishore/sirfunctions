@@ -802,8 +802,9 @@ extract_country_data <- function(
   cli::cli_process_start(paste0(steps,") Subsetting country spatial data\n"))
   ctry.data$ctry <- .raw.data$global.ctry |>
     dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
-  ctry.data$ctry <- dplyr::filter(ctry.data$ctry, ADM0_SOVRN == chosen.country)
-  #.country <- unique(ctry.data$ctry$ADM0_NAME)
+  ctry.data$ctry <- dplyr::filter(ctry.data$ctry,
+                                  stringr::str_to_upper(ADM0_SOVRN) == stringr::str_to_upper(chosen.country))
+  .country <- unique(ctry.data$ctry$ADM0_NAME)
 
   ctry.data$prov <- .raw.data$global.prov |>
     dplyr::filter(ADM0_NAME == .country)
