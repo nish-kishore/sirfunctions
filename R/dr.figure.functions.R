@@ -222,6 +222,9 @@ generate_es_site_det <- function(ctry.data, es.data.long,
                                  output_path=Sys.getenv("DR_FIGURE_PATH"),
                                  vaccine_types=NULL,
                                  detection_types=NULL) {
+  es.data.long <- es.data.long |>
+    filter(between(collect.date, es_start_date, es_end_date))
+
   sias <- ctry.data$sia %>%
     filter(status == "Done") %>%
     filter(yr.sia >= year(es_start_date) &
