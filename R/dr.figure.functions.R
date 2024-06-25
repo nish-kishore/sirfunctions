@@ -2526,7 +2526,7 @@ generate_es_tab <- function(es.data,
       med.trans = "Median lab transport time (d)",
       num.wpv.or.vdpv = "No. VDPV or WPV"
     ) |>
-    flextable::align(j = 10:11, align = "center", part = "all") %>%
+    flextable::align(j = 10:11, align = "center", part = "all")
 
   if ((neg_interval_data |> nrow()) > 0) {
     cli::cli_alert_info(paste0("The following sample sites had bad data. ",
