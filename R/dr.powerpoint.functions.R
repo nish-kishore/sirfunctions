@@ -276,7 +276,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
     #ph_with(dml(ggobj = es.site.det.facet), location = ph_location_type("body")) %>%
     # ES sites and detection map ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
-    ph_with(value = "ES Sites and Detection 2",
+    ph_with(value = "ES Site Performance",
             location = ph_location_type("title")) %>%
     ph_with(dml(ggobj = es.det.map), location = ph_location_type("body")) %>%
     # ES timeliness sample collection to lab ----
