@@ -385,6 +385,10 @@ generate_es_site_det <- function(ctry.data, es.data.long,
 #' @export
 generate_es_timely <- function(es.data, es_start_date=(end_date - lubridate::years(1)),
                                es_end_date=end_date, output_path=Sys.getenv("DR_FIGURE_PATH")) {
+
+  es.data <- es.data |>
+    filter(between(collect.date, es_start_date, es_end_date))
+
   es.data$timely <-
     difftime(
       as.Date(es.data$date.received.in.lab, format = "%d/%m/%Y"),
@@ -1652,8 +1656,14 @@ generate_es_det_map <- function(es.data, es.data.long, ctry.shape, prov.shape,
                                 es_start_date=(end_date - lubridate::years(1)),
                                 es_end_date=end_date, output_path = Sys.getenv("DR_FIGURE_PATH")) {
 
-  det.rate <- summarize(
-    group_by(es.data.long, site.name),
+  es.data <- es.data |>
+    dplyr::filter(between(collect.date, es_start_date, es_end_date))
+
+  es.data.long <- es.data.long |>
+    dplyr::filter(between(collect.date, es_start_date, es_end_date))
+
+  det.rate <- dplyr::summarize(
+    dplyr::group_by(es.data.long, site.name),
     det.rate = 100 * sum(as.numeric(ev.detect), na.rm = TRUE) / n(),
     samp.num = n()
   )
@@ -1928,7 +1938,7 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
     flextable::set_header_labels(type = "") %>%
     flextable::add_footer_row(
       top = F,
-      "*Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND ≤14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
+      "*Pendings included\n**Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND ≤14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
       colwidths = ncol(temp.ind.tab.flex)
     ) %>%
     flextable::autofit()
@@ -2296,7 +2306,7 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
                                  sub = "") |>
     flextable::add_footer_row(
       top = F,
-      "*Pending included\n**Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND ≤14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
+      "*Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND ≤14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
       colwidths = ncol(inad.tab)
     ) %>%
     flextable::autofit()
@@ -2387,6 +2397,10 @@ generate_60_day_tab <- function(cases.need60day) {
 generate_es_tab <- function(es.data,
                             es_start_date=(end_date - lubridate::years(1)),
                             es_end_date=end_date) {
+
+  es.data <- es.data |>
+    filter(between(collect.date, es_start_date, es_end_date))
+
   # Big table that needs calculating
   # Cols = province, district, site name, earliest sample collected in POLIS,
   # n samples collected (earliest to analysis date), % EV detected, % good condition
@@ -2511,7 +2525,8 @@ generate_es_tab <- function(es.data,
       trans.pct = "% arriving within 3 days",
       med.trans = "Median lab transport time (d)",
       num.wpv.or.vdpv = "No. VDPV or WPV"
-    )
+    ) |>
+    flextable::align(j = 10:11, align = "center", part = "all") %>%
 
   if ((neg_interval_data |> nrow()) > 0) {
     cli::cli_alert_info(paste0("The following sample sites had bad data. ",
