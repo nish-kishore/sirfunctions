@@ -2523,7 +2523,7 @@ generate_es_tab <- function(es.data,
       # no of bad specimens excluded
       condition.pct = 100 * sum(sample.condition == "Good", na.rm = T) / n(),
       # specimens in good condition
-      trans.pct = 100 * sum(as.numeric(timely) <= 3, na.rm = TRUE) / n(),
+      trans.pct = round(100 * sum(as.numeric(timely) <= 3, na.rm = TRUE) / n(), 1),
       # % timely
       med.trans = paste0(
         median(as.numeric(timely), na.rm = T),
