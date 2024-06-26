@@ -783,7 +783,7 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
 
   provnpafp$cats <- cut(
     provnpafp$npafp_rate,
-    breaks = c(-1, 0, 1, 2, 3, 1000),
+    breaks = c(-1, 0, 1, 2, 3, Inf),
     right = F,
     labels = c("Zero NPAFP cases", "<1",
                "1-<2", "2-<3", "3+")
@@ -865,7 +865,8 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(data = prov.pop.case.npafp, color = "black", aes(fill = cats)) +
+    geom_sf(data = prov.pop.case.npafp, color = "black", aes(fill = cats),
+            show.legend = T) +
     geom_text(
       data = prov.2npafp,
       aes(
@@ -888,7 +889,7 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
         "Missing Pop" = "#2C83C7",
         "Silent (u15pop >= 100K)" = "#d7191c"
       ),
-      drop = T
+      drop = F
     ) +
     ggtitle("NPAFP Rate Annualized - Province") +
     sirfunctions::f.plot.looks("epicurve") +
@@ -925,7 +926,7 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
 
   distnpafp$cats <- cut(
     distnpafp$npafp_rate,
-    breaks = c(-1, 0, 1, 2, 3, 1000),
+    breaks = c(-1, 0, 1, 2, 3, Inf),
     right = F,
     labels = c("Zero NPAFP cases", "<1",
                "1-<2", "2-<3", "3+")
@@ -1005,7 +1006,7 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
       size = .5
     ) +
     #geom_sf(data = ctry.data$dist, color = "black", fill = "lightgrey", size = .5) +
-    geom_sf(data = dist.pop.case.npafp, color = "black", aes(fill = cats)) +
+    geom_sf(data = dist.pop.case.npafp, color = "black", aes(fill = cats), show.legend = T) +
     geom_text(
       data = dist.2npafp,
       aes(
@@ -1028,7 +1029,7 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
         "Missing Pop" = "#2C83C7",
         "Silent (u15pop >= 100K)" = "#d7191c"
       ),
-      drop = T
+      drop = F
     ) +
     # scale_color_manual(values = sirfunctions::f.color.schemes("para.case"), name = "Case type",
     #                  drop = F) +
@@ -1089,13 +1090,13 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape,
     tibble() %>%
     mutate(
       prop.cat = case_when(
-        allafp == 0 ~ "Zero AFP cases",
-        allafp != 0 & per.stool.ad < 40 ~ "<40%",
-        allafp != 0 &
+        afp.cases == 0 ~ "Zero AFP cases",
+        afp.cases != 0 & per.stool.ad < 40 ~ "<40%",
+        afp.cases != 0 &
           per.stool.ad >= 40 & per.stool.ad < 60 ~ "40-59%",
-        allafp != 0 &
+        afp.cases != 0 &
           per.stool.ad >= 60 & per.stool.ad < 80 ~  "60-79%",
-        allafp != 0 & per.stool.ad >= 80 ~  "80%+"
+        afp.cases != 0 & per.stool.ad >= 80 ~  "80%+"
       )
     ) %>%
     mutate(prop.cat = factor(
@@ -1145,7 +1146,7 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape,
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(data = stool.map.p, color = "black", aes(fill = prop.cat)) +
+    geom_sf(data = stool.map.p, color = "black", aes(fill = prop.cat), show.legend = T) +
     geom_text(
       data = stoolad.nums.p,
       aes(
@@ -1233,13 +1234,13 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape
     tibble() %>%
     mutate(
       prop.cat = case_when(
-        allafp == 0 ~ "Zero AFP cases",
-        allafp != 0 & per.stool.ad < 40 ~ "<40%",
-        allafp != 0 &
+        afp.cases == 0 ~ "Zero AFP cases",
+        afp.cases != 0 & per.stool.ad < 40 ~ "<40%",
+        afp.cases != 0 &
           per.stool.ad >= 40 & per.stool.ad < 60 ~ "40-59%",
-        allafp != 0 &
+        afp.cases != 0 &
           per.stool.ad >= 60 & per.stool.ad < 80 ~  "60-79%",
-        allafp != 0 & per.stool.ad >= 80 ~  "80%+"
+        afp.cases != 0 & per.stool.ad >= 80 ~  "80%+"
       )
     ) %>%
     mutate(prop.cat = factor(
@@ -1288,7 +1289,7 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(data = stool.map.d, color = "black", aes(fill = prop.cat)) +
+    geom_sf(data = stool.map.d, color = "black", aes(fill = prop.cat), show.legend = T) +
     geom_text(
       data = stoolad.nums.d,
       aes(
@@ -1310,7 +1311,7 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape
         "80%+" = "#2c7bb6",
         "Unable to Assess" = "white"
       ),
-      drop = T
+      drop = F
     ) +
     ggtitle("Stool Adequacy - District") +
     sirfunctions::f.plot.looks("epicurve") +
@@ -1448,10 +1449,27 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
     sirfunctions::f.plot.looks("epicurve")
 
   if (mark_x) {
-    mapt1 <- mapt1 +
-      geom_sf(data = st_centroid(filter(low.case.prov, type == "noti.7d.on")),
-              pch = 4,
-              size = pt_size)
+    tryCatch(
+      {
+        mapt1 <- mapt1 +
+          geom_sf(data = st_centroid(filter(low.case.prov, type == "noti.7d.on")),
+                  pch = 4,
+                  size = pt_size)
+      },
+      error = function(error) {
+        cli::cli_alert_warning("Duplicate vertex. Setting sf_use_s2(F).")
+
+        sf::sf_use_s2(F)
+        mapt1 <- mapt1 +
+          geom_sf(data = st_centroid(filter(low.case.prov, type == "noti.7d.on")),
+                  pch = 4,
+                  size = pt_size)
+        sf::sf_use_s2(T)
+
+        cli::cli_alert_success("Setting sf_use_s2(T)")
+      }
+    )
+
   }
   mapt1 <- mapt1 +
     facet_wrap( ~ year, ncol = 4) +
@@ -1483,10 +1501,27 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
     )
 
   if (mark_x) {
-    mapt2 <- mapt2 +
-      geom_sf(data = st_centroid(filter(low.case.prov, type == "inv.2d.noti")),
-              pch = 4,
-              size = pt_size)
+
+    tryCatch(
+      {
+        mapt2 <- mapt2 +
+          geom_sf(data = st_centroid(filter(low.case.prov, type == "inv.2d.noti")),
+                  pch = 4,
+                  size = pt_size)
+      },
+      error = function(error) {
+        cli::cli_alert_warning("Duplicate vertex. Setting sf_use_s2(F).")
+
+        sf::sf_use_s2(F)
+        mapt2 <- mapt2 +
+          geom_sf(data = st_centroid(filter(low.case.prov, type == "inv.2d.noti")),
+                  pch = 4,
+                  size = pt_size)
+        sf::sf_use_s2(T)
+
+        cli::cli_alert_success("Setting sf_use_s2(T)")
+      }
+    )
   }
   mapt2 <- mapt2 +
     scale_fill_manual(name = "Proportion",
@@ -1527,10 +1562,26 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
     sirfunctions::f.plot.looks("epicurve")
 
   if (mark_x) {
-    mapt3 <- mapt3 +
-      geom_sf(data = st_centroid(filter(low.case.prov, type == "coll.3d.inv")),
-              pch = 4,
-              size = pt_size)
+    tryCatch(
+      {
+        mapt3 <- mapt3 +
+          geom_sf(data = st_centroid(filter(low.case.prov, type == "coll.3d.inv")),
+                  pch = 4,
+                  size = pt_size)
+      },
+      error = function(error) {
+        cli::cli_alert_warning("Duplicate vertex. Setting sf_use_s2(F).")
+
+        sf::sf_use_s2(F)
+        mapt3 <- mapt3 +
+          geom_sf(data = st_centroid(filter(low.case.prov, type == "coll.3d.inv")),
+                  pch = 4,
+                  size = pt_size)
+        sf::sf_use_s2(T)
+
+        cli::cli_alert_success("Setting sf_use_s2(T)")
+      }
+    )
   }
   mapt3 <- mapt3 +
     facet_wrap( ~ year, ncol = 4) +
@@ -1569,10 +1620,26 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
 
 
   if (mark_x) {
-    mapt4 <- mapt4 +
-      geom_sf(data = st_centroid(filter(low.case.prov, type == "ship.3d.coll")),
-              pch = 4,
-              size = pt_size)
+    tryCatch(
+      {
+        mapt4 <- mapt4 +
+          geom_sf(data = st_centroid(filter(low.case.prov, type == "ship.3d.coll")),
+                  pch = 4,
+                  size = pt_size)
+      },
+      error = function(error) {
+        cli::cli_alert_warning("Duplicate vertex. Setting sf_use_s2(F).")
+
+        sf::sf_use_s2(F)
+        mapt4 <- mapt4 +
+          geom_sf(data = st_centroid(filter(low.case.prov, type == "ship.3d.coll")),
+                  pch = 4,
+                  size = pt_size)
+        sf::sf_use_s2(T)
+
+        cli::cli_alert_success("Setting sf_use_s2(T)")
+      }
+    )
   }
 
   mapt4 <- mapt4 +
