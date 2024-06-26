@@ -390,7 +390,7 @@ generate_dr_ppt2 <- function(ctry.data,
     # Paralytic polio and compatible cases map ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(
-      value = paste("Paralytic Polio and Compatible cases", start_date, "-", end_date),
+      value = paste("Paralytic Polio and Compatible cases", start_date, "-", lubridate::today()),
       location = ph_location_type("title")
     ) %>%
     ph_with(external_img(file.path(fig.path, "afp.case.map.png")), location = ph_location(top = 2, left = 5, width = 5.5, height = 5.5)) %>%
@@ -408,7 +408,7 @@ generate_dr_ppt2 <- function(ctry.data,
     # Epi-curve ----
   add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     ph_with(
-      value = paste("Epicurve", start_date, "-", end_date),
+      value = paste("Epicurve", start_date, "-", lubridate::today()),
       location = ph_location_type("title")
     ) %>%
     ph_with(external_img(file.path(fig.path, "afp.epi.curve.png")), location = ph_location(top = 2, left = 1, width = 14, height = 5)) %>%
