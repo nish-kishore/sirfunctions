@@ -248,11 +248,13 @@ load_data <- function(data_dir_path) {
       return(message("Aborting dataset loading..."))
     }
 
+    file_names <- list.files(data_dir_path, pattern = "\\.Rds$", ignore.case = T)
+
     load_data <- suppressWarnings(as.integer(load_data))
     if (is.na(load_data) | load_data == 0) {
       message("Invalid response. Please try again.")
-    } else if (load_data <= length(list.files(data_dir_path))) {
-      chosen_file <- list.files(data_dir_path)[load_data]
+    } else if (load_data <= length(file_names)) {
+      chosen_file <- file_names[load_data]
       chosen_file_path <- file.path(data_dir_path, chosen_file)
       message(paste0("Loading ", chosen_file))
       country_data <- readr::read_rds(chosen_file_path)
@@ -296,14 +298,17 @@ generate_data <-
            country_name,
            dr_data_path,
            attach_spatial_data) {
-    data_exists <- length(list.files(data_path)) != 0
+
+    file_names <- list.files(data_path, pattern = "\\.rds$", ignore.case = T)
+
+    data_exists <- length(file_names) != 0
     if (data_exists) {
       response <- T
       while (response) {
         cli::cli_alert_info("Previous save(s) found:")
 
-        for (i in 1:length(list.files(data_path))) {
-          message(paste0(i, ") ", list.files(data_path)[i]))
+        for (i in 1:length(file_names)) {
+          message(paste0(i, ") ", file_names[i]))
         }
 
         message("Save a new copy? Type 'y','n', or 'q' to quit.")
@@ -531,24 +536,29 @@ init_dr <-
 
     # Attaching lab data if available and creating a copy to data folder
     if (!is.null(lab_data_path)) {
+      cli::cli_process_start("Saving a copy of the lab data to the data folder.")
       country_data$lab.data <- load_lab_data(lab_data_path)
-      dr_lab_data_path <- file.path(data_path, "lab_data.csv")
-      file.copy(lab_data_path, dr_lab_data_path)
+      dr_lab_data_path <- file.path(data_path,
+                                    paste0(country_data$ctry$ISO_3_CODE, "_lab_data_", Sys.Date(), ".Rds"))
+      saveRDS(country_data$lab.data, dr_lab_data_path)
       Sys.setenv(DR_LAB_PATH = dr_lab_data_path)
     }
 
     # Attaching ISS data if available and creating a copy to data folder
     if (!is.null(iss_data_path)) {
+      cli::cli_process_start("Saving a copy of the ISS/eSurv data to the data folder.")
       country_data$iss.data <- load_iss_data(iss_data_path)
-      dr_iss_data_path <- file.path(dr_data_path, "iss_data.csv")
-      file.copy(iss_data_path, dr_iss_data_path)
+      dr_iss_data_path <- file.path(dr_data_path,
+                                    paste0(country_data$ctry$ISO_3_CODE, "_iss_data_", Sys.Date(), ".Rds"))
+      saveRDS(country_data$iss.data, dr_iss_data_path)
       Sys.setenv(DR_ISS_PATH = dr_iss_data_path)
+      cli::cli_process_done()
     }
 
     # Check if previous params should be loaded or update a new cache file
     check_cache(file.path(country_dir_path, "parameters", "parameters.RData"),
                 start_date, end_date, country_name)
-                
+
     end_date <<- lubridate::as_date(end_date)
     start_date <<- lubridate::as_date(start_date)
     # Setting environmental variables
