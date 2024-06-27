@@ -362,9 +362,15 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   if (nrow(lab.data) == 0) {
     message("Filtering resulted in zero records. Please check that the ctry.code2 in lab.data matches ctry.data$ctry$ISO_3_CODE")
-    return(NULL)
+    return(ctry.data$lab.data)
   }
 
+  cli::cli_process_done()
+
+  # remove time portion of any date time columns
+  cli::cli_process_start("Converting date/date-time character columns to date columns")
+  lab.data2 <- lab.data2 |>
+    dplyr::mutate(dplyr::across(dplyr::starts_with("Date"), \(x) lubridate::as_date(x)))
   cli::cli_process_done()
 
   cli::cli_process_start("Filtering for cases with valid dates")
@@ -381,6 +387,12 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
            CaseOrContact == "1-Case")
   cli::cli_process_done()
 
+  # Don't run additional cleaning steps if no data is present
+  if (nrow(lab.data2) == 0) {
+    cli::cli_alert_danger("There are zero lab data after filtering. Aborting cleaning steps and returning the original lab.data.")
+    return(ctry.data$lab.data)
+  }
+
   cli::cli_process_start("Imputing missing years")
   miss = filter(lab.data2, is.na(year))
 
@@ -395,18 +407,11 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
     ))
   cli::cli_process_done()
 
-  # !!! after operation no more missing years
-  count(lab.data2, year)
-  # !!! District in the original dataset and distict names are incorrect
-  count(lab.data2, District)
-
   cli::cli_process_start("Correcting district and province names.")
   lab.data2$Province = str_to_upper(lab.data2$Province)
   lab.data2$District = str_to_upper(lab.data2$District)
   lab.data2$Province = iconv(lab.data2$Province, to='ASCII//TRANSLIT')
   lab.data2$District = iconv(lab.data2$District, to='ASCII//TRANSLIT')
-  # !!! missing values for province in 13 entries for the date range specified
-  count(lab.data2, Province, year)
 
   # Match province and district by epid number -
   lab.data2$prov = NA
@@ -421,11 +426,6 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   lab.data2$adm1guid = ctry.data$afp.all.2$adm1guid[match(lab.data2$EpidNumber, ctry.data$afp.all.2$epid)]
   lab.data2$adm2guid = ctry.data$afp.all.2$adm2guid[match(lab.data2$EpidNumber, ctry.data$afp.all.2$epid)]
-
-
-  # matching by Epid
-  # !!! first pass at reconciling missing values
-  count(lab.data2, prov, year)
 
   potential_errors = lab.data2
   potential_errors %>% count(EpidNumber %in% ctry.data$afp.all.2$epid)
@@ -516,12 +516,6 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   lab.data2 <- test
 
-  cli::cli_process_done()
-
-  # remove time portion of any date time columns
-  cli::cli_process_start("Converting date/date-time character columns to date columns")
-  lab.data2 <- lab.data2 |>
-    dplyr::mutate(dplyr::across(dplyr::starts_with("Date"), \(x) lubridate::as_date(x)))
   cli::cli_process_done()
 
   return(lab.data2)
