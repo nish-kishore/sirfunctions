@@ -115,6 +115,7 @@ f.color.schemes <- function(type) {
       "Case investigation to stool 1 collection" = "#4daf4a",
       "Stool 1 collection to stool 2 collection" = "#984ea3",
       "Last stool collection to received in lab" = "#ff7f00",
+      "Last stool collection sent to lab" = "#ff7f00",
       "Stool received lab to final culture results" = "#b55f04"
     )
   )
