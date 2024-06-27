@@ -534,7 +534,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
       "nottoinvest" = "Case notification to investigation",
       "investtostool1" = "Case investigation to stool 1 collection",
       "stool1tostool2" = "Stool 1 collection to stool 2 collection",
-      "daysstooltolab" = "Last stool collection to received in lab",
+      "daysstooltolab" = "Last stool collection sent to lab",
       "days.lab.culture" = "Stool received lab to final culture results",
       "days.seq.ship" = "Isolate received for sequencing to sequence results available",
       "days.lab.seq" = "Stool received in lab to sequence result",
@@ -567,6 +567,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
         "Case notification to investigation",
         "Case investigation to stool 1 collection",
         "Stool 1 collection to stool 2 collection",
+        "Last stool collection sent to lab",
         "Last stool collection to received in lab",
         "Stool received lab to final culture results"
       )
