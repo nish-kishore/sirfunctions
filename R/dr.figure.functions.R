@@ -13,7 +13,7 @@ generate_ctry_timeliness_graph <- function(int.data, output_path = Sys.getenv("D
       aes(
         x = factor(year),
         y = medi,
-        fill = fct_rev(type)
+        fill = forcats::fct_rev(type)
       ),
       position = "stack",
       stat = "identity"
@@ -24,7 +24,7 @@ generate_ctry_timeliness_graph <- function(int.data, output_path = Sys.getenv("D
         x = factor(year),
         y = medi,
         label = medi,
-        group = fct_rev(type)
+        group = forcats::fct_rev(type)
       ),
       position = position_stack(vjust = 0.5)
     ) +
@@ -72,7 +72,7 @@ generate_prov_timeliness_graph <- function(int.data, afp.prov.year, output_path 
     geom_bar(aes(
       x = as.character(labs),
       y = medi,
-      fill = fct_rev(type)
+      fill = forcats::fct_rev(type)
     ),
     position = "stack",
     stat = "identity") +
@@ -80,7 +80,7 @@ generate_prov_timeliness_graph <- function(int.data, afp.prov.year, output_path 
       x = labs,
       y = medi,
       label = medi,
-      group = fct_rev(type)
+      group = forcats::fct_rev(type)
     ),
     position = position_stack(vjust = 0.5)) +
     coord_flip() +
