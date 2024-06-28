@@ -641,7 +641,7 @@ generate_dr_ppt2 <- function(ctry.data,
       fpar(ftext("If EPID prov and dist code match with previously reported case in the same onset year, then backfill prov and dist",fp_text(font.size = 17))),
       fpar(ftext("If no match, expand search to any year, then backfill prov and dist",fp_text(font.size = 17))),
       fpar(ftext("If there are multiple guids identified with the same prov and dist for the match, then do not match and leave blank (cannot tell which GUID to use)",fp_text(font.size = 17))),
-      fpar(ftext(paste0("There are ", (incomplete.adm.dist |> length()), " missing district from raw data"), fp_text(font.size = 17))),
+      fpar(ftext(paste0("There are ", (nrow(incomplete.adm.dist)), " missing district from raw data"), fp_text(font.size = 17))),
       fpar(ftext("Able to extract district from EPID for (manually fill here) cases.", fp_text(font.size = 17)))
     ),
     location = ph_location_type("body"),
