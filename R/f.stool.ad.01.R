@@ -9,6 +9,7 @@
 #' @import dplyr
 #' @import lubridate
 #' @import tibble
+#'
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
 #' formatted as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all2
 #' which includes "NOT-AFP"
@@ -21,6 +22,8 @@
 #' @param missing chr: "good" or "bad" or "missing"; default "good"
 #' @param bad.data chr: "remove" or "inadequate" or "adequate"; default "inadequate"
 #' @param rolling boolean: Should data be annualized or calculated within the time period allotted
+#' @param sp_continuity_validation boolean: Should data excluded temporaliry inconsistent GUIDs? Default T.
+#'
 #' @returns tibble: long format stool adequacy evaluations
 #' @export
 
@@ -32,7 +35,8 @@ f.stool.ad.01 <- function(
     spatial.scale,
     missing = "good",
     bad.data = "inadequate",
-    rolling = F
+    rolling = F,
+    sp_continuity_validation = T
     ){
 
   #file names
@@ -47,7 +51,7 @@ f.stool.ad.01 <- function(
   # not for any population based calculation - SHOULD THIS BE A DIFFERENT FILE??
 
   #check that data inputs have the same country data
-  if(!sort(unique(admin.data$adm0guid)) == sort(unique(afp.data$adm0guid))){
+  if (!sort(unique(admin.data$adm0guid)) == sort(unique(afp.data$adm0guid))) {
     stop("Please make sure that your `afp.data` and `admin.data` are subset for
          the same countries")
   }
@@ -72,7 +76,7 @@ f.stool.ad.01 <- function(
   )
 
   #check that country data contains all the years necessary
-  if(sum(!years %in% ctry.years) > 0){
+  if (sum(!years %in% ctry.years) > 0) {
     unfound.years <- years[!(years %in% ctry.years)]
     stop(paste0("There are no years of administrative level data for: ",
                 paste0(unfound.years, collapse = ", ")))
@@ -85,105 +89,97 @@ f.stool.ad.01 <- function(
     filter(between(date, start.date, end.date))
 
   #check if spatial.data param in appropriate format
-  if(!spatial.scale %in% c("ctry", "prov", "dist")){
+  if (!spatial.scale %in% c("ctry", "prov", "dist")) {
     stop("'spatial.scale' can only be 'ctry', 'prov', or 'dist'")
   }
 
-  #check input data based on spatial format
-  if(spatial.scale == "ctry"){
-    if(sum(!names.afp.ctry %in% names(afp.data)) > 0){
-      stop(paste0("The follow variables were not found in afp.data: ",
-                  paste0(names.afp.ctry[!names.afp.ctry %in% names(afp.data)],
-                         collapse = ", ")))
-    }
-    if(sum(!names.ctry %in% names(admin.data)) > 0){
-      stop(paste0("The follow variables were not found in admin.data: ",
-                  paste0(names.ctry[!names.ctry %in% names(admin.data)],
-                         collapse = ", ")))
-    }
-    #check if ctry admin data is of a larger spatial scale than the parameter chosen
-    if(sum(c("adm1guid", "adm2guid") %in% names(admin.data)) > 0){
-      stop("Please check that the spatial scale of the country admin data provided
-      matches the `spatial.scale` chosen.")
+
+  # helper function to check missing variables based on spatial scale
+  check_missing_var <- function(afp_vars, admin_vars, afp_data, admin_data) {
+    missing_afp_vars <- setdiff(afp_vars, names(afp_data))
+    if (length(missing_afp_vars) > 0) {
+      stop(paste0("The following variables were not found in afp.data: ",
+                  paste(missing_afp_vars, collapse = ", ")))
     }
 
-    incomplete.adm <- admin.data |>
-      group_by(adm0guid) |>
-      summarize(freq = n()) |>
-      filter(freq < length(year(start.date):year(end.date))) |>
-      pull(adm0guid)
-
-    admin.data <- filter(admin.data, !adm0guid %in% incomplete.adm)
-    afp.data <- filter(afp.data, !adm0guid %in% incomplete.adm)
-
+    missing_admin_vars <- setdiff(admin_vars, names(admin_data))
+    if (length(missing_admin_vars) > 0) {
+      stop(paste0("The following variables were not found in admin.data: ",
+                  paste(missing_admin_vars, collapse = ", ")))
+    }
   }
 
-  if(spatial.scale == "prov"){
-    if(sum(!names.afp.prov %in% names(afp.data)) > 0){
-      stop(paste0("The follow variables were not found in afp.data: ",
-                  paste0(names.afp.prov[!names.afp.prov %in% names(afp.data)],
-                         collapse = ", ")))
+  # helper function to check if spatial scale of data matches spatial scale chosen
+  check_spatial_scale <- function(admin_data, spatial_scale) {
+
+    # Define a list for spatial scales to columns that should not be present
+    invalid_columns <- list(
+      ctry = c("adm1guid", "adm2guid"),
+      prov = "adm2guid",
+      dist = NULL  # No invalid columns for district level
+    )
+
+    # Get the relevant set of invalid columns for the current spatial scale
+    cols_to_check <- invalid_columns[[spatial_scale]]
+
+    if (!is.null(cols_to_check) && any(cols_to_check %in% names(admin_data))) {
+      stop("Please check that the spatial scale of the country admin data provided matches the `spatial.scale` chosen.")
     }
-    if(sum(!names.prov %in% names(admin.data)) > 0){
-      stop(paste0("The follow variables were not found in admin.data: ",
-                  paste0(names.prov[!names.prov %in% names(admin.data)],
-                         collapse = ", ")))
-    }
-
-    #check if country admin data is of a larger spatial scale than the parameter
-    #chosen
-    if(sum(c("adm2guid") %in% names(admin.data)) > 0){
-      stop("Please check that the spatial scale of the country admin data provided
-      matches the `spatial.scale` chosen.")
-    }
-
-
-    incomplete.adm <- admin.data |>
-      group_by(adm1guid) |>
-      summarize(freq = n()) |>
-      filter(freq < length(year(start.date):year(end.date))) |>
-      pull(adm1guid)
-
-    admin.data <- filter(admin.data, !adm1guid %in% incomplete.adm)
-    afp.data <- filter(afp.data, !adm1guid %in% incomplete.adm)
-
   }
 
-  if(spatial.scale == "dist"){
-    if(sum(!names.afp.dist %in% names(afp.data)) > 0){
-      stop(paste0("The follow variables were not found in afp.data: ",
-                  paste0(names.afp.dist[!names.afp.dist %in% names(afp.data)],
-                         collapse = ", ")))
-    }
-    if(sum(!names.dist %in% names(admin.data)) > 0){
-      stop(paste0("The follow variables were not found in admin.data: ",
-                  paste0(names.dist[!names.dist %in% names(admin.data)],
-                         collapse = ", ")))
-    }
+  # helper function to filter GUIDs that are not consistent across temporal scale
+  get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) {
+    guid_col <- paste0("adm", match(spatial_scale, c("ctry", "prov", "dist")) - 1, "guid")
+    expected_freq <- length(year(start_date):year(end_date))
 
-    incomplete.adm <- admin.data |>
-      group_by(adm2guid) |>
-      summarize(freq = n()) |>
-      filter(freq < length(year(start.date):year(end.date))) |>
-      pull(adm2guid)
+    incomplete_adm <- incomplete_adm <- admin_data |>
+      group_by(across(all_of(guid_col))) |>
+      summarize(freq = n(), .groups = 'drop') |>
+      filter(freq < expected_freq) |>
+      pull(guid_col)
 
-    admin.data <- filter(admin.data, !adm2guid %in% incomplete.adm)
-    afp.data <- filter(afp.data, !adm2guid %in% incomplete.adm)
-
+    return(incomplete_adm)
   }
 
-  if(length(incomplete.adm) > 0){
+  # Perform checks
+  switch(spatial.scale,
+         "ctry" = {
+           check_missing_var(names.afp.ctry, names.ctry, afp.data, admin.data)
+           check_spatial_scale(admin.data, "ctry")
+         },
+         "prov" = {
+           check_missing_var(names.afp.prov, names.prov, afp.data, admin.data)
+           check_spatial_scale(admin.data, "prov")
+         },
+         "dist" = {
+           check_missing_var(names.afp.dist, names.dist, afp.data, admin.data)
+           check_spatial_scale(admin.data, "dist")
+         })
 
-    readline(paste0("The following GUIDS at the ", spatial.scale,
-                    " were not valid across the temporal scale:\n",
-                    paste0(incomplete.adm, collapse = ", "),
-                    "\n Please hit [ENTER] to continue"))
+  # Get inconsistent GUIDs across temporal scale
+  incomplete.adm <- get_incomplete_adm(admin.data, spatial.scale, start.date, end.date)
 
+  # Filter data if spatial validation is true
+  if (sp_continuity_validation) {
+
+    # Output warning message
+    if (length(incomplete.adm) > 0) {
+      readline(paste0("The following GUIDS at the ", spatial.scale,
+                      " were not valid across the temporal scale:\n",
+                      paste0(incomplete.adm, collapse = ", "),
+                      "\n Please hit [ENTER] to continue"))
+    }
+
+    guid_col_name <- paste0("adm", match(spatial.scale, c("ctry", "prov", "dist")) - 1, "guid")
+    admin.data <- admin.data |>
+      filter(!(.data[[guid_col_name]] %in% incomplete.adm))
+
+    afp.data <- afp.data |>
+      filter(!(.data[[guid_col_name]] %in% incomplete.adm))
   }
-
 
   #Warning message about non-overlapping dates
-  if(start.date < as_date(afp.data$date |> min(na.rm = T))){
+  if (start.date < as_date(afp.data$date |> min(na.rm = T))) {
     print(paste0(
       "Your specified start date is ",
       start.date,
@@ -835,5 +831,9 @@ stool.data <- afp.data |>
 
     }
   }
+
+  int.data <- int.data |>
+    mutate(per.stool.ad = if_else(afp.cases == 0, NA, per.stool.ad))
+
   return(int.data)
 }

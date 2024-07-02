@@ -59,15 +59,8 @@ f.timely.01 <- function(
   # Stool 2 collection date
   # Date stool received in lab
 
-  afp.data = ctry.data$afp.all.2
-  admin.data = dpop.ctry
-  start.date =  date_first
-  end.date = date_last
-
-
   admin.data <- admin.data %>%
-    filter(year >= year(start.date) &
-             year <= year(end.date))
+    filter(between(year, lubridate::year(start.date), lubridate::year(end.date)))
 
   afp.data1 = afp.data
 
@@ -80,7 +73,7 @@ f.timely.01 <- function(
       is.na(datestool2) == FALSE ~ as.numeric(difftime(stooltolabdate, datestool2), units = "days"),
       is.na(datestool2) ~ as.numeric(difftime(stooltolabdate, datestool1), units = "days")
     )) %>%
-    filter(date >= date_first & date <= date_last)
+    filter(between(date, start.date, end.date))
 
   if(intervals.manual == F){
     afp.data1 <- afp.data1 %>%

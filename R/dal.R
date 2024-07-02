@@ -547,25 +547,8 @@ get_all_polio_data <- function(
 
 
     cli::cli_process_start("5) Loading population data from EDAV")
-    raw.data$dist.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
-                dplyr::pull(file), default_dir = NULL) |>
-      dplyr::ungroup()
-
-    raw.data$prov.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
-                dplyr::pull(file), default_dir = NULL) |>
-      dplyr::ungroup()
-
-    raw.data$ctry.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
-                dplyr::pull(file), default_dir = NULL) |>
-      dplyr::ungroup()
-
     cli::cli_process_done()
+
 
     cli::cli_process_start("6) Loading coverage data from EDAV")
     raw.data$coverage <-
@@ -819,7 +802,8 @@ extract_country_data <- function(
   cli::cli_process_start(paste0(steps,") Subsetting country spatial data\n"))
   ctry.data$ctry <- .raw.data$global.ctry |>
     dplyr::filter(stringr::str_detect(ADM0_NAME, .country))
-  ctry.data$ctry <- dplyr::filter(ctry.data$ctry, ADM0_SOVRN == chosen.country)
+  ctry.data$ctry <- dplyr::filter(ctry.data$ctry,
+                                  stringr::str_to_upper(ADM0_SOVRN) == stringr::str_to_upper(chosen.country))
   .country <- unique(ctry.data$ctry$ADM0_NAME)
 
   ctry.data$prov <- .raw.data$global.prov |>
@@ -1050,17 +1034,6 @@ extract_country_data <- function(
   cli::cli_process_done()
   steps <- steps + 1
   cli::cli_process_start(paste0(steps,") Prepping population data"))
-  ctry.data$dist.pop <- .raw.data$dist.pop |>
-    dplyr::filter(ADM0_NAME == .country) |>
-    #filter(str_detect(ADM0_NAME, .country)) |>
-    dplyr::mutate(ADM0_NAME = .country) |>
-    dplyr::select(year,
-           ctry = ADM0_NAME,
-           prov = ADM1_NAME,
-           dist = ADM2_NAME,
-           u15pop,
-           adm2guid,
-           datasource)
 
   ctry.data$ctry.pop <- .raw.data$ctry.pop |>
     dplyr::filter(ADM0_NAME == .country) |>
@@ -1077,7 +1050,22 @@ extract_country_data <- function(
                   ctry = ADM0_NAME,
                   prov = ADM1_NAME,
                   u15pop = u15pop.prov,
+                  adm0guid=ADM0_GUID,
                   adm1guid,
+                  datasource)
+
+  ctry.data$dist.pop <- .raw.data$dist.pop |>
+    dplyr::filter(ADM0_NAME == .country) |>
+    #filter(str_detect(ADM0_NAME, .country)) |>
+    dplyr::mutate(ADM0_NAME = .country) |>
+    dplyr::select(year,
+                  ctry = ADM0_NAME,
+                  prov = ADM1_NAME,
+                  dist = ADM2_NAME,
+                  u15pop,
+                  adm0guid = ADM0_GUID,
+                  adm1guid,
+                  adm2guid,
                   datasource)
 
   cli::cli_process_done()
@@ -1086,6 +1074,20 @@ extract_country_data <- function(
   ctry.data$pos <- .raw.data$pos |>
     dplyr::filter(place.admin.0 == .country)
   #filter(str_detect(place.admin.0, .country)) |>
+  cli::cli_process_done()
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Attaching ES data"))
+  ctry.data$es <- .raw.data$es |>
+    dplyr::filter(ADM0_NAME == .country)
+  cli::cli_process_done()
+  steps <- steps + 1
+  cli::cli_process_start(paste0(steps,") Attaching SIA data"))
+  ctry.data$sia <- .raw.data$sia |>
+    dplyr::filter(place.admin.0 == .country)
+  cli::cli_process_done()
+
+  cli::cli_process_start("Attaching metadata from get_all_polio_data()")
+  ctry.data$metadata <- .raw.data$metadata
   cli::cli_process_done()
 
   gc()

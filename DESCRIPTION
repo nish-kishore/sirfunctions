@@ -25,7 +25,10 @@ Imports:
     AzureStor,
     Microsoft365R, 
     blastula, 
-    flextable
+    flextable,
+    purrr,
+    scales,
+    tidyr
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
