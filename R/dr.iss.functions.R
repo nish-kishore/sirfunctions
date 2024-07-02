@@ -41,6 +41,12 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
                            today_col="today",
                            date_of_visit_col="date_of_visit") {
 
+  # check if already cleaned
+  if ("monyear" %in% names(ctry.data$iss.data)) {
+    cli::cli_alert_warning("ISS data already cleaned.")
+    return(ctry.data$iss.data)
+  }
+
   if (is.null(ctry.data$iss.data)) {
     message("No ISS data attached.")
     return(NULL)

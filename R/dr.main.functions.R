@@ -548,7 +548,7 @@ init_dr <-
     if (!is.null(iss_data_path)) {
       cli::cli_process_start("Saving a copy of the ISS/eSurv data to the data folder.")
       country_data$iss.data <- load_iss_data(iss_data_path)
-      dr_iss_data_path <- file.path(dr_data_path,
+      dr_iss_data_path <- file.path(data_path,
                                     paste0(country_data$ctry$ISO_3_CODE, "_iss_data_", Sys.Date(), ".Rds"))
       saveRDS(country_data$iss.data, dr_iss_data_path)
       Sys.setenv(DR_ISS_PATH = dr_iss_data_path)

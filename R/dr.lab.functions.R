@@ -350,6 +350,11 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
     return(NULL)
   }
 
+  if ("prov" %in% names(ctry.data$lab.data)) {
+    cli::cli_alert_warning("Lab data already cleaned.")
+    return(ctry.data$lab.data)
+  }
+
   if (nrow(ctry.data$lab.data) == 0) {
     message("There are no entries for lab data.")
     return(NULL)
@@ -367,12 +372,6 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   cli::cli_process_done()
 
-  # remove time portion of any date time columns
-  cli::cli_process_start("Converting date/date-time character columns to date columns")
-  lab.data2 <- lab.data2 |>
-    dplyr::mutate(dplyr::across(dplyr::starts_with("Date"), \(x) lubridate::as_date(x)))
-  cli::cli_process_done()
-
   cli::cli_process_start("Filtering for cases with valid dates")
   lab.data2 = lab.data %>%
     filter((days.collect.lab >= 0 | is.na(days.collect.lab)) &
@@ -385,6 +384,12 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
     ) |>
     filter(year >= year(start.date) & year <= year(end.date),
            CaseOrContact == "1-Case")
+  cli::cli_process_done()
+
+  # remove time portion of any date time columns
+  cli::cli_process_start("Converting date/date-time character columns to date columns")
+  lab.data2 <- lab.data2 |>
+    dplyr::mutate(dplyr::across(dplyr::starts_with("Date"), \(x) lubridate::as_date(x)))
   cli::cli_process_done()
 
   # Don't run additional cleaning steps if no data is present
@@ -541,6 +546,11 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   # Check if the lab data is attached
   if (is.null(ctry.data$lab.data)) {
     stop("Lab data not attached to ctry.data. Please attach and try again.")
+  }
+
+  if ("country" %in% names(ctry.data$lab.data)) {
+    cli::cli_alert_warning("Lab data already cleaned.")
+    return(ctry.data$lab.data)
   }
 
   lab.data <- ctry.data$lab.data
@@ -918,6 +928,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
 #' @export
 clean_lab_data <- function(ctry.data, start.date=start_date, end.date=end_date,
                            delim="-", lab_locs_path=NULL) {
+
   # Check if the lab data is attached
   if (is.null(ctry.data$lab.data)) {
     stop("Lab data not attached to ctry.data. Please attach and try again.")
@@ -929,7 +940,7 @@ clean_lab_data <- function(ctry.data, start.date=start_date, end.date=end_date,
   # Determine the type of cleaning to do
   lab.data.cols <- names(ctry.data$lab.data)
 
-  if ("ctry.code2" %in% lab.data.cols) {
+  if ("ICLabID" %in% lab.data.cols) {
     lab.data <- clean_lab_data_who(ctry.data, start.date, end.date, delim)
   } else {
     lab.data <- clean_lab_data_regional(ctry.data, start.date, end.date, delim, lab_locs_path)

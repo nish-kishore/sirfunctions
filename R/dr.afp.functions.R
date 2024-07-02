@@ -874,6 +874,14 @@ ctry_data_errors <- function(ctry.data,
 #' @return cleaned country data RDS object
 #' @export
 clean_ctry_data <- function(ctry.data) {
+
+  # Check if the data has already been cleaned
+  if ("noti.7d.on" %in% names(ctry.data$afp.all.2) &
+      "all_dets" %in% names(ctry.data$es)) {
+    cli::cli_alert_warning("ctry.data already cleaned.")
+    return(ctry.data)
+  }
+
   ctry.data$afp.all.2 <- impute_dist_afp(ctry.data$afp.all.2)
   ctry.data$afp.all.2 <- col_to_datecol(ctry.data$afp.all.2)
   ctry.data$afp.all.2 <- ctry.data$afp.all.2 |>
