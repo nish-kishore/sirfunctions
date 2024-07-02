@@ -51,7 +51,7 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
     "MALAWI", "SOUTH SUDAN", "LIBERIA", "TOGO", "UGANDA", "BOTSWANA", "ZAMBIA",
     "MAURITANIA", "GABON", "ERITREA", "GUINEA-BISSAU", "LESOTHO", "NAMIBIA",
     "SIERRA LEONE", "ZIMBABWE", "EQUATORIAL GUINEA", "MAURITIUS", "RWANDA",
-    "ESWATINI", "COTE D'IVIORE"
+    "ESWATINI", "COTE D'IVOIRE", "COTE D IVOIRE"
   )
 
 
@@ -546,14 +546,23 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   lab.data <- ctry.data$lab.data
 
   # Cleaning for Cote D'Ivoire
-  if (stringr::str_to_upper(Sys.getenv("DR_COUNTRY")) == "COTE D'IVIORE") {
+  if (stringr::str_to_upper(Sys.getenv("DR_COUNTRY")) %in%
+      c("COTE D'IVOIRE", "COTE D IVOIRE", "CÔTE D’IVOIRE")
+      ) {
     lab.data <- lab.data |>
-      mutate(Name = if_else(Name == "CÔTE D’IVOIRE", "COTE D'IVIORE", Name))
+      mutate(Name = if_else(Name %in%
+                              c("COTE D'IVOIRE", "COTE D IVOIRE", "CÔTE D’IVOIRE"),
+                            "COTE D'IVOIRE", Name))
   }
 
   # Filter to only the country of interest
-  lab.data <- lab.data |>
-    filter(Name == Sys.getenv("DR_COUNTRY"))
+  if (Sys.getenv("DR_COUNTRY") %in% c("COTE D'IVOIRE", "COTE D IVOIRE", "CÔTE D’IVOIRE")) {
+    lab.data <- lab.data |>
+      filter(Name == "COTE D'IVOIRE")
+  } else {
+    lab.data <- lab.data |>
+      filter(Name == Sys.getenv("DR_COUNTRY"))
+  }
 
   # Assign the region
   region <- get_region()
