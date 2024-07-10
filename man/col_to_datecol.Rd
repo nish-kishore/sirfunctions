@@ -7,7 +7,7 @@
 col_to_datecol(afp.data)
 }
 \arguments{
-\item{afp.data}{}
+\item{afp.data}{tibble: AFP data}
 }
 \value{
 AFP linelist with converted date columns and additional timeliness cols

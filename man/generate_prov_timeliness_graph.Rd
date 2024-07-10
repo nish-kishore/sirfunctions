@@ -6,14 +6,14 @@
 \usage{
 generate_prov_timeliness_graph(
   int.data,
-  afp.prov.year,
+  afp.prov.year.lab,
   output_path = Sys.getenv("DR_FIGURE_PATH")
 )
 }
 \arguments{
 \item{int.data}{summary table of median timeliness intervals at a province level}
 
-\item{afp.prov.year}{labels for AFP dataset summarized by year}
+\item{afp.prov.year.lab}{labels for AFP dataset summarized by year}
 
 \item{output_path}{where to save the figure}
 }

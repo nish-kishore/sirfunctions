@@ -3,7 +3,7 @@
 #' Downloads the desk review template code
 #'
 #' @param output_path where to download the desk review template code
-#' @export
+#'
 copy_dr_template_code <- function(output_path=Sys.getenv("DR_PATH")) {
   dr_template_name <- "desk_review_template.Rmd"
   github_raw_url <- "https://raw.githubusercontent.com/nish-kishore/sg-desk-reviews/main/resources/desk_review_template.Rmd"
@@ -23,6 +23,7 @@ copy_dr_template_code <- function(output_path=Sys.getenv("DR_PATH")) {
 #'
 #' @param branch which branch to use
 #' @param output_folder where the function scripts should be stored
+#'
 #' @export
 copy_dr_functions <- function(branch="main", output_folder=Sys.getenv("DR_FUNC_PATH")) {
   repo <- "nish-kishore/sirfunctions"
@@ -34,8 +35,8 @@ copy_dr_functions <- function(branch="main", output_folder=Sys.getenv("DR_FUNC_P
 
   # Filter only the relevant files
   file_path <- file_path |>
-    filter(str_starts(paths, "R/dr.")) |>
-    separate(paths, into=c("folder", "name"), remove = F, sep="/")
+    dplyr::filter(str_starts(.data$paths, "R/dr.")) |>
+    tidyr::separate(.data$paths, into = c("folder", "name"), remove = F, sep = "/")
 
   if (nrow(file_path) == 0) {
     stop("No desk review functions in this branch.")
@@ -145,8 +146,7 @@ check_cache <- function(param_path, start_date, end_date, country_name=Sys.geten
 #' Sets up local folders in the current working directory for desk review
 #' data_path is expected to be ~/country/year
 #'
-#' @param data_path `str` path where folders are to be created
-#'
+#' @param path location of the local desk review folder
 set_dr_local_folders <- function(path) {
   # Check if required directories exist locally and create it if it does not
   if (!dir.exists(path)) {
@@ -359,7 +359,7 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
     file_loc = file.path("GID/PEB/SIR/Data/desk_review",
                          country, year)
   ) |>
-    dplyr::pull(name)
+    dplyr::pull(.data$name)
 
   file_names <- basename(files)
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.excel.export.functions.R
 \name{create_60_day_export}
 \alias{create_60_day_export}
-\title{Output for 60-day follow ups}
+\title{Exports output for 60-day follow ups}
 \usage{
 create_60_day_export(
   cases.need60day,
@@ -17,9 +17,6 @@ create_60_day_export(
 
 \item{excel_output_path}{output path}
 }
-\value{
-does not return anything
-}
 \description{
-Output for 60-day follow ups
+Exports output for 60-day follow ups
 }

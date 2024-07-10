@@ -1,8 +1,11 @@
 
-#' Check for missing geographic data from afp data
+#' Checks for missing geographic data
+#' @description
+#' check_missing_geo() checks the AFP dataset for rows with missing geographic data.
+#' It checks for missing data based on the scale passed through spatial.scale.
 #'
 #' @param afp.data tibble containing AFP data
-#' @param spatial.scale what geographic level to check for
+#' @param spatial.scale what geographic level to check for. Valid values are "ctry","prov", "dist".
 #'
 #' @return tibble containing records with missing geographic data
 check_missing_geo <- function(afp.data, spatial.scale) {
@@ -34,87 +37,87 @@ check_missing_geo <- function(afp.data, spatial.scale) {
 impute_dist_afp <- function(afp.data) {
 
   cli::cli_process_start("Filling in missing district data in the AFP linelist")
-  missy <- afp.data |>
+  missing <- afp.data |>
     dplyr::filter(is.na(dist))
 
-  cli::cli_alert_info(paste0("There are ", nrow(missy), " records missing district data"))
+  cli::cli_alert_info(paste0("There are ", nrow(missing), " records missing district data"))
 
   # Pull out any geographic info from the epid
-  missy2 = afp.data |>
-    dplyr::filter(epid %in% missy$epid) |>
+  missing2 = afp.data |>
+    dplyr::filter(epid %in% missing$epid) |>
     dplyr::mutate(epid.check = substr(epid, 1, 11))
 
   # Match epid.check with epid and year onset to pull out district and guid
-  missy2 <- missy2 |>
+  missing2 <- missing2 |>
     dplyr::mutate(adm2guid.2 = NA)
 
-  for (i in seq_len(nrow(missy2))) {
+  for (i in seq_len(nrow(missing2))) {
     x <- afp.data |>
       dplyr::filter(
-        year == missy2$year[i] &
-          grepl(missy2$epid.check[i], afp.data$epid) == T &
+        year == missing2$year[i] &
+          grepl(missing2$epid.check[i], afp.data$epid) == T &
           !is.na(adm2guid)
       )
 
     #print(dim(x))
     if (dim(x)[1] > 0 & length(unique(x$adm2guid)) == 1) {
-      missy2$adm2guid.2[i] = unique(x$adm2guid)
+      missing2$adm2guid.2[i] = unique(x$adm2guid)
     }
   }
 
   # back fill to adm2guid
-  missy2 <- missy2 |>
+  missing2 <- missing2 |>
     mutate(adm2guid = dplyr::if_else(is.na(adm2guid), as.character(adm2guid.2), adm2guid))
 
-  missy3 <- missy2 |>
+  missing3 <- missing2 |>
     dplyr::filter(is.na(adm2guid))
 
-  for (i in seq_len(nrow(missy3))) {
+  for (i in seq_len(nrow(missing3))) {
     x <- afp.data |>
-      dplyr::filter(grepl(missy3$epid.check[i], afp.data$epid) == T &
+      dplyr::filter(grepl(missing3$epid.check[i], afp.data$epid) == T &
                       !is.na(adm2guid))
 
     #print(dim(x))
     if (dim(x)[1] > 0 & length(unique(x$adm2guid)) == 1) {
-      missy3$adm2guid.2[i] <- unique(x$adm2guid)
+      missing3$adm2guid.2[i] <- unique(x$adm2guid)
     }
 
   }
 
-  # Backfill missy2 with new data
-  missy2$dist[match(missy3$epid, missy2$epid)] <- missy3$dist
-  missy2$adm2guid[match(missy3$epid, missy2$epid)] <- missy3$adm2guid.2
+  # Backfill missing2 with new data
+  missing2$dist[match(missing3$epid, missing2$epid)] <- missing3$dist
+  missing2$adm2guid[match(missing3$epid, missing2$epid)] <- missing3$adm2guid.2
 
   # For those that have multiple adm2guids
   # Match province and take the adm2guid that goes with the province
-  missy3  <- missy2 |>
+  missing3  <- missing2 |>
     dplyr::filter(is.na(adm2guid))
 
-  for (i in seq_len(nrow(missy3))) {
+  for (i in seq_len(nrow(missing3))) {
     x <- afp.data |>
-      dplyr::filter(grepl(missy3$epid.check[i], afp.data$epid) == T &
+      dplyr::filter(grepl(missing3$epid.check[i], afp.data$epid) == T &
                       !is.na(adm2guid))
 
     y <- x |>
-      dplyr::filter(prov == missy3$prov[i])
+      dplyr::filter(prov == missing3$prov[i])
 
     if (dim(x)[1] > 0 & dim(y)[1] > 0) {
-      missy3$adm2guid.2[i] <- unique(y$adm2guid)
+      missing3$adm2guid.2[i] <- unique(y$adm2guid)
     }
   }
 
-  missy2$adm2guid[match(missy3$epid, missy2$epid)] = missy3$adm2guid.2
+  missing2$adm2guid[match(missing3$epid, missing2$epid)] = missing3$adm2guid.2
 
-  # add dist in to missy2
-  missy2 = missy2 |>
+  # add dist in to missing2
+  missing2 = missing2 |>
     dplyr::mutate(dist = dplyr::case_when(is.na(dist) & is.na(adm2guid) == F ~
-                                            afp.data$dist[match(missy2$adm2guid,
+                                            afp.data$dist[match(missing2$adm2guid,
                                                                 afp.data$adm2guid)],
                                           T ~ dist))
 
   # Update dist and adm2guid
-  afp.data$dist[match(missy2$epid, afp.data$epid)] <- missy2$dist
-  afp.data$adm2guid[match(missy2$epid, afp.data$epid)] <- missy2$adm2guid
+  afp.data$dist[match(missing2$epid, afp.data$epid)] <- missing2$dist
+  afp.data$adm2guid[match(missing2$epid, afp.data$epid)] <- missing2$adm2guid
 
   #!!! no NAs should be present anymore
   dist_na <- sum(is.na(afp.data$dist))
@@ -142,7 +145,7 @@ impute_dist_afp <- function(afp.data) {
 
 #' Convert character date columns to date columns in the AFP linelist
 #'
-#' @param afp.data
+#' @param afp.data tibble: AFP data
 #'
 #' @return AFP linelist with converted date columns and additional timeliness cols
 col_to_datecol <- function(afp.data) {
@@ -165,6 +168,11 @@ col_to_datecol <- function(afp.data) {
   return(afp.data)
 }
 
+#' Add columns in the AFP data for number of doses and dose category
+#'
+#' @param afp.data AFP linelist (specifically, afp.all.2)
+#'
+#' @return tibble with AFP data with columns for number of doses and dose category
 add_zero_dose_col <- function(afp.data) {
   cli::cli_process_start("Cleaning and adding columns for zero-dose children data")
   afp.data = afp.data %>%
@@ -247,9 +255,9 @@ add_age_group <- function(age.months) {
       age.months >= 6 & age.months < 60 ~ "6-59",
       age.months >= 60 & age.months < 145 ~ "60-144",
       age.months >= 145 & age.months < 180 ~ "145-179",
-      age.months >= 180 ~ "≥180"
+      age.months >= 180 ~ ">=180"
     )) |>
-    dplyr::select(age_group)
+    dplyr::select(.data$age_group)
   cli::cli_process_done()
 
   return(age.months)
@@ -257,13 +265,16 @@ add_age_group <- function(age.months) {
 
 
 #' Generate AFP case counts by month
+#'
 #' @param afp.data tibble containing AFP data (afp.all.2)
+#' @param start_date start date of the desk review
+#' @param end_date  end date of the desk review
 #'
 #' @return tibble containing summary of AFP data
 #' @export
 generate_afp_by_month <- function(afp.data, start_date, end_date) {
   summary <- afp.data |>
-    tidyr::drop_na(date.onset) |>
+    tidyr::drop_na(.data$date.onset) |>
     dplyr::filter(dplyr::between(as_date(date.onset), start_date, end_date)) |>
     dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
 
@@ -276,7 +287,7 @@ generate_afp_by_month <- function(afp.data, start_date, end_date) {
 #' @param ctry.data RDS file containing country data
 #' @param start_date start date of analysis
 #' @param end_date end date of analysis
-#' @param by either prov, dist, or year
+#' @param by either "prov", "dist", or "year"
 #'
 #' @return tibble summary table of AFP cases by month
 #' @export
@@ -368,7 +379,7 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
 #' @param npafp.output tibble output after running f.npafp.rate.01 at the district
 #' level
 #'
-#' @return tibble of output with province names for those without didtrict names
+#' @return tibble of output with province names for those without district names
 add_prov_npafp_table <- function(npafp.output) {
   prov_na <- npafp.output |> dplyr::filter(is.na(prov))
   prov_no_na <- npafp.output |> dplyr::filter(!is.na(prov))
@@ -379,11 +390,13 @@ add_prov_npafp_table <- function(npafp.output) {
   return(npafp.output)
 }
 
-#' Create the *.case.ind tables in desk reviews
+#' Create the indicator tables in desk reviews
 #'
 #' @param npafp.output output of running f.npafp.rate.01
 #' @param afp.all.2 AFP linelist
 #' @param spatial.scale spatial scale to analyze. Valid values are "ctry", "prov", "dist"
+#' @param start_date start date of the desk review
+#' @param end_date end date of the desk review
 #'
 #' @return table to be used in summary tables for NPAFP rates
 #' @export
@@ -407,15 +420,15 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
   cases <- switch(spatial.scale,
                   "ctry" = {
                     cases <- cases |>
-                      dplyr::rename(ctry = `get(geo)`)
+                      dplyr::rename(ctry = .data$`get(geo)`)
                   },
                   "prov" = {
                     cases <- cases |>
-                      dplyr::rename(adm1guid = `get(geo)`)
+                      dplyr::rename(adm1guid = .data$`get(geo)`)
                   },
                   "dist" = {
                     cases <- cases |>
-                      dplyr::rename(adm2guid = `get(geo)`)
+                      dplyr::rename(adm2guid = .data$`get(geo)`)
                   }
   )
 
@@ -430,7 +443,7 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
                                                     cases,
                                                     by = c("adm1guid" = "adm1guid",
                                                            "year" = "year")) |>
-                         dplyr::select(-adm1guid)
+                         dplyr::select(-.data$adm1guid)
                      },
                      "dist" = {
                        case.ind <-
@@ -438,7 +451,7 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
                                           cases,
                                           by = c("adm2guid" = "adm2guid",
                                                  "year" = "year")) |>
-                         dplyr::select(-adm1guid, -adm2guid)
+                         dplyr::select(-.data$adm1guid, -.data$adm2guid)
                      })
 
   return(case.ind)
@@ -452,7 +465,7 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
 #' @param spatial.scale Scale to summarize to. Either "ctry" or "prov". "dist" not available currently.
 #' @param lab.data tibble of lab data
 #'
-#' @return a tibble summarizing median days for different intervals
+#' @return tibble summarizing median days for different intervals
 #' @export
 generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, lab.data=NULL) {
 
@@ -502,7 +515,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
   int.data <- switch(spatial.scale,
                      "ctry" = {
                        int.data <- int.data |>
-                         tidyr::pivot_longer(!c(epid, year, adm0guid, ctry),
+                         tidyr::pivot_longer(!c(.data$epid, .data$year, .data$adm0guid, .data$ctry),
                                              names_to = "type",
                                              values_to = "value") |>
                          dplyr::group_by(year, type, adm0guid, ctry) |>
@@ -511,7 +524,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
                      "prov" = {
                        int.data <- int.data |>
                          tidyr::pivot_longer(
-                           !c(epid, year, adm0guid, adm1guid, prov, ctry),
+                           !c(.data$epid, .data$year, .data$adm0guid, .data$adm1guid, .data$prov, .data$ctry),
                            names_to = "type",
                            values_to = "value"
                          ) %>%
@@ -519,11 +532,11 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
                          dplyr::summarize(medi = median(value, na.rm = T), freq = n())
                      })
 
-  if(!is.null(lab.data)) {
+  if (!is.null(lab.data)) {
     int.data = dplyr::bind_rows(lab.data, int.data)
   }
 
-  if(spatial.scale == "prov") {
+  if (spatial.scale == "prov") {
     int.data$prov = ctry.data$prov.pop$prov[match(int.data$adm1guid, ctry.data$prov.pop$adm1guid)]
   }
 
@@ -694,36 +707,36 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
       0
     )) |>
     dplyr::select(
-      epid,
-      year,
-      age.months,
-      hot.case,
-      hot.case.no.review,
-      got60day,
-      ontime.60day,
-      ctry,
-      prov,
-      dist,
-      date,
-      date.notify,
-      date.invest,
-      datestool1,
-      datestool2,
-      stool.1.condition,
-      stool.2.condition,
-      adequacy.03,
-      paralysis.asymmetric,
-      paralysis.rapid.progress,
-      paralysis.onset.fever,
-      pot.compatible,
-      doses.total,
-      timeto60day,
-      followup.date,
-      classification,
-      cdc.classification.all2,
-      missing.fu.date,
-      adm1guid,
-      adm2guid
+      .data$epid,
+      .data$year,
+      .data$age.months,
+      .data$hot.case,
+      .data$hot.case.no.review,
+      .data$got60day,
+      .data$ontime.60day,
+      .data$ctry,
+      .data$prov,
+      .data$dist,
+      .data$date,
+      .data$date.notify,
+      .data$date.invest,
+      .data$datestool1,
+      .data$datestool2,
+      .data$stool.1.condition,
+      .data$stool.2.condition,
+      .data$adequacy.03,
+      .data$paralysis.asymmetric,
+      .data$paralysis.rapid.progress,
+      .data$paralysis.onset.fever,
+      .data$pot.compatible,
+      .data$doses.total,
+      .data$timeto60day,
+      .data$followup.date,
+      .data$classification,
+      .data$cdc.classification.all2,
+      .data$missing.fu.date,
+      .data$adm1guid,
+      .data$adm2guid
     )
 
   return(cases.need60day)
@@ -748,7 +761,7 @@ generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
 }
 
 
-#' Creating a table of compatible and potentially compatible cases.
+#' Creating a table of compatible and potentially compatible cases
 #'
 #' @param cases.need60day summary table of cases that need 60 day follow-up
 #' @param create_cluster whether to use clustering algorithm. Default to F.
@@ -810,6 +823,7 @@ generate_potentially_compatibles_cluster <- function(cases.need60day, create_clu
 #'
 #' @param ctry.data RDS object containing polio country data
 #' @param error_path path where to store errors in ctry.data
+#'
 #' @export
 ctry_data_errors <- function(ctry.data,
                              error_path = Sys.getenv("DR_ERROR_PATH")) {
@@ -826,19 +840,19 @@ ctry_data_errors <- function(ctry.data,
   pop_file <- check_pop_rollout(ctry.data)
 
   # spatial validation check across country, province, lab
-  cli::cli_progress_step("Spatial validation for country")
+  cli::cli_progress_step("Checking for GUIDs at the country level that changed in the desk review time period.")
   incomplete.adm.ctry <-
     spatial_validation(ctry.data$ctry.pop, "ctry")
   missing.pop.ctry <-
     check_missing_pop(ctry.data$ctry.pop, "ctry")
 
-  cli::cli_progress_step("Spatial validation for province")
+  cli::cli_progress_step("Checking for GUIDs at the province level that changed in the desk review time period.")
   incomplete.adm.prov <-
     spatial_validation(ctry.data$prov.pop, "prov")
   missing.pop.prov <-
     check_missing_pop(ctry.data$prov.pop, "prov")
 
-  cli::cli_progress_step("Spatial validation for district")
+  cli::cli_progress_step("Checking for GUIDs at the district level that changed in the desk review time period.")
   incomplete.adm.dist <-
     spatial_validation(ctry.data$dist.pop, "dist")
   missing.pop.dist <-
@@ -852,9 +866,9 @@ ctry_data_errors <- function(ctry.data,
   error_log$missing_prov <- missing_prov
   error_log$missing_dist <- missing_dist
   error_log$pop_rollup_diff <- pop_file
-  error_log$invalid_adm0 <- incomplete.adm.ctry
-  error_log$invalid_adm1 <- incomplete.adm.prov
-  error_log$invalid_adm2 <- incomplete.adm.dist
+  error_log$guid_changes_adm0 <- incomplete.adm.ctry
+  error_log$guid_changes_adm1 <- incomplete.adm.prov
+  error_log$guid_changes_adm2 <- incomplete.adm.dist
   error_log$missing_pop_ctry <- missing.pop.ctry
   error_log$missing_pop_prov <- missing.pop.prov
   error_log$missing_pop_dist <- missing.pop.dist
@@ -866,10 +880,6 @@ ctry_data_errors <- function(ctry.data,
 #' Cleans and adds additional columns used in the desk reviews
 #'
 #' @param ctry.data country data RDS object
-#' @param start_date start date for desk review
-#' @param end_date end date for desk review
-#' @param es_start_date start date for environmental surveillance data
-#' @param es_end_date end date for environmental surveillance data
 #'
 #' @return cleaned country data RDS object
 #' @export
@@ -894,6 +904,7 @@ clean_ctry_data <- function(ctry.data) {
 
 #' Generate stool adequacy columns in the AFP dataset
 #'
+#' @import dplyr
 #' @param afp.data tibble of AFP data (afp.all.2)
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
@@ -943,7 +954,7 @@ generate_stool_data <- function(afp.data, start_date, end_date) {
       adequacy.final == 1 ~ "Adequate",
       adequacy.final == 77 ~ "Bad data",
       adequacy.final == 99 ~ "Missing",
-    ))|>
+    )) |>
     mutate(adequacy.final2 = ifelse(adequacy.final == "Missing", "Adequate", adequacy.final)
     )
 

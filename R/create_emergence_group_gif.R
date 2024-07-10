@@ -2,13 +2,16 @@
 #' @description
 #' Generate the figures and stitch together a GIF to evaluate emergence group
 #' movement over time, generally aggregated as cumulative per month
-#' @import dplyr lubridate sf ggplot ggpubr magick cli
+#' @import dplyr lubridate sf ggplot2 ggpubr magick cli
+#'
 #' @param emergence_group str: designation of the emergence group to review
 #' @param pos tibble: positives data set
 #' @param dist sf: shapefile of all districts
 #' @param ctry sf: shapefile of all countries
 #' @param include_env boolean: To include environmental detections in analysis
+#' @param cumulative boolean: To display cases as cumulative
 #' @param out_gif str: location where gif should be saved
+#'
 #' @returns GIF written out to a location
 create_emergence_group_gif <- function(
   emergence_group,

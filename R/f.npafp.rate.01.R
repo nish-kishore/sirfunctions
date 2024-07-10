@@ -7,10 +7,10 @@
 #' @import tibble
 #' @import tidyr
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
-#' formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all2 which includes
+#' formated as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2 which includes
 #' c("NPAFP", "PENDING", "LAB PENDING")
 #' @param pop.data tibble: Under 15 population data by a given spatial scale including
-#' "year", "adm{0,1,2}guid, "u15pop", and "{ctry/prov/dist}" as appropriate
+#' "year", "adm(0,1,2)guid, "u15pop", and "(ctry/prov/dist)" as appropriate
 #' @param start.date chr: "YYYY-MM-DD"
 #' @param end.date chr: "YYYY-MM-DD"
 #' @param spatial.scale chr: "prov" or "dist" or "ctry"

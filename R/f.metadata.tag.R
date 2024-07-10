@@ -3,8 +3,10 @@
 #'
 #' @description add metadata tags to figures and tables
 #' @import flextable
+#'
 #' @param object ggplot or flextable object: the figure or table to add metadata to
 #' @param time_tag str: a date and time string, defaults to raw.data$metadata$download_time
+#' @param raw_data Rds object: polio raw data
 #' and will throw an error if "raw.data" doesn't exist in your environment or is called something else
 #' @returns a `ggplot` or `flextable` object with metadata added
 #' @export

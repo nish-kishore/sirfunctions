@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.excel.export.functions.R
 \name{create_pot_comp_clust_export}
 \alias{create_pot_comp_clust_export}
-\title{Import potentially compatible and compatible summaries}
+\title{Export potentially compatible and compatible summaries}
 \usage{
 create_pot_comp_clust_export(
   pot.c.clust,
@@ -17,9 +17,6 @@ create_pot_comp_clust_export(
 
 \item{excel_output_path}{output path}
 }
-\value{
-does not return anything
-}
 \description{
-Import potentially compatible and compatible summaries
+Export potentially compatible and compatible summaries
 }

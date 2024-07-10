@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{generate_potentially_compatibles_cluster}
 \alias{generate_potentially_compatibles_cluster}
-\title{Creating a table of compatible and potentially compatible cases.}
+\title{Creating a table of compatible and potentially compatible cases}
 \usage{
 generate_potentially_compatibles_cluster(cases.need60day, create_cluster = F)
 }
@@ -15,5 +15,5 @@ generate_potentially_compatibles_cluster(cases.need60day, create_cluster = F)
 summary table with clustering info
 }
 \description{
-Creating a table of compatible and potentially compatible cases.
+Creating a table of compatible and potentially compatible cases
 }

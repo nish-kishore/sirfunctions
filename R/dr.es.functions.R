@@ -1,6 +1,11 @@
+#' Adds coordinates for ES surveillance sites missing them
+#'
+#' @param ctry.data RDS object containing country polio data
+#'
+#' @return tibble of ES data with imputed coordinates for sites missing them
 impute_site_coord <- function(ctry.data) {
   df01 <- ctry.data$es %>%
-    distinct(ADM0_NAME, site.name, dist.guid, lat, lng) %>%
+    distinct(.data$ADM0_NAME, .data$site.name, .data$dist.guid, .data$lat, .data$lng) |>
     filter(is.na(lat) | is.na(lng))
 
   cli::cli_process_start("Adding coordinates to sites in their home district")
@@ -15,22 +20,22 @@ impute_site_coord <- function(ctry.data) {
                               ctry.data$dist.pop |> filter(year == max(year)),
                               by = c("GUID" = "adm2guid"))
 
-  df01.shape <- right_join(shape.dist.pop %>% select(GUID),
+  df01.shape <- right_join(shape.dist.pop %>% select(.data$GUID),
                            df01 %>% filter(!is.na(dist.guid)),
                            by = c("GUID" = "dist.guid")) %>%
     mutate(empty.01 = st_is_empty(.)) %>%
     filter(empty.01 == 0) |>
     distinct()
 
-  if(nrow(df01.shape) == 0) {
+  if (nrow(df01.shape) == 0) {
     cli::cli_alert_warning("Unable to find shapefile associated with site(s)")
     return(ctry.data$es)
   }
 
   df02 <- df01.shape %>%
-    group_by(GUID) %>%
+    group_by(.data$GUID) %>%
     summarise(nperarm = n()) %>%
-    arrange(GUID) %>%
+    arrange(.data$GUID) %>%
     mutate(id = row_number())
 
 
@@ -40,16 +45,16 @@ impute_site_coord <- function(ctry.data) {
 
 
   df03 <- pt01_joined %>%
-    select(-nperarm, -id) %>%
-    group_by(GUID) %>%
-    arrange(GUID, .by_group = TRUE) %>%
+    select(-.data$nperarm, -id) %>%
+    group_by(.data$GUID) %>%
+    arrange(.data$GUID, .by_group = TRUE) %>%
     mutate(id = row_number()) %>%
     as.data.frame()
 
 
   df04 <- df01.shape %>%
-    group_by(GUID) %>%
-    arrange(GUID, .by_group = TRUE) %>%
+    group_by(.data$GUID) %>%
+    arrange(.data$GUID, .by_group = TRUE) %>%
     mutate(id = row_number())
 
 
@@ -59,22 +64,22 @@ impute_site_coord <- function(ctry.data) {
              col = pt01,
              into = c("lon", "lat"),
              sep = "[,]") %>%
-    mutate(lon = readr::parse_number(lon),
-           lat = readr::parse_number(lat),)
+    mutate(lon = readr::parse_number(.data$lon),
+           lat = readr::parse_number(.data$lat),)
 
 
   st_geometry(df05) <- NULL
 
 
   df06 <- df05 %>%
-    select(ADM0_NAME, site.name, "lng" = lon, lat) %>%
+    select(.data$ADM0_NAME, .data$site.name, "lng" = .data$lon, .data$lat) %>%
     mutate_at(c("lng", "lat"), as.character)
 
   es.data <- ctry.data$es %>%
     left_join(., df06, by = c("ADM0_NAME", "site.name")) %>%
-    mutate(lat = ifelse(is.na(lat.x), lat.y, lat.x),
-           lng = ifelse(is.na(lng.x), lng.y, lng.x)) %>%
-    select(-c(lat.x, lat.y, lng.x, lng.y))
+    mutate(lat = ifelse(is.na(.data$lat.x), .data$lat.y, .data$lat.x),
+           lng = ifelse(is.na(.data$lng.x), .data$lng.y, .data$lng.x)) %>%
+    select(-c(.data$lat.x, .data$lat.y, .data$lng.x, .data$lng.y))
 
   cli::cli_process_done()
 
@@ -84,18 +89,19 @@ impute_site_coord <- function(ctry.data) {
 
 #' Transform ES data cleaning with additional columns
 #'
-#' @param es.data tibble of ES data from ctry.data
+#' @param ctry.data RDS object containing country polio data
 #'
 #' @return tibble of cleaned ES data
+#' @export
 clean_es_data <- function(ctry.data) {
   es.data <- ctry.data$es
   cli::cli_process_start("Checking for missing site coordinates")
 
   df01 <- es.data |>
-    distinct(ADM0_NAME, site.name, dist.guid, lat, lng) %>%
+    distinct(.data$ADM0_NAME, .data$site.name, .data$dist.guid, .data$lat, .data$lng) %>%
     filter(is.na(lat) | is.na(lng))
 
-  if(nrow(df01) != 0) {
+  if (nrow(df01) != 0) {
     cli::cli_alert_warning("These sites are missing coordinates:")
 
     for (i in df01$site.name) {
@@ -111,7 +117,7 @@ clean_es_data <- function(ctry.data) {
 
   cli::cli_process_start("Cleaning ES data")
   es.data.earlidat <- es.data %>%
-    group_by(site.name) %>%
+    group_by(.data$site.name) %>%
     summarize(early.dat = min(collect.date)) %>%
     ungroup()
 
@@ -175,8 +181,8 @@ clean_es_data <- function(ctry.data) {
 #' @export
 generate_es_data_long <- function(es.data) {
   es.data.long <- es.data %>%
-    select(site.name, ADM1_NAME, collect.date, early.dat, ev.detect, all_dets) %>%
-    mutate(ev.detect = as.character(ev.detect)) %>%
+    select(.data$site.name, .data$ADM1_NAME, .data$collect.date, .data$early.dat, .data$ev.detect, .data$all_dets) %>%
+    mutate(ev.detect = as.character(.data$ev.detect)) %>%
     mutate(all_dets = case_when(
       all_dets == "" & ev.detect == "1" ~ "NPEV only",
       all_dets == "" & ev.detect == "0" ~ "No EV isolated",

@@ -15,9 +15,13 @@ generate_iss_map(
 \arguments{
 \item{iss.data}{tibble of ISS/eSurv data}
 
+\item{prov.shape}{shapefile containing province shapes}
+
 \item{start_date}{start date of desk review}
 
 \item{end_date}{end date of desk review}
+
+\item{output_path}{where to save the figure}
 }
 \value{
 a ggplot map

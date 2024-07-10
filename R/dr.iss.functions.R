@@ -61,10 +61,10 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
       str_to_lower(substr(get(priority_col), 1, 1)) %in% c("n", "x") ~ "Not Focal Site",
       TRUE ~ get(priority_col)
     )) %>%
-    mutate(priority_level = factor(priority_level, levels = c(
+    mutate(priority_level = factor(.data$priority_level, levels = c(
       "High", "Medium", "Low", "Not Focal Site"
     ))) |>
-    mutate(priority_level = if_else(is.na(priority_level), "Not Focal Site", priority_level))
+    mutate(priority_level = if_else(is.na(.data$priority_level), "Not Focal Site", .data$priority_level))
   cli::cli_process_done()
 
   cli::cli_process_start("Adding date columns")
@@ -101,8 +101,8 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
   # Convert "n/a" characters to actual null values
   cli::cli_process_start("Converting n/a characters to actual null values")
   iss.02 <- iss.02 |>
-    mutate(dists = if_else(dists == "N/A", NA, dists),
-           prov = if_else(prov == "N/A", NA, prov)
+    mutate(dists = if_else(.data$dists == "N/A", NA, .data$dists),
+           prov = if_else(.data$prov == "N/A", NA, .data$prov)
     )
   cli::cli_process_done()
 
@@ -112,19 +112,20 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
     mutate(facility_name2 = iconv(.data[[hf_col]],
                                   to = "ASCII//TRANSLIT"))
 
-  # Make all capital letters and remove extra whitespace
+  # Make all capital letters and remove extra white space
   iss.02 <- iss.02 %>%
-    mutate(facility_name2 = toupper(facility_name2)) %>%
-    mutate(facility_name2 = str_squish(facility_name2))
+    mutate(facility_name2 = toupper(.data$facility_name2)) %>%
+    mutate(facility_name2 = str_squish(.data$facility_name2))
   cli::cli_process_done()
 
   return(iss.02)
 }
 
-#' Checks for errors in the iss.data.
+#' Checks for errors in the ISS data.
 #' Currently reports the number of missing priority levels.
 #'
 #' @param ctry.data ctry.data with ISS/eSurv data attached
+#' @param error_path path to error folder
 #'
 #' @return error message
 #' @export
@@ -143,13 +144,13 @@ iss_data_errors <- function(ctry.data, error_path=Sys.getenv("DR_ERROR_PATH")) {
   if ("priority_level" %in% names(iss.data)) {
 
     na_priority <- iss.data |>
-      mutate(priority_level = stringr::str_to_lower(priority_level)) |>
+      mutate(priority_level = stringr::str_to_lower(.data$priority_level)) |>
       filter(priority_level %in% c("na", "n/a", ""))
 
   } else if ("hf_rating" %in% names(iss.data)) {
 
     na_priority <- iss.data |>
-      mutate(hf_rating = stringr::str_to_lower(hf_rating)) |>
+      mutate(hf_rating = stringr::str_to_lower(.data$hf_rating)) |>
       filter(hf_rating %in% c("na", "n/a", ""))
   }
 

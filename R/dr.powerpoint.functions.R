@@ -7,7 +7,7 @@
 generate_pptx_assumptions <- function(start_date, end_date) {
   pptx.assumptions <- c('Data sources:',
                         paste0('POLIS (data as of ', format(end_date, '%d-%b-%Y') ,')', " unless specified otherwise"),
-                        'Missing population estimated from the UNDP growth factor from previous year’s population.',
+                        "Missing population estimated from the UNDP growth factor from previous year's population.",
                         paste0('Timeframe for analysis: ', format(start_date, '%d-%b-%Y'),
                                ' to ',format(end_date, '%d-%b-%Y')),
                         paste0('Some selected figures include additional data (',
@@ -319,6 +319,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
 #' Generating the PowerPoint from the figures folder is generally faster and allows
 #' figures to remain consistent. Tables remain as PowerPoint tables.
 #'
+#' @import officer
 #' @param ctry.data RDS file containing polio data for a country
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
@@ -344,7 +345,6 @@ generate_dr_ppt2 <- function(ctry.data,
                              country=Sys.getenv("DR_COUNTRY"),
                              ppt_output_path=Sys.getenv("DR_POWERPOINT_PATH")) {
 
-  library(officer)
   ppt_template_path <- get_ppt_template(ppt_template_path)
   assump <- generate_pptx_assumptions(start_date, end_date)
   incomplete.adm.dist <- spatial_validation(ctry.data$dist.pop, "dist")
@@ -579,53 +579,53 @@ generate_dr_ppt2 <- function(ctry.data,
       fpar(ftext("Data undergoes cleaning and standardization by CDC", fp_text(font.size = 17))),
       fpar(ftext("Substantive differences include:", fp_text(font.size = 17))),
       fpar(ftext("Classification of cases", fp_text(font.size = 17))),
-      fpar(ftext("Classification is derived from laboratory classification first and then epi classification (see CDC data processing – Case classification for more details)", fp_text(font.size = 17))),
+      fpar(ftext("Classification is derived from laboratory classification first and then epi classification (see CDC data processing - Case classification for more details)", fp_text(font.size = 17))),
       fpar(ftext("Stool adequacy and timeliness", fp_text(font.size = 17))),
-      fpar(ftext('Primary POLIS variable(s) are "Stool adequacy" and  "Stool adequacy with condition"', fp_text(font.size = 17))),
+      fpar(ftext('Primary POLIS variable(s) are "Stool adequacy" and "Stool adequacy with condition"', fp_text(font.size = 17))),
       fpar(ftext('Discrepancies observed between collection intervals and condition and what is reported with in "Stool adequacy with condition"', fp_text(font.size = 17))),
-      fpar(ftext("Recalculated using stool 1 condition, stool 2 condition, and calculated timeliness intervals (see slide CDC data processing – Timeliness intervals)", fp_text(font.size = 17)))
+      fpar(ftext("Recalculated using stool 1 condition, stool 2 condition, and calculated timeliness intervals (see slide CDC data processing - Timeliness intervals)", fp_text(font.size = 17)))
     ),
     location = ph_location_type("body"),
     level_list = c(1L, 1L, 1L, 2L, 3L, 2L, 3L, 3L, 3L)) %>%
     add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
-    ph_with(value = "CDC Data Processing – Timeliness Intervals",
+    ph_with(value = "CDC Data Processing - Timeliness Intervals",
             location = ph_location_type("title")) %>%
     ph_with(value = block_list(
-      fpar(ftext("Calculated as difference in reported dates (epi data only)​", fp_text(font.size = 17))),
-      fpar(ftext("Onset to notification – ≤ 7 days", fp_text(font.size = 17))),
-      fpar(ftext("Notification to investigation – ≤ 2 days", fp_text(font.size = 17))),
-      fpar(ftext("Investigation to stool 1 collection – ≤ 3 days*", fp_text(font.size = 17))),
-      fpar(ftext("Stool 1 to stool 2 collection – Goal: ≥1 day and ≤ 11 days", fp_text(font.size = 17))),
-      fpar(ftext("Stool collection to received in lab – ≤ 3 days (note: this is the indicator for collection to lab, NOT onset to lab)​", fp_text(font.size = 17))),
+      fpar(ftext("Calculated as difference in reported dates (epi data only) ", fp_text(font.size = 17))),
+      fpar(ftext("Onset to notification - <= 7 days", fp_text(font.size = 17))),
+      fpar(ftext("Notification to investigation - <= 2 days", fp_text(font.size = 17))),
+      fpar(ftext("Investigation to stool 1 collection - <= 3 days*", fp_text(font.size = 17))),
+      fpar(ftext("Stool 1 to stool 2 collection - Goal: >= 1 day and <= 11 days", fp_text(font.size = 17))),
+      fpar(ftext("Stool collection to received in lab - <= 3 days (note: this is the indicator for collection to lab, NOT onset to lab) ", fp_text(font.size = 17))),
       fpar(ftext("Note: if there is no stool 2 collected, this is calculated from stool 1 collection", fp_text(font.size = 17))),
       fpar(ftext("Samples with conflicting/data errors are considered inadequate", fp_text(font.size = 17))),
       fpar(ftext("Date before onset", fp_text(font.size = 17))),
       fpar(ftext("Missing date", fp_text(font.size = 17))),
-      fpar(ftext("Data entry error (>365 days between stool 1 and stool 2 collection)​", fp_text(font.size = 17))),
+      fpar(ftext("Data entry error (>365 days between stool 1 and stool 2 collection) ", fp_text(font.size = 17))),
       fpar(ftext("Caveats", fp_text(font.size = 17))),
       fpar(ftext("The displayed timeliness intervals are not adjusted for those countries who need to ship to an international lab for testing", fp_text(font.size = 17))),
-      fpar(ftext("Timeliness intervals are not represented visually as listed in the GPSAP – i.e. 14 days from onset to received in lab – stacked bar shows the subcategories according to GPSAP intervals", fp_text(font.size = 17)))
+      fpar(ftext("Timeliness intervals are not represented visually as listed in the GPSAP - i.e. 14 days from onset to received in lab - stacked bar shows the subcategories according to GPSAP intervals", fp_text(font.size = 17)))
     ),
     line_spacing = 0,
     padding = 0,
     location = ph_location_type("body"),
-    level_list =c(1L, 2L, 2L, 2L, 2L, 2L, 3L, 1L, 2L, 2L, 2L, 1L, 2L, 2L)
+    level_list = c(1L, 2L, 2L, 2L, 2L, 2L, 3L, 1L, 2L, 2L, 2L, 1L, 2L, 2L)
     ) %>%
     ph_with(value = "* This indicator is not explicitly defined in the GPSAP", location = ph_location_type("ftr")) |>
     add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
-    ph_with(value = "CDC Data Processing – Case Classification",
+    ph_with(value = "CDC Data Processing - Case Classification",
             location = ph_location_type("title")) %>%
     ph_with(value = block_list(
-      fpar(ftext("CDC case classification uses lab classification first and then epi data – if epi and lab disagree, lab is considered correct", fp_text(font.size = 17))),
-      fpar(ftext("Categories includes not AFP, NPAFP, compatible, pending, lab pending, and all virus types (eg VDPV, Wild 1)​",fp_text(font.size = 17))),
-      fpar(ftext("Pending is when there is no virus type and classification is pending​",fp_text(font.size = 17))),
+      fpar(ftext("CDC case classification uses lab classification first and then epi data - if epi and lab disagree, lab is considered correct", fp_text(font.size = 17))),
+      fpar(ftext("Categories includes not AFP, NPAFP, compatible, pending, lab pending, and all virus types (eg VDPV, Wild 1) ",fp_text(font.size = 17))),
+      fpar(ftext("Pending is when there is no virus type and classification is pending ",fp_text(font.size = 17))),
       fpar(ftext('Lab pending is no virus type, classification is pending, and final culture result is "not received in lab"',fp_text(font.size = 17))),
       fpar(ftext("Laboratory classification is determined from Virus Type field",fp_text(font.size = 17))),
-      fpar(ftext("Note that this does not take into account the vdpv1, vdpv2, vdpv3, and wild1 computed variables in POLIS​",fp_text(font.size = 17))),
+      fpar(ftext("Note that this does not take into account the vdpv1, vdpv2, vdpv3, and wild1 computed variables in POLIS ",fp_text(font.size = 17))),
       fpar(ftext("Extract virus from virus type and then use classification vdpv to determine ambiguous, immune deficient, or circulating for VDPVs",fp_text(font.size = 17))),
       fpar(ftext("Important caveats",fp_text(font.size = 17))),
-      fpar(ftext("Case classification and lab results are updated in POLIS as lab results come in – this can and does result in varying time delays based on shipping and lab testing times",fp_text(font.size = 17))),
-      fpar(ftext("Vdpv1, 2, and 3 variables in POLIS are also extracted from virus type​",fp_text(font.size = 17))),
+      fpar(ftext("Case classification and lab results are updated in POLIS as lab results come in - this can and does result in varying time delays based on shipping and lab testing times",fp_text(font.size = 17))),
+      fpar(ftext("Vdpv1, 2, and 3 variables in POLIS are also extracted from virus type ",fp_text(font.size = 17))),
       fpar(ftext("There can be discrepancies between the two",fp_text(font.size = 17))),
       fpar(ftext("Can be difficult to identify dual infections",fp_text(font.size = 17)))
     ),
@@ -637,7 +637,7 @@ generate_dr_ppt2 <- function(ctry.data,
             location = ph_location_type("title")) %>%
     ph_with(value = block_list(
       fpar(ftext("Filling missing geographic data",fp_text(font.size = 17))),
-      fpar(ftext("Compare epid with previously reported case epids​",fp_text(font.size = 17))),
+      fpar(ftext("Compare epid with previously reported case epids ",fp_text(font.size = 17))),
       fpar(ftext("If EPID prov and dist code match with previously reported case in the same onset year, then backfill prov and dist",fp_text(font.size = 17))),
       fpar(ftext("If no match, expand search to any year, then backfill prov and dist",fp_text(font.size = 17))),
       fpar(ftext("If there are multiple guids identified with the same prov and dist for the match, then do not match and leave blank (cannot tell which GUID to use)",fp_text(font.size = 17))),
@@ -653,12 +653,12 @@ generate_dr_ppt2 <- function(ctry.data,
     ph_with(value = block_list(
       fpar(ftext("Steps for lab cleaning",fp_text(font.size = 17))),
       fpar(ftext("Extract year from onset date if available",fp_text(font.size = 17))),
-      fpar(ftext("For non-cases/no onset date – extracted from EPID",fp_text(font.size = 17))),
+      fpar(ftext("For non-cases/no onset date - extracted from EPID",fp_text(font.size = 17))),
       fpar(ftext("Deduplicated using lab master key (MasterKey)",fp_text(font.size = 17))),
       fpar(ftext("Data current up to (manually edit here)", fp_text(font.size = 17))),
       fpar(ftext("If a master key was duplicated, used the more recent appearance (the later database)",fp_text(font.size = 17))),
       fpar(ftext("Matching province",fp_text(font.size = 17))),
-      fpar(ftext("Match epids between lab and epi data – use province from epi data",fp_text(font.size = 17))),
+      fpar(ftext("Match epids between lab and epi data - use province from epi data",fp_text(font.size = 17))),
       fpar(ftext("Note: a number of mismatches observed (hard to quantify since a subset of these are spelling differences)", fp_text(font.size = 17, color = "red"))),
       fpar(ftext("Cross check epids with previous epids to identify same province code",fp_text(font.size = 17))),
       fpar(ftext(paste0("Created look up table for provinces and districts from previous epids",

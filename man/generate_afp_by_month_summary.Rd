@@ -21,7 +21,7 @@ generate_afp_by_month_summary(
 
 \item{end_date}{end date of analysis}
 
-\item{by}{either prov, dist, or year}
+\item{by}{either "prov", "dist", or "year"}
 }
 \value{
 tibble summary table of AFP cases by month

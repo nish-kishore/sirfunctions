@@ -7,7 +7,7 @@
 get_region(country_name = Sys.getenv("DR_COUNTRY"))
 }
 \arguments{
-\item{lab.data}{tibble containing lab data}
+\item{country_name}{name of the country}
 }
 \value{
 string "EMRO" or "AFRO"

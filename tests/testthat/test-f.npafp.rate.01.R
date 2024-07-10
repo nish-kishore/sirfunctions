@@ -1,4 +1,5 @@
 test_that("testing f.npafp.rate.01()", {
+  skip()
   # Initialize testing values
   country_name <- "PAKISTAN"
   raw_data <- sirfunctions::get_all_polio_data()

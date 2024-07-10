@@ -1,10 +1,12 @@
 #' Exports AFP linelist with adequacy.final2 column
 #'
 #' @param stool.data afp data with final adequacy columns
+#' @param country name of the country
 #' @param excel_output_path output path of the Excel file
+#'
 #' @export
 create_afp_export <- function(stool.data, country=Sys.getenv("DR_COUNTRY"), excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
-  stool.data.export=stool.data |>
+  stool.data.export = stool.data |>
     mutate(nvaccine.2 = NA) |>
     select(c("polis.case.id","epid","followup.date","followup.findings",
              "investigation.date","notification.date","stool.1.collection.date",
@@ -53,14 +55,13 @@ create_afp_export <- function(stool.data, country=Sys.getenv("DR_COUNTRY"), exce
 
 }
 
-#' Export stool adequacy data
+#' Exports stool adequacy data
 #'
 #' @param cstool stool adequacy at country level
 #' @param pstool stool adequacy at province level
 #' @param dstool stool adequacy at district level
 #' @param excel_output_path output path
 #'
-#' @return does not return anything
 #' @export
 create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   sheets <- list(
@@ -74,14 +75,13 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
   ))
 }
 
-#' Export NPAFP data
+#' Exports NPAFP indicator data
 #'
 #' @param ctry.case.ind country NPAFP indicator
 #' @param prov.case.ind province NPAFP indicator
 #' @param dis.case.ind district NPAFP indicator
 #' @param excel_output_path output path
 #'
-#' @return does not return anything
 #' @export
 create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
 
@@ -98,24 +98,22 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, exce
 
 }
 
-#' File for checking population roll-ups
+#' Exports file for checking population roll-ups
 #'
 #' @param ctry.data RDS file containing polio data for a country
-#' @param ctry.data.error.log error log of a country
 #' @param country name of the country
 #' @param excel_output_path output path
 #'
-#' @return does not return anything
 #' @export
 create_pop_check_export <- function(ctry.data, country=Sys.getenv("DR_COUNTRY"),
                                     excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   pop.check <-
-    count(ungroup(filter(ctry.data$dist.pop, year >= min(year))), prov, dist,
-          adm1guid, adm2guid, year, u15pop)
+    count(ungroup(filter(ctry.data$dist.pop, year >= min(year))), .data$prov, .data$dist,
+          .data$adm1guid, .data$adm2guid, .data$year, .data$u15pop)
 
   pop.check1 = as.data.frame(pivot_wider(pop.check,
-                                         names_from = year,
-                                         values_from = u15pop))
+                                         names_from = .data$year,
+                                         values_from = .data$u15pop))
 
   pop_rollup_diff <- suppressMessages(check_pop_rollout(ctry.data))
 
@@ -130,30 +128,29 @@ create_pop_check_export <- function(ctry.data, country=Sys.getenv("DR_COUNTRY"),
   ))
 }
 
-#' Output for 60-day follow ups
+#' Exports output for 60-day follow ups
 #'
 #' @param cases.need60day table for 60 day follow up
 #' @param country name of the country
 #' @param excel_output_path output path
 #'
-#' @return does not return anything
 #' @export
 create_60_day_export <- function(cases.need60day, country=Sys.getenv("DR_COUNTRY"), excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   cases.need60day |>
     rename(
       Year = year,
-      "age in months" = age.months,
-      "Hot Case" = hot.case,
-      "Hot Case, no review" = hot.case.no.review,
-      "Complete 60 day" = got60day,
-      "60-day ontime" = ontime.60day,
-      Country = ctry,
-      Province = prov,
+      "age in months" = .data$age.months,
+      "Hot Case" = .data$hot.case,
+      "Hot Case, no review" = .data$hot.case.no.review,
+      "Complete 60 day" = .data$got60day,
+      "60-day ontime" = .data$ontime.60day,
+      Country = .data$ctry,
+      Province = .data$prov,
       District = dist,
-      "Adequate stool missing=good" = adequacy.03,
-      "total OPV doses" = doses.total,
-      "Potentially Compatible" = pot.compatible,
-      "Missing followup date but have findings" = missing.fu.date
+      "Adequate stool missing=good" = .data$adequacy.03,
+      "total OPV doses" = .data$doses.total,
+      "Potentially Compatible" = .data$pot.compatible,
+      "Missing followup date but have findings" = .data$missing.fu.date
     ) |>
     readr::write_csv(file.path(
       excel_output_path,
@@ -161,13 +158,12 @@ create_60_day_export <- function(cases.need60day, country=Sys.getenv("DR_COUNTRY
     ))
 }
 
-#' Import potentially compatible and compatible summaries
+#' Export potentially compatible and compatible summaries
 #'
 #' @param pot.c.clust potentially compatible cluster summary
 #' @param country name of the country
 #' @param excel_output_path output path
 #'
-#' @return does not return anything
 #' @export
 create_pot_comp_clust_export <- function(pot.c.clust, country=Sys.getenv("DR_COUNTRY"), excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   writexl::write_xlsx(pot.c.clust,

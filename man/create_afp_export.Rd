@@ -13,6 +13,8 @@ create_afp_export(
 \arguments{
 \item{stool.data}{afp data with final adequacy columns}
 
+\item{country}{name of the country}
+
 \item{excel_output_path}{output path of the Excel file}
 }
 \description{

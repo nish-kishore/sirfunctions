@@ -89,10 +89,12 @@ check_pop_rollout <- function(ctry.data) {
     cli::cli_alert_warning("Differences in population country and district roll up found.")
   }
 
+  cli::cli_alert("Please check the error logs of ctry.data for differences in population roll ups.")
+
   return(pop_file)
 }
 
-#' Check for invalid spatial GUIDs
+#' Check for GUIDs that has changed due to redistricting
 #'
 #' @param pop.data population data
 #' @param spatial.scale spatial scale of the data
@@ -116,40 +118,46 @@ spatial_validation <- function(pop.data, spatial.scale) {
     spatial.scale,
     "ctry" = {
       pop.data |>
-        group_by(adm0guid) |>
-        summarize(freq = n()) |>
+        group_by(.data$adm0guid) |>
+        summarize(freq = n(), years_active = paste0(min(year), "-", max(year)),
+                  ctry = unique(ctry)) |>
         filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
-        pull(adm0guid)
+        select(.data$ctry, .data$adm0guid, .data$years_active) |>
+        arrange(.data$ctry, .data$years_active)
     },
     "prov" = {
       pop.data |>
-        group_by(adm1guid) |>
-        summarize(freq = n()) |>
+        group_by(.data$adm1guid) |>
+        summarize(freq = n(), years_active = paste0(min(year), "-", max(year)),
+                  prov = unique(prov)) |>
         filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
-        pull(adm1guid)
+        select(.data$prov, .data$adm1guid, .data$years_active) |>
+        arrange(.data$prov, .data$years_active)
     },
     "dist" = {
       pop.data |>
-        group_by(adm2guid) |>
-        summarize(freq = n()) |>
+        group_by(.data$adm2guid) |>
+        summarize(freq = n(), years_active = paste0(min(year), "-", max(year)),
+                  dist = unique(dist)) |>
         filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
-        pull(adm2guid)
+        select(.data$dist, .data$adm2guid, .data$years_active) |>
+        arrange(.data$dist, .data$years_active)
     }
   )
 
-  if (length(incomplete.adm) > 0) {
+  if (nrow(incomplete.adm) > 0) {
     cli::cli_alert_warning(
       paste0(
-        length(incomplete.adm),
+        nrow(incomplete.adm),
         " GUIDs at the ",
         geo,
         " level",
-        " were not valid across the temporal scale.\n"
+        " were not consistent across the temporal scale of the desk review.\n"
       )
     )
   }
 
-  return(tibble::as_tibble(incomplete.adm))
+  return(incomplete.adm)
 }
 
 #' Get the most recent shapefile at a given spatial scale

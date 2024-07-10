@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.excel.export.functions.R
 \name{create_pop_check_export}
 \alias{create_pop_check_export}
-\title{File for checking population roll-ups}
+\title{Exports file for checking population roll-ups}
 \usage{
 create_pop_check_export(
   ctry.data,
@@ -16,12 +16,7 @@ create_pop_check_export(
 \item{country}{name of the country}
 
 \item{excel_output_path}{output path}
-
-\item{ctry.data.error.log}{error log of a country}
-}
-\value{
-does not return anything
 }
 \description{
-File for checking population roll-ups
+Exports file for checking population roll-ups
 }

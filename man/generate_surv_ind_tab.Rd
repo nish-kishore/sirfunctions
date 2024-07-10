@@ -6,6 +6,7 @@
 \usage{
 generate_surv_ind_tab(
   ctry.data,
+  ctry.extract,
   dis.extract,
   cstool,
   dstool,
@@ -14,15 +15,19 @@ generate_surv_ind_tab(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file countaining polio data of a country}
+\item{ctry.data}{RDS file containing polio data of a country}
+
+\item{ctry.extract}{country NPAFP rate}
 
 \item{dis.extract}{district NPAFP rate}
 
 \item{cstool}{stool adequacy at country level}
 
-\item{dstool}{stool adequact at a district level}
+\item{dstool}{stool adequacy at a district level}
 
 \item{afp.case}{AFP cases}
+
+\item{country_name}{name of the country}
 }
 \value{
 a flex table object for timeliness indicators

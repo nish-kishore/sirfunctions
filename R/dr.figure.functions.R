@@ -4,6 +4,7 @@
 #'
 #' @param int.data summary table with timeliness intervals at the country level
 #' @param output_path path where to output the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_ctry_timeliness_graph <- function(int.data, output_path = Sys.getenv("DR_FIGURE_PATH")) {
@@ -31,7 +32,6 @@ generate_ctry_timeliness_graph <- function(int.data, output_path = Sys.getenv("D
     coord_flip() +
     ylab("Median Days") +
     xlab("Year of Paralysis Onset") +
-    #scale_y_continuous(breaks = seq(0, max(pretty(tot.time$tot))+1)) +
     scale_x_discrete(labels = labs) +
     scale_fill_manual(
       name = "Interval",
@@ -51,11 +51,12 @@ generate_ctry_timeliness_graph <- function(int.data, output_path = Sys.getenv("D
 #' Timeliness interval bar graph at a province level
 #'
 #' @param int.data summary table of median timeliness intervals at a province level
-#' @param afp.prov.year labels for AFP dataset summarized by year
+#' @param afp.prov.year.lab labels for AFP dataset summarized by year
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
-generate_prov_timeliness_graph <- function(int.data, afp.prov.year, output_path = Sys.getenv("DR_FIGURE_PATH")) {
+generate_prov_timeliness_graph <- function(int.data, afp.prov.year.lab, output_path = Sys.getenv("DR_FIGURE_PATH")) {
   prov.time.2 = left_join(
     int.data,
     afp.prov.year.lab,
@@ -117,6 +118,7 @@ generate_prov_timeliness_graph <- function(int.data, afp.prov.year, output_path 
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_afp_epicurve <- function(ctry.data, start_date,
@@ -125,8 +127,8 @@ generate_afp_epicurve <- function(ctry.data, start_date,
   afp.epi.date.filter <- ctry.data$afp.epi %>%
     filter(between(yronset, as.numeric(year(start_date)), as.numeric(year(end_date))))
 
-  case.num.labs <- reframe(group_by(afp.epi.date.filter, yronset),
-                           labs = paste0(yronset, " (N = ", sum(afp.cases), ")")) %>%
+  case.num.labs <- reframe(group_by(afp.epi.date.filter, .data$yronset),
+                           labs = paste0(.data$yronset, " (N = ", sum(.data$afp.cases), ")")) %>%
     distinct(.)
 
   afp.epi.date.filter1 <- left_join(afp.epi.date.filter,
@@ -160,6 +162,7 @@ generate_afp_epicurve <- function(ctry.data, start_date,
 #' @param start_date start date of the desk review
 #' @param end_date cutoff date of calculating the number of cases
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_afp_prov_year <- function(afp.by.month.prov,
@@ -170,12 +173,9 @@ generate_afp_prov_year <- function(afp.by.month.prov,
 
   afp.month.prov.g$case.cat <- factor(afp.month.prov.g$case.cat, levels = c(c("0", "1", "2-5", "6-9", "10+")))
 
-  # changed to u15pop.prov instead
-  # prov is not a column at afp.month.prov.g (fixed by adding to the groupby)
-  # !!! address
   afp.dets.prov.year <- ggplot(
     afp.month.prov.g |>
-      arrange(u15pop),
+      arrange(.data$u15pop),
     aes(x = mon.year2,
         y = fct_inorder(prov),
         fill = case.cat)
@@ -235,11 +235,11 @@ generate_es_site_det <- function(ctry.data, es.data.long,
   sias$activity.end.date <- as.Date(sias$activity.end.date)
 
   minsy = count(sias,
-                yr.sia,
-                province,
-                activity.start.date,
-                activity.end.date,
-                vaccine.type)
+                .data$yr.sia,
+                .data$province,
+                .data$activity.start.date,
+                .data$activity.end.date,
+                .data$vaccine.type)
 
   colnames(minsy)[colnames(minsy) == "province"] <- "ADM1_NAME"
 
@@ -272,13 +272,13 @@ generate_es_site_det <- function(ctry.data, es.data.long,
     detection_types <- default_detections
   }
 
-  # Check whether the vaccine types and detections are present in the ggplot
+  # Check whether the vaccine types and detection are present in the ggplot
   minsy_vaccine_types <- minsy |>
-    select(vaccine.type) |>
+    select(.data$vaccine.type) |>
     unique() |> pull()
 
   es.data.long_all_dets <- es.data.long |>
-    select(all_dets) |>
+    select(.data$all_dets) |>
     unique() |> pull()
 
   miss_vaccine <- minsy_vaccine_types[!(minsy_vaccine_types %in% names(default_vaccine_type))]
@@ -297,7 +297,7 @@ generate_es_site_det <- function(ctry.data, es.data.long,
 
   }
 
-  if(length(miss_dets) > 0) {
+  if (length(miss_dets) > 0) {
     warning_message <- paste0(
       "There are values of all_dets missing from default. ",
       "Please pass a named list with the detection types to the detection_types parameter and try again.",
@@ -315,7 +315,7 @@ generate_es_site_det <- function(ctry.data, es.data.long,
   new.site <- es.data.long %>%
     filter(early.dat >= min(collect.date) &
              early.dat <= max(collect.date)) %>%
-    distinct(site.name, early.dat)
+    distinct(.data$site.name, .data$early.dat)
 
 
   minny = min(es.data.long$collect.date) - 7
@@ -324,7 +324,7 @@ generate_es_site_det <- function(ctry.data, es.data.long,
   es.site.det <- ggplot() +
     geom_point(
       data = es.data.long |>
-        arrange(ADM1_NAME),
+        arrange(.data$ADM1_NAME),
       aes(x = collect.date, y = site.name, col = all_dets),
       pch = 19,
       size = 3
@@ -342,14 +342,14 @@ generate_es_site_det <- function(ctry.data, es.data.long,
     ) +
     geom_point(
       data = es.data.long |>
-        arrange(ADM1_NAME),
+        arrange(.data$ADM1_NAME),
       aes(x = collect.date, y = site.name, col = all_dets),
       pch = 19,
       size = 3
     ) +
     geom_point(
       data = es.data.long |>
-        arrange(ADM1_NAME),
+        arrange(.data$ADM1_NAME),
       aes(x = collect.date, y = site.name),
       fill = NA,
       pch = 21,
@@ -380,7 +380,9 @@ generate_es_site_det <- function(ctry.data, es.data.long,
 #'
 #' @param es.data ES data
 #' @param es_start_date start date of ES
+#' @param output_path where to save the figure
 #' @param es_end_date end date of ES
+#'
 #' @return ggplot scatterplot for timeliness
 #' @export
 generate_es_timely <- function(es.data, es_start_date=(end_date - lubridate::years(1)),
@@ -393,7 +395,7 @@ generate_es_timely <- function(es.data, es_start_date=(end_date - lubridate::yea
     difftime(
       as.Date(es.data$date.received.in.lab, format = "%d/%m/%Y"),
       es.data$collect.date,
-      unit = "days"
+      units = "days"
     )
 
   per.time = es.data %>% count(timely > 3) %>%
@@ -466,6 +468,7 @@ generate_es_timely <- function(es.data, es_start_date=(end_date - lubridate::yea
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#'
 #' @return ggplot barplot
 #' @export
 generate_case_num_dose_g <- function(ctry.data, start_date, end_date,
@@ -504,7 +507,7 @@ generate_case_num_dose_g <- function(ctry.data, start_date, end_date,
     ylab("Percent of Cases") +
     scale_fill_manual("Number of doses - IPV/OPV", values = dose.num.cols, drop = F) +
     scale_y_continuous(labels = scales::percent)  +
-    labs(title="OPV/IPV Status of NP AFP cases, 6-59 months") +
+    labs(title = "OPV/IPV Status of NP AFP cases, 6-59 months") +
     geom_text(data = dcat.yr.prov |> group_by(year) |> summarise(freq = sum(freq)),
               aes(label = paste0("n = ", freq), x = year, y = 1.02), check_overlap = TRUE) +
     ggpubr::theme_pubr()
@@ -522,6 +525,7 @@ generate_case_num_dose_g <- function(ctry.data, start_date, end_date,
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
 #' @param output_path where to save the figure
+#'
 #' @return ggplot object of a barplot
 #' @export
 generate_iss_barplot <- function(iss.data=NULL, start_date,
@@ -542,9 +546,9 @@ generate_iss_barplot <- function(iss.data=NULL, start_date,
     filter(between(today_date, start_date, end_date))
 
   iss.data3 = iss.data2.1 %>%
-    group_by(month, year, priority_level) %>%
+    group_by(.data$month, .data$year, .data$priority_level) %>%
     summarize(freq = n()) %>%
-    filter(between(year, year(start_date), year(end_date)))
+    filter(between(.data$year, year(.data$start_date), year(.data$end_date)))
 
   iss.data3$labs = month.abb[iss.data3$month] %>%
     factor(., levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
@@ -561,11 +565,11 @@ generate_iss_barplot <- function(iss.data=NULL, start_date,
   iss.data.vis = ggplot(data = iss.data3) +
     geom_bar(aes(x = factor(labs), y = freq,
                  fill = priority_level), stat = "identity",
-             position = "stack", col = "black")+
+             position = "stack", col = "black") +
     scale_y_continuous(name = "Visit Number", limits = c(0, max(pretty(mtot))),
                        breaks = seq(0, max(pretty(mtot)), max(pretty(mtot))/5),
-                       labels = seq(0, max(pretty(mtot)), max(pretty(mtot))/5))+
-    scale_x_discrete(name = "Time")+
+                       labels = seq(0, max(pretty(mtot)), max(pretty(mtot))/5)) +
+    scale_x_discrete(name = "Time") +
     scale_fill_manual(name = "Priority",
                       values = c(
                         "High" = "#d73027",
@@ -573,7 +577,7 @@ generate_iss_barplot <- function(iss.data=NULL, start_date,
                         "Low" = "#4575b4",
                         "Not Focal Site" = "#878787"
 
-                      ))+
+                      )) +
     facet_wrap(~year) +
     theme_bw()
 
@@ -591,6 +595,7 @@ generate_iss_barplot <- function(iss.data=NULL, start_date,
 #' @param prov.shape province of most recent shape file
 #' @param end_date end date of the desk review
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_pop_map <- function(ctry.data, prov.shape, end_date, output_path=Sys.getenv("DR_FIGURE_PATH")) {
@@ -649,13 +654,15 @@ generate_pop_map <- function(ctry.data, prov.shape, end_date, output_path=Sys.ge
 #' Generate a map of population by district
 #'
 #' @param ctry.data RDS file of polio country data
+#' @param ctry.shape recent shape file of country
 #' @param prov.shape recent shape file of province
 #' @param dist.shape recent shape file of district
 #' @param end_date end date of the desk review
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
-generate_dist_pop_map <- function(ctry.data, prov.shape, dist.shape, end_date,
+generate_dist_pop_map <- function(ctry.data, ctry.shape, prov.shape, dist.shape, end_date,
                                   output_path=Sys.getenv("DR_FIGURE_PATH")) {
   prov.pop <- ctry.data$prov.pop %>%
     filter(year == year(end_date))
@@ -716,6 +723,7 @@ generate_dist_pop_map <- function(ctry.data, prov.shape, dist.shape, end_date,
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_afp_case_map <- function(ctry.data, ctry.shape, prov.shape,
@@ -774,6 +782,7 @@ generate_afp_case_map <- function(ctry.data, ctry.shape, prov.shape,
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
@@ -790,7 +799,7 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
   )
 
   prov.cut <- provnpafp %>%
-    mutate(cats = as.character(cats)) %>%
+    mutate(cats = as.character(.data$cats)) %>%
     mutate(
       cats = case_when(
         npafp_rate == 0 & u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
@@ -827,7 +836,7 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
   # Labels for provinces meeting NPAFP rate
   # How many provinces meet >2 NPAFP?
   prov.2npafp = provnpafp %>%
-    group_by(year, adm1guid, prov) %>%
+    group_by(.data$year, .data$adm1guid, .data$prov) %>%
     summarize(meet2 = sum(npafp_rate >= 2, na.rm = T)) %>%
     ungroup() %>%
     group_by(year) %>%
@@ -835,11 +844,11 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
               len.year = length(year)) %>%
     mutate(
       labs = paste0(
-        num.meet2,
+        .data$num.meet2,
         "/",
-        len.year,
+        .data$len.year,
         " (",
-        round(100 * num.meet2 / len.year, 0),
+        round(100 * .data$num.meet2 / .data$len.year, 0),
         "%)",
         " provinces with >= 2 cases of NPAFP \nper 100,000 population"
       )
@@ -917,12 +926,13 @@ generate_npafp_maps <- function(prov.extract, ctry.shape, prov.shape,
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.shape,
                                      start_date, end_date,
                                      output_path=Sys.getenv("DR_FIGURE_PATH")) {
-  distnpafp <- dis.extract
+  distnpafp <- dist.extract
 
   distnpafp$cats <- cut(
     distnpafp$npafp_rate,
@@ -935,7 +945,7 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
   # For those with no cases --> separate out districts with u15pop >100K and <100K
 
   dist.cut <- distnpafp %>%
-    mutate(cats = as.character(cats)) %>%
+    mutate(cats = as.character(.data$cats)) %>%
     mutate(
       cats = case_when(
         npafp_rate == 0 & u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
@@ -968,7 +978,7 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
 
   # How many districts meet >2 NPAFP?
   dist.2npafp = distnpafp %>%
-    group_by(year, adm2guid, dist) %>%
+    group_by(.data$year, .data$adm2guid, .data$dist) %>%
     summarize(meet2 = sum(npafp_rate >= 2, na.rm = T)) %>%
     ungroup() %>%
     group_by(year) %>%
@@ -976,11 +986,11 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
               len.year = length(year)) %>%
     mutate(
       labs = paste0(
-        num.meet2,
+        .data$num.meet2,
         "/",
-        len.year,
+        .data$len.year,
         " (",
-        round(100 * num.meet2 / len.year, 0),
+        round(100 * .data$num.meet2 / .data$len.year, 0),
         "%)",
         " districts with >= 2 cases of NPAFP \nper 100,000 population"
       )
@@ -1059,6 +1069,7 @@ generate_npafp_maps_dist <- function(dist.extract, ctry.shape, prov.shape, dist.
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape,
@@ -1066,16 +1077,16 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape,
                                    output_path=Sys.getenv("DR_FIGURE_PATH")) {
   allafp = ctry.data$afp.all.2 %>%
     filter(date >= start_date & date <= end_date) %>%
-    reframe(group_by(ctry.data$afp.all.2, cdc.classification.all2,
-                     adm1guid, year),
+    reframe(group_by(ctry.data$afp.all.2, .data$cdc.classification.all2,
+                     .data$adm1guid, .data$year),
             freq = n()) %>%
-    filter(cdc.classification.all2 != "NOT-AFP")
+    filter(.data$cdc.classification.all2 != "NOT-AFP")
 
   allprov = ctry.data$prov.pop[, c("adm1guid", "year", "prov")] %>%
     filter(year >= year(start_date) & year <= year(end_date))
 
   all.prov.afp = left_join(allprov, allafp) %>%
-    group_by(year, adm1guid, prov) %>%
+    group_by(.data$year, .data$adm1guid, .data$prov) %>%
     summarize(allafp = sum(freq, na.rm = T))
 
   stoolad.p = left_join(all.prov.afp,
@@ -1100,13 +1111,13 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape,
       )
     ) %>%
     mutate(prop.cat = factor(
-      prop.cat,
+      .data$prop.cat,
       levels = c("Zero AFP cases", "<40%", "40-59%",
                  "60-79%", "80%+")
     ))
 
   stoolad.nums.p = stoolad.p %>%
-    group_by(year, adm1guid, prov) %>%
+    group_by(.data$year, .data$adm1guid, .data$prov) %>%
     summarize(meet.stool = sum(per.stool.ad >= 80, na.rm = T)) %>%
     ungroup() %>%
     group_by(year) %>%
@@ -1114,11 +1125,11 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape,
               len.year = length(year)) %>%
     mutate(
       labs = paste0(
-        num.meet.stool,
+        .data$num.meet.stool,
         "/",
-        len.year,
+        .data$len.year,
         " (",
-        round(100 * num.meet.stool / len.year, 0),
+        round(100 * .data$num.meet.stool / .data$len.year, 0),
         "%)",
         " provinces with >= 80% stool adequacy"
       )
@@ -1196,19 +1207,20 @@ generate_stool_ad_maps <- function(ctry.data, pstool, ctry.shape, prov.shape,
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape, dist.shape, start_date, end_date,
                                         output_path=Sys.getenv("DR_FIGURE_PATH")) {
   # Get coordinates for maps that are plotted
   ctcoord <- as.data.frame(st_coordinates(ctry.shape))
-  # Put text at 10% below the minimum X and Y coords for each map
+  # Put text at 10% below the minimum X and Y coordinates for each map
   adjy <- (range(ctcoord$Y)[1] - range(ctcoord$Y)[2])*.1
 
   allafp.d <- ctry.data$afp.all.2 %>%
     filter(date >= start_date & date <= end_date) %>%
-    reframe(group_by(ctry.data$afp.all.2, cdc.classification.all2,
-                     adm2guid, year),
+    reframe(group_by(ctry.data$afp.all.2, .data$cdc.classification.all2,
+                     .data$adm2guid, .data$year),
             freq = n()) %>%
     filter(cdc.classification.all2 != "NOT-AFP")
 
@@ -1216,7 +1228,7 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape
     filter(year >= year(start_date) & year <= year(end_date))
 
   all.dist.afp <- left_join(alldist, allafp.d) %>%
-    group_by(year, adm2guid, prov, dist) %>%
+    group_by(.data$year, .data$adm2guid, .data$prov, .data$dist) %>%
     summarize(allafp = sum(freq, na.rm = T))
 
   stoolad.d <- left_join(
@@ -1244,12 +1256,12 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape
       )
     ) %>%
     mutate(prop.cat = factor(
-      prop.cat,
+      .data$prop.cat,
       levels = c("Zero AFP cases", "<40%", "40-59%", "60-79%", "80%+")
     ))
 
   stoolad.nums.d <- stoolad.d %>%
-    group_by(year, adm2guid, dist) %>%
+    group_by(.data$year, .data$adm2guid, .data$dist) %>%
     summarize(meet.stool = sum(per.stool.ad >= 80, na.rm = T)) %>%
     ungroup() %>%
     group_by(year) %>%
@@ -1257,11 +1269,11 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape
               len.year = length(year)) %>%
     mutate(
       labs = paste0(
-        num.meet.stool,
+        .data$num.meet.stool,
         "/",
-        len.year,
+        .data$len.year,
         " (",
-        round(100 * num.meet.stool / len.year, 0),
+        round(100 * .data$num.meet.stool / .data$len.year, 0),
         "%)",
         " districts with >= 80% stool adequacy"
       )
@@ -1338,9 +1350,10 @@ generate_stool_ad_maps_dist <- function(ctry.data, dstool,ctry.shape, prov.shape
 #' @param prov.shape recent province shapefile
 #' @param start_date start date of desk review
 #' @param end_date end dtae of desk review
-#' @param mark_x whether to put X on where AFP cases are less than 5
+#' @param mark_x whether to put a mark on where AFP cases are less than 5
 #' @param pt_size size of the marks
 #' @param output_path where to save the figure
+#'
 #' @returns ggplot object
 #' @export
 generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
@@ -1348,22 +1361,22 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
                                      mark_x = T, pt_size = 4,
                                      output_path=Sys.getenv("DR_FIGURE_PATH")) {
   long.timely <- ctry.data$afp.all.2 %>%
-    select(epid,
-           noti.7d.on,
-           inv.2d.noti,
-           coll.3d.inv,
-           ship.3d.coll,
-           year,
-           prov,
-           adm1guid) %>%
-    pivot_longer(!c(epid, year, prov, adm1guid),
+    select(.data$epid,
+           .data$noti.7d.on,
+           .data$inv.2d.noti,
+           .data$coll.3d.inv,
+           .data$ship.3d.coll,
+           .data$year,
+           .data$prov,
+           .data$adm1guid) %>%
+    pivot_longer(!c(.data$epid, .data$year, .data$prov, .data$adm1guid),
                  names_to = "type",
                  values_to = "value") %>%
-    group_by(year, type, prov, adm1guid) %>%
+    group_by(.data$year, .data$type, .data$prov, .data$adm1guid) %>%
     summarize(prop = sum(value, na.rm = T) / n()) %>%
     ungroup() %>%
     filter(year >= year(start_date) & year <= year(end_date)) %>%
-    complete(year, prov, type)
+    complete(.data$year, .data$prov, .data$type)
 
 
   for (i in 1:nrow(long.timely)) {
@@ -1378,8 +1391,8 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
                                  year, adm1guid),
                         case.num = n()) %>%
     ungroup() %>%
-    filter(year >= year(start_date) & year <= year(end_date)) %>%
-    complete(year, prov, fill = list(case.num = 0))
+    filter(.data$year >= year(start_date) & year <= year(end_date)) %>%
+    complete(.data$year, .data$prov, fill = list(case.num = 0))
 
   for (i in 1:nrow(all.case)) {
     if (is.na(all.case$adm1guid[i])) {
@@ -1394,7 +1407,7 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
     labels = c("<20%", "20-49%", "50-79%",
                "80-89%", "90-100%", NA)
   )
-  long.timely$prop = fct_na_value_to_level(long.timely$prop, "Missing")# missing date data
+  long.timely$prop = forcats::fct_na_value_to_level(long.timely$prop, "Missing")# missing date data
 
   time.map <-
     left_join(prov.shape, long.timely, by = c("GUID" = "adm1guid"))
@@ -1402,10 +1415,10 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
     full_join(time.map, all.case, by = c("GUID" = "adm1guid", "year" = "year"))
 
   time.map <- time.map %>%
-    mutate(prop = as.character(prop)) %>%
-    mutate(prop = ifelse(case.num == 0, "No AFP cases", prop)) %>%
+    mutate(prop = as.character(.data$prop)) %>%
+    mutate(prop = ifelse(.data$case.num == 0, "No AFP cases", .data$prop)) %>%
     mutate(prop = factor(
-      prop,
+      .data$prop,
       levels = c(
         "<20%",
         "20-49%",
@@ -1420,7 +1433,7 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
 
   # Flag provinces with less than 5 AFP cases reported
   low.case.prov <- time.map %>%
-    group_by(year, ADM1_NAME) %>%
+    group_by(.data$year, .data$ADM1_NAME) %>%
     filter(case.num <= 5)
 
   # noti.7d.on
@@ -1717,6 +1730,7 @@ generate_timeliness_maps <- function(ctry.data, ctry.shape, prov.shape,
 #' @param es_start_date ES start date
 #' @param es_end_date ES end date
 #' @param output_path where to save the figure
+#'
 #' @return ggplot map of ES detections
 #' @export
 generate_es_det_map <- function(es.data, es.data.long, ctry.shape, prov.shape,
@@ -1749,7 +1763,7 @@ generate_es_det_map <- function(es.data, es.data.long, ctry.shape, prov.shape,
                             TRUE ~ cats))
 
   site.coord <-
-    reframe(group_by(es.data, site.name), lat = lat, lng = lng)
+    reframe(group_by(es.data, .data$site.name), lat = .data$lat, lng = .data$lng)
   site.coord <- unique(site.coord)
 
   det.rate$cats <- factor(det.rate$cats,
@@ -1824,7 +1838,10 @@ generate_es_det_map <- function(es.data, es.data.long, ctry.shape, prov.shape,
 #'
 #' @param iss.data tibble of ISS/eSurv data
 #' @param start_date start date of desk review
+#' @param prov.shape shapefile containing province shapes
+#' @param output_path where to save the figure
 #' @param end_date end date of desk review
+#'
 #' @return a ggplot map
 #' @export
 generate_iss_map <- function(iss.data, prov.shape, start_date, end_date,
@@ -1834,12 +1851,12 @@ generate_iss_map <- function(iss.data, prov.shape, start_date, end_date,
     stop("No ISS data attached.")
   }
 
-  if(!"_gps_ending_longitude" %in% names(iss.data)) {
+  if (!"_gps_ending_longitude" %in% names(iss.data)) {
     iss.data <- iss.data |>
       mutate(`_gps_ending_longitude` = .data[["_gps_longitude"]])
   }
 
-  if(!"_gps_ending_latitude" %in% names(iss.data)) {
+  if (!"_gps_ending_latitude" %in% names(iss.data)) {
     iss.data <- iss.data |>
       mutate(`_gps_ending_latitude` = .data[["_gps_latitude"]])
   }
@@ -1850,25 +1867,25 @@ generate_iss_map <- function(iss.data, prov.shape, start_date, end_date,
     filter(between(`_gps_ending_longitude`, bbox$xmin, bbox$xmax),
            between(`_gps_ending_latitude`, bbox$ymin, bbox$ymax))
 
-  pryr = count(iss.data, priority_level,year) %>%
+  pryr = count(iss.data, .data$priority_level, .data$year) %>%
     filter(priority_level == "High")
 
   iss.data2 = full_join(iss.data, pryr)
 
   iss.data2$labs = paste0(iss.data$year, "\n(n = ",iss.data2$n,")")
 
-  iss.data.map = ggplot()+
+  iss.data.map = ggplot() +
     geom_sf(data = prov.shape, color = "black", fill = NA, size = .5) +
     geom_point(data = iss.data2 |>
-                 filter(year<=year(end_date) &
-                          year>= year(start_date) &
-                          priority_level=="High"),
+                 filter(year <= year(end_date) &
+                          year >= year(start_date) &
+                          priority_level == "High"),
                aes(x = as.numeric(`_gps_ending_longitude`),
                    y = as.numeric(`_gps_ending_latitude`),
-                   col = priority_level))+
+                   col = priority_level)) +
     sirfunctions::f.plot.looks("epicurve") +
-    scale_color_manual("Priority level", values = c("High" = "#d73027"))+
-    facet_wrap(~labs, ncol=4) +
+    scale_color_manual("Priority level", values = c("High" = "#d73027")) +
+    facet_wrap(~labs, ncol = 4) +
     theme(
       axis.text.x = element_blank(),
       axis.text.y = element_blank(),
@@ -1883,15 +1900,17 @@ generate_iss_map <- function(iss.data, prov.shape, start_date, end_date,
 # Tables ----
 #' Generate surveillance indicator table
 #'
-#' @param ctry.data RDS file countaining polio data of a country
+#' @param ctry.data RDS file containing polio data of a country
+#' @param ctry.extract country NPAFP rate
 #' @param dis.extract district NPAFP rate
 #' @param cstool stool adequacy at country level
-#' @param dstool stool adequact at a district level
+#' @param dstool stool adequacy at a district level
 #' @param afp.case AFP cases
+#' @param country_name name of the country
 #'
 #' @return a flex table object for timeliness indicators
 #' @export
-generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.case, country_name=Sys.getenv("DR_COUNTRY")) {
+generate_surv_ind_tab <- function(ctry.data, ctry.extract, dis.extract, cstool, dstool, afp.case, country_name=Sys.getenv("DR_COUNTRY")) {
   dist.ind.afp <- left_join(dis.extract,
                             dstool,
                             by = c(
@@ -1918,7 +1937,7 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
     mutate(across(tot.dist.adeq, ~ replace_na(.x, 0)))
 
   meet.ind <- meet.ind |>
-    mutate(prop.dist.adeq = tot.dist.adeq / tot.dist.pop * 100)
+    mutate(prop.dist.adeq = .data$tot.dist.adeq / .data$tot.dist.pop * 100)
 
   ctry.ind.afp <- left_join(ctry.extract, cstool,
                             by = c("year", "adm0guid"))
@@ -1933,7 +1952,7 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
   unique.dist.100k <- ctry.data$dist.pop %>%
     filter(ctry == str_to_upper(country_name) & u15pop >= 100000) %>%
     unique() %>%
-    group_by(year, u15pop, adm2guid) %>%
+    group_by(.data$year, .data$u15pop, .data$adm2guid) %>%
     filter(u15pop >= 100000) %>%
     filter(year >= year(start_date) &
              year <= year(end_date))
@@ -1953,7 +1972,7 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
   adeq.dists <-
     left_join(num.dists.100k, ad.dists.100k, by = c("year")) %>%
     mutate(across(everything(), ~ replace_na(.x, 0))) %>%
-    mutate(prop = paste0(ad.dist.100k.num, "/", dist.100k.num))
+    mutate(prop = paste0(.data$ad.dist.100k.num, "/", .data$dist.100k.num))
 
   temp.ind.tab1 <-
     left_join(temp.ind.tab, adeq.dists, by = c("year" = "year"))
@@ -1984,8 +2003,8 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
         type == "npafp_rate" ~ "NPAFP rate*",
         type == "afp.cases" ~ "AFP cases",
         type == "per.stool.ad" ~ "Stool adequacy**",
-        type == "prop.dist.adeq" ~ "% Population living in districts ≥ 100,000 U15 that met both indicators",
-        type == "prop" ~ "Districts ≥ 100,000 U15 that met both indicators",
+        type == "prop.dist.adeq" ~ "% Population living in districts >= 100,000 U15 that met both indicators",
+        type == "prop" ~ "Districts >= 100,000 U15 that met both indicators",
         FALSE ~ type
       )
     )
@@ -2005,7 +2024,7 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
     flextable::set_header_labels(type = "") %>%
     flextable::add_footer_row(
       top = F,
-      "*Pendings included\n**Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND ≤14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
+      "*Pendings included\n**Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND <=14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
       colwidths = ncol(temp.ind.tab.flex)
     ) %>%
     flextable::autofit()
@@ -2025,19 +2044,19 @@ generate_surv_ind_tab <- function(ctry.data, dis.extract, cstool, dstool, afp.ca
 generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
 
   sub.prov.case.ind = prov.case.ind %>%
-    select(year, n_npafp, u15pop, prov, npafp_rate)
+    select(.data$year, .data$n_npafp, .data$u15pop, .data$prov, .data$npafp_rate)
 
   sub.pstool <- pstool %>%
-    select(year, per.stool.ad, prov) |>
+    select(.data$year, .data$per.stool.ad, .data$prov) |>
     filter(!is.na(prov))
 
   sub.prov.join <- full_join(sub.prov.case.ind, sub.pstool, by = c("year", "prov")) %>%
-    arrange(prov, year)
+    arrange(.data$prov, .data$year)
 
   sub.prov.join = sub.prov.join %>%
-    group_by(prov) %>%
-    mutate(diff = lag(n_npafp)) %>%
-    mutate(diff_per = round(100*(n_npafp - lag(n_npafp))/lag(n_npafp), 1)) %>%
+    group_by(.data$prov) %>%
+    mutate(diff = lag(.data$n_npafp)) %>%
+    mutate(diff_per = round(100*(.data$n_npafp - lag(.data$n_npafp))/lag(.data$n_npafp), 1)) %>%
     mutate(across(c(per.stool.ad, diff, diff_per, n_npafp),\(x) round(x, 0))) %>%
     mutate(across(c(npafp_rate), \(x) round(x, 1))) |>
     filter(!is.na(prov))
@@ -2045,11 +2064,11 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
   sub.prov.join
 
   date.analysis =  seq(year(start_date), year(end_date),1)
-  pop.date.analysis =paste0("u15pop_", date.analysis[1:length(date.analysis)-1])
+  pop.date.analysis = paste0("u15pop_", date.analysis[1:length(date.analysis) - 1])
 
   sub.prov.join.wide = pivot_wider(sub.prov.join, names_from = year,
-                                   values_from = c(per.stool.ad, diff, diff_per,
-                                                   n_npafp, npafp_rate, u15pop))%>%
+                                   values_from = c(.data$per.stool.ad, .data$diff, .data$diff_per,
+                                                   .data$n_npafp, .data$npafp_rate, .data$u15pop)) %>%
     select(-all_of(pop.date.analysis))
 
   var.ord = c("prov", paste0("u15pop_", date.analysis[length(date.analysis)]),
@@ -2088,7 +2107,7 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
     select(all_of(var.ord.case))
   # Cases and differences
 
-  null.col = rep(c(NA),times=ncol(sub.prov.join.wide.case)*nrow(sub.prov.join.wide.case))
+  null.col = rep(c(NA),times = ncol(sub.prov.join.wide.case)*nrow(sub.prov.join.wide.case))
 
   col.mat = c(null.col, npafp.rate.colors, stool.ad.colors)
 
@@ -2096,7 +2115,7 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
   # If stool ad or NPAFP below threshold - color = "#CC0000"
   # Subset of prov not meeting indicators any year
   inad.prov = sub.prov.join %>%
-    filter(npafp_rate<2|per.stool.ad<80)
+    filter(npafp_rate < 2 | per.stool.ad<80)
 
   uni.inad.prov = match(unique(inad.prov$prov), sub.prov.join.wide$prov)
 
@@ -2107,20 +2126,20 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
 
   # Flextable column formatting calculations
   # # NPAFP cases length
-  npafp.case.length = length(subset(var.ord, grepl("n_n", var.ord) ==T |
-                                      grepl("diff", var.ord)==T))
+  npafp.case.length = length(subset(var.ord, grepl("n_n", var.ord) == T |
+                                      grepl("diff", var.ord) == T))
   # NPAFP rate length
-  npafp.rate.length = length(subset(var.ord, grepl("rate", var.ord) ==T))
+  npafp.rate.length = length(subset(var.ord, grepl("rate", var.ord) == T))
   # stool adequacy length
-  stool.ad.length = length(subset(var.ord, grepl("stool", var.ord) ==T))
+  stool.ad.length = length(subset(var.ord, grepl("stool", var.ord) == T))
 
   # Labels for % difference
-  diff.yr = length(which(grepl("diff", names(sub.prov.join.wide)) ==T))
+  diff.yr = length(which(grepl("diff", names(sub.prov.join.wide)) == T))
 
   diff.lab = NULL
-  for(i in 1:(diff.yr)){
-    diff.lab[i] = paste("% difference ", min(date.analysis)+i-1, "-",
-                        min(date.analysis)+i)
+  for (i in 1:(diff.yr)) {
+    diff.lab[i] = paste("% difference ", min(date.analysis) + i - 1, "-",
+                        min(date.analysis) + i)
   }
 
   # Names for flextable columns
@@ -2130,12 +2149,12 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
              date.analysis, date.analysis)
 
 
-  small_border = flextable::fp_border_default(color="black", width = 1)
+  small_border = flextable::fp_border_default(color = "black", width = 1)
   # pop.tab flextable
   pop.tab = flextable::flextable(sub.prov.join.wide) %>%
     flextable::theme_booktabs() %>%
     flextable::bg(j = colnames(sub.prov.join.wide), bg = col.mat) %>%
-    flextable::color(j = colnames(sub.prov.join.wide), col = col.mat.txt) %>%
+    flextable::color(j = colnames(sub.prov.join.wide), color = col.mat.txt) %>%
     flextable::align(align = "center", part = "all") %>%
     flextable::set_header_df(mapping = data.frame(keys = names1,
                                                   values = names2,
@@ -2144,8 +2163,8 @@ generate_pop_tab <- function(prov.case.ind, pstool, start_date, end_date) {
     flextable::add_header_row(values = c("", "# NP AFP Cases", "NP AFP rate", "% Stool Adequacy"),
                               colwidths = c(2, npafp.case.length, stool.ad.length,
                                             stool.ad.length), top = TRUE) %>%
-    flextable::vline(j = c(2,2+npafp.case.length,2+npafp.case.length+stool.ad.length),
-                     border = small_border)%>%
+    flextable::vline(j = c(2, 2 + npafp.case.length, 2 + npafp.case.length + stool.ad.length),
+                     border = small_border) %>%
     flextable::hline(part = "header") %>%
     flextable::bold(bold = TRUE, part = "header") %>%
     flextable::align(align = "center", part = "all")
@@ -2190,14 +2209,14 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
     )
 
 
-  late.stool = count(late.inads, year, timelystool) %>%
+  late.stool = count(late.inads, .data$year, .data$timelystool) %>%
     filter(timelystool == "Not Timely")
   # variables exclude bad dates as 77 or Unable to Assess
   # Missing dates treated as absence of collection of stool as there is no variable
   # that specifies stool was not collected
 
   # No stool/one stool/one stool among inadequate
-  count(inads, stoolmissing, stool1missing, stool2missing)
+  count(inads, .data$stoolmissing, .data$stool1missing, .data$stool2missing)
 
   stool.miss.any = summarize(
     group_by(inads, year),
@@ -2207,7 +2226,7 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
 
 
   # Poor condition among inadequate
-  count(inads, stool.1.condition, stool.2.condition)
+  count(inads, .data$stool.1.condition, .data$stool.2.condition)
 
   cond.poor = filter(inads, stool.1.condition == "Poor" |
                        stool.2.condition == "Poor")
@@ -2226,11 +2245,11 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
   # 1 stool within 14 days of onset (+condition)
   good.cond.1 = count(
     afps.all,
-    (ontostool1 <= 14 | ontostool2 <= 14) &
-      (stool.1.condition == "Good" |
-         is.na(stool.1.condition)) &
-      (stool.2.condition == "Good" |
-         is.na(stool.2.condition)),
+    (.data$ontostool1 <= 14 | .data$ontostool2 <= 14) &
+      (.data$stool.1.condition == "Good" |
+         is.na(.data$stool.1.condition)) &
+      (.data$stool.2.condition == "Good" |
+         is.na(.data$stool.2.condition)),
     year
   )
 
@@ -2240,13 +2259,13 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
   # 2 stools within 21 days of onset (+condition)
   good.cond.2 = count(
     afps.all,
-    stool1missing == 0 &
-      stool2missing == 0 &
-      ontostool2 <= 21 &
-      (stool.1.condition == "Good" |
-         is.na(stool.1.condition)) &
-      (stool.2.condition == "Good" |
-         is.na(stool.2.condition)),
+    .data$stool1missing == 0 &
+      .data$stool2missing == 0 &
+      .data$ontostool2 <= 21 &
+      (.data$stool.1.condition == "Good" |
+         is.na(.data$stool.1.condition)) &
+      (.data$stool.2.condition == "Good" |
+         is.na(.data$stool.2.condition)),
     year
   )
   colnames(good.cond.2)[1] <- "conds"
@@ -2262,16 +2281,16 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
 
   # Bind together tables
   allinadstool <- left_join(stool.sub, late.stool, by = "year") %>%
-    select(-timelystool) %>%
+    select(-.data$timelystool) %>%
     rename("timelystool" = "n") %>%
     left_join(stool.miss.any, by = "year") %>%
     left_join(cond.poor.num, by = "year") %>%
     rename("cond.poor.num" = "n") %>%
     left_join(good.cond.1, by = "year") %>%
-    select(-conds) %>%
+    select(-.data$conds) %>%
     rename("good.cond.1" = "n") %>%
     left_join(good.cond.2, by = "year") %>%
-    select(-conds) %>%
+    select(-.data$conds) %>%
     rename("good.cond.2" = "n")
 
   allinadstool$timelyper <- paste0(
@@ -2373,7 +2392,7 @@ generate_inad_tab <- function(ctry.data, stool.data, cstool, start_date, end_dat
                                  sub = "") |>
     flextable::add_footer_row(
       top = F,
-      "*Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND ≤14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
+      "*Stool adequacy defined as per Certification Indicator, i.e., 2 stools collected at least 24h apart AND <=14d of onset AND received in good condition at a WHO-accredited laboratory (missing condition assumed good)",
       colwidths = ncol(inad.tab)
     ) %>%
     flextable::autofit()
@@ -2399,32 +2418,32 @@ generate_60_day_tab <- function(cases.need60day) {
       missing.fu.date = sum(missing.fu.date == 1, na.rm = T)
     ) |>
     mutate(
-      per.got60 = round(got60day / inadequate * 100),
-      per.ontime60day = round(ontime60day / got60day * 100),
-      per.comp = round(compatible / inadequate * 100),
-      per.pot.comp = round(pot.compatible / inadequate * 100),
-      per.got60.2 = paste(got60day, " ", "(", per.got60, "%", ")", sep = ""),
-      per.ontime60day.2 = paste(ontime60day, " ", "(", per.ontime60day, "%", ")", sep = ""),
-      per.comp.2 = compatible,
-      per.pot.comp.2 = pot.compatible,
+      per.got60 = round(.data$got60day / .data$inadequate * 100),
+      per.ontime60day = round(.data$ontime60day / .data$got60day * 100),
+      per.comp = round(.data$compatible / .data$inadequate * 100),
+      per.pot.comp = round(.data$pot.compatible / .data$inadequate * 100),
+      per.got60.2 = paste(.data$got60day, " ", "(", .data$per.got60, "%", ")", sep = ""),
+      per.ontime60day.2 = paste(.data$ontime60day, " ", "(", .data$per.ontime60day, "%", ")", sep = ""),
+      per.comp.2 = .data$compatible,
+      per.pot.comp.2 = .data$pot.compatible,
       per.missing.fu.date = paste(
-        missing.fu.date,
+        .data$missing.fu.date,
         " ",
         "(",
-        round(missing.fu.date / inadequate * 100),
+        round(.data$missing.fu.date / .data$inadequate * 100),
         "%",
         ")",
         sep = ""
       )
     ) |>
     select(
-      year,
-      inadequate,
-      per.got60.2,
-      per.ontime60day.2,
-      per.missing.fu.date,
-      per.comp.2,
-      per.pot.comp.2
+      .data$year,
+      .data$inadequate,
+      .data$per.got60.2,
+      .data$per.ontime60day.2,
+      .data$per.missing.fu.date,
+      .data$per.comp.2,
+      .data$per.pot.comp.2
     ) |>
     mutate(year = as.character(year)) |>
     arrange(desc(year))
@@ -2486,60 +2505,60 @@ generate_es_tab <- function(es.data,
     difftime(
       as.Date(es.data$date.received.in.lab, format = "%d/%m/%Y"),
       es.data$collect.date,
-      unit = "days"
+      units = "days"
     )
 
   # get values with negative intervals
   neg_interval_data <- es.data |>
     filter(timely < 0 | is.na(timely)) |>
-    group_by(ADM1_NAME, ADM2_NAME, site.name) |>
+    group_by(.data$ADM1_NAME, .data$ADM2_NAME, .data$site.name) |>
     summarize(neg_intervals = n())
   #sample summary
   sample_summary <- es.data |>
-    group_by(ADM1_NAME, ADM2_NAME, site.name) |>
+    group_by(.data$ADM1_NAME, .data$ADM2_NAME, .data$site.name) |>
     summarize(samples = n())
 
   neg_interval_data <- neg_interval_data |>
     left_join(sample_summary)
 
   neg_interval_data <- neg_interval_data |>
-    mutate(bad_samples = round(neg_intervals / samples * 100, 2))
+    mutate(bad_samples = round(.data$neg_intervals / .data$samples * 100, 2))
 
   # turn negative timely intervals to NA to exclude from calculations
   es.data <- es.data |>
-    mutate(timely = if_else(timely < 0, NA, timely))
+    mutate(timely = if_else(.data$timely < 0, NA, .data$timely))
 
   es.tab1 <- es.data %>%
     #filter(year(collect.date) == year(end_date)) %>%
-    group_by(site.name, ADM1_NAME, ADM2_NAME) %>%
+    group_by(.data$site.name, .data$ADM1_NAME, .data$ADM2_NAME) %>%
     reframe(
-      early.dat = format(early.dat, format = "%B %d, %Y"),
+      early.dat = format(.data$early.dat, format = "%B %d, %Y"),
       # earliest report to POLIS
-      ev.pct = 100 * sum(as.numeric(ev.detect), na.rm = TRUE) / n(),
-      # percent ev detected
+      ev.pct = 100 * sum(as.numeric(.data$ev.detect), na.rm = TRUE) / n(),
+      # percent EV detected
       num.spec = n(),
       # number of specimens
-      num.spec.bad = sum(is.na(timely)),
+      num.spec.bad = sum(is.na(.data$timely)),
       # no of bad specimens excluded
-      condition.pct = 100 * sum(sample.condition == "Good", na.rm = T) / n(),
+      condition.pct = 100 * sum(.data$sample.condition == "Good", na.rm = T) / n(),
       # specimens in good condition
-      trans.pct = round(100 * sum(as.numeric(timely) <= 3, na.rm = TRUE) / n(), 1),
+      trans.pct = round(100 * sum(as.numeric(.data$timely) <= 3, na.rm = TRUE) / n(), 1),
       # % timely
       med.trans = paste0(
-        median(as.numeric(timely), na.rm = T),
+        median(as.numeric(.data$timely), na.rm = T),
         " (",
-        min(as.numeric(timely), na.rm = T),
+        min(as.numeric(.data$timely), na.rm = T),
         ", ",
-        max(as.numeric(timely), na.rm = T),
+        max(as.numeric(.data$timely), na.rm = T),
         ")"
       ),
       # med (range)
-      num.wpv.or.vdpv = sum(wpv, na.rm = T) + sum(vdpv, na.rm = T)
+      num.wpv.or.vdpv = sum(.data$wpv, na.rm = T) + sum(.data$vdpv, na.rm = T)
     ) %>% # WPV/VDPV
     distinct()
 
   es.tab1 = es.tab1 %>%
-    arrange(ADM1_NAME, ADM2_NAME, site.name)
+    arrange(.data$ADM1_NAME, .data$ADM2_NAME, .data$site.name)
 
   es.table <- es.tab1 %>%
     flextable::flextable(

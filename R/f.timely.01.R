@@ -8,9 +8,9 @@
 #' @import lubridate
 #' @import tibble
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
-#' formated as "adm{0,1,2}guid, onset date as "date"
+#' formated as "adm(0,1,2)guid, onset date as "date"
 #' @param admin.data tibble: Full list of country administrative units by a given
-#' spatial scale including "year", "adm{0,1,2}guid, and "{ctry/prov/dist}"
+#' spatial scale including "year", "adm(0,1,2)guid, and "(ctry/prov/dist)"
 #' as appropriate
 #' @param start.date date: "YYYY-MM-DD"
 #' @param end.date date: "YYYY-MM-DD"
