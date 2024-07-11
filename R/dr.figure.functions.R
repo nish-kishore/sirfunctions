@@ -911,7 +911,7 @@ generate_afp_case_map <- function(ctry.data,
 }
 
 #' Map of NPAFP rate by province
-#' @import dplyr ggplot2
+#' @import dplyr ggplot2 lubridate sf
 #' @param prov.extract province NPAFP rate
 #' @param ctry.shape recent country shape
 #' @param prov.shape recent province shape
@@ -939,7 +939,7 @@ generate_npafp_maps <- function(prov.extract,
   prov.cut <- provnpafp %>%
     dplyr::mutate(cats = as.character(.data$cats)) %>%
     dplyr::mutate(
-      cats = case_when(
+      cats = dplyr::case_when(
         npafp_rate == 0 & u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
         npafp_rate == 0 &
           u15pop < 100000 & u15pop > 0 ~ "No cases (u15pop < 100K)",
@@ -999,26 +999,26 @@ generate_npafp_maps <- function(prov.extract,
   adjy = (range(ctcoord$Y)[1] - range(ctcoord$Y)[2]) * .1
 
 
-  npafp.maps <- ggplot() +
-    geom_sf(
+  npafp.maps <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.pop.case.npafp,
       color = "black",
       aes(fill = cats),
       show.legend = T
     ) +
-    geom_text(
+    ggplot2::geom_text(
       data = prov.2npafp,
       aes(
         x = min(ctcoord$X),
@@ -1029,7 +1029,7 @@ generate_npafp_maps <- function(prov.extract,
       check_overlap = TRUE,
       hjust = 0,
     ) +
-    scale_fill_manual(
+    ggplot2::scale_fill_manual(
       name = "NPAFP rate",
       values = c(
         "No cases (u15pop < 100K)" = "lightgrey",
@@ -1042,18 +1042,18 @@ generate_npafp_maps <- function(prov.extract,
       ),
       drop = F
     ) +
-    ggtitle("NPAFP Rate Annualized - Province") +
+    ggplot2::ggtitle("NPAFP Rate Annualized - Province") +
     sirfunctions::f.plot.looks("epicurve") +
-    facet_wrap(~ year, ncol = 4) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
+    ggplot2::facet_wrap(~ year, ncol = 4) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
       legend.position.inside =  c(0.5, -0.23),
       legend.direction = "horizontal"
     )
 
-  ggsave("npafp.map.png",
+  ggplot2::ggsave("npafp.map.png",
          plot = npafp.maps,
          path = output_path,
          width = 14,
