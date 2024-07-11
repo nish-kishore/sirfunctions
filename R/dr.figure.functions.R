@@ -1539,7 +1539,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
 
 
 #' Map containing timeliness of samples
-#' @import dplyr tidyr ggplot2 ggpubr cli
+#' @import dplyr tidyr ggplot2 ggpubr cli lubridate forcats
 #' @param ctry.data RDS file containing polio data for a country
 #' @param ctry.shape recent country shapefile
 #' @param prov.shape recent province shapefile
@@ -1580,7 +1580,7 @@ generate_timeliness_maps <- function(ctry.data,
     dplyr::ungroup() %>%
     dplyr::filter(year >= lubridate::year(start_date) &
                     year <= lubridate::year(end_date)) %>%
-    complete(.data$year, .data$prov, .data$type)
+    tidyr::complete(.data$year, .data$prov, .data$type)
 
 
   for (i in 1:nrow(long.timely)) {
@@ -1591,12 +1591,12 @@ generate_timeliness_maps <- function(ctry.data,
   }
 
 
-  all.case <- dplyr::summarize(group_by(ctry.data$afp.all.2, prov, year, adm1guid),
+  all.case <- dplyr::summarize(dplyr::group_by(ctry.data$afp.all.2, prov, year, adm1guid),
                                case.num = n()) %>%
     dplyr::ungroup() %>%
     dplyr::filter(.data$year >= lubridate::year(start_date) &
                     year <= lubridate::year(end_date)) %>%
-    complete(.data$year, .data$prov, fill = list(case.num = 0))
+    tidyr::complete(.data$year, .data$prov, fill = list(case.num = 0))
 
   for (i in 1:nrow(all.case)) {
     if (is.na(all.case$adm1guid[i])) {
@@ -1640,34 +1640,34 @@ generate_timeliness_maps <- function(ctry.data,
     dplyr::filter(case.num <= 5)
 
   # noti.7d.on
-  mapt1 <- ggplot() +
-    geom_sf(
+  mapt1 <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = dplyr::filter(time.map, type == "noti.7d.on"),
       color = "black",
       aes(fill = prop)
     ) +
-    scale_fill_manual(name = "Proportion",
+    ggplot2::scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
-    ggtitle("Proportion of cases with notification within 7 days of onset") +
+    ggplot2::ggtitle("Proportion of cases with notification within 7 days of onset") +
     sirfunctions::f.plot.looks("epicurve")
 
   if (mark_x) {
     tryCatch({
       mapt1 <- mapt1 +
-        geom_sf(data = st_centroid(filter(low.case.prov, type == "noti.7d.on")),
+        ggplot2::geom_sf(data = sf::st_centroid(dplyr::filter(low.case.prov, type == "noti.7d.on")),
                 pch = 4,
                 size = pt_size)
     }, error = function(error) {
@@ -1675,7 +1675,7 @@ generate_timeliness_maps <- function(ctry.data,
 
       sf::sf_use_s2(F)
       mapt1 <- mapt1 +
-        geom_sf(data = st_centroid(filter(low.case.prov, type == "noti.7d.on")),
+        ggplot2::geom_sf(data = sf::st_centroid(dplyr::filter(low.case.prov, type == "noti.7d.on")),
                 pch = 4,
                 size = pt_size)
       sf::sf_use_s2(T)
@@ -1685,29 +1685,29 @@ generate_timeliness_maps <- function(ctry.data,
 
   }
   mapt1 <- mapt1 +
-    facet_wrap(~ year, ncol = 4) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
-      plot.caption = element_text(hjust = 0)
+    ggplot2::facet_wrap(~ year, ncol = 4) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      plot.caption = ggplot2::element_text(hjust = 0)
     )
 
   # inv.2d.noti
-  mapt2 <- ggplot() +
-    geom_sf(
+  mapt2 <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = dplyr::filter(time.map, type == "inv.2d.noti"),
       color = "black",
       aes(fill = prop)
@@ -1716,7 +1716,7 @@ generate_timeliness_maps <- function(ctry.data,
   if (mark_x) {
     tryCatch({
       mapt2 <- mapt2 +
-        geom_sf(data = st_centroid(filter(
+        ggplot2::geom_sf(data = sf::st_centroid(dplyr::filter(
           low.case.prov, type == "inv.2d.noti"
         )),
         pch = 4,
@@ -1726,7 +1726,7 @@ generate_timeliness_maps <- function(ctry.data,
 
       sf::sf_use_s2(F)
       mapt2 <- mapt2 +
-        geom_sf(data = st_centroid(filter(
+        ggplot2::geom_sf(data = sf::st_centroid(dplyr::filter(
           low.case.prov, type == "inv.2d.noti"
         )),
         pch = 4,
@@ -1737,47 +1737,47 @@ generate_timeliness_maps <- function(ctry.data,
     })
   }
   mapt2 <- mapt2 +
-    scale_fill_manual(name = "Proportion",
+    ggplot2::scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
-    ggtitle("Proportion of cases with investigation within 2 days of notification") +
+    ggplot2::ggtitle("Proportion of cases with investigation within 2 days of notification") +
     sirfunctions::f.plot.looks("epicurve") +
-    facet_wrap(~ year, ncol = 4) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
-      plot.caption = element_text(hjust = 0)
+    ggplot2::facet_wrap(~ year, ncol = 4) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      plot.caption = ggplot2::element_text(hjust = 0)
     )
 
   # coll.3d.inv
-  mapt3 <- ggplot() +
-    geom_sf(
+  mapt3 <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = dplyr::filter(time.map, type == "coll.3d.inv"),
       color = "black",
       aes(fill = prop)
-    ) + scale_fill_manual(name = "Proportion",
+    ) + ggplot2::scale_fill_manual(name = "Proportion",
                           values = f.color.schemes("mapval"),
                           drop = T) +
-    ggtitle("Proportion of cases with collection within 3 days of investigation") +
+    ggplot2::ggtitle("Proportion of cases with collection within 3 days of investigation") +
     sirfunctions::f.plot.looks("epicurve")
 
   if (mark_x) {
     tryCatch({
       mapt3 <- mapt3 +
-        geom_sf(data = st_centroid(filter(
+        ggplot2::geom_sf(data = sf::st_centroid(dplyr::filter(
           low.case.prov, type == "coll.3d.inv"
         )),
         pch = 4,
@@ -1787,7 +1787,7 @@ generate_timeliness_maps <- function(ctry.data,
 
       sf::sf_use_s2(F)
       mapt3 <- mapt3 +
-        geom_sf(data = st_centroid(filter(
+        ggplot2::geom_sf(data = sf::st_centroid(dplyr::filter(
           low.case.prov, type == "coll.3d.inv"
         )),
         pch = 4,
@@ -1798,37 +1798,37 @@ generate_timeliness_maps <- function(ctry.data,
     })
   }
   mapt3 <- mapt3 +
-    facet_wrap(~ year, ncol = 4) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
-      plot.caption = element_text(hjust = 0)
+    ggplot2::facet_wrap(~ year, ncol = 4) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      plot.caption = ggplot2::element_text(hjust = 0)
     )
 
   # ship.3d.coll
-  mapt4 <- ggplot() +
-    geom_sf(
+  mapt4 <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = dplyr::filter(time.map, type == "ship.3d.coll"),
       color = "black",
       aes(fill = prop)
     ) +
-    scale_fill_manual(name = "Proportion",
+    ggplot2::scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
-    ggtitle("Proportion of stool shipped to lab within 3 days of collection") +
+    ggplot2::ggtitle("Proportion of stool shipped to lab within 3 days of collection") +
     sirfunctions::f.plot.looks("epicurve")
 
 
@@ -1836,7 +1836,7 @@ generate_timeliness_maps <- function(ctry.data,
   if (mark_x) {
     tryCatch({
       mapt4 <- mapt4 +
-        geom_sf(data = st_centroid(filter(
+        ggplot2::geom_sf(data = sf::st_centroid(dplyr::filter(
           low.case.prov, type == "ship.3d.coll"
         )),
         pch = 4,
@@ -1846,7 +1846,7 @@ generate_timeliness_maps <- function(ctry.data,
 
       sf::sf_use_s2(F)
       mapt4 <- mapt4 +
-        geom_sf(data = st_centroid(filter(
+        ggplot2::geom_sf(data = sf::st_centroid(dplyr::filter(
           low.case.prov, type == "ship.3d.coll"
         )),
         pch = 4,
@@ -1858,41 +1858,41 @@ generate_timeliness_maps <- function(ctry.data,
   }
 
   mapt4 <- mapt4 +
-    facet_wrap(~ year, ncol = 4) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
-      plot.caption = element_text(hjust = 0)
+    ggplot2::facet_wrap(~ year, ncol = 4) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      plot.caption = ggplot2::element_text(hjust = 0)
     )
 
-  mapt_dummy <- ggplot() +
-    geom_sf(
+  mapt_dummy <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = time.map |> dplyr::filter(!is.na(year), !is.na(type)),
       color = "black",
       aes(fill = prop)
     ) +
-    scale_fill_manual(name = "Proportion",
+    ggplot2::scale_fill_manual(name = "Proportion",
                       values = f.color.schemes("mapval"),
                       drop = T) +
-    facet_wrap(~ year, ncol = 4) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
-      plot.caption = element_text(hjust = 0)
+    ggplot2::facet_wrap(~ year, ncol = 4) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      plot.caption = ggplot2::element_text(hjust = 0)
     ) +
     sirfunctions::f.plot.looks("epicurve")
 
@@ -1920,7 +1920,7 @@ generate_timeliness_maps <- function(ctry.data,
     )
   }
 
-  ggsave(
+  ggplot2::ggsave(
     "mapt_all.png",
     plot = mapt_all,
     path = output_path,
