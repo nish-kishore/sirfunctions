@@ -10,7 +10,7 @@
 generate_ctry_timeliness_graph <- function(int.data,
                                            output_path = Sys.getenv("DR_FIGURE_PATH")) {
   timely_nation <- ggplot2::ggplot() +
-    geom_bar(
+    ggplot2::geom_bar(
       data = int.data,
       aes(
         x = factor(year),
@@ -20,7 +20,7 @@ generate_ctry_timeliness_graph <- function(int.data,
       position = "stack",
       stat = "identity"
     ) +
-    geom_text(
+    ggplot2::geom_text(
       data = int.data,
       aes(
         x = factor(year),
@@ -30,20 +30,20 @@ generate_ctry_timeliness_graph <- function(int.data,
       ),
       position = position_stack(vjust = 0.5)
     ) +
-    coord_flip() +
-    ylab("Median Days") +
-    xlab("Year of Paralysis Onset") +
-    scale_x_discrete(labels = labs) +
-    scale_fill_manual(
+    ggplot2::coord_flip() +
+    ggplot2::ylab("Median Days") +
+    ggplot2::xlab("Year of Paralysis Onset") +
+    ggplot2::scale_x_discrete(labels = labs) +
+    ggplot2::scale_fill_manual(
       name = "Interval",
       drop = T,
       values = f.color.schemes("timeliness.col.vars"),
       guide = guide_legend(reverse = TRUE)
     ) +
-    theme(legend.position = "bottom",
+    ggplot2::theme(legend.position = "bottom",
           legend.background = element_blank())
 
-  ggsave(
+  ggplot2::ggsave(
     "timely_nation.png",
     plot = timely_nation,
     path = output_path,
