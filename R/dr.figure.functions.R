@@ -827,7 +827,7 @@ generate_dist_pop_map <- function(ctry.data,
 }
 
 #' Generate a map of AFP cases
-#' @import dplyr ggplot2
+#' @import dplyr ggplot2 lubridate
 #' @param ctry.data RDS object containing polio country data
 #' @param ctry.shape recent country shapefile
 #' @param prov.shape  recent province shapefile
@@ -844,7 +844,7 @@ generate_afp_case_map <- function(ctry.data,
                                   end_date = lubridate::today(),
                                   output_path = Sys.getenv("DR_FIGURE_PATH")) {
   afp.case.map.filter <- ctry.data$afp.all %>%
-    dplyr::filter(between(as.Date(date.onset), start_date, end_date)) |>
+    dplyr::filter(dplyr::between(as.Date(date.onset), start_date, end_date)) |>
     dplyr::mutate(year = as.factor(year))
 
   if (nrow(afp.case.map.filter) == 0) {
@@ -856,30 +856,30 @@ generate_afp_case_map <- function(ctry.data,
       cdc.class %in% c("PENDING", "NPAFP", "UNKNOWN", "NOT-AFP", "LAB PENDING")
     ))
 
-  afp.case.map <- ggplot() +
-    geom_sf(
+  afp.case.map <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       aes(),
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       aes(),
       color = "black",
       fill = NA,
       size = .5
     ) +
-    geom_sf(data = afp.case.map.filter,
+    ggplot2::geom_sf(data = afp.case.map.filter,
             aes(color = cdc.classification.all2),
             size = 1) +
-    scale_color_manual(
+    ggplot2::scale_color_manual(
       values = sirfunctions::f.color.schemes("para.case"),
       name = "Case type",
       drop = F
     ) +
-    ggtitle(paste(
+    ggplot2::ggtitle(paste(
       "Paralytic Polio and Compatible Cases",
       lubridate::year(start_date),
       "-",
@@ -887,18 +887,18 @@ generate_afp_case_map <- function(ctry.data,
     )) +
     # NOTE: IF THERE ARE NONE IT NEEDS TO THROW AN ERROR
     sirfunctions::f.plot.looks("epicurve") +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank()
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank()
     )
 
   if (nrow(afp.case.map.filter) != 0) {
     afp.case.map  <- afp.case.map +
-      facet_wrap( ~ year, ncol = 4)
+      ggplot2::facet_wrap( ~ year, ncol = 4)
   }
 
-  ggsave(
+  ggplot2::ggsave(
     "afp.case.map.png",
     plot = afp.case.map,
     path = output_path,
