@@ -235,7 +235,7 @@ generate_afp_prov_year <- function(afp.by.month.prov,
 
 
 #' Dot plot of virus detections in ES sites
-#' @import dplyr ggplot2
+#' @import dplyr ggplot2 scales
 #' @param ctry.data RDS file of polio data for a country
 #' @param es.data.long AFP data with viral detection columns
 #' @param es_start_date start date of ES data
@@ -254,7 +254,7 @@ generate_es_site_det <- function(ctry.data,
                                  vaccine_types = NULL,
                                  detection_types = NULL) {
   es.data.long <- es.data.long |>
-    dplyr::filter(between(collect.date, es_start_date, es_end_date))
+    dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
   sias <- ctry.data$sia %>%
     dplyr::filter(status == "Done") %>%
@@ -265,7 +265,7 @@ generate_es_site_det <- function(ctry.data,
   sias$activity.start.date <- as.Date(sias$activity.start.date)
   sias$activity.end.date <- as.Date(sias$activity.end.date)
 
-  minsy = count(
+  minsy = dplyr::count(
     sias,
     .data$yr.sia,
     .data$province,
@@ -309,11 +309,13 @@ generate_es_site_det <- function(ctry.data,
   # Check whether the vaccine types and detection are present in the ggplot
   minsy_vaccine_types <- minsy |>
     dplyr::select(.data$vaccine.type) |>
-    unique() |> pull()
+    unique() |>
+    dplyr::pull()
 
   es.data.long_all_dets <- es.data.long |>
     dplyr::select(.data$all_dets) |>
-    unique() |> pull()
+    unique() |>
+    dplyr::pull()
 
   miss_vaccine <- minsy_vaccine_types[!(minsy_vaccine_types %in% names(default_vaccine_type))]
   miss_dets <- es.data.long_all_dets[!(es.data.long_all_dets %in% names(default_detections))]
