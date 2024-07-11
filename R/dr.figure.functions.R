@@ -1372,7 +1372,7 @@ generate_stool_ad_maps <- function(ctry.data,
 }
 
 #' Stool adequacy map by district
-#' @import dplyr tibble ggplot2
+#' @import dplyr tibble ggplot2 sf lubridate
 #' @param ctry.data RDS file of polio data for a country
 #' @param dstool district stool adequacy
 #' @param ctry.shape recent country shapefile
@@ -1399,8 +1399,8 @@ generate_stool_ad_maps_dist <- function(ctry.data,
 
   allafp.d <- ctry.data$afp.all.2 %>%
     dplyr::filter(date >= start_date & date <= end_date) %>%
-    reframe(
-      group_by(
+    dplyr::reframe(
+      dplyr::group_by(
         ctry.data$afp.all.2,
         .data$cdc.classification.all2,
         .data$adm2guid,
@@ -1431,7 +1431,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
   stoolad.d <- stoolad.d %>%
     tibble::tibble() %>%
     dplyr::mutate(
-      prop.cat = case_when(
+      prop.cat = dplyr::case_when(
         afp.cases == 0 ~ "Zero AFP cases",
         afp.cases != 0 & per.stool.ad < 40 ~ "<40%",
         afp.cases != 0 &
@@ -1468,32 +1468,32 @@ generate_stool_ad_maps_dist <- function(ctry.data,
   stool.map.d <-
     dplyr::left_join(dist.shape, stoolad.d, by = c("GUID" = "adm2guid"))
 
-  stool.ad.maps.dist <- ggplot() +
-    geom_sf(
+  stool.ad.maps.dist <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = dist.shape,
       color = "black",
       fill = "lightgrey",
       size = .5
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = stool.map.d,
       color = "black",
       aes(fill = prop.cat),
       show.legend = T
     ) +
-    geom_text(
+    ggplot2::geom_text(
       data = stoolad.nums.d,
       aes(
         x = min(ctcoord$X),
@@ -1504,7 +1504,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
       check_overlap = TRUE,
       hjust = 0
     ) +
-    scale_fill_manual(
+    ggplot2::scale_fill_manual(
       name = "Stool Adequacy",
       values = c(
         "Zero AFP cases" = "lightgrey",
@@ -1516,16 +1516,16 @@ generate_stool_ad_maps_dist <- function(ctry.data,
       ),
       drop = F
     ) +
-    ggtitle("Stool Adequacy - District") +
+    ggplot2::ggtitle("Stool Adequacy - District") +
     sirfunctions::f.plot.looks("epicurve") +
-    facet_wrap(~ year, ncol = 4) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank()
+    ggplot2::facet_wrap(~ year, ncol = 4) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank()
     )
 
-  ggsave(
+  ggplot2::ggsave(
     "stool.ad.maps.dist.png",
     plot = stool.ad.maps.dist,
     path = output_path,
