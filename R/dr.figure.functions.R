@@ -679,7 +679,7 @@ generate_iss_barplot <- function(iss.data = NULL,
 
 ## Maps ----
 #' Generate a map of population data
-#' @import ggrepel dplyr ggplot2
+#' @import ggrepel dplyr ggplot2 lubridate scales
 #' @param ctry.data RDS object
 #' @param prov.shape province of most recent shape file
 #' @param end_date end date of the desk review
@@ -698,16 +698,16 @@ generate_pop_map <- function(ctry.data,
   shape.prov.pop <-
     dplyr::left_join(prov.shape, prov.pop, by = c("GUID" = "adm1guid"))
 
-  pop.map <- ggplot() +
-    geom_sf(
+  pop.map <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.data$ctry,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(data = shape.prov.pop, aes(fill = u15pop)) +
-    geom_sf(data = st_crop(ctry.data$roads, ctry.data$ctry)) +
-    geom_sf(
+    ggplot2::geom_sf(data = shape.prov.pop, aes(fill = u15pop)) +
+    ggplot2::geom_sf(data = st_crop(ctry.data$roads, ctry.data$ctry)) +
+    ggplot2::geom_sf(
       data = dplyr::filter(ctry.data$cities, toupper(CNTRY_NAME) == ctry.data$name),
       size = 3,
       color = "blue"
@@ -717,31 +717,31 @@ generate_pop_map <- function(ctry.data,
       aes(label = CITY_NAME, geometry = geometry),
       stat = "sf_coordinates"
     ) +
-    scale_fill_distiller(palette = "YlOrRd",
+    ggplot2::scale_fill_distiller(palette = "YlOrRd",
                          direction = 1,
                          labels = scales::comma) +
-    ggtitle(paste0(
+    ggplot2::ggtitle(paste0(
       "Major Cities and Roads - Province Level Population - ",
       lubridate::year(end_date)
     )) +
-    labs(fill = "Under-15 pop", caption = "- Under 15 population is shown at the province level\n- Major roads are shown in black\n- Population centers are shown in blue") +
+    ggplot2::labs(fill = "Under-15 pop", caption = "- Under 15 population is shown at the province level\n- Major roads are shown in black\n- Population centers are shown in blue") +
     sirfunctions::f.plot.looks("epicurve") +
-    scale_size_identity() +
-    theme(
-      plot.title = element_text(
+    ggplot2::scale_size_identity() +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(
         size = 15,
         face = "bold",
         hjust = 0.5
       ),
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
       legend.position = "right",
-      plot.caption = element_text(hjust = 0, size = 11),
-      legend.background = element_blank()
+      plot.caption = ggplot2::element_text(hjust = 0, size = 11),
+      legend.background = ggplot2::element_blank()
     )
 
-  ggsave("pop.map.png",
+  ggplot2::ggsave("pop.map.png",
          plot = pop.map,
          path = output_path,
          width = 8,
@@ -2006,7 +2006,7 @@ generate_es_det_map <- function(es.data,
       fill = NA,
       size = .5
     ) +
-    ggplot2;:geom_point(
+    ggplot2::geom_point(
       data = det.rate,
       aes(
         x = as.numeric(lng),
