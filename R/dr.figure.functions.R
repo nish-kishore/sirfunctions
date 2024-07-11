@@ -1952,10 +1952,10 @@ generate_es_det_map <- function(es.data,
                                 es_end_date = end_date,
                                 output_path = Sys.getenv("DR_FIGURE_PATH")) {
   es.data <- es.data |>
-    dplyr::filter(between(collect.date, es_start_date, es_end_date))
+    dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
   es.data.long <- es.data.long |>
-    dplyr::filter(between(collect.date, es_start_date, es_end_date))
+    dplyr::filter(dplry::between(collect.date, es_start_date, es_end_date))
 
   det.rate <- dplyr::summarize(
     dplyr::group_by(es.data.long, site.name),
@@ -1973,10 +1973,10 @@ generate_es_det_map <- function(es.data,
   det.rate$cats <- as.character(det.rate$cats)
 
   det.rate <- det.rate %>%
-    dplyr::mutate(cats = case_when(samp.num < 5 ~ "<5 samples", TRUE ~ cats))
+    dplyr::mutate(cats = dplyr::case_when(samp.num < 5 ~ "<5 samples", TRUE ~ cats))
 
   site.coord <-
-    reframe(group_by(es.data, .data$site.name),
+    dplyr::reframe(dplyr::group_by(es.data, .data$site.name),
             lat = .data$lat,
             lng = .data$lng)
   site.coord <- unique(site.coord)
@@ -1993,20 +1993,20 @@ generate_es_det_map <- function(es.data,
   # ES Map of sites
   #randomly put points in their districts
 
-  es.det.map <- ggplot() +
-    geom_sf(
+  es.det.map <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = NA,
       size = .5
     ) +
-    geom_point(
+    ggplot2;:geom_point(
       data = det.rate,
       aes(
         x = as.numeric(lng),
@@ -2026,13 +2026,13 @@ generate_es_det_map <- function(es.data,
       show.legend = FALSE,
       force = 100
     ) +
-    ggtitle(paste0(
+    ggplot2::ggtitle(paste0(
       "ES detection rate by site: ",
       format(es_start_date, "%B %Y"),
       " - ",
       format(es_end_date, "%B %Y")
     )) +
-    scale_color_manual(
+    ggplot2::scale_color_manual(
       values = c(
         "<50%" = "#FF0000",
         "50-79%" = "#feb24c",
@@ -2043,9 +2043,9 @@ generate_es_det_map <- function(es.data,
       drop = F
     ) +
     sirfunctions::f.plot.looks("02") +
-    theme(legend.position = "right")
+    ggplot2::theme(legend.position = "right")
 
-  ggsave(
+  ggplot2::ggsave(
     "es.det.map.png",
     plot = es.det.map,
     path = output_path,
