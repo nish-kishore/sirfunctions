@@ -180,7 +180,7 @@ generate_afp_epicurve <- function(ctry.data,
 
 
 #' AFP cases by province and year
-#' @import dplyr lubridate ggplot2
+#' @import dplyr lubridate ggplot2 forcats
 #' @param afp.by.month.prov table summarizing afp cases by month and province
 #' @param start_date start date of the desk review
 #' @param end_date cutoff date of calculating the number of cases
@@ -193,31 +193,31 @@ generate_afp_prov_year <- function(afp.by.month.prov,
                                    end_date = lubridate::today(),
                                    output_path = Sys.getenv("DR_FIGURE_PATH")) {
   afp.month.prov.g <- afp.by.month.prov |>
-    dplyr::filter(between(year, lubridate::year(start_date), lubridate::year(end_date)), !is.na(prov))
+    dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)), !is.na(prov))
 
   afp.month.prov.g$case.cat <- factor(afp.month.prov.g$case.cat, levels = c(c("0", "1", "2-5", "6-9", "10+")))
 
-  afp.dets.prov.year <- ggplot(
+  afp.dets.prov.year <- ggplot2::ggplot(
     afp.month.prov.g |>
-      arrange(.data$u15pop),
+      dplyr::arrange(.data$u15pop),
     aes(
       x = mon.year2,
-      y = fct_inorder(prov),
+      y = forcats::fct_inorder(prov),
       fill = case.cat
     )
   ) +
-    geom_tile(color = "black") +
-    ggtitle("Number of AFP Cases by Province") +
+    ggplot2::geom_tile(color = "black") +
+    ggplot2::ggtitle("Number of AFP Cases by Province") +
     sirfunctions::f.plot.looks("geomtile") +
-    scale_fill_manual(
+    ggplot2::scale_fill_manual(
       values = sirfunctions::f.color.schemes("afp.prov"),
       name = "AFP Cases",
       drop = T
     ) +
-    theme(plot.caption = element_text(hjust = 0)) +
-    labs(caption = "Provinces are ordered by under 15 population, with highest on top")
+    ggplot2::theme(plot.caption = element_text(hjust = 0)) +
+    ggplot2::labs(caption = "Provinces are ordered by under 15 population, with highest on top")
 
-  ggsave(
+  ggplot2::ggsave(
     "afp.dets.prov.year.png",
     plot = afp.dets.prov.year,
     path = output_path,
