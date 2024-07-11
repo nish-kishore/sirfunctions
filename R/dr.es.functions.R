@@ -1,5 +1,5 @@
 #' Adds coordinates for ES surveillance sites missing them
-#'
+#' @import cli dplyr sf
 #' @param ctry.data RDS object containing country polio data
 #'
 #' @return tibble of ES data with imputed coordinates for sites missing them
@@ -90,7 +90,7 @@ impute_site_coord <- function(ctry.data) {
 #' Transform ES data cleaning with additional columns
 #'
 #' @param ctry.data RDS object containing country polio data
-#'
+#' @import cli dplyr tidyr
 #' @return tibble of cleaned ES data
 #' @export
 clean_es_data <- function(ctry.data) {
@@ -174,23 +174,23 @@ clean_es_data <- function(ctry.data) {
 }
 
 #' Generate ES data with viral detection columns
-#'
+#' @import dplyr lubridate
 #' @param es.data tibble containing ES data
 #'
 #' @return tibble of ES data with viral detection columns
 #' @export
 generate_es_data_long <- function(es.data) {
   es.data.long <- es.data %>%
-    select(.data$site.name, .data$ADM1_NAME, .data$collect.date, .data$early.dat, .data$ev.detect, .data$all_dets) %>%
-    mutate(ev.detect = as.character(.data$ev.detect)) %>%
-    mutate(all_dets = case_when(
+    dplyr::select(.data$site.name, .data$ADM1_NAME, .data$collect.date, .data$early.dat, .data$ev.detect, .data$all_dets) %>%
+    dplyr::mutate(ev.detect = as.character(.data$ev.detect)) %>%
+    dplyr::mutate(all_dets = dplyr::case_when(
       all_dets == "" & ev.detect == "1" ~ "NPEV only",
       all_dets == "" & ev.detect == "0" ~ "No EV isolated",
       TRUE ~ all_dets
     )
     )
 
-  es.data.long$year = year(es.data.long$collect.date)
+  es.data.long$year = lubridate::year(es.data.long$collect.date)
 
   return(es.data.long)
 }

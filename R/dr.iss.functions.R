@@ -1,5 +1,5 @@
 #' Read ISS/eSURV data
-#'
+#' @import stringr readxl
 #' @param iss_path path to the excel or csv file
 #' @param sheet_name optional name of the ISS data
 #'
@@ -16,7 +16,7 @@ load_iss_data <- function(iss_path, sheet_name=NULL) {
 }
 
 #' Perform common cleaning tasks for ISS/eSURV data
-#'
+#' @import cli dplyr stringr
 #' @param ctry.data ctry.data containing iss.data
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
@@ -123,7 +123,7 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
 
 #' Checks for errors in the ISS data.
 #' Currently reports the number of missing priority levels.
-#'
+#' @import cli dplyr readr
 #' @param ctry.data ctry.data with ISS/eSurv data attached
 #' @param error_path path to error folder
 #'

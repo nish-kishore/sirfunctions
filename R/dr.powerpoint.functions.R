@@ -1,5 +1,5 @@
 #' Generate PowerPoint assumptions
-#'
+#' @import officer
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #'
@@ -49,7 +49,7 @@ get_ppt_template <- function(path=NULL, filename="desk_review_template.pptx") {
 
 
 #' Generate the desk review slide deck
-#'
+#' @import dplyr officer
 #' @param ppt_template_path path to the PowerPoint template
 #' @param ctry.data RDS file containing polio data for a country
 #' @param start_date start date of desk review
@@ -319,7 +319,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
 #' Generating the PowerPoint from the figures folder is generally faster and allows
 #' figures to remain consistent. Tables remain as PowerPoint tables.
 #'
-#' @import officer
+#' @import officer dplyr
 #' @param ctry.data RDS file containing polio data for a country
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review

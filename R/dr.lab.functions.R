@@ -1,5 +1,5 @@
 #' Gets information related to testing labs
-#'
+#' @import cli dplyr
 #' @param path path the lab location file
 #'
 #' @return tibble containing the test lab locations
@@ -30,7 +30,7 @@ get_lab_locs <- function(path) {
 }
 
 #' Determines whether lab data is EMRO or AFRO
-#'
+#' @import stringr
 #' @param country_name name of the country
 #'
 #' @return string "EMRO" or "AFRO"
@@ -73,7 +73,7 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
 
 
 #' Function to load the raw lab data
-#'
+#' @import stringr readr readxl
 #' @param lab_data_path file path as a string to the lab data
 #' @param sheet_name name of the sheet to load
 #'
@@ -118,7 +118,7 @@ lab_data_errors <- function(ctry.data, start.date=start_date, end.date=end_date,
 }
 
 #' Check common errors in the regional lab data
-#'
+#' @import dplyr stringr cli writexl
 #' @param ctry.data Rds file containing polio country data
 #' @param start.date start date of the desk review
 #' @param end.date end date of the desk review
@@ -277,7 +277,7 @@ lab_data_errors_region <- function(ctry.data, start.date, end.date,
 }
 
 #' Checks for common data errors in lab data
-#'
+#' @import dplyr cli writexl
 #' @param start.date start date of the desk review
 #' @param end.date end date of the desk review
 #' @param error_path folder to save the log to
@@ -345,7 +345,7 @@ lab_data_errors_who <- function(ctry.data, start.date, end.date,
 }
 
 #' Clean polio lab data from WHO
-#'
+#' @import dplyr cli stringr tidyr
 #' @param ctry.data country data RDS object
 #' @param start.date start date of the desk review
 #' @param end.date end date of the desk review
@@ -533,7 +533,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 #' Regional data have different columns compared to the WHO lab data. The cleaning
 #' of the regional data is adapted from the lab data cleaning code from the GPSAP
 #' indicator script.
-#'
+#' @import cli dplyr stringr
 #' @param ctry.data Rds polio data at the country level with lab data attached
 #' @param start.date start date of the desk review
 #' @param end.date end date of the desk review
@@ -951,7 +951,7 @@ clean_lab_data <- function(ctry.data, start.date=start_date, end.date=end_date,
 
 
 #' Generate timeliness intervals with lab data
-#'
+#' @import dplyr
 #' @param lab.data lab data
 #' @param spatial.scale spatial scale to analyze the data. Valid values are "ctry", "prov", "dist"
 #' @param start.date start date of analysis

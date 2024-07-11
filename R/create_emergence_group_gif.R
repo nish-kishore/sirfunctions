@@ -2,7 +2,13 @@
 #' @description
 #' Generate the figures and stitch together a GIF to evaluate emergence group
 #' movement over time, generally aggregated as cumulative per month
-#' @import dplyr lubridate sf ggplot2 ggpubr magick cli
+#' @import dplyr
+#' @import lubridate
+#' @import sf
+#' @import ggplot2
+#' @import ggpubr
+#' @import magick
+#' @import cli
 #'
 #' @param emergence_group str: designation of the emergence group to review
 #' @param pos tibble: positives data set

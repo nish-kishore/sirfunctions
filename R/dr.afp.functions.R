@@ -1,9 +1,8 @@
 
 #' Checks for missing geographic data
-#' @description
-#' check_missing_geo() checks the AFP dataset for rows with missing geographic data.
+#' @description checks the AFP dataset for rows with missing geographic data.
 #' It checks for missing data based on the scale passed through spatial.scale.
-#'
+#' @import dplyr cli
 #' @param afp.data tibble containing AFP data
 #' @param spatial.scale what geographic level to check for. Valid values are "ctry","prov", "dist".
 #'
@@ -32,7 +31,7 @@ check_missing_geo <- function(afp.data, spatial.scale) {
 #' Imputation algorithm to fill in missing district data from EPID
 #'
 #' @param afp.data tibble of AFP data
-#'
+#' @import cli dplyr
 #' @return tibble of AFP data with filled district data
 impute_dist_afp <- function(afp.data) {
 
@@ -146,7 +145,7 @@ impute_dist_afp <- function(afp.data) {
 #' Convert character date columns to date columns in the AFP linelist
 #'
 #' @param afp.data tibble: AFP data
-#'
+#' @import cli dplyr
 #' @return AFP linelist with converted date columns and additional timeliness cols
 col_to_datecol <- function(afp.data) {
 
@@ -171,7 +170,7 @@ col_to_datecol <- function(afp.data) {
 #' Add columns in the AFP data for number of doses and dose category
 #'
 #' @param afp.data AFP linelist (specifically, afp.all.2)
-#'
+#' @import cli dplyr
 #' @return tibble with AFP data with columns for number of doses and dose category
 add_zero_dose_col <- function(afp.data) {
   cli::cli_process_start("Cleaning and adding columns for zero-dose children data")
@@ -203,7 +202,7 @@ add_zero_dose_col <- function(afp.data) {
       )] < 99),
     na.rm = T)) |>
     dplyr::mutate(
-      dose.num.calc = case_when(
+      dose.num.calc =dplyr::case_when(
         doses.opv.routine == 99 &
           doses.opv.sia == 99 &
           doses.ipv.routine == 99 &
@@ -241,7 +240,7 @@ add_zero_dose_col <- function(afp.data) {
 
 
 #' Create age group categories
-#'
+#' @import cli dplyr
 #' @param age.months column containing age in months
 #'
 #' @return a column containing age group categories
@@ -265,7 +264,7 @@ add_age_group <- function(age.months) {
 
 
 #' Generate AFP case counts by month
-#'
+#' @import tidyr dplyr lubridate
 #' @param afp.data tibble containing AFP data (afp.all.2)
 #' @param start_date start date of the desk review
 #' @param end_date  end date of the desk review
@@ -275,7 +274,7 @@ add_age_group <- function(age.months) {
 generate_afp_by_month <- function(afp.data, start_date, end_date) {
   summary <- afp.data |>
     tidyr::drop_na(.data$date.onset) |>
-    dplyr::filter(dplyr::between(as_date(date.onset), start_date, end_date)) |>
+    dplyr::filter(dplyr::between(lubridate::as_date(date.onset), start_date, end_date)) |>
     dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
 
   return(summary)
@@ -283,6 +282,7 @@ generate_afp_by_month <- function(afp.data, start_date, end_date) {
 
 #' Generate summary from the afp.by.month summary tibble
 #'
+#' @import dplyr tidyr lubridate zoo
 #' @param afp.by.month summary table of AFP cases
 #' @param ctry.data RDS file containing country data
 #' @param start_date start date of analysis
@@ -375,7 +375,7 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
 }
 
 #' Add province name back to those without district names
-#'
+#' @import dplyr
 #' @param npafp.output tibble output after running f.npafp.rate.01 at the district
 #' level
 #'
@@ -392,6 +392,7 @@ add_prov_npafp_table <- function(npafp.output) {
 
 #' Create the indicator tables in desk reviews
 #'
+#' @import dplyr
 #' @param npafp.output output of running f.npafp.rate.01
 #' @param afp.all.2 AFP linelist
 #' @param spatial.scale spatial scale to analyze. Valid values are "ctry", "prov", "dist"
@@ -458,7 +459,7 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
 }
 
 #' Generate a summary table for sample timeliness intervals
-#'
+#' @import dplyr lubridate tidyr
 #' @param ctry.data RDS object containing polio country data
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
@@ -496,7 +497,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
                          dplyr::mutate(year = lubridate::year(date)) |>
                          dplyr::group_by(adm0guid, year) |>
                          dplyr::select(any_of(select_criteria)) %>%
-                         mutate(across(
+                         dplyr::mutate(dplyr::across(
                            dplyr::any_of(as_num_conversion),
                            as.numeric
                          ))
@@ -594,7 +595,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 }
 
 #' Generate summary table for those requiring 60 day follow up
-#'
+#' @import dplyr tibble lubridate
 #' @param stool.data AFP data with stool adequacy columns
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
@@ -743,7 +744,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 }
 
 #' Generate a summary of samples sent to lab by year and province
-#'
+#' @import dplyr
 #' @param ctry.data Rds file countaining country polio data
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
@@ -752,9 +753,9 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #' @export
 generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
   afp.prov.year.lab <- ctry.data$afp.all.2 |>
-    filter(between(date.onset, start_date, end_date)) |>
+    dplyr::filter(dplyr::between(date.onset, start_date, end_date)) |>
     count(prov, adm1guid, year) |>
-    mutate(labs = paste0(year,
+    dplyr::mutate(labs = paste0(year,
                          " (N=", n, ")"))
 
   return(afp.prov.year.lab)
@@ -762,7 +763,7 @@ generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
 
 
 #' Creating a table of compatible and potentially compatible cases
-#'
+#' @import dplyr
 #' @param cases.need60day summary table of cases that need 60 day follow-up
 #' @param create_cluster whether to use clustering algorithm. Default to F.
 #'
@@ -820,7 +821,7 @@ generate_potentially_compatibles_cluster <- function(cases.need60day, create_clu
 }
 
 #' Checks data quality errors from the country data
-#'
+#' @import cli writexl
 #' @param ctry.data RDS object containing polio country data
 #' @param error_path path where to store errors in ctry.data
 #'
@@ -878,7 +879,7 @@ ctry_data_errors <- function(ctry.data,
 }
 
 #' Cleans and adds additional columns used in the desk reviews
-#'
+#' @import cli dplyr
 #' @param ctry.data country data RDS object
 #'
 #' @return cleaned country data RDS object
@@ -904,7 +905,7 @@ clean_ctry_data <- function(ctry.data) {
 
 #' Generate stool adequacy columns in the AFP dataset
 #'
-#' @import dplyr
+#' @import dplyr lubridate
 #' @param afp.data tibble of AFP data (afp.all.2)
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
@@ -914,48 +915,48 @@ clean_ctry_data <- function(ctry.data) {
 generate_stool_data <- function(afp.data, start_date, end_date) {
 
   afp.data <- afp.data |>
-    filter(year >= year(start_date) & year <= year(end_date))
+    dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)))
 
   stool.data <- afp.data |> # IF FUNCTION CHANGES, THIS WILL NEED TO CHANGE AS WELL
-    as_tibble() |>
-    filter(cdc.classification.all2 != "NOT-AFP") |>
-    mutate(adequacy.final = case_when(#Conditions for Bad Data
+    tibble::as_tibble() |>
+    dplyr::filter(cdc.classification.all2 != "NOT-AFP") |>
+    dplyr::mutate(adequacy.final = dplyr::case_when(#Conditions for Bad Data
       bad.stool1 == "data entry error" |
         bad.stool1 == "date before onset" |
         bad.stool1 == "date onset missing" ~ 77
     )) %>%
-    mutate(adequacy.final = case_when(#Conditions for Bad Data
+    dplyr::mutate(adequacy.final = dplyr::case_when(#Conditions for Bad Data
       is.na(adequacy.final)==TRUE & (bad.stool2 == "data entry error" |
                                        bad.stool2 == "date before onset" |
                                        bad.stool2 == "date onset missing") ~ 77,
       TRUE ~ adequacy.final
     )) %>%
-    mutate(adequacy.final = case_when(#Conditions for Poor Adequacy
+    dplyr::mutate(adequacy.final = dplyr::case_when(#Conditions for Poor Adequacy
       is.na(adequacy.final)==TRUE & (ontostool1 > 13 | ontostool1 < 0 |
                                        is.na(stool1tostool2) == T |
                                        ontostool2 > 14 | ontostool2 < 1 | stool1tostool2 < 1 |
                                        stool.1.condition == "Poor" | stool.2.condition == "Poor") ~ 0,
       TRUE ~ adequacy.final)) %>%
-    mutate(adequacy.final = case_when(#Conditions for Good Adequacy
+    dplyr::mutate(adequacy.final = dplyr::case_when(#Conditions for Good Adequacy
       is.na(adequacy.final)==TRUE & (ontostool1 <= 13 & ontostool1 >= 0 &
                                        ontostool2 <= 14 & ontostool2 >= 1 &
                                        stool1tostool2 >= 1 & stool.1.condition == "Good" &
                                        stool.2.condition == "Good") ~ 1,
       TRUE ~ adequacy.final
     )) %>%
-    mutate(adequacy.final = case_when(#Conditions for Missing Adequacy
+    dplyr::mutate(adequacy.final = dplyr::case_when(#Conditions for Missing Adequacy
       is.na(adequacy.final)==TRUE & (is.na(stool.1.condition) == T |
                                        is.na(stool.2.condition) == T |
                                        stool.1.condition == "Unknown" | stool.2.condition == "Unknown") ~ 99,
       TRUE ~ adequacy.final
     )) |>
-    mutate(adequacy.final = case_when(
+    dplyr::mutate(adequacy.final = dplyr::case_when(
       adequacy.final == 0 ~ "Inadequate",
       adequacy.final == 1 ~ "Adequate",
       adequacy.final == 77 ~ "Bad data",
       adequacy.final == 99 ~ "Missing",
     )) |>
-    mutate(adequacy.final2 = ifelse(adequacy.final == "Missing", "Adequate", adequacy.final)
+    dplyr::mutate(adequacy.final2 = dplyr::if_else(adequacy.final == "Missing", "Adequate", adequacy.final)
     )
 
   return(stool.data)

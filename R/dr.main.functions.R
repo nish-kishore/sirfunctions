@@ -20,7 +20,7 @@ copy_dr_template_code <- function(output_path=Sys.getenv("DR_PATH")) {
 }
 
 #' Get functions used for the desk review from Github
-#'
+#' @import httr dplyr tidyr cli
 #' @param branch which branch to use
 #' @param output_folder where the function scripts should be stored
 #'
@@ -84,7 +84,7 @@ copy_dr_functions <- function(branch="main", output_folder=Sys.getenv("DR_FUNC_P
 }
 
 #' Checks the cache file and see if it should load parameters from it
-#'
+#' @import cli stringr
 #' @param param_path path to parameters.RData
 #' @param start_date start date of the desk review
 #' @param end_date  end date of the desk review
@@ -202,7 +202,7 @@ set_data_size <- function(year) {
 }
 
 #' Pull new data and write to the specified file path
-#'
+#' @import readr
 #' @param data_size `str` size of polio data to pull.
 #' "small" (>= 2019), "medium" (>= 2016), large" (full)
 #' @param country_name `str` name of the country to pull data from
@@ -266,7 +266,7 @@ load_data <- function(data_dir_path) {
 }
 
 #' Creates a meta data file
-#'
+#' @import readr
 #' @param path location where the .txt file is located/should be created
 #'
 #' @return this function does not return anything
@@ -284,7 +284,7 @@ create_metadata <- function(path) {
 }
 
 #' Handles the logic of which files to load in the current R session
-#'
+#' @import cli stringr
 #' @param dr_data_path `str` path to the dataset
 #' @param data_size `str` "small", "medium", or "large"
 #' @param country_name `str` name of the country
@@ -345,7 +345,7 @@ generate_data <-
   }
 
 #' Fetch the Rds file to be used for a desk review
-#'
+#' @import stringr
 #' @param country country name as a string
 #' @param year year as an integer
 #' @param local_dr_repo the local desk review repository
@@ -426,7 +426,7 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 
 # "public" methods ----
 #' Set up the folders and load polio data
-#'
+#' @import stringr lubridate
 #' @param country_name `str` name of the country
 #' @param start_date `str` start date of the desk review
 #' @param end_date `str` end date of the desk review
@@ -593,7 +593,7 @@ init_dr <-
   }
 
 #' Upload desk review script to the sg-desk-review Github repository
-#'
+#' @importFrom git2r repository add commit
 #' @param file_path location of the file to upload to the sg-desk-review repo
 #' @param repo_path local path of the sg-desk-review repo
 #' @param message message to include in the commit

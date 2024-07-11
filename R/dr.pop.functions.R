@@ -39,7 +39,7 @@ check_missing_pop <- function(pop.data, spatial.scale) {
 
 #' Check the population data in country data from a roll up in province and
 #' district population data
-#'
+#' @import dplyr cli
 #' @param ctry.data country data to check for
 #'
 #' @return tibble containing differences in population data
@@ -95,7 +95,7 @@ check_pop_rollout <- function(ctry.data) {
 }
 
 #' Check for GUIDs that has changed due to redistricting
-#'
+#' @import dplyr cli
 #' @param pop.data population data
 #' @param spatial.scale spatial scale of the data
 #'
@@ -161,7 +161,7 @@ spatial_validation <- function(pop.data, spatial.scale) {
 }
 
 #' Get the most recent shapefile at a given spatial scale
-#'
+#' @import dplyr
 #' @param ctry.data RDS file containing country data
 #' @param spatial.scale either "ctry", "prov", "dist"
 #'

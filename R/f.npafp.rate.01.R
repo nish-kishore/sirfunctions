@@ -114,24 +114,24 @@ f.npafp.rate.01 <- function(
   incomplete.adm <- switch(spatial.scale,
     "ctry" = {
       pop.data |>
-        group_by(adm0guid) |>
-        summarize(freq = n()) |>
-        filter(freq < length(year(start.date):year(end.date))) |>
-        pull(adm0guid)
+        dplyr::group_by(adm0guid) |>
+        dplyr::summarize(freq = n()) |>
+        dplyr::filter(freq < length(year(start.date):year(end.date))) |>
+        dplyr::pull(adm0guid)
     },
     "prov" = {
       pop.data |>
         group_by(adm1guid) |>
         summarize(freq = n()) |>
         filter(freq < length(year(start.date):year(end.date))) |>
-        pull(adm1guid)
+        dplyr::pull(adm1guid)
     },
     "dist" = {
       pop.data |>
-        group_by(adm2guid) |>
-        summarize(freq = n()) |>
-        filter(freq < length(year(start.date):year(end.date))) |>
-        pull(adm2guid)
+        dplyr::group_by(adm2guid) |>
+        dplyr::summarize(freq = n()) |>
+        dplyr::filter(freq < length(year(start.date):year(end.date))) |>
+        dplyr::pull(adm2guid)
     }
   )
 

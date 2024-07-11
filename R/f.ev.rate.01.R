@@ -22,27 +22,27 @@ f.ev.rate.01 <- function(
 ){
 
   # Analysis start and end date as defined by user (as a character)
-  start.date <- as_date(start.date)
-  end.date <- as_date(end.date)
+  start.date <- lubridate::as_date(start.date)
+  end.date <- lubridate::as_date(end.date)
 
   #check to make sure that data has necessary variables
   necessary.es.vars <- c("collect.date", "ADM0_NAME",  "site.name", "ev.detect")
   useful.es.vars <- c("ADM1_NAME", "ADM2_NAME","lat", "lng")
 
-  if(sum(!necessary.es.vars %in% names(es.data)) > 0){
+  if (sum(!necessary.es.vars %in% names(es.data)) > 0) {
     missing.vars <- necessary.es.vars[!necessary.es.vars %in% names(es.data)]
     stop(paste0("The following necessary variables were not found in `es.data`: ",
                 paste0(missing.vars, collapse = ", ")))
   }
 
-  if(sum(!useful.es.vars %in% names(es.data)) > 0){
+  if (sum(!useful.es.vars %in% names(es.data)) > 0) {
     missing.vars <- useful.es.vars[!useful.es.vars %in% names(es.data)]
     readline(paste0("The following useful variables were not found in `es.data`, please consider including them: ",
                     paste0(missing.vars, collapse = ", "), "\n Press [ENTER] to continue"))
   }
 
   #Warning message about non-overlapping dates
-  if(start.date < as_date(es.data$collect.date |> min(na.rm = T))){
+  if (start.date < lubridate::as_date(es.data$collect.date |> min(na.rm = T))) {
     print(paste0(
       "Your specified start date is ",
       start.date,
@@ -55,17 +55,17 @@ f.ev.rate.01 <- function(
 
   # Limit ES data to the range described by the analysis start and end dates
   es.data <- es.data |>
-    filter(collect.date >= start.date & collect.date <= end.date)
+    dplyr::filter(collect.date >= start.date & collect.date <= end.date)
 
 
   # Create site-level summary
   es.sum <- es.data |>
-    group_by(ADM0_NAME, site.name) |>
-    summarize(
+    dplyr::group_by(ADM0_NAME, site.name) |>
+    dplyr::summarize(
       num.samples = n(),
       num.ev.pos = sum(ev.detect == 1, na.rm = T)
     ) |>
-    mutate(
+    dplyr::mutate(
       ev.rate = num.ev.pos/num.samples,
       ev.percent = purrr::map_chr(ev.rate, label_percent(accuracy=1)),
       ev.rate.cat = case_when(
@@ -75,7 +75,7 @@ f.ev.rate.01 <- function(
     ) |>
     ungroup() |>
     as_tibble() |>
-    mutate(
+    dplyr::mutate(
       start.date = start.date,
       end.date = end.date,
       interval = end.date - start.date
@@ -84,7 +84,7 @@ f.ev.rate.01 <- function(
   es.sum <- left_join(
     es.sum,
     es.data |>
-      select(any_of(c("site.name", "ADM1_NAME", "ADM2_NAME","lat", "lng"))) |>
+      dplyr::select(tidyr::any_of(c("site.name", "ADM1_NAME", "ADM2_NAME","lat", "lng"))) |>
       distinct()
   )
 

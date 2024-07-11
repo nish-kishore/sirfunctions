@@ -15,6 +15,6 @@ check_missing_geo(afp.data, spatial.scale)
 tibble containing records with missing geographic data
 }
 \description{
-check_missing_geo() checks the AFP dataset for rows with missing geographic data.
+checks the AFP dataset for rows with missing geographic data.
 It checks for missing data based on the scale passed through spatial.scale.
 }

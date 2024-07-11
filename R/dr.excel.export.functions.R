@@ -1,5 +1,5 @@
 #' Exports AFP linelist with adequacy.final2 column
-#'
+#' @import dplyr writexl
 #' @param stool.data afp data with final adequacy columns
 #' @param country name of the country
 #' @param excel_output_path output path of the Excel file
@@ -7,8 +7,8 @@
 #' @export
 create_afp_export <- function(stool.data, country=Sys.getenv("DR_COUNTRY"), excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   stool.data.export = stool.data |>
-    mutate(nvaccine.2 = NA) |>
-    select(c("polis.case.id","epid","followup.date","followup.findings",
+    dplyr::mutate(nvaccine.2 = NA) |>
+    dplyr::select(c("polis.case.id","epid","followup.date","followup.findings",
              "investigation.date","notification.date","stool.1.collection.date",
              "stool.2.collection.date","stool.date.sent.to.ic.lab",
              "classification","source.advanced.notification",
@@ -56,7 +56,7 @@ create_afp_export <- function(stool.data, country=Sys.getenv("DR_COUNTRY"), exce
 }
 
 #' Exports stool adequacy data
-#'
+#' @import writexl
 #' @param cstool stool adequacy at country level
 #' @param pstool stool adequacy at province level
 #' @param dstool stool adequacy at district level
@@ -76,7 +76,7 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
 }
 
 #' Exports NPAFP indicator data
-#'
+#' @import writexl
 #' @param ctry.case.ind country NPAFP indicator
 #' @param prov.case.ind province NPAFP indicator
 #' @param dis.case.ind district NPAFP indicator
@@ -99,7 +99,7 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, exce
 }
 
 #' Exports file for checking population roll-ups
-#'
+#' @import dplyr writexl tidyr
 #' @param ctry.data RDS file containing polio data for a country
 #' @param country name of the country
 #' @param excel_output_path output path
@@ -129,7 +129,7 @@ create_pop_check_export <- function(ctry.data, country=Sys.getenv("DR_COUNTRY"),
 }
 
 #' Exports output for 60-day follow ups
-#'
+#' @import dplyr readr
 #' @param cases.need60day table for 60 day follow up
 #' @param country name of the country
 #' @param excel_output_path output path
@@ -137,7 +137,7 @@ create_pop_check_export <- function(ctry.data, country=Sys.getenv("DR_COUNTRY"),
 #' @export
 create_60_day_export <- function(cases.need60day, country=Sys.getenv("DR_COUNTRY"), excel_output_path=Sys.getenv("DR_TABLE_PATH")) {
   cases.need60day |>
-    rename(
+    dplyr::rename(
       Year = year,
       "age in months" = .data$age.months,
       "Hot Case" = .data$hot.case,
@@ -159,7 +159,7 @@ create_60_day_export <- function(cases.need60day, country=Sys.getenv("DR_COUNTRY
 }
 
 #' Export potentially compatible and compatible summaries
-#'
+#' @import writexl
 #' @param pot.c.clust potentially compatible cluster summary
 #' @param country name of the country
 #' @param excel_output_path output path
