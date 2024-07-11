@@ -2057,7 +2057,7 @@ generate_es_det_map <- function(es.data,
 }
 
 #' Generate ISS map
-#' @import dplyr sf ggplot2
+#' @import dplyr sf ggplot2 lubridate
 #' @param iss.data tibble of ISS/eSurv data
 #' @param start_date start date of desk review
 #' @param prov.shape shapefile containing province shapes
@@ -2089,7 +2089,7 @@ generate_iss_map <- function(iss.data,
 
   iss.data <- iss.data |>
     dplyr::filter(
-      between(`_gps_ending_longitude`, bbox$xmin, bbox$xmax),
+      dplyr::between(`_gps_ending_longitude`, bbox$xmin, bbox$xmax),
       dplyr::between(`_gps_ending_latitude`, bbox$ymin, bbox$ymax)
     )
 
@@ -2100,14 +2100,14 @@ generate_iss_map <- function(iss.data,
 
   iss.data2$labs = paste0(iss.data$year, "\n(n = ", iss.data2$n, ")")
 
-  iss.data.map = ggplot() +
-    geom_sf(
+  iss.data.map = ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = NA,
       size = .5
     ) +
-    geom_point(
+    ggplot2::geom_point(
       data = iss.data2 |>
         dplyr::filter(
           year <= lubridate::year(end_date) &
@@ -2121,15 +2121,15 @@ generate_iss_map <- function(iss.data,
       )
     ) +
     sirfunctions::f.plot.looks("epicurve") +
-    scale_color_manual("Priority level", values = c("High" = "#d73027")) +
-    facet_wrap( ~ labs, ncol = 4) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank()
+    ggplot2::scale_color_manual("Priority level", values = c("High" = "#d73027")) +
+    ggplot2::facet_wrap( ~ labs, ncol = 4) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank()
     )
 
-  ggsave("iss.map.png",
+  ggplot2::ggsave("iss.map.png",
          plot = iss.data.map,
          path = output_path,
          width = 14,
