@@ -575,7 +575,7 @@ generate_case_num_dose_g <- function(ctry.data,
 }
 
 #' Generate the ISS/eSURV barplot
-#'
+#' @import dplyr ggplot2
 #' @param iss.data tibble of ISS data
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
@@ -598,7 +598,7 @@ generate_iss_barplot <- function(iss.data = NULL,
 
 
   iss.data2.1 = iss.data %>%
-    dplyr::filter(between(today_date, start_date, end_date))
+    dplyr::filter(dplyr::between(today_date, start_date, end_date))
 
   iss.data3 = iss.data2.1 %>%
     dplyr::group_by(.data$month, .data$year, .data$priority_level) %>%
@@ -632,8 +632,8 @@ generate_iss_barplot <- function(iss.data = NULL,
 
   mtot = max(totty$totty)
 
-  iss.data.vis = ggplot(data = iss.data3) +
-    geom_bar(
+  iss.data.vis = ggplot2::ggplot(data = iss.data3) +
+    ggplot2::geom_bar(
       aes(
         x = factor(labs),
         y = freq,
@@ -643,7 +643,7 @@ generate_iss_barplot <- function(iss.data = NULL,
       position = "stack",
       col = "black"
     ) +
-    scale_y_continuous(
+    ggplot2::scale_y_continuous(
       name = "Visit Number",
       limits = c(0, max(pretty(mtot))),
       breaks = seq(0, max(pretty(mtot)), max(pretty(mtot)) /
@@ -651,8 +651,8 @@ generate_iss_barplot <- function(iss.data = NULL,
       labels = seq(0, max(pretty(mtot)), max(pretty(mtot)) /
                      5)
     ) +
-    scale_x_discrete(name = "Time") +
-    scale_fill_manual(
+    ggplot2::scale_x_discrete(name = "Time") +
+    ggplot2::scale_fill_manual(
       name = "Priority",
       values = c(
         "High" = "#d73027",
@@ -662,11 +662,11 @@ generate_iss_barplot <- function(iss.data = NULL,
 
       )
     ) +
-    facet_wrap( ~ year) +
-    theme_bw()
+    ggplot2::facet_wrap( ~ year) +
+    ggplot2::theme_bw()
 
 
-  ggsave(
+  ggplot2::ggsave(
     "iss.barplot.png",
     plot = iss.data.vis,
     path = output_path,
