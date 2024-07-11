@@ -427,7 +427,7 @@ generate_es_timely <- function(es.data,
                                es_end_date = end_date,
                                output_path = Sys.getenv("DR_FIGURE_PATH")) {
   es.data <- es.data |>
-    dplyr::filter(between(collect.date, es_start_date, es_end_date))
+    dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
   es.data$timely <-
     difftime(
@@ -464,35 +464,35 @@ generate_es_timely <- function(es.data,
 
   # Timeliness of ES
   # Excludes those with bad data (e.g. negative timeliness)
-  es.timely <- ggplot() +
-    geom_hline(
+  es.timely <- ggplot2::ggplot() +
+    ggplot2::geom_hline(
       yintercept = 3,
       color = "dark gray",
       linetype = "dashed",
       lwd = 1
     ) +
-    geom_point(
+    ggplot2::geom_point(
       data = dplyr::filter(es.data, timely >= 0),
       aes(x = collect.date, y = timely, color = site.name),
       alpha = 0.7,
-      position = position_jitter(height = .2, width = 0.5),
+      position = ggplot2::position_jitter(height = .2, width = 0.5),
       size = 3
     ) +
-    scale_y_continuous(labels = scales::number_format(accuracy = 1),
+    ggplot2::scale_y_continuous(labels = scales::number_format(accuracy = 1),
                        breaks = c(seq(0, max(
                          pretty(es.data$timely)
                        ), 6))) +
-    labs(x = "Date of collection", y = "Transport time to lab (days)", color = "Site Name") +
-    labs(title = per.timely.title, caption = num.miss.capt) +
+    ggplot2::labs(x = "Date of collection", y = "Transport time to lab (days)", color = "Site Name") +
+    ggplot2::labs(title = per.timely.title, caption = num.miss.capt) +
     # scale_x_date(date_breaks = "2 months", date_labels = "%b-%y", limits = c(start.date.12m, end.date + months(1))) +
-    theme_classic() +
-    theme(
+    ggplot2::theme_classic() +
+    ggplot2::theme(
       text = element_text(size = 16),
       axis.text = element_text(size = 14),
       plot.caption = element_text(hjust = 0)
     )
 
-  ggsave("es.timely.png",
+  ggplot2::ggsave("es.timely.png",
          plot = es.timely,
          path = output_path,
          width = 14,
