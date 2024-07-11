@@ -128,7 +128,7 @@ generate_prov_timeliness_graph <- function(int.data,
 
 
 #' Generate epicurve of AFP cases by year
-#' @import dplyr
+#' @import dplyr ggplot2
 #' @param ctry.data RDS data countaining polio data for a country
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
@@ -141,32 +141,32 @@ generate_afp_epicurve <- function(ctry.data,
                                   end_date = lubridate::today(),
                                   output_path = Sys.getenv("DR_FIGURE_PATH")) {
   afp.epi.date.filter <- ctry.data$afp.epi %>%
-    dplyr::filter(between(yronset, as.numeric(year(start_date)), as.numeric(year(end_date))))
+    dplyr::filter(dplyr::between(yronset, as.numeric(year(start_date)), as.numeric(year(end_date))))
 
-  case.num.labs <- reframe(
-    group_by(afp.epi.date.filter, .data$yronset),
+  case.num.labs <- dplyr::reframe(
+    dplyr::group_by(afp.epi.date.filter, .data$yronset),
     labs = paste0(.data$yronset, " (N = ", sum(.data$afp.cases), ")")
   ) %>%
-    distinct(.)
+    dplyr::distinct(.)
 
   afp.epi.date.filter1 <- dplyr::left_join(afp.epi.date.filter,
                                            case.num.labs,
                                            by = c("yronset" = "yronset"))
 
-  afp.epi.curve <- ggplot(
+  afp.epi.curve <- ggplot2::ggplot(
     afp.epi.date.filter1,
     aes(fill = cdc.classification.all2, y = afp.cases, x = epi.week)
   ) +
-    geom_bar(position = "stack", stat = "identity") +
-    scale_fill_manual(
+    ggplot2::geom_bar(position = "stack", stat = "identity") +
+    ggplot2::scale_fill_manual(
       values = sirfunctions::f.color.schemes(type = "epicurve"),
       name = "Classification",
       drop = T
     ) +
     sirfunctions::f.plot.looks(type = "epicurve") +
-    facet_wrap(~ labs, ncol = 3, drop = F)
+    ggplot2::facet_wrap(~ labs, ncol = 3, drop = F)
 
-  ggsave(
+  ggplot2::ggsave(
     "afp.epi.curve.png",
     plot = afp.epi.curve,
     path = output_path,
