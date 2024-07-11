@@ -76,10 +76,10 @@ generate_prov_timeliness_graph <- function(int.data,
   ) |>
     dplyr::filter(medi >= 0)
 
-  timely_prov <- ggplot(prov.time.2 |>
+  timely_prov <- ggplot2::ggplot(prov.time.2 |>
                           dplyr::filter(is.na(medi) == F &
                                           is.na(prov) == F)) +
-    geom_bar(
+    ggplot2::geom_bar(
       aes(
         x = as.character(labs),
         y = medi,
@@ -88,34 +88,34 @@ generate_prov_timeliness_graph <- function(int.data,
       position = "stack",
       stat = "identity"
     ) +
-    geom_text(aes(
+    ggplot2::geom_text(aes(
       x = labs,
       y = medi,
       label = medi,
       group = forcats::fct_rev(type)
     ),
-    position = position_stack(vjust = 0.5)) +
-    coord_flip() +
-    ylab("Median Days") +
-    xlab("Year of Paralysis Onset") +
+    position = ggplot2::position_stack(vjust = 0.5)) +
+    ggplot2::coord_flip() +
+    ggplot2::ylab("Median Days") +
+    ggplot2::xlab("Year of Paralysis Onset") +
     # scale_y_continuous(breaks = seq(0, max(pretty(tot.time.p$tot))+1)) +
-    scale_x_discrete() +
-    ylab("Days") +
-    xlab("Year") +
-    scale_fill_manual(
+    ggplot2::scale_x_discrete() +
+    ggplot2::ylab("Days") +
+    ggplot2::xlab("Year") +
+    ggplot2::scale_fill_manual(
       name = "Interval",
       values = f.color.schemes("timeliness.col.vars"),
       guide = guide_legend(reverse = TRUE),
       drop = T
     ) +
-    facet_grid(prov ~ . , scales = "free_y" , space = "free") +
-    theme(
+    ggplot2::facet_grid(prov ~ . , scales = "free_y" , space = "free") +
+    ggplot2::theme(
       legend.position = "bottom",
-      legend.background = element_blank(),
-      strip.text.y = element_text(size = 5, angle = 0)
+      legend.background = ggplot2::element_blank(),
+      strip.text.y = ggplot2::element_text(size = 5, angle = 0)
     )
 
-  ggsave(
+  ggplot2::ggsave(
     "timely_prov.png",
     plot = timely_prov,
     path = output_path,
