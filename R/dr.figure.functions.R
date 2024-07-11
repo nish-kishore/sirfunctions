@@ -1094,7 +1094,7 @@ generate_npafp_maps_dist <- function(dist.extract,
   dist.cut <- distnpafp %>%
     dplyr::mutate(cats = as.character(.data$cats)) %>%
     dplyr::mutate(
-      cats = case_when(
+      cats = dplyr::case_when(
         npafp_rate == 0 & u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
         npafp_rate == 0 &
           u15pop < 100000 & u15pop > 0 ~ "No cases (u15pop < 100K)",
@@ -1149,27 +1149,27 @@ generate_npafp_maps_dist <- function(dist.extract,
   # Put text at 10% below the minimum X and Y coords for each map
   adjy = (range(ctcoord$Y)[1] - range(ctcoord$Y)[2]) * .1
 
-  npafp.maps.dist <- ggplot() +
-    geom_sf(
+  npafp.maps.dist <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
       fill = "lightgrey",
       size = .5
     ) +
     #geom_sf(data = ctry.data$dist, color = "black", fill = "lightgrey", size = .5) +
-    geom_sf(
+    ggplot2::geom_sf(
       data = dist.pop.case.npafp,
       color = "black",
       aes(fill = cats),
       show.legend = T
     ) +
-    geom_text(
+    ggplot2::geom_text(
       data = dist.2npafp,
       aes(
         x = min(ctcoord$X),
@@ -1180,7 +1180,7 @@ generate_npafp_maps_dist <- function(dist.extract,
       check_overlap = TRUE,
       hjust = 0
     ) +
-    scale_fill_manual(
+    ggplot2::scale_fill_manual(
       name = "NPAFP rate",
       values =  c(
         "No cases (u15pop < 100K)" = "lightgrey",
@@ -1195,16 +1195,16 @@ generate_npafp_maps_dist <- function(dist.extract,
     ) +
     # scale_color_manual(values = sirfunctions::f.color.schemes("para.case"), name = "Case type",
     #                  drop = F) +
-    ggtitle("NPAFP Rate Annualized - District") +
+    ggplot2::ggtitle("NPAFP Rate Annualized - District") +
     sirfunctions::f.plot.looks("epicurve") +
-    facet_wrap(~ year, ncol = 4) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank()
+    ggplot2::facet_wrap(~ year, ncol = 4) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank()
     )
 
-  ggsave(
+  ggplot2::ggsave(
     "npafp.map.dist.png",
     plot = npafp.maps.dist,
     path = output_path,
