@@ -501,7 +501,7 @@ generate_es_timely <- function(es.data,
 }
 
 #' Generate zero-dose children barcharts
-#'
+#' @import dplyr ggplot2 ggpubr
 #' @param ctry.data RDS file containing polio data of country
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
@@ -523,7 +523,7 @@ generate_case_num_dose_g <- function(ctry.data,
 
   ### Create zero dose graphs
   # Cats - 0, 1-2, 3, 4+
-  dcat.yr.prov = dplyr::summarize(group_by(
+  dcat.yr.prov = dplyr::summarize(dplyr::group_by(
     ctry.data$afp.all.2 |>
       dplyr::filter(
         date >= start_date &
@@ -538,21 +538,21 @@ generate_case_num_dose_g <- function(ctry.data,
   freq = n())
 
   # case num by year and province by vaccination status
-  case.num.dose.g = ggplot() +
-    geom_bar(
+  case.num.dose.g = ggplot2::ggplot() +
+    ggplot2::geom_bar(
       data = dcat.yr.prov,
       aes(x = year, y = freq, fill = dose.cat),
       stat = "identity",
       position = "fill"
     ) +
-    xlab("") +
-    ylab("Percent of Cases") +
-    scale_fill_manual("Number of doses - IPV/OPV",
+    ggplot2::xlab("") +
+    ggplot2::ylab("Percent of Cases") +
+    ggplot2::scale_fill_manual("Number of doses - IPV/OPV",
                       values = dose.num.cols,
                       drop = F) +
-    scale_y_continuous(labels = scales::percent)  +
-    labs(title = "OPV/IPV Status of NP AFP cases, 6-59 months") +
-    geom_text(
+    ggplot2::scale_y_continuous(labels = scales::percent)  +
+    ggplot2::labs(title = "OPV/IPV Status of NP AFP cases, 6-59 months") +
+    ggplot2::geom_text(
       data = dcat.yr.prov |> dplyr::group_by(year) |> dplyr::summarize(freq = sum(freq)),
       aes(
         label = paste0("n = ", freq),
@@ -563,7 +563,7 @@ generate_case_num_dose_g <- function(ctry.data,
     ) +
     ggpubr::theme_pubr()
 
-  ggsave(
+  ggplot2::ggsave(
     "case.num.dose.g.png",
     plot = case.num.dose.g,
     path = output_path,
