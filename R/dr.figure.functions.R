@@ -750,7 +750,7 @@ generate_pop_map <- function(ctry.data,
 }
 
 #' Generate a map of population by district
-#' @import dplyr ggplot2
+#' @import dplyr ggplot2 lubridate  ggrepel scales
 #' @param ctry.data RDS file of polio country data
 #' @param ctry.shape recent shape file of country
 #' @param prov.shape recent shape file of province
@@ -779,44 +779,44 @@ generate_dist_pop_map <- function(ctry.data,
     dplyr::left_join(dist.shape, dist.pop, by = c("GUID" = "adm2guid"))
 
 
-  pop.map.provn <- ggplot() +
-    geom_sf(
+  pop.map.provn <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
       data = ctry.shape,
       color = "black",
       fill = NA,
       size = 1
     ) +
-    geom_sf(data = shape.dist.pop, aes(fill = u15pop), color = NA) +
-    geom_sf(data = prov.shape,
+    ggplot2::geom_sf(data = shape.dist.pop, aes(fill = u15pop), color = NA) +
+    ggplot2::geom_sf(data = prov.shape,
             color = "black",
             fill = NA) +
     ggrepel::geom_label_repel(data = shape.prov.pop,
                               aes(label = ADM1_NAME, geometry = SHAPE),
                               stat = "sf_coordinates",
                               force = 80) +
-    scale_fill_distiller(palette = "YlOrRd",
+    ggplot2::scale_fill_distiller(palette = "YlOrRd",
                          direction = "both",
                          labels = scales::comma) +
-    ggtitle(paste0("Province Names - District Level Population - ", lubridate::year(end_date))) +
-    labs(fill = "Under-15 pop") +
+    ggplot2::ggtitle(paste0("Province Names - District Level Population - ", lubridate::year(end_date))) +
+    ggplot2::labs(fill = "Under-15 pop") +
     sirfunctions::f.plot.looks("epicurve") +
-    scale_size_identity() +
-    labs(caption = "- Under 15 population is shown at the district level\n- Labels are province names\n- Black lines are province borders") +
-    theme(
-      plot.title = element_text(
+    ggplot2::scale_size_identity() +
+    ggplot2::labs(caption = "- Under 15 population is shown at the district level\n- Labels are province names\n- Black lines are province borders") +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(
         size = 15,
         face = "bold",
         hjust = 0.5
       ),
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
       legend.position = "right",
-      plot.caption = element_text(hjust = 0, size = 11),
-      legend.background = element_blank()
+      plot.caption = ggplot2::element_text(hjust = 0, size = 11),
+      legend.background = ggplot2::element_blank()
     )
 
-  ggsave(
+  ggplot2::ggsave(
     "pop.map.prov.png",
     plot = pop.map.provn,
     path = output_path,
