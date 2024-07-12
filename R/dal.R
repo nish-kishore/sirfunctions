@@ -552,6 +552,23 @@ get_all_polio_data <- function(
 
 
     cli::cli_process_start("5) Loading population data from EDAV")
+    raw.data$dist.pop <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
+                dplyr::pull(file), default_dir = NULL) |>
+      dplyr::ungroup()
+
+    raw.data$prov.pop <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
+                dplyr::pull(file), default_dir = NULL) |>
+      dplyr::ungroup()
+
+    raw.data$ctry.pop <-
+      edav_io(io = "read",
+              file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
+                dplyr::pull(file), default_dir = NULL) |>
+      dplyr::ungroup()
     cli::cli_process_done()
 
 
