@@ -73,8 +73,9 @@ f.npafp.rate.01 <- function(
   # Check dates and return warning if afp data out of range
 
   # Limit AFP data to the range described by the analysis start and end dates
+  # Also limit to only U15 population
   afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date))
+    dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180)
 
   # check if spatial.data param in appropriate format
   if (!spatial.scale %in% c("ctry", "prov", "dist")) {
