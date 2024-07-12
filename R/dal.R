@@ -693,7 +693,7 @@ get_all_polio_data <- function(
   }
 
   if(create.cache){
-    cli::cli_process_start("13) Caching processed data")
+    cli::cli_process_start("15) Caching processed data")
 
     out <- split_concat_raw_data(action = "split", split.years = c(2000,2016,2019), raw.data.all = raw.data)
 
