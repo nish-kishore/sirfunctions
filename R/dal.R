@@ -485,6 +485,11 @@ get_all_polio_data <- function(
           "LAB PENDING",
           cdc.classification.all
         ),
+        cdc.classification.all2 = ifelse(
+          is.na(final.cell.culture.result) &
+            cdc.classification.all == "PENDING",
+          "PENDING",
+          cdc.classification.all),
         hot.case = ifelse(
           paralysis.asymmetric == "Yes" &
             paralysis.onset.fever == "Yes" &
