@@ -4,7 +4,6 @@
 #' @description Function to calculate the overall timeliness of detection in AFP & ES POLIS data
 #' @import dplyr
 #' @import lubridate
-#' @import tibble
 #' @param afp.data tibble: AFP data which includes classification of AFP cases with onset date and date of notification to HQ,
 #' @param es.data tibble: ES data which includes classification of samples with collection date and date of notification to HQ,
 #' @param ctryseq.data tibble: countries with sequencing capacity within or outside of the country,

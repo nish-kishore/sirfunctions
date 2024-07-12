@@ -2,10 +2,8 @@
 #'
 #' @name f.ev.rate.01
 #' @description Function to calculate the EV detection rate in sites from POLIS
-#' @importFrom dplyr case_when distinct group_by left_join mutate n select summarize ungroup
+#' @importFrom dplyr case_when distinct group_by left_join mutate n select summarize ungroup as_tibble
 #' @importFrom lubridate as_date
-#' @importFrom purrr map_chr
-#' @importFrom tibble as_tibble
 #' @importFrom scales label_percent
 #' @param es.data tibble: ES data which includes site name (site.name),
 #' country (ADM0_NAME),
@@ -19,6 +17,12 @@ f.ev.rate.01 <- function(
     es.data,
     start.date,
     end.date) {
+
+  if (!requireNamespace("purrr", quietly = TRUE)) {
+    stop('Package "purrr" must be installed to use this function.',
+         .call = FALSE)
+  }
+
   # Analysis start and end date as defined by user (as a character)
   start.date <- lubridate::as_date(start.date)
   end.date <- lubridate::as_date(end.date)

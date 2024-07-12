@@ -1270,7 +1270,7 @@ generate_npafp_maps_dist <- function(dist.extract,
 
 
 #' Stool adequacy maps by province
-#' @import dplyr ggplot2 sf lubridate tibble
+#' @import dplyr ggplot2 sf lubridate
 #' @param ctry.data RDS file for polio data of a country
 #' @param pstool stool adequacy at province level
 #' @param ctry.shape recent country shapefile
@@ -1318,7 +1318,7 @@ generate_stool_ad_maps <- function(ctry.data,
   )
 
   stoolad.p <- stoolad.p %>%
-    tibble::tibble() %>%
+    dplyr::tibble() %>%
     dplyr::mutate(
       prop.cat = dplyr::case_when(
         afp.cases == 0 ~ "Zero AFP cases",
@@ -1428,7 +1428,7 @@ generate_stool_ad_maps <- function(ctry.data,
 }
 
 #' Stool adequacy map by district
-#' @import dplyr tibble ggplot2 sf lubridate
+#' @import dplyr ggplot2 sf lubridate
 #' @param ctry.data RDS file of polio data for a country
 #' @param dstool district stool adequacy
 #' @param ctry.shape recent country shapefile
@@ -1485,7 +1485,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
   )
 
   stoolad.d <- stoolad.d %>%
-    tibble::tibble() %>%
+    dplyr::tibble() %>%
     dplyr::mutate(
       prop.cat = dplyr::case_when(
         afp.cases == 0 ~ "Zero AFP cases",
@@ -2250,7 +2250,6 @@ generate_iss_map <- function(iss.data,
 #' @importFrom dplyr across case_when group_by left_join mutate n summarize
 #' @importFrom lubridate year
 #' @importFrom stringr str_to_upper
-#' @importFrom tibble rownames_to_column
 #' @importFrom tidyr replace_na
 #' @param ctry.data RDS file containing polio data of a country
 #' @param ctry.extract country NPAFP rate
@@ -2269,6 +2268,18 @@ generate_surv_ind_tab <- function(ctry.data,
                                   dstool,
                                   afp.case,
                                   country_name = Sys.getenv("DR_COUNTRY")) {
+
+
+  if (!requireNamespace("janitor", quietly = TRUE)) {
+    stop('Package "janitor" must be installed to use this function.',
+         .call = FALSE)
+  }
+
+  if (!requireNamespace("tibble", quietly = TRUE)) {
+    stop('Package "tibble" must be installed to use this function.',
+         .call = FALSE)
+  }
+
   dist.ind.afp <- dplyr::left_join(dis.extract,
     dstool,
     by = c(
@@ -2328,7 +2339,7 @@ generate_surv_ind_tab <- function(ctry.data,
 
   adeq.dists <-
     dplyr::left_join(num.dists.100k, ad.dists.100k, by = c("year")) %>%
-    dplyr::mutate(dplyr::across(tidyselect::everything(), ~ tidyr::replace_na(.x, 0))) %>%
+    dplyr::mutate(dplyr::across(dplyr::everything(), ~ tidyr::replace_na(.x, 0))) %>%
     dplyr::mutate(prop = paste0(.data$ad.dist.100k.num, "/", .data$dist.100k.num))
 
   temp.ind.tab1 <-
@@ -2390,7 +2401,6 @@ generate_surv_ind_tab <- function(ctry.data,
 }
 
 #' Generate table for population
-#' @importFrom tidyselect all_of everything
 #' @importFrom dplyr across arrange full_join group_by mutate select
 #' @importFrom flextable add_header_row align bg bold color flextable fp_border_default hline set_header_df theme_booktabs vline
 #' @importFrom lubridate year
@@ -2448,7 +2458,7 @@ generate_pop_tab <- function(prov.case.ind,
       .data$u15pop
     )
   ) %>%
-    dplyr::select(-all_of(pop.date.analysis))
+    dplyr::select(-dplyr::all_of(pop.date.analysis))
 
   var.ord <- c(
     "prov",
@@ -2472,8 +2482,8 @@ generate_pop_tab <- function(prov.case.ind,
   # NPAFP table
   col_palette <- c("#FF9999", "white")
   col.npafp.rate <- sub.prov.join.wide[, c(paste0("npafp_rate_", date.analysis))] %>%
-    dplyr::mutate(dplyr::across(tidyselect::everything(), \(x) tidyr::replace_na(x, 0))) %>%
-    dplyr::mutate(dplyr::across(c(tidyselect::everything()), \(x) cut(
+    dplyr::mutate(dplyr::across(dplyr::everything(), \(x) tidyr::replace_na(x, 0))) %>%
+    dplyr::mutate(dplyr::across(c(dplyr::everything()), \(x) cut(
       x,
       breaks = c(0, 2),
       right = F,
@@ -2485,8 +2495,8 @@ generate_pop_tab <- function(prov.case.ind,
   # Stool adequacy
   col_palette <- c("#FF9999", "white")
   col.stool.ad <- sub.prov.join.wide[, c(paste0("per.stool.ad_", date.analysis))] %>%
-    dplyr::mutate(dplyr::across(tidyselect::everything(), \(x) tidyr::replace_na(x, 0))) %>%
-    dplyr::mutate(dplyr::across(c(tidyselect::everything()), \(x) cut(
+    dplyr::mutate(dplyr::across(dplyr::everything(), \(x) tidyr::replace_na(x, 0))) %>%
+    dplyr::mutate(dplyr::across(c(dplyr::everything()), \(x) cut(
       x,
       breaks = c(0, 80),
       right = F,
@@ -2593,9 +2603,7 @@ generate_pop_tab <- function(prov.case.ind,
 #' Table containing stool adequacy at the country level
 #' @importFrom dplyr across between case_when count group_by left_join mutate rename select summarize
 #' @importFrom flextable add_footer_row as_grouped_data autofit bold flextable set_header_labels theme_booktabs
-#' @importFrom janitor row_to_names
 #' @importFrom lubridate year
-#' @importFrom tibble rownames_to_column
 #' @importFrom tidyr replace_na
 #' @param ctry.data RDS file containing polio data for a country
 #' @param stool.data AFP data with stool adequacy columns
@@ -2610,6 +2618,17 @@ generate_inad_tab <- function(ctry.data,
                               cstool,
                               start_date,
                               end_date) {
+
+  if (!requireNamespace("janitor", quietly = TRUE)) {
+    stop('Package "janitor" must be installed to use this function.',
+         .call = FALSE)
+  }
+
+  if (!requireNamespace("tibble", quietly = TRUE)) {
+    stop('Package "tibble" must be installed to use this function.',
+         .call = FALSE)
+  }
+
   stool.sub <- cstool[, c(
     "year",
     "num.adj.w.miss",

@@ -20,7 +20,8 @@ copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
 }
 
 #' Get functions used for the desk review from Github
-#' @import httr dplyr tidyr cli
+#' @import dplyr tidyr cli
+#' @importFrom httr GET content
 #' @param branch which branch to use
 #' @param output_folder where the function scripts should be stored
 #'
@@ -547,7 +548,10 @@ init_dr <-
     )
 
     # Attaching lab data if available and creating a copy to data folder
-    if (!is.null(lab_data_path)) {
+    data_folder_files <- list.files(data_path)
+
+
+    if (!is.null(lab_data_path) & (stringr::str_detect(data_folder_files, "_lab_data_") |> sum()) == 0) {
       cli::cli_process_start("Saving a copy of the lab data to the data folder.")
       country_data$lab.data <- load_lab_data(lab_data_path)
       dr_lab_data_path <- file.path(
@@ -609,7 +613,6 @@ init_dr <-
   }
 
 #' Upload desk review script to the sg-desk-review Github repository
-#' @importFrom git2r repository add commit
 #' @param file_path location of the file to upload to the sg-desk-review repo
 #' @param repo_path local path of the sg-desk-review repo
 #' @param message message to include in the commit
@@ -618,6 +621,12 @@ init_dr <-
 #' @export
 upload_dr_to_github <-
   function(file_path, repo_path, message = "updating file") {
+
+    if (!requireNamespace("git2r", quietly = TRUE)) {
+      stop('Package "git2r" must be installed to use this function.',
+           .call = FALSE)
+    }
+
     # Check if the repository is initialized
     if (is.null(git2r::discover_repository(repo_path))) {
       stop("Git repository not found at ", repo_path)

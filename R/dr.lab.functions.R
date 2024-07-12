@@ -77,13 +77,19 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
 
 
 #' Function to load the raw lab data
-#' @import stringr readr readxl
+#' @import stringr readr
 #' @param lab_data_path file path as a string to the lab data
 #' @param sheet_name name of the sheet to load
 #'
 #' @return a tibble containing lab data
 #' @export
 load_lab_data <- function(lab_data_path, sheet_name = NULL) {
+
+  if (!requireNamespace("readxl", quietly = TRUE)) {
+    stop('Package "readxl" must be installed to use this function.',
+         .call = FALSE)
+  }
+
   if (stringr::str_ends(lab_data_path, ".csv")) {
     return(readr::read_csv(lab_data_path))
   } else if (stringr::str_ends(lab_data_path, ".xlsx")) {

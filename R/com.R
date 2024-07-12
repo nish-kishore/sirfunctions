@@ -83,7 +83,6 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 #' Helper function to send an email through Outlook from R
 #' @import Microsoft365R
 #' @import AzureAuth
-#' @import blastula
 #' @import dplyr
 #' @param title str: Subject of message to be sent
 #' @param body str: long string of body of message to be sent
@@ -92,6 +91,11 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 #' @returns Success or error message
 #' @export
 send_outlook_email <- function(title, body, recipient, attachment = NULL){
+
+  if (!requireNamespace("blastula", quietly = TRUE)) {
+    stop('Package "blastula" must be installed to use this function.',
+         .call = FALSE)
+  }
 
   tokens <- AzureAuth::list_azure_tokens()
 

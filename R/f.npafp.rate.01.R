@@ -4,7 +4,6 @@
 #' @description Calculate the NPAFP rate from POLIS data
 #' @import dplyr
 #' @import lubridate
-#' @import tibble
 #' @import tidyr
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
 #' formated as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2 which includes

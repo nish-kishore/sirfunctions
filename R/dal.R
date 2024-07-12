@@ -99,7 +99,7 @@ edav_io <- function(
     }
 
     return(AzureStor::list_storage_files(azcontainer, file_loc) |>
-      tibble::as_tibble())
+      dplyr::as_tibble())
   }
 
   if (io == "exists.dir") {
@@ -212,7 +212,7 @@ edav_io <- function(
 #' and upload data from
 #' @param test_size int: byte size of a theoretical file to be uploaded or downloaded
 #' @param return_list boolean: return a list of download time estimates, default F
-#' @import dplyr readr prettyunits tibble cli
+#' @import dplyr readr cli
 #' @returns System message with download and update time, potentially list output
 #' @export
 test_EDAV_connection <- function(
@@ -220,9 +220,15 @@ test_EDAV_connection <- function(
     folder = "GID/PEB/SIR/Data",
     return_list = F,
     test_size = 10000000) {
+
+  if (!requireNamespace("prettyunits", quietly = TRUE)) {
+    stop('Package "prettyunits" must be installed to use this function.',
+         .call = FALSE)
+  }
+
   tmp_data <- replicate(100, iris, simplify = F) |>
     dplyr::bind_rows() |>
-    tibble::as_tibble()
+    dplyr::as_tibble()
 
   tmp_file <- paste0(tempfile(), ".rds")
 
@@ -287,7 +293,7 @@ test_EDAV_connection <- function(
 #' from 2001 onwards. Regular pulls form the data will recreate the "small" dataset
 #' when new information is availble and the Data Management Team can force the
 #' creation of the "medium" and "large" static datasets as necessary.
-#' @import dplyr cli sf tibble
+#' @import dplyr cli sf
 #' @param size str: "small", "medium", "large", defaults to "small";
 #' "small" - returns data from 2019 onwards;
 #' "medium" - returns data from 2016 onwards;
@@ -1201,7 +1207,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
     }
 
   if (data.only) {
-    out <- tibble::as_tibble(out)
+    out <- dplyr::as_tibble(out)
     return(out)
   }
 
@@ -1216,7 +1222,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' Standard function to load Province data
 #'
 #' @description Pulls province shapefiles directly from the geodatabase
-#' @import stringr AzureStor lubridate dplyr tibble
+#' @import stringr AzureStor lubridate dplyr
 #' @param azcontainer Azure validated container object
 #' @param fp str: Location of geodatabase
 #' @param prov_guid array/str: Array of all province GUIDS that you want to pull
@@ -1269,7 +1275,7 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
     }
 
   if (data.only) {
-    out <- tibble::as_tibble(out)
+    out <- dplyr::as_tibble(out)
     return(out)
   }
 
@@ -1284,7 +1290,7 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' Standard function to load Country data
 #'
 #' @description Pulls province shapefiles directly from the geodatabase
-#' @import stringr AzureStor dplyr tibble lubridate
+#' @import stringr AzureStor dplyr lubridate
 #' @param azcontainer azure validated container object
 #' @param fp str: Location of geodatabase
 #' @param ctry_guid array/str: Array of all country GUIDS that you want to pull
@@ -1328,7 +1334,7 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
     }
 
   if (data.only) {
-    out <- tibble::as_tibble(out)
+    out <- dplyr::as_tibble(out)
     return(out)
   }
 

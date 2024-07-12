@@ -8,7 +8,6 @@
 #' the calculations
 #' @import dplyr
 #' @import lubridate
-#' @import tibble
 #'
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
 #' formatted as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2

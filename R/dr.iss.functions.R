@@ -1,11 +1,16 @@
 #' Read ISS/eSURV data
-#' @import stringr readxl
+#' @import stringr
 #' @param iss_path path to the excel or csv file
 #' @param sheet_name optional name of the ISS data
 #'
 #' @return a tibble containing ISS/eSURV data
 #' @export
 load_iss_data <- function(iss_path, sheet_name = NULL) {
+  
+  if (!requireNamespace("readxl", quietly = TRUE)) {
+    stop('Package "readxl" must be installed to use this function.',
+         .call = FALSE)
+  }
   if (stringr::str_ends(iss_path, ".csv")) {
     return(readr::read_csv(iss_path))
   } else if (stringr::str_ends(iss_path, ".xlsx")) {
@@ -17,6 +22,7 @@ load_iss_data <- function(iss_path, sheet_name = NULL) {
 
 #' Perform common cleaning tasks for ISS/eSURV data
 #' @import cli dplyr stringr
+#' @importFrom zoo as.yearmon
 #' @param ctry.data ctry.data containing iss.data
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review

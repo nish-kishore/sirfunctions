@@ -252,7 +252,7 @@ add_zero_dose_col <- function(afp.data) {
 #'
 add_age_group <- function(age.months) {
   cli::cli_process_start("Adding age_group column")
-  age.months <- tibble::tibble(age.months) |>
+  age.months <- dplyr::tibble(age.months) |>
     dplyr::mutate(age.months = as.integer(age.months)) |>
     dplyr::mutate(age_group = dplyr::case_when(
       age.months < 6 ~ "<6",
@@ -287,7 +287,8 @@ generate_afp_by_month <- function(afp.data, start_date, end_date) {
 
 #' Generate summary from the afp.by.month summary tibble
 #'
-#' @import dplyr tidyr lubridate zoo
+#' @import dplyr tidyr lubridate
+#' @importFrom zoo as.yearmon
 #' @param afp.by.month summary table of AFP cases
 #' @param ctry.data RDS file containing country data
 #' @param start_date start date of analysis
@@ -626,7 +627,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 }
 
 #' Generate summary table for those requiring 60 day follow up
-#' @import dplyr tibble lubridate
+#' @import dplyr lubridate
 #' @param stool.data AFP data with stool adequacy columns
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
@@ -663,7 +664,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
     )
 
   cases.need60day <- stool.data.inad |>
-    tibble::as_tibble() |>
+    dplyr::as_tibble() |>
     # filter onset to be >120 days from system date
     dplyr::filter(date <= lubridate::as_date(dplyr::if_else(
       end_date > Sys.Date() - 120, (Sys.Date() - 120),
@@ -947,7 +948,7 @@ generate_stool_data <- function(afp.data, start_date, end_date) {
     dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)))
 
   stool.data <- afp.data |> # IF FUNCTION CHANGES, THIS WILL NEED TO CHANGE AS WELL
-    tibble::as_tibble() |>
+    dplyr::as_tibble() |>
     dplyr::filter(cdc.classification.all2 != "NOT-AFP") |>
     dplyr::mutate(adequacy.final = dplyr::case_when( # Conditions for Bad Data
       bad.stool1 == "data entry error" |
