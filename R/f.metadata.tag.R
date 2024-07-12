@@ -2,7 +2,7 @@
 #'
 #'
 #' @description add metadata tags to figures and tables
-#' @import flextable
+#' @importFrom flextable add_footer_lines
 #'
 #' @param object ggplot or flextable object: the figure or table to add metadata to
 #' @param time_tag str: a date and time string, defaults to raw.data$metadata$download_time

@@ -1,53 +1,57 @@
 Package: sirfunctions
 Title: Key Functions for CDC/GID/PEB/SIR
 Version: 1.0.6
-Authors@R: 
-    c(person("Nishant", "Kishore", , "ynm2@cdc.gov", role = c("aut", "cre"),
+Authors@R: c(
+    person("Nishant", "Kishore", , "ynm2@cdc.gov", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0408-2747")),
-    person("Elizabeth", "Krow-Lucal", , "yxn9@cdc.gov", role = c("aut")),
-    person("Smita", "Chavan", , "wsy2@cdc.gov", role = c("aut")),
-    person("Mervin Keith", "Cuadera", , "xrg9@cdc.gov", role = c("aut"),
+    person("Elizabeth", "Krow-Lucal", , "yxn9@cdc.gov", role = "aut"),
+    person("Smita", "Chavan", , "wsy2@cdc.gov", role = "aut"),
+    person("Mervin Keith", "Cuadera", , "xrg9@cdc.gov", role = "aut",
            comment = c(ORCID = "0000-0003-4898-2659")),
-    person("Nicholas", "Heaghney", , "uic3@cdc.gov", role = c("aut")))
-Description: Centralizes key functions used for analysis of Polio data used by CDC/GID/PEB/SIR.
+    person("Nicholas", "Heaghney", , "uic3@cdc.gov", role = "aut")
+  )
+Description: Centralizes key functions used for analysis of Polio data
+    used by CDC/GID/PEB/SIR.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 Imports: 
-    dplyr,
-    ggplot2,
-    lubridate,
-    sf,
-    tibble, 
-    cli, 
-    prettyunits,
-    purrr,
-    scales,
-    readr, 
-    stringr, 
-    AzureAuth, 
+    AzureAuth,
     AzureStor,
-    Microsoft365R, 
-    blastula, 
-    ggpubr,
+    blastula,
+    cli,
+    dplyr,
     flextable,
-    tidyr,
-    tidyselect,
-    magick,
     forcats,
+    ggplot2,
+    ggpubr,
     ggrepel,
     git2r,
     httr,
     janitor,
+    lubridate,
+    Microsoft365R,
     officer,
+    prettyunits,
+    purrr,
+    readr,
     readxl,
+    scales,
+    sf,
+    stringr,
+    tibble,
+    tidyr,
+    tidyselect,
     vctrs,
     writexl,
     zoo
 Suggests: 
     knitr,
+    rvg,
+    magick,
     rmarkdown,
     testthat (>= 3.0.0)
+VignetteBuilder: 
+    knitr
 Config/testthat/edition: 3
-VignetteBuilder: knitr
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2

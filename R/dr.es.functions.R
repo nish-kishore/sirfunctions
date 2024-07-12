@@ -5,8 +5,8 @@
 #' @return tibble of ES data with imputed coordinates for sites missing them
 impute_site_coord <- function(ctry.data) {
   df01 <- ctry.data$es %>%
-    distinct(.data$ADM0_NAME, .data$site.name, .data$dist.guid, .data$lat, .data$lng) |>
-    filter(is.na(lat) | is.na(lng))
+    dplyr::distinct(.data$ADM0_NAME, .data$site.name, .data$dist.guid, .data$lat, .data$lng) |>
+    dplyr::filter(is.na(lat) | is.na(lng))
 
   cli::cli_process_start("Adding coordinates to sites in their home district")
 
@@ -16,16 +16,18 @@ impute_site_coord <- function(ctry.data) {
   }
 
   dist.shape <- ctry.data$dist
-  shape.dist.pop <- left_join(dist.shape,
-                              ctry.data$dist.pop |> filter(year == max(year)),
-                              by = c("GUID" = "adm2guid"))
+  shape.dist.pop <- dplyr::left_join(dist.shape,
+    ctry.data$dist.pop |> dplyr::filter(year == max(year)),
+    by = c("GUID" = "adm2guid")
+  )
 
-  df01.shape <- right_join(shape.dist.pop %>% select(.data$GUID),
-                           df01 %>% filter(!is.na(dist.guid)),
-                           by = c("GUID" = "dist.guid")) %>%
-    mutate(empty.01 = st_is_empty(.)) %>%
-    filter(empty.01 == 0) |>
-    distinct()
+  df01.shape <- dplyr::right_join(shape.dist.pop %>% dplyr::select(.data$GUID),
+    df01 %>% dplyr::filter(!is.na(dist.guid)),
+    by = c("GUID" = "dist.guid")
+  ) %>%
+    dplyr::mutate(empty.01 = sf::st_is_empty(.)) %>%
+    dplyr::filter(empty.01 == 0) |>
+    dplyr::distinct()
 
   if (nrow(df01.shape) == 0) {
     cli::cli_alert_warning("Unable to find shapefile associated with site(s)")
@@ -33,58 +35,62 @@ impute_site_coord <- function(ctry.data) {
   }
 
   df02 <- df01.shape %>%
-    group_by(.data$GUID) %>%
-    summarise(nperarm = n()) %>%
-    arrange(.data$GUID) %>%
-    mutate(id = row_number())
+    dplyr::group_by(.data$GUID) %>%
+    dplyr::summarize(nperarm = dplyr::n()) %>%
+    dplyr::arrange(.data$GUID) %>%
+    dplyr::mutate(id = dplyr::row_number())
 
 
-  pt01 <- st_sample(df02, df02$nperarm, exact = TRUE)
-  pt01_sf <- st_sf(pt01)
-  pt01_joined <- st_join(pt01_sf, df02)
+  pt01 <- sf::st_sample(df02, df02$nperarm, exact = TRUE)
+  pt01_sf <- sf::st_sf(pt01)
+  pt01_joined <- sf::st_join(pt01_sf, df02)
 
 
   df03 <- pt01_joined %>%
-    select(-.data$nperarm, -id) %>%
-    group_by(.data$GUID) %>%
-    arrange(.data$GUID, .by_group = TRUE) %>%
-    mutate(id = row_number()) %>%
+    dplyr::select(-.data$nperarm, -id) %>%
+    dplyr::group_by(.data$GUID) %>%
+    dplyr::arrange(.data$GUID, .by_group = TRUE) %>%
+    dplyr::mutate(id = dplyr::row_number()) %>%
     as.data.frame()
 
 
   df04 <- df01.shape %>%
-    group_by(.data$GUID) %>%
-    arrange(.data$GUID, .by_group = TRUE) %>%
-    mutate(id = row_number())
+    dplyr::group_by(.data$GUID) %>%
+    dplyr::arrange(.data$GUID, .by_group = TRUE) %>%
+    dplyr::mutate(id = dplyr::row_number())
 
 
-  df05 <- full_join(df04, df03) %>%
-    filter(!is.na(empty.01)) %>%
-    separate(.,
-             col = pt01,
-             into = c("lon", "lat"),
-             sep = "[,]") %>%
-    mutate(lon = readr::parse_number(.data$lon),
-           lat = readr::parse_number(.data$lat),)
+  df05 <- dplyr::full_join(df04, df03) %>%
+    dplyr::filter(!is.na(empty.01)) %>%
+    tidyr::separate(.,
+      col = pt01,
+      into = c("lon", "lat"),
+      sep = "[,]"
+    ) %>%
+    dplyr::mutate(
+      lon = readr::parse_number(.data$lon),
+      lat = readr::parse_number(.data$lat),
+    )
 
 
-  st_geometry(df05) <- NULL
+  sf::st_geometry(df05) <- NULL
 
 
   df06 <- df05 %>%
-    select(.data$ADM0_NAME, .data$site.name, "lng" = .data$lon, .data$lat) %>%
-    mutate_at(c("lng", "lat"), as.character)
+    dplyr::select(.data$ADM0_NAME, .data$site.name, "lng" = .data$lon, .data$lat) %>%
+    dplyr::mutate_at(c("lng", "lat"), as.character)
 
   es.data <- ctry.data$es %>%
-    left_join(., df06, by = c("ADM0_NAME", "site.name")) %>%
-    mutate(lat = ifelse(is.na(.data$lat.x), .data$lat.y, .data$lat.x),
-           lng = ifelse(is.na(.data$lng.x), .data$lng.y, .data$lng.x)) %>%
-    select(-c(.data$lat.x, .data$lat.y, .data$lng.x, .data$lng.y))
+    dplyr::left_join(., df06, by = c("ADM0_NAME", "site.name")) %>%
+    dplyr::mutate(
+      lat = ifelse(is.na(.data$lat.x), .data$lat.y, .data$lat.x),
+      lng = ifelse(is.na(.data$lng.x), .data$lng.y, .data$lng.x)
+    ) %>%
+    dplyr::select(-c(.data$lat.x, .data$lat.y, .data$lng.x, .data$lng.y))
 
   cli::cli_process_done()
 
   return(es.data)
-
 }
 
 #' Transform ES data cleaning with additional columns
@@ -98,8 +104,8 @@ clean_es_data <- function(ctry.data) {
   cli::cli_process_start("Checking for missing site coordinates")
 
   df01 <- es.data |>
-    distinct(.data$ADM0_NAME, .data$site.name, .data$dist.guid, .data$lat, .data$lng) %>%
-    filter(is.na(lat) | is.na(lng))
+    dplyr::distinct(.data$ADM0_NAME, .data$site.name, .data$dist.guid, .data$lat, .data$lng) %>%
+    dplyr::filter(is.na(lat) | is.na(lng))
 
   if (nrow(df01) != 0) {
     cli::cli_alert_warning("These sites are missing coordinates:")
@@ -108,7 +114,6 @@ clean_es_data <- function(ctry.data) {
       cli::cli_alert_info(i)
     }
     es.data <- impute_site_coord(ctry.data)
-
   } else {
     cli::cli_alert_success("No sites with missing coordinates.")
   }
@@ -117,57 +122,57 @@ clean_es_data <- function(ctry.data) {
 
   cli::cli_process_start("Cleaning ES data")
   es.data.earlidat <- es.data %>%
-    group_by(.data$site.name) %>%
-    summarize(early.dat = min(collect.date)) %>%
-    ungroup()
+    dplyr::group_by(.data$site.name) %>%
+    dplyr::summarize(early.dat = min(collect.date)) %>%
+    dplyr::ungroup()
 
   es.data <- es.data %>%
-    left_join(es.data.earlidat, by = c("site.name" = "site.name")) |>
-    mutate(nvaccine.2 = NA)
+    dplyr::left_join(es.data.earlidat, by = c("site.name" = "site.name")) |>
+    dplyr::mutate(nvaccine.2 = NA)
 
   es.data <- es.data %>%
-    mutate(vaccine.1.3 = case_when(
+    dplyr::mutate(vaccine.1.3 = dplyr::case_when(
       is.na(vaccine.1) == F & vaccine.1 == "Yes" ~ "Sabin 1/3"
     )) %>%
-    mutate(vaccine.3.1 = case_when(
+    dplyr::mutate(vaccine.3.1 = dplyr::case_when(
       is.na(vaccine.3) == F & vaccine.3 == "Yes" ~ "Sabin 1/3"
     )) %>%
-    mutate(vaccine.2 = case_when(
+    dplyr::mutate(vaccine.2 = dplyr::case_when(
       is.na(vaccine.2) == F & vaccine.2 == "Yes" ~ "Sabin 2"
     )) %>%
-    mutate(vdpv.1 = case_when(
+    dplyr::mutate(vdpv.1 = dplyr::case_when(
       is.na(vdpv.1) == F & vdpv.1 == "Yes" ~ "VDPV1"
     )) %>%
-    mutate(vdpv.2 = case_when(
+    dplyr::mutate(vdpv.2 = dplyr::case_when(
       is.na(vdpv.2) == F & vdpv.2 == "Yes" ~ "VDPV2"
     )) %>%
-    mutate(vdpv.3 = case_when(
+    dplyr::mutate(vdpv.3 = dplyr::case_when(
       is.na(vdpv.3) == F & vdpv.3 == "Yes" ~ "VDPV3"
     )) %>%
-    mutate(wild.1 = case_when(
+    dplyr::mutate(wild.1 = dplyr::case_when(
       is.na(wild.1) == F & wild.1 == "Yes" ~ "WPV1"
     )) %>%
-    mutate(wild.3 = case_when(
+    dplyr::mutate(wild.3 = dplyr::case_when(
       is.na(wild.3) == F & wild.3 == "Yes" ~ "WPV3"
     )) %>%
-    mutate(nvaccine.2 = case_when(
+    dplyr::mutate(nvaccine.2 = dplyr::case_when(
       is.na(nvaccine.2) == F & nvaccine.2 == "Yes" ~ "nOPV2"
     )) %>%
-    unite("all_dets", c(
+    tidyr::unite("all_dets", c(
       "vaccine.1.3", "vaccine.3.1", "vaccine.2",
       "vdpv.1", "vdpv.2", "vdpv.3", "wild.1",
       "wild.3", "nvaccine.2"
     ),
     na.rm = TRUE, remove = FALSE, sep = " and "
     ) %>%
-    mutate(all_dets = case_when(
+    dplyr::mutate(all_dets = dplyr::case_when(
       all_dets == "Sabin 1" ~ "Sabin 1 or Sabin 3",
       all_dets == "Sabin 3" ~ "Sabin 1 or Sabin 3",
       all_dets == "Sabin 1 and Sabin 3" ~ "Sabin 1 or Sabin 3",
       TRUE ~ all_dets
     ))
 
-  es.data$all_dets = gsub("Sabin 1/3 and Sabin 1/3", "Sabin 1/3", es.data$all_dets)
+  es.data$all_dets <- gsub("Sabin 1/3 and Sabin 1/3", "Sabin 1/3", es.data$all_dets)
   cli::cli_process_done()
 
   return(es.data)
@@ -187,10 +192,9 @@ generate_es_data_long <- function(es.data) {
       all_dets == "" & ev.detect == "1" ~ "NPEV only",
       all_dets == "" & ev.detect == "0" ~ "No EV isolated",
       TRUE ~ all_dets
-    )
-    )
+    ))
 
-  es.data.long$year = lubridate::year(es.data.long$collect.date)
+  es.data.long$year <- lubridate::year(es.data.long$collect.date)
 
   return(es.data.long)
 }

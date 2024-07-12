@@ -2,11 +2,11 @@
 #'
 #' @name f.ev.rate.01
 #' @description Function to calculate the EV detection rate in sites from POLIS
-#' @import dplyr
-#' @import lubridate
-#' @import tibble
-#' @import scales
-#' @import purrr
+#' @importFrom dplyr case_when distinct group_by left_join mutate n select summarize ungroup
+#' @importFrom lubridate as_date
+#' @importFrom purrr map_chr
+#' @importFrom tibble as_tibble
+#' @importFrom scales label_percent
 #' @param es.data tibble: ES data which includes site name (site.name),
 #' country (ADM0_NAME),
 #' date of collection (collect.date), and a binary ev detection variable (ev.detect)
@@ -16,32 +16,34 @@
 #' @returns tibble: long format including site specific ev detection rate
 #' @export
 f.ev.rate.01 <- function(
-  es.data,
-  start.date,
-  end.date
-){
-
+    es.data,
+    start.date,
+    end.date) {
   # Analysis start and end date as defined by user (as a character)
   start.date <- lubridate::as_date(start.date)
   end.date <- lubridate::as_date(end.date)
 
-  #check to make sure that data has necessary variables
-  necessary.es.vars <- c("collect.date", "ADM0_NAME",  "site.name", "ev.detect")
-  useful.es.vars <- c("ADM1_NAME", "ADM2_NAME","lat", "lng")
+  # check to make sure that data has necessary variables
+  necessary.es.vars <- c("collect.date", "ADM0_NAME", "site.name", "ev.detect")
+  useful.es.vars <- c("ADM1_NAME", "ADM2_NAME", "lat", "lng")
 
   if (sum(!necessary.es.vars %in% names(es.data)) > 0) {
     missing.vars <- necessary.es.vars[!necessary.es.vars %in% names(es.data)]
-    stop(paste0("The following necessary variables were not found in `es.data`: ",
-                paste0(missing.vars, collapse = ", ")))
+    stop(paste0(
+      "The following necessary variables were not found in `es.data`: ",
+      paste0(missing.vars, collapse = ", ")
+    ))
   }
 
   if (sum(!useful.es.vars %in% names(es.data)) > 0) {
     missing.vars <- useful.es.vars[!useful.es.vars %in% names(es.data)]
-    readline(paste0("The following useful variables were not found in `es.data`, please consider including them: ",
-                    paste0(missing.vars, collapse = ", "), "\n Press [ENTER] to continue"))
+    readline(paste0(
+      "The following useful variables were not found in `es.data`, please consider including them: ",
+      paste0(missing.vars, collapse = ", "), "\n Press [ENTER] to continue"
+    ))
   }
 
-  #Warning message about non-overlapping dates
+  # Warning message about non-overlapping dates
   if (start.date < lubridate::as_date(es.data$collect.date |> min(na.rm = T))) {
     print(paste0(
       "Your specified start date is ",
@@ -62,33 +64,32 @@ f.ev.rate.01 <- function(
   es.sum <- es.data |>
     dplyr::group_by(ADM0_NAME, site.name) |>
     dplyr::summarize(
-      num.samples = n(),
+      num.samples = dplyr::n(),
       num.ev.pos = sum(ev.detect == 1, na.rm = T)
     ) |>
     dplyr::mutate(
-      ev.rate = num.ev.pos/num.samples,
-      ev.percent = purrr::map_chr(ev.rate, label_percent(accuracy=1)),
-      ev.rate.cat = case_when(
+      ev.rate = num.ev.pos / num.samples,
+      ev.percent = purrr::map_chr(ev.rate, scales::label_percent(accuracy = 1)),
+      ev.rate.cat = dplyr::case_when(
         ev.rate < .50 ~ "<50%",
         ev.rate >= .50 & ev.rate < .80 ~ "50 to <80%",
-        ev.rate >= .80 ~ "80-100%")
+        ev.rate >= .80 ~ "80-100%"
+      )
     ) |>
-    ungroup() |>
-    as_tibble() |>
+    dplyr::ungroup() |>
+    dplyr::as_tibble() |>
     dplyr::mutate(
       start.date = start.date,
       end.date = end.date,
       interval = end.date - start.date
     )
 
-  es.sum <- left_join(
+  es.sum <- dplyr::left_join(
     es.sum,
     es.data |>
-      dplyr::select(tidyr::any_of(c("site.name", "ADM1_NAME", "ADM2_NAME","lat", "lng"))) |>
-      distinct()
+      dplyr::select(tidyr::any_of(c("site.name", "ADM1_NAME", "ADM2_NAME", "lat", "lng"))) |>
+      dplyr::distinct()
   )
 
   return(es.sum) # Data frame to return from function
-
 }
-
