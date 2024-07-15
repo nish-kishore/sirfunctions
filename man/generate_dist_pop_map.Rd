@@ -6,6 +6,7 @@
 \usage{
 generate_dist_pop_map(
   ctry.data,
+  ctry.shape,
   prov.shape,
   dist.shape,
   end_date,
@@ -14,6 +15,8 @@ generate_dist_pop_map(
 }
 \arguments{
 \item{ctry.data}{RDS file of polio country data}
+
+\item{ctry.shape}{recent shape file of country}
 
 \item{prov.shape}{recent shape file of province}
 

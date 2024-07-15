@@ -50,3 +50,4 @@ rsconnect/
 
 #files 
 R/nish_sandbox.R
+inst/doc

@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.excel.export.functions.R
 \name{create_stool_adequacy_export}
 \alias{create_stool_adequacy_export}
-\title{Export stool adequacy data}
+\title{Exports stool adequacy data}
 \usage{
 create_stool_adequacy_export(
   cstool,
@@ -20,9 +20,6 @@ create_stool_adequacy_export(
 
 \item{excel_output_path}{output path}
 }
-\value{
-does not return anything
-}
 \description{
-Export stool adequacy data
+Exports stool adequacy data
 }

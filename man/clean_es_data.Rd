@@ -7,7 +7,7 @@
 clean_es_data(ctry.data)
 }
 \arguments{
-\item{es.data}{tibble of ES data from ctry.data}
+\item{ctry.data}{RDS object containing country polio data}
 }
 \value{
 tibble of cleaned ES data

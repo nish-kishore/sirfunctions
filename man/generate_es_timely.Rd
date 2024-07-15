@@ -17,6 +17,8 @@ generate_es_timely(
 \item{es_start_date}{start date of ES}
 
 \item{es_end_date}{end date of ES}
+
+\item{output_path}{where to save the figure}
 }
 \value{
 ggplot scatterplot for timeliness

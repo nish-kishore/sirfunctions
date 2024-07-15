@@ -11,7 +11,7 @@ add_prov_npafp_table(npafp.output)
 level}
 }
 \value{
-tibble of output with province names for those without didtrict names
+tibble of output with province names for those without district names
 }
 \description{
 Add province name back to those without district names

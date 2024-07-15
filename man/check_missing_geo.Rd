@@ -2,18 +2,19 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{check_missing_geo}
 \alias{check_missing_geo}
-\title{Check for missing geographic data from afp data}
+\title{Checks for missing geographic data}
 \usage{
 check_missing_geo(afp.data, spatial.scale)
 }
 \arguments{
 \item{afp.data}{tibble containing AFP data}
 
-\item{spatial.scale}{what geographic level to check for}
+\item{spatial.scale}{what geographic level to check for. Valid values are "ctry","prov", "dist".}
 }
 \value{
 tibble containing records with missing geographic data
 }
 \description{
-Check for missing geographic data from afp data
+checks the AFP dataset for rows with missing geographic data.
+It checks for missing data based on the scale passed through spatial.scale.
 }

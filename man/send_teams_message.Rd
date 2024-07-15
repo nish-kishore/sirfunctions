@@ -8,7 +8,8 @@ send_teams_message(
   msg,
   team_id = "CGH-GID-PEB-SIR",
   channel = "CORE 2.0",
-  attach = NULL
+  attach = NULL,
+  type = "text"
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ send_teams_message(
 \item{channel}{str: channel where message should be sent}
 
 \item{attach}{str: local path of files to be attached in message}
+
+\item{type}{str: "text" or "html"}
 }
 \value{
 Success or error message

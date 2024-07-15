@@ -1,11 +1,16 @@
 #' Read ISS/eSURV data
-#'
+#' @import stringr
 #' @param iss_path path to the excel or csv file
 #' @param sheet_name optional name of the ISS data
 #'
 #' @return a tibble containing ISS/eSURV data
 #' @export
-load_iss_data <- function(iss_path, sheet_name=NULL) {
+load_iss_data <- function(iss_path, sheet_name = NULL) {
+  
+  if (!requireNamespace("readxl", quietly = TRUE)) {
+    stop('Package "readxl" must be installed to use this function.',
+         .call = FALSE)
+  }
   if (stringr::str_ends(iss_path, ".csv")) {
     return(readr::read_csv(iss_path))
   } else if (stringr::str_ends(iss_path, ".xlsx")) {
@@ -16,7 +21,8 @@ load_iss_data <- function(iss_path, sheet_name=NULL) {
 }
 
 #' Perform common cleaning tasks for ISS/eSURV data
-#'
+#' @import cli dplyr stringr
+#' @importFrom zoo as.yearmon
 #' @param ctry.data ctry.data containing iss.data
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
@@ -32,15 +38,14 @@ load_iss_data <- function(iss_path, sheet_name=NULL) {
 #' @return a tibble of cleaned ISS data
 #' @export
 clean_iss_data <- function(ctry.data, start_date, end_date,
-                           priority_col="priority_level",
-                           start_time_col="starttime",
-                           unreported_cases_col="num_unreportedcases",
-                           prov_col="states",
-                           dist_col="districts",
-                           hf_col="name_of_facility_visited",
-                           today_col="today",
-                           date_of_visit_col="date_of_visit") {
-
+                           priority_col = "priority_level",
+                           start_time_col = "starttime",
+                           unreported_cases_col = "num_unreportedcases",
+                           prov_col = "states",
+                           dist_col = "districts",
+                           hf_col = "name_of_facility_visited",
+                           today_col = "today",
+                           date_of_visit_col = "date_of_visit") {
   # check if already cleaned
   if ("monyear" %in% names(ctry.data$iss.data)) {
     cli::cli_alert_warning("ISS data already cleaned.")
@@ -54,28 +59,30 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
 
   cli::cli_process_start("Standardizing priority levels")
   iss.02 <- ctry.data$iss.data %>%
-    mutate(priority_level = case_when(
-      str_to_lower(substr(get(priority_col), 1, 1)) == "h" ~ "High",
-      str_to_lower(substr(get(priority_col), 1, 1)) == "m" ~ "Medium",
-      str_to_lower(substr(get(priority_col), 1, 1)) == "l" ~ "Low",
-      str_to_lower(substr(get(priority_col), 1, 1)) %in% c("n", "x") ~ "Not Focal Site",
+    mutate(priority_level = dplyr::case_when(
+      stringr::str_to_lower(substr(get(priority_col), 1, 1)) == "h" ~ "High",
+      stringr::str_to_lower(substr(get(priority_col), 1, 1)) == "m" ~ "Medium",
+      stringr::str_to_lower(substr(get(priority_col), 1, 1)) == "l" ~ "Low",
+      stringr::str_to_lower(substr(get(priority_col), 1, 1)) %in% c("n", "x") ~ "Not Focal Site",
       TRUE ~ get(priority_col)
     )) %>%
-    mutate(priority_level = factor(priority_level, levels = c(
+    mutate(priority_level = factor(.data$priority_level, levels = c(
       "High", "Medium", "Low", "Not Focal Site"
     ))) |>
-    mutate(priority_level = if_else(is.na(priority_level), "Not Focal Site", priority_level))
+    mutate(priority_level = dplyr::if_else(is.na(.data$priority_level), "Not Focal Site", .data$priority_level))
   cli::cli_process_done()
 
   cli::cli_process_start("Adding date columns")
   iss.02 <- iss.02 |>
     mutate(
       monyear = zoo::as.yearmon(as.Date(.data[[start_time_col]])),
-      month = month(as.Date(.data[[start_time_col]])),
-      year = year(as.Date(.data[[start_time_col]]))
+      month = lubridate::month(as.Date(.data[[start_time_col]])),
+      year = lubridate::year(as.Date(.data[[start_time_col]]))
     ) |>
-    mutate(today_date = as_date(.data[[today_col]], format = "%m/%d/%Y"),
-           date_of_visit = as_date(.data[[date_of_visit_col]], format = "%m/%d/%Y"))
+    mutate(
+      today_date = lubridate::as_date(.data[[today_col]], format = "%m/%d/%Y"),
+      date_of_visit = lubridate::as_date(.data[[date_of_visit_col]], format = "%m/%d/%Y")
+    )
   cli::cli_process_done()
 
   cli::cli_process_start("counting unreported AFP cases")
@@ -101,8 +108,9 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
   # Convert "n/a" characters to actual null values
   cli::cli_process_start("Converting n/a characters to actual null values")
   iss.02 <- iss.02 |>
-    mutate(dists = if_else(dists == "N/A", NA, dists),
-           prov = if_else(prov == "N/A", NA, prov)
+    mutate(
+      dists = dplyr::if_else(.data$dists == "N/A", NA, .data$dists),
+      prov = dplyr::if_else(.data$prov == "N/A", NA, .data$prov)
     )
   cli::cli_process_done()
 
@@ -110,29 +118,30 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
   cli::cli_process_start("Performing cleaning for names")
   iss.02 <- iss.02 %>%
     mutate(facility_name2 = iconv(.data[[hf_col]],
-                                  to = "ASCII//TRANSLIT"))
+      to = "ASCII//TRANSLIT"
+    ))
 
-  # Make all capital letters and remove extra whitespace
+  # Make all capital letters and remove extra white space
   iss.02 <- iss.02 %>%
-    mutate(facility_name2 = toupper(facility_name2)) %>%
-    mutate(facility_name2 = str_squish(facility_name2))
+    mutate(facility_name2 = toupper(.data$facility_name2)) %>%
+    mutate(facility_name2 = stringr::str_squish(.data$facility_name2))
   cli::cli_process_done()
 
   return(iss.02)
 }
 
-#' Checks for errors in the iss.data.
+#' Checks for errors in the ISS data.
 #' Currently reports the number of missing priority levels.
-#'
+#' @import cli dplyr readr
 #' @param ctry.data ctry.data with ISS/eSurv data attached
+#' @param error_path path to error folder
 #'
 #' @return error message
 #' @export
-iss_data_errors <- function(ctry.data, error_path=Sys.getenv("DR_ERROR_PATH")) {
-
+iss_data_errors <- function(ctry.data, error_path = Sys.getenv("DR_ERROR_PATH")) {
   # Check if ISS data is attached
   if (is.null(ctry.data$iss.data)) {
-    stop("ISS data not attached to ctry.data. Please attach and try again.")
+    return(message("ISS data not attached to ctry.data. Please attach and try again."))
   }
 
   iss.data <- ctry.data$iss.data
@@ -141,23 +150,22 @@ iss_data_errors <- function(ctry.data, error_path=Sys.getenv("DR_ERROR_PATH")) {
   total_records <- nrow(iss.data)
   na_priority <- NULL
   if ("priority_level" %in% names(iss.data)) {
-
     na_priority <- iss.data |>
-      mutate(priority_level = stringr::str_to_lower(priority_level)) |>
-      filter(priority_level %in% c("na", "n/a", ""))
-
+      mutate(priority_level = stringr::str_to_lower(.data$priority_level)) |>
+      dplyr::filter(priority_level %in% c("na", "n/a", ""))
   } else if ("hf_rating" %in% names(iss.data)) {
-
     na_priority <- iss.data |>
-      mutate(hf_rating = stringr::str_to_lower(hf_rating)) |>
-      filter(hf_rating %in% c("na", "n/a", ""))
+      mutate(hf_rating = stringr::str_to_lower(.data$hf_rating)) |>
+      dplyr::filter(hf_rating %in% c("na", "n/a", ""))
   }
 
   if (nrow(na_priority) > 0) {
-    message <- paste0("There are ", nrow(na_priority),
-                      " records missing priority levels (",
-                      round(nrow(na_priority)/total_records * 100, 2),
-                      "% of the total dataset.)")
+    message <- paste0(
+      "There are ", nrow(na_priority),
+      " records missing priority levels (",
+      round(nrow(na_priority) / total_records * 100, 2),
+      "% of the total dataset.)"
+    )
     cli::cli_alert_warning(message)
     readr::write_csv(na_priority, file.path(error_path, "missing_priority_iss.csv"))
   } else {

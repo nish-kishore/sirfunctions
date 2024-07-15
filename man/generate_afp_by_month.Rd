@@ -8,6 +8,10 @@ generate_afp_by_month(afp.data, start_date, end_date)
 }
 \arguments{
 \item{afp.data}{tibble containing AFP data (afp.all.2)}
+
+\item{start_date}{start date of the desk review}
+
+\item{end_date}{end date of the desk review}
 }
 \value{
 tibble containing summary of AFP data

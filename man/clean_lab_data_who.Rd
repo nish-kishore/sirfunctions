@@ -9,7 +9,11 @@ clean_lab_data_who(ctry.data, start.date, end.date, delim = "-")
 \arguments{
 \item{ctry.data}{country data RDS object}
 
-\item{lab.data}{raw lab data}
+\item{start.date}{start date of the desk review}
+
+\item{end.date}{end date of the desk review}
+
+\item{delim}{delimiter used in the EPIDs. Defaults to "-".}
 }
 \value{
 a tibble containing clean lab data

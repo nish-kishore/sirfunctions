@@ -24,7 +24,7 @@ generate_int_data(
 \item{lab.data}{tibble of lab data}
 }
 \value{
-a tibble summarizing median days for different intervals
+tibble summarizing median days for different intervals
 }
 \description{
 Generate a summary table for sample timeliness intervals

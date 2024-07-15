@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{prep_npafp_table}
 \alias{prep_npafp_table}
-\title{Create the *.case.ind tables in desk reviews}
+\title{Create the indicator tables in desk reviews}
 \usage{
 prep_npafp_table(npafp.output, afp.all.2, start_date, end_date, spatial.scale)
 }
@@ -11,11 +11,15 @@ prep_npafp_table(npafp.output, afp.all.2, start_date, end_date, spatial.scale)
 
 \item{afp.all.2}{AFP linelist}
 
+\item{start_date}{start date of the desk review}
+
+\item{end_date}{end date of the desk review}
+
 \item{spatial.scale}{spatial scale to analyze. Valid values are "ctry", "prov", "dist"}
 }
 \value{
 table to be used in summary tables for NPAFP rates
 }
 \description{
-Create the *.case.ind tables in desk reviews
+Create the indicator tables in desk reviews
 }
