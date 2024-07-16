@@ -527,7 +527,19 @@ get_all_polio_data <- function(
           "PENDING",
           "LAB PENDING",
           "NPAFP",
-          "NOT-AFP"
+          "NOT-AFP",
+          "UNKNOWN",
+          "aVDPV 1",
+          "aVDPV 3",
+          "cVDPV1andcVDPV2",
+          "CombinationWild1-cVDPV 2",
+          "aVDPV 2",
+          "VDPV 3",
+          "iVDPV 2",
+          "VDPV1andcVDPV2",
+          "VAPP",
+          "cVDPV 3",
+          "iVDPV 3"
         ),
         labels = c(
           "WILD 1",
@@ -539,7 +551,19 @@ get_all_polio_data <- function(
           "PENDING",
           "LAB PENDING",
           "NPAFP",
-          "NOT-AFP"
+          "NOT-AFP",
+          "UNKNOWN",
+          "aVDPV 1",
+          "aVDPV 3",
+          "cVDPV1andcVDPV2",
+          "CombinationWild1-cVDPV 2",
+          "aVDPV 2",
+          "VDPV 3",
+          "iVDPV 2",
+          "VDPV1andcVDPV2",
+          "VAPP",
+          "cVDPV 3",
+          "iVDPV 3"
         )
       )
 
