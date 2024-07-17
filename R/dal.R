@@ -569,7 +569,7 @@ get_all_polio_data <- function(
 
     raw.data$para.case <- raw.data$afp |>
       dplyr::filter(
-        cdc.classification.all2 %in% c("cVDPV 2", "VDPV 1", "VDPV 2", "WILD 1", "cVDPV 1", "COMPATIBLE")
+        cdc.classification.all2 %in% c("WILD 1","COMPATIBLE") | stringr::str_detect(cdc.classification.all2, "VDPV")
       ) |>
       dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
     cli::cli_process_done()
