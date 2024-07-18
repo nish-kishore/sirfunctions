@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.pop.functions.R
 \name{spatial_validation}
 \alias{spatial_validation}
-\title{Check for invalid spatial GUIDs}
+\title{Check for GUIDs that has changed due to redistricting}
 \usage{
 spatial_validation(pop.data, spatial.scale)
 }
@@ -15,5 +15,5 @@ spatial_validation(pop.data, spatial.scale)
 list containing invalid GUIDs
 }
 \description{
-Check for invalid spatial GUIDs
+Check for GUIDs that has changed due to redistricting
 }

@@ -26,7 +26,7 @@ generate_timeliness_maps(
 
 \item{end_date}{end dtae of desk review}
 
-\item{mark_x}{whether to put X on where AFP cases are less than 5}
+\item{mark_x}{whether to put a mark on where AFP cases are less than 5}
 
 \item{pt_size}{size of the marks}
 

@@ -8,7 +8,7 @@ data_path is expected to be ~/country/year}
 set_dr_local_folders(path)
 }
 \arguments{
-\item{data_path}{\code{str} path where folders are to be created}
+\item{path}{location of the local desk review folder}
 }
 \description{
 Sets up local folders in the current working directory for desk review

@@ -8,14 +8,6 @@ clean_ctry_data(ctry.data)
 }
 \arguments{
 \item{ctry.data}{country data RDS object}
-
-\item{start_date}{start date for desk review}
-
-\item{end_date}{end date for desk review}
-
-\item{es_start_date}{start date for environmental surveillance data}
-
-\item{es_end_date}{end date for environmental surveillance data}
 }
 \value{
 cleaned country data RDS object

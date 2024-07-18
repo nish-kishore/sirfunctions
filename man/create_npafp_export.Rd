@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.excel.export.functions.R
 \name{create_npafp_export}
 \alias{create_npafp_export}
-\title{Export NPAFP data}
+\title{Exports NPAFP indicator data}
 \usage{
 create_npafp_export(
   ctry.case.ind,
@@ -20,9 +20,6 @@ create_npafp_export(
 
 \item{excel_output_path}{output path}
 }
-\value{
-does not return anything
-}
 \description{
-Export NPAFP data
+Exports NPAFP indicator data
 }

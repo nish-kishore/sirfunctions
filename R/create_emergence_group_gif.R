@@ -2,23 +2,31 @@
 #' @description
 #' Generate the figures and stitch together a GIF to evaluate emergence group
 #' movement over time, generally aggregated as cumulative per month
-#' @import dplyr lubridate sf ggplot ggpubr magick cli
+#' @importFrom cli cli_alert cli_alert_info cli_h1 cli_process_done cli_process_start
+#' @importFrom dplyr arrange filter group_by inner_join lag left_join mutate n pull select slice summarise
+#' @importFrom ggplot2 aes coord_sf geom_bar geom_sf geom_vline ggplot ggsave labs scale_fill_brewer theme_bw
+#' @importFrom ggpubr annotate_figure ggarrange
+#' @importFrom lubridate as_date floor_date month year
+#' @importFrom sf st_bbox
+#' @importFrom tidyr expand_grid
 #' @param emergence_group str: designation of the emergence group to review
 #' @param pos tibble: positives data set
 #' @param dist sf: shapefile of all districts
 #' @param ctry sf: shapefile of all countries
 #' @param include_env boolean: To include environmental detections in analysis
+#' @param cumulative boolean: To display cases as cumulative
 #' @param out_gif str: location where gif should be saved
+#'
 #' @returns GIF written out to a location
 create_emergence_group_gif <- function(
-  emergence_group,
-  pos,
-  dist,
-  ctry,
-  include_env = T,
-  cumulative = T,
-  out_gif
-  ){
+    emergence_group,
+    pos,
+    dist,
+    ctry,
+    include_env = T,
+    cumulative = T,
+    out_gif
+){
 
   # data <- sirfunctions::get_all_polio_data(size = "medium")
   # pos <- data$pos
@@ -28,6 +36,10 @@ create_emergence_group_gif <- function(
   # include_env <- T
   # cumulative <- F
   # out_gif <- "C:/Users/ynm2/OneDrive - CDC/NIE_JIS_1.gif"
+  if (!requireNamespace("magick", quietly = TRUE)) {
+    stop('Package "magick" must be installed to use this function.',
+         .call = FALSE)
+  }
 
   cli::cli_process_start("Setting up data structures")
 
@@ -180,7 +192,7 @@ create_emergence_group_gif <- function(
 
   ## save to disk
   magick::image_write(image = img_animated,
-              path = out_gif)
+                      path = out_gif)
   cli::cli_process_done()
 
 }
