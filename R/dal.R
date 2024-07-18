@@ -479,17 +479,9 @@ get_all_polio_data <- function(
                 dplyr::pull(file), default_dir = NULL) |>
       dplyr::filter(surveillancetypename == "AFP") |>
       dplyr::mutate(
-        cdc.classification.all2 = ifelse(
-          final.cell.culture.result == "Not received in lab" &
-            cdc.classification.all == "PENDING",
-          "LAB PENDING",
-          cdc.classification.all
-        ),
-        cdc.classification.all2 = ifelse(
-          is.na(final.cell.culture.result) &
-            cdc.classification.all == "PENDING",
-          "PENDING",
-          cdc.classification.all),
+        cdc.classification.all2 = dplyr::case_when(final.cell.culture.result == "Not received in lab" &
+                                                     cdc.classification.all == "PENDING" ~ "LAB PENDING",
+                                                   TRUE ~ cdc.classification.all),
         hot.case = ifelse(
           paralysis.asymmetric == "Yes" &
             paralysis.onset.fever == "Yes" &
@@ -539,7 +531,11 @@ get_all_polio_data <- function(
           "VDPV1andcVDPV2",
           "VAPP",
           "cVDPV 3",
-          "iVDPV 3"
+          "iVDPV 3",
+          "WILD 3",
+          "WILD1andWILD3",
+          "iVDPV 1",
+          "cVDPV2andcVDPV3"
         ),
         labels = c(
           "WILD 1",
@@ -563,13 +559,17 @@ get_all_polio_data <- function(
           "VDPV1andcVDPV2",
           "VAPP",
           "cVDPV 3",
-          "iVDPV 3"
+          "iVDPV 3",
+          "WILD 3",
+          "WILD1andWILD3",
+          "iVDPV 1",
+          "cVDPV2andcVDPV3"
         )
       )
 
     raw.data$para.case <- raw.data$afp |>
       dplyr::filter(
-        cdc.classification.all2 %in% c("WILD 1","COMPATIBLE") | stringr::str_detect(cdc.classification.all2, "VDPV")
+        stringr::str_detect(cdc.classification.all2, "VDPV|WILD|COMPATIBLE")
       ) |>
       dplyr::mutate(yronset = ifelse(is.na(yronset) == T, 2022, yronset)) #this fix was for the manually added MOZ case
     cli::cli_process_done()
