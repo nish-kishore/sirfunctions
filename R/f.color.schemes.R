@@ -108,15 +108,22 @@ f.color.schemes <- function(type) {
         "No AFP cases" = "lightgrey",
         "Missing" = "grey34"
       ),
-    "timeliness.col.vars" =
-      c(
-      "Paralysis onset to notification" = "#377eb8",
-      "Case notification to investigation" = "#e41a1c",
-      "Case investigation to stool 1 collection" = "#4daf4a",
-      "Stool 1 collection to stool 2 collection" = "#984ea3",
+    timeliness.col.vars = c(
+      "Paralysis onset to notification" = "#a6cee3",
+      "Case notification to investigation" = "#1f78b4",
+      "Case investigation to stool 1 collection" = "#b2df8a",
+      "Stool 1 collection to stool 2 collection" = "#33a02c",
       "Last stool collection to received in lab" = "#ff7f00",
       "Last stool collection sent to lab" = "#ff7f00",
-      "Stool received lab to final culture results" = "#b55f04"
+
+      "Stool received lab to final culture results" = "#cab2d6",
+
+      "Collection to sent from field" = "#fb9a99",
+      "Sent from field to received nat level" = "#e31a1c",
+      "Received nat level to sent to lab" = "#fdbf6f",
+      "Sent to lab to received at lab" = "#ff7f00",
+      "Received at lab to culture results" = "#cab2d6"
     )
+
   )
 }

@@ -550,6 +550,17 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   cli::cli_process_done()
 
+  # adding additional subintervals
+
+  lab.data2 <- lab.data2 |>
+    dplyr::mutate(
+      days.coll.sent.field = as.numeric(.data$DateStoolSentfromField - .data$DateStoolCollected),
+      days.sent.field.rec.nat = as.numeric(.data$DateStoolReceivedNatLevel - .data$DateStoolSentfromField),
+      days.rec.nat.sent.lab = as.numeric(.data$DateStoolSentToLab - .data$DateStoolReceivedNatLevel),
+      days.sent.lab.rec.lab = as.numeric(.data$DateStoolReceivedinLab - .data$DateStoolSentToLab),
+      days.rec.lab.culture =  as.numeric(.data$DateFinalCellCultureResults - .data$DateStoolReceivedinLab),
+    )
+
   return(lab.data2)
 }
 
@@ -945,6 +956,16 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     dplyr::rename(DateOfOnset = .data$CaseDate)
   cli::cli_process_done()
 
+  # adding additional subintervals (these aren't present in regional lab data, so are created as dummy variables)
+  lab.data <- lab.data |>
+    mutate(
+      days.coll.sent.field = NA,
+      days.sent.field.rec.nat = NA,
+      days.rec.nat.sent.lab = NA,
+      days.sent.lab.rec.lab = NA,
+      days.rec.lab.culture =  NA,
+    )
+
   return(lab.data)
 }
 
@@ -1091,7 +1112,59 @@ generate_lab_timeliness <-
       dplyr::mutate(type = "days.seq.rec.res") |>
       dplyr::mutate(medi = as.numeric(.data$medi))
 
-    lab <- dplyr::bind_rows(lab1, lab2, lab3, lab4, lab5, lab6, lab7)
+    # Additional sub-intervals that may be of interest
+    lab8 <- lab.data |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
+      group_by(year, get(geo)) |>
+      summarize(medi = median(days.coll.sent.field, na.rm = T),
+                freq = n()) |>
+      ungroup() |>
+      mutate(type = "days.coll.sent.field") |>
+      mutate(medi = as.numeric(.data$medi))
+
+    lab9 <- lab.data |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
+      group_by(year, get(geo)) |>
+      summarize(medi = median(days.sent.field.rec.nat, na.rm = T),
+                freq = n()) |>
+      ungroup() |>
+      mutate(type = "days.sent.field.rec.nat") |>
+      mutate(medi = as.numeric(medi))
+
+    lab10 <- lab.data |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
+      group_by(year, get(geo)) |>
+      summarize(medi = median(days.rec.nat.sent.lab, na.rm = T),
+                freq = n()) |>
+      ungroup() |>
+      mutate(type = "days.rec.nat.sent.lab") |>
+      mutate(medi = as.numeric(medi))
+
+    lab11 <- lab.data |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
+      group_by(year, get(geo)) |>
+      summarize(medi = median(days.sent.lab.rec.lab, na.rm = T),
+                freq = n()) |>
+      ungroup() |>
+      mutate(type = "days.sent.lab.rec.lab") |>
+      mutate(medi = as.numeric(medi))
+
+    lab12 <- lab.data |>
+      filter(as.Date(DateOfOnset) >= start.date &
+               as.Date(DateOfOnset) <= end.date) |>
+      group_by(year, get(geo)) |>
+      summarize(medi = median(days.rec.lab.culture, na.rm = T),
+                freq = n()) |>
+      ungroup() |>
+      mutate(type = "days.rec.lab.culture") |>
+      mutate(medi = as.numeric(medi))
+
+    lab <- dplyr::bind_rows(lab1, lab2, lab3, lab4, lab5, lab6, lab7,
+                            lab8, lab9, lab10, lab11, lab12)
     lab <- lab |> dplyr::filter(!is.na(`get(geo)`))
 
     lab <- switch(spatial.scale,

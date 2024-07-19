@@ -41,7 +41,7 @@ generate_ctry_timeliness_graph <- function(int.data,
       guide = ggplot2::guide_legend(reverse = TRUE)
     ) +
     ggplot2::theme(
-      legend.position = "bottom",
+      legend.position = "right",
       legend.background = ggplot2::element_blank()
     )
 
@@ -97,12 +97,12 @@ generate_prov_timeliness_graph <- function(int.data,
         label = medi,
         group = forcats::fct_rev(type)
       ),
+      size = 3,
       position = ggplot2::position_stack(vjust = 0.5)
     ) +
     ggplot2::coord_flip() +
     ggplot2::ylab("Median Days") +
     ggplot2::xlab("Year of Paralysis Onset") +
-    # ggplot2::scale_y_continuous(breaks = seq(0, max(pretty(tot.time.p$tot))+1)) +
     ggplot2::scale_x_discrete() +
     ggplot2::ylab("Days") +
     ggplot2::xlab("Year") +
@@ -112,11 +112,11 @@ generate_prov_timeliness_graph <- function(int.data,
       guide = ggplot2::guide_legend(reverse = TRUE),
       drop = T
     ) +
-    ggplot2::facet_grid(prov ~ ., scales = "free_y", space = "free") +
+    ggplot2::facet_grid(prov ~ ., scales = "free_y", space = "free", switch = "y", labeller = label_wrap_gen(8)) +
     ggplot2::theme(
-      legend.position = "bottom",
+      legend.position = "right",
       legend.background = ggplot2::element_blank(),
-      strip.text.y = ggplot2::element_text(size = 5, angle = 0)
+      strip.text.y = ggplot2::element_text(size = 7, angle = 0)
     )
 
   ggplot2::ggsave(

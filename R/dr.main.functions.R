@@ -551,15 +551,20 @@ init_dr <-
     data_folder_files <- list.files(data_path)
 
 
-    if (!is.null(lab_data_path) & (stringr::str_detect(data_folder_files, "_lab_data_") |> sum()) == 0) {
-      cli::cli_process_start("Saving a copy of the lab data to the data folder.")
+    if (!is.null(lab_data_path)) {
       country_data$lab.data <- load_lab_data(lab_data_path)
-      dr_lab_data_path <- file.path(
-        data_path,
-        paste0(country_data$ctry$ISO_3_CODE, "_lab_data_", Sys.Date(), ".Rds")
-      )
-      saveRDS(country_data$lab.data, dr_lab_data_path)
-      Sys.setenv(DR_LAB_PATH = dr_lab_data_path)
+      # check if there is already a copy of lab data in the data folder
+      if ((stringr::str_detect(data_folder_files, "_lab_data_") |> sum()) == 0) {
+        cli::cli_process_start("Saving a copy of the lab data to the data folder.")
+        dr_lab_data_path <- file.path(
+          data_path,
+          paste0(country_data$ctry$ISO_3_CODE, "_lab_data_", Sys.Date(), ".Rds")
+        )
+        saveRDS(country_data$lab.data, dr_lab_data_path)
+        Sys.setenv(DR_LAB_PATH = dr_lab_data_path)
+      } else {
+        Sys.setenv(DR_LAB_PATH = lab_data_path)
+      }
     }
 
     # Attaching ISS data if available and creating a copy to data folder

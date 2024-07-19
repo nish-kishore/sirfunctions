@@ -546,22 +546,22 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
   int.data <- switch(spatial.scale,
     "ctry" = {
       int.data <- int.data |>
-        tidyr::pivot_longer(!c(.data$epid, .data$year, .data$adm0guid, .data$ctry),
+        tidyr::pivot_longer(!c(epid, year, adm0guid, ctry),
           names_to = "type",
           values_to = "value"
         ) |>
         dplyr::group_by(year, type, adm0guid, ctry) |>
-        dplyr::summarize(medi = median(value, na.rm = T), freq =dplyr::n())
+        dplyr::summarize(medi = median(value, na.rm = T), freq = n())
     },
     "prov" = {
       int.data <- int.data |>
         tidyr::pivot_longer(
-          !c(.data$epid, .data$year, .data$adm0guid, .data$adm1guid, .data$prov, .data$ctry),
+          !c(epid, year, adm0guid, adm1guid, prov, ctry),
           names_to = "type",
           values_to = "value"
         ) %>%
         dplyr::group_by(year, type, adm1guid, prov, ctry) %>%
-        dplyr::summarize(medi = median(value, na.rm = T), freq =dplyr::n())
+        dplyr::summarize(medi = median(value, na.rm = T), freq = n())
     }
   )
 
@@ -595,6 +595,11 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
       "investtostool1" = "Case investigation to stool 1 collection",
       "stool1tostool2" = "Stool 1 collection to stool 2 collection",
       "days.collect.lab" = "Last stool collection to received in lab",
+      "days.coll.sent.field" = "Collection to sent from field",
+      "days.sent.field.rec.nat" = "Sent from field to received nat level",
+      "days.rec.nat.sent.lab" = "Received nat level to sent to lab",
+      "days.sent.lab.rec.lab" = "Sent to lab to received at lab",
+      "days.rec.lab.culture" = "Received at lab to culture results",
       "days.lab.culture" = "Stool received lab to final culture results",
       "days.seq.ship" = "Isolate received for sequencing to sequence results available",
       "days.lab.seq" = "Stool received in lab to sequence result",
@@ -613,9 +618,15 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
         "Case notification to investigation",
         "Case investigation to stool 1 collection",
         "Stool 1 collection to stool 2 collection",
-        "Last stool collection sent to lab",
-        "Last stool collection to received in lab",
-        "Stool received lab to final culture results"
+        # "Last stool collection sent to lab",
+        # "Last stool collection to received in lab",
+        # "Stool received lab to final culture results"
+
+        "Collection to sent from field",
+        "Sent from field to received nat level",
+        "Received nat level to sent to lab",
+        "Sent to lab to received at lab",
+        "Received at lab to culture results"
       )
     )
 

@@ -40,7 +40,11 @@ utils::globalVariables(c(
   'status', 'stool.1.condition', 'stool.2.condition', 'stool.col.int', 'stool.date.sent.to.lab', 'stool1missing', 'stool1tostool2',
   'stool2missing', 'stoolmissing', 't.daysstooltolab', 't.investtostool1', 't.nottoinvest', 't.ontonot', 't.stool1tostool2', 'timely',
   'timely > 3', 'timelystool', 'today_date', 'tot.dist.adeq', 'tot.freq.x', 'tot.freq.y', 'type', 'u15pop.prov', 'vdpv.1', 'vdpv.2',
-  'vdpv.3', 'wild.1', 'wild.3', 'yr.sia'
+  'vdpv.3', 'wild.1', 'wild.3', 'yr.sia',
+
+  #new additions to v1.2
+  'days.coll.sent.field', 'days.rec.lab.culture', 'days.rec.nat.sent.lab',
+  'days.sent.field.rec.nat', 'days.sent.lab.rec.lab'
 
 
 ))
