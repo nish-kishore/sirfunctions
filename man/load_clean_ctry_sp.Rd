@@ -9,7 +9,7 @@ load_clean_ctry_sp(
   fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
   ctry_guid = NULL,
   ctry_name = NULL,
-  end.year = year(Sys.Date()),
+  end.year = lubridate::year(Sys.Date()),
   st.year = 2000,
   data.only = F,
   type = NULL

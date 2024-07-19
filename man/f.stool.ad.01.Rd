@@ -12,16 +12,17 @@ f.stool.ad.01(
   spatial.scale,
   missing = "good",
   bad.data = "inadequate",
-  rolling = F
+  rolling = F,
+  sp_continuity_validation = T
 )
 }
 \arguments{
 \item{afp.data}{tibble: AFP data which includes GUID at a given spatial scale
-formatted as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all
+formatted as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2
 which includes "NOT-AFP"}
 
 \item{admin.data}{tibble: Full list of country administrative units by a given
-spatial scale including "year", "adm{0,1,2}guid, and "{ctry/prov/dist}"
+spatial scale including "year", "adm(0,1,2)guid, and "(ctry/prov/dist)"
 as appropriate}
 
 \item{start.date}{chr: "YYYY-MM-DD" - starting date for analysis}
@@ -35,6 +36,8 @@ as appropriate}
 \item{bad.data}{chr: "remove" or "inadequate" or "adequate"; default "inadequate"}
 
 \item{rolling}{boolean: Should data be annualized or calculated within the time period allotted}
+
+\item{sp_continuity_validation}{boolean: Should data excluded temporaliry inconsistent GUIDs? Default T.}
 }
 \value{
 tibble: long format stool adequacy evaluations

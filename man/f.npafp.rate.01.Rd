@@ -17,11 +17,11 @@ f.npafp.rate.01(
 }
 \arguments{
 \item{afp.data}{tibble: AFP data which includes GUID at a given spatial scale
-formated as "adm{0,1,2}guid, onset date as "date" and cdc.classification.all which includes
+formated as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2 which includes
 c("NPAFP", "PENDING", "LAB PENDING")}
 
 \item{pop.data}{tibble: Under 15 population data by a given spatial scale including
-"year", "adm{0,1,2}guid, "u15pop", and "{ctry/prov/dist}" as appropriate}
+"year", "adm(0,1,2)guid, "u15pop", and "(ctry/prov/dist)" as appropriate}
 
 \item{start.date}{chr: "YYYY-MM-DD"}
 

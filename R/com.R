@@ -4,21 +4,24 @@
 #'
 #' @description
 #' Helper function to send message to validated MS Teams interface
-#' @import Microsoft365R AzureAuth
+#' @import Microsoft365R
+#' @import AzureAuth
 #' @param msg str: message to be sent
 #' @param team_id str: Team id, defaults to "CGH-GID-PEB-SIR"
 #' @param channel str: channel where message should be sent
 #' @param attach str: local path of files to be attached in message
+#' @param type str: "text" or "html"
 #' @returns Success or error message
 #' @export
-send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL){
+send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL, type = "text"){
 
   team <- Microsoft365R::get_team(team_id)
 
   channel <- team$get_channel(channel)
 
   channel$send_message(body = msg,
-                       attachments = attach)
+                       attachments = attach,
+                       content_type = type)
 
 }
 
@@ -26,7 +29,9 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #'
 #' @description
 #' Helper function to upload file to MS SharePoint
-#' @import Microsoft365R AzureAuth dplyr
+#' @import Microsoft365R
+#' @import AzureAuth
+#' @import dplyr
 #' @param file_to_upload str: local path of files to be uploaded
 #' @param sharepoint_file_loc str: location in SharePoint to upload file
 #' @param site str: SharePoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"
@@ -76,7 +81,9 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 #'
 #' @description
 #' Helper function to send an email through Outlook from R
-#' @import Microsoft365R AzureAuth blastula dplyr
+#' @import Microsoft365R
+#' @import AzureAuth
+#' @import dplyr
 #' @param title str: Subject of message to be sent
 #' @param body str: long string of body of message to be sent
 #' @param recipient str: semicolon separated list of recipients
@@ -84,6 +91,11 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 #' @returns Success or error message
 #' @export
 send_outlook_email <- function(title, body, recipient, attachment = NULL){
+
+  if (!requireNamespace("blastula", quietly = TRUE)) {
+    stop('Package "blastula" must be installed to use this function.',
+         .call = FALSE)
+  }
 
   tokens <- AzureAuth::list_azure_tokens()
 

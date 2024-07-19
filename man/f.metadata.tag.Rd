@@ -4,16 +4,18 @@
 \alias{f.metadata.tag}
 \title{Function to add metadata tags to figures and tables}
 \usage{
-f.metadata.tag(
-  object,
-  time_tag = ifelse(exists("raw.data"), raw.data$metadata$download_time, NA)
-)
+f.metadata.tag(object, raw_data = NA, time_tag = NA)
 }
 \arguments{
-\item{object}{ggplot or flex table object: the figure or table to add metadata to}
+\item{object}{ggplot or flextable object: the figure or table to add metadata to}
 
-\item{time_tag}{str: a date and time string, defaults to raw.data$metadata$download_time
+\item{raw_data}{Rds object: polio raw data
 and will throw an error if "raw.data" doesn't exist in your environment or is called something else}
+
+\item{time_tag}{str: a date and time string, defaults to raw.data$metadata$download_time}
+}
+\value{
+a \code{ggplot} or \code{flextable} object with metadata added
 }
 \description{
 add metadata tags to figures and tables

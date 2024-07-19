@@ -10,7 +10,7 @@ load_clean_prov_sp(
   prov_guid = NULL,
   prov_name = NULL,
   ctry_name = NULL,
-  end.year = year(Sys.Date()),
+  end.year = lubridate::year(Sys.Date()),
   st.year = 2000,
   data.only = F,
   type = NULL
