@@ -482,7 +482,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   #---- Additional data cleaning steps
   geo_lookup_table <- ctry.data$afp.all.2 |>
-    dplyr::select(.data$epid, dplyr::matches("guid"), dplyr::contains("$adm"), .data$ctry, .data$prov, .data$dist, .data$year) |>
+    dplyr::select("epid", dplyr::matches("guid"), dplyr::contains("$adm"), "ctry", "prov", "dist", "year") |>
     tidyr::separate_wider_delim(
       cols = .data$epid, delim = delim,
       names = c(
@@ -492,15 +492,15 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
       too_many = "merge",
       too_few = "align_start"
     ) |>
-    dplyr::select(dplyr::contains("epid"), .data$ctry, .data$prov, .data$dist, dplyr::matches("adm[0-3]guid"), .data$year) |>
+    dplyr::select(dplyr::contains("epid"), "ctry", "prov", "dist", dplyr::matches("adm[0-3]guid"), "year") |>
     dplyr::distinct()
 
   prov_lookup_table <- geo_lookup_table |>
-    dplyr::select(.data$epid_prov, .data$prov, .data$adm0guid, .data$adm1guid, .data$year) |>
+    dplyr::select("epid_prov", "prov", "adm0guid", "adm1guid", "year") |>
     dplyr::distinct()
 
   dist_lookup_table <- geo_lookup_table |>
-    dplyr::select(.data$epid_dist, .data$dist, .data$adm2guid, .data$year) |>
+    dplyr::select("epid_dist", "dist", "adm2guid", "year") |>
     dplyr::distinct()
 
   # geomatching algorithm
@@ -537,11 +537,11 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
       prov = .data$prov.x,
       dist = .data$dist.x
     ) |>
-    dplyr::select(-ends_with(".y"))
+    dplyr::select(-dplyr::ends_with(".y"))
 
   # check for correctness
   check <- test |>
-    dplyr::select(starts_with("epid_"), dplyr::matches("adm[1-2]"), .data$prov, .data$dist, .data$EpidNumber, .data$year)
+    dplyr::select(dplyr::starts_with("epid_"), dplyr::matches("adm[1-2]"), "prov", "dist", "EpidNumber", "year")
   mismatch_dist <- dplyr::anti_join(check, dist_lookup_table)
   # 14 mismatches in prov
   mismatch_prov <- dplyr::anti_join(check, prov_lookup_table)
@@ -700,7 +700,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     emro.lab.04 <- dplyr::full_join(
       emro.lab.03,
       lab.locs |> dplyr::filter(who.region == "EMRO") |>
-        dplyr::select(.data$country:.data$num.ship.seq.samples),
+        dplyr::select("country":"num.ship.seq.samples"),
       by = "country"
     ) %>%
       # count duplicates with same epid and specimen number
@@ -716,7 +716,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
 
     emro.lab.04 <- emro.lab.04 %>%
       dplyr::filter(!is.na(EPID)) %>%
-      dplyr::select(-n)
+      dplyr::select(-"n")
 
     emro.lab.04 <- emro.lab.04[!duplicated(emro.lab.04[c("EPID", "SpecimenNumber")]), ]
     cli::cli_process_done()
@@ -759,7 +759,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
       # 1. stool can't be collected before Paralysis
       dplyr::filter((DateStoolCollected >= ParalysisOnsetDate | is.na(ParalysisOnsetDate))) |>
       dplyr::mutate(seq.capacity = ifelse(.data$seq.capacity == "yes", "Sequencing capacity", "No sequencing capacity")) %>%
-      dplyr::select(-contains("cIntratypeIs"))
+      dplyr::select(-dplyr::contains("cIntratypeIs"))
     cli::cli_process_done()
 
     lab.data <- emro.lab.05
@@ -834,13 +834,13 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
         whoregion = "AFRO"
       ) %>%
       dplyr::filter(country == ctry.data$ctry$ADM0_NAME) %>%
-      dplyr::select(-.data$Name)
+      dplyr::select(-"Name")
 
 
     # Join lab locations
     afro.lab.04 <- dplyr::full_join(
       afro.lab.03,
-      lab.locs %>% dplyr::select(.data$country:.data$num.ship.seq.samples),
+      lab.locs %>% dplyr::select("country":"num.ship.seq.samples"),
       by = "country"
     ) %>%
       # count duplicates with same epid and specimen number
@@ -856,7 +856,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     # Create intervals (currently using subset of those I need for SC PPT)
     cli::cli_process_start("Creating timeliness interval columns")
     afro.lab.05 <- afro.lab.04 %>%
-      dplyr::select(-n) %>%
+      dplyr::select(-"n") %>%
       dplyr::mutate(
         # Intervals
         days.collect.lab = .data$DateStoolReceivedinLab - .data$DateStoolCollected,
@@ -901,7 +901,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
         ParalysisOnsetDate = lubridate::ymd(.data$ParalysisOnsetDate),
         seq.capacity = ifelse(.data$seq.capacity == "yes", "Sequencing capacity", "No sequencing capacity")
       ) %>%
-      dplyr::select(-contains("cIntratypeIs"))
+      dplyr::select(-dplyr::contains("cIntratypeIs"))
 
     lab.data <- afro.lab.05
     rm(afro.lab.01b, afro.lab.02, afro.lab.03, afro.lab.04, afro.lab.05)
@@ -921,7 +921,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
 
   cli::cli_process_start("Imputing missing province and district data from AFP linelist")
   geo_lookup_table <- ctry.data$afp.all.2 |>
-    dplyr::select(.data$epid, dplyr::matches("guid"), dplyr::contains("$adm"), .data$ctry, .data$prov, .data$dist, .data$year) |>
+    dplyr::select("epid", dplyr::matches("guid"), dplyr::contains("$adm"), "ctry", "prov", "dist", "year") |>
     tidyr::separate_wider_delim(
       cols = .data$epid,
       delim = delim,
@@ -934,11 +934,11 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     ) |>
     dplyr::select(
       dplyr::contains("epid"),
-      .data$ctry,
-      .data$prov,
-      .data$dist,
+      "ctry",
+      "prov",
+      "dist",
       dplyr::matches("adm[0-3]guid"),
-      year
+      "year"
     ) |>
     dplyr::distinct()
 

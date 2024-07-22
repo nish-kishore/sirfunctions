@@ -317,12 +317,12 @@ generate_es_site_det <- function(ctry.data,
 
   # Check whether the vaccine types and detection are present in the ggplot
   minsy_vaccine_types <- minsy |>
-    dplyr::select(.data$vaccine.type) |>
+    dplyr::select("vaccine.type") |>
     unique() |>
     dplyr::pull()
 
   es.data.long_all_dets <- es.data.long |>
-    dplyr::select(.data$all_dets) |>
+    dplyr::select("all_dets") |>
     unique() |>
     dplyr::pull()
 
@@ -633,7 +633,7 @@ generate_iss_barplot <- function(iss.data = NULL,
   iss.data3 <- iss.data2.1 %>%
     dplyr::group_by(.data$month, .data$year, .data$priority_level) %>%
     dplyr::summarize(freq = dplyr::n()) %>%
-    dplyr::filter(dplyr::between(.data$year, lubridate::year(.data$start_date), lubridate::year(.data$end_date)))
+    dplyr::filter(dplyr::between(.data$year, lubridate::year(start_date), lubridate::year(end_date)))
 
   iss.data3$labs <- month.abb[iss.data3$month] %>%
     factor(
@@ -1625,14 +1625,14 @@ generate_timeliness_maps <- function(ctry.data,
                                      output_path = Sys.getenv("DR_FIGURE_PATH")) {
   long.timely <- ctry.data$afp.all.2 %>%
     dplyr::select(
-      .data$epid,
-      .data$noti.7d.on,
-      .data$inv.2d.noti,
-      .data$coll.3d.inv,
-      .data$ship.3d.coll,
-      .data$year,
-      .data$prov,
-      .data$adm1guid
+      "epid",
+      "noti.7d.on",
+      "inv.2d.noti",
+      "coll.3d.inv",
+      "ship.3d.coll",
+      "year",
+      "prov",
+      "adm1guid"
     ) %>%
     tidyr::pivot_longer(
       !c(.data$epid, .data$year, .data$prov, .data$adm1guid),
@@ -2419,15 +2419,15 @@ generate_pop_tab <- function(prov.case.ind,
                              end_date) {
   sub.prov.case.ind <- prov.case.ind %>%
     dplyr::select(
-      .data$year,
-      .data$n_npafp,
-      .data$u15pop,
-      .data$prov,
-      .data$npafp_rate
+      "year",
+      "n_npafp",
+      "u15pop",
+      "prov",
+      "npafp_rate"
     )
 
   sub.pstool <- pstool %>%
-    dplyr::select(.data$year, .data$per.stool.ad, .data$prov) |>
+    dplyr::select("year", "per.stool.ad", "prov") |>
     dplyr::filter(!is.na(prov))
 
   sub.prov.join <- dplyr::full_join(sub.prov.case.ind, sub.pstool, by = c("year", "prov")) %>%
@@ -2744,16 +2744,16 @@ generate_inad_tab <- function(ctry.data,
 
   # Bind together tables
   allinadstool <- dplyr::left_join(stool.sub, late.stool, by = "year") %>%
-    dplyr::select(-.data$timelystool) %>%
+    dplyr::select(-"timelystool") %>%
     dplyr::rename("timelystool" = "n") %>%
     dplyr::left_join(stool.miss.any, by = "year") %>%
     dplyr::left_join(cond.poor.num, by = "year") %>%
     dplyr::rename("cond.poor.num" = "n") %>%
     dplyr::left_join(good.cond.1, by = "year") %>%
-    dplyr::select(-.data$conds) %>%
+    dplyr::select(-"conds") %>%
     dplyr::rename("good.cond.1" = "n") %>%
     dplyr::left_join(good.cond.2, by = "year") %>%
-    dplyr::select(-.data$conds) %>%
+    dplyr::select(-"conds") %>%
     dplyr::rename("good.cond.2" = "n")
 
   allinadstool$timelyper <- paste0(
@@ -2911,13 +2911,13 @@ generate_60_day_tab <- function(cases.need60day) {
       )
     ) |>
     dplyr::select(
-      .data$year,
-      .data$inadequate,
-      .data$per.got60.2,
-      .data$per.ontime60day.2,
-      .data$per.missing.fu.date,
-      .data$per.comp.2,
-      .data$per.pot.comp.2
+      "year",
+      "inadequate",
+      "per.got60.2",
+      "per.ontime60day.2",
+      "per.missing.fu.date",
+      "per.comp.2",
+      "per.pot.comp.2"
     ) |>
     dplyr::mutate(year = as.character(year)) |>
     dplyr::arrange(dplyr::desc(year))

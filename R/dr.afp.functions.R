@@ -261,7 +261,7 @@ add_age_group <- function(age.months) {
       age.months >= 145 & age.months < 180 ~ "145-179",
       age.months >= 180 ~ ">=180"
     )) |>
-    dplyr::select(.data$age_group)
+    dplyr::select("age_group")
   cli::cli_process_done()
 
   return(age.months)
@@ -466,7 +466,7 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
           "year" = "year"
         )
       ) |>
-        dplyr::select(-.data$adm1guid)
+        dplyr::select(-"adm1guid")
     },
     "dist" = {
       case.ind <-
@@ -477,7 +477,7 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
             "year" = "year"
           )
         ) |>
-        dplyr::select(-.data$adm1guid, -.data$adm2guid)
+        dplyr::select(-"adm1guid", -"adm2guid")
     }
   )
 
@@ -750,36 +750,36 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
       0
     )) |>
     dplyr::select(
-      .data$epid,
-      .data$year,
-      .data$age.months,
-      .data$hot.case,
-      .data$hot.case.no.review,
-      .data$got60day,
-      .data$ontime.60day,
-      .data$ctry,
-      .data$prov,
-      .data$dist,
-      .data$date,
-      .data$date.notify,
-      .data$date.invest,
-      .data$datestool1,
-      .data$datestool2,
-      .data$stool.1.condition,
-      .data$stool.2.condition,
-      .data$adequacy.03,
-      .data$paralysis.asymmetric,
-      .data$paralysis.rapid.progress,
-      .data$paralysis.onset.fever,
-      .data$pot.compatible,
-      .data$doses.total,
-      .data$timeto60day,
-      .data$followup.date,
-      .data$classification,
-      .data$cdc.classification.all2,
-      .data$missing.fu.date,
-      .data$adm1guid,
-      .data$adm2guid
+      "epid",
+      "year",
+      "age.months",
+      "hot.case",
+      "hot.case.no.review",
+      "got60day",
+      "ontime.60day",
+      "ctry",
+      "prov",
+      "dist",
+      "date",
+      "date.notify",
+      "date.invest",
+      "datestool1",
+      "datestool2",
+      "stool.1.condition",
+      "stool.2.condition",
+      "adequacy.03",
+      "paralysis.asymmetric",
+      "paralysis.rapid.progress",
+      "paralysis.onset.fever",
+      "pot.compatible",
+      "doses.total",
+      "timeto60day",
+      "followup.date",
+      "classification",
+      "cdc.classification.all2",
+      "missing.fu.date",
+      "adm1guid",
+      "adm2guid"
     )
 
   return(cases.need60day)
