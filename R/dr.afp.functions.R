@@ -438,15 +438,15 @@ prep_npafp_table <- function(npafp.output, afp.all.2, start_date, end_date, spat
   cases <- switch(spatial.scale,
     "ctry" = {
       cases <- cases |>
-        dplyr::rename(ctry = .data$`get(geo)`)
+        dplyr::rename(ctry = "get(geo)")
     },
     "prov" = {
       cases <- cases |>
-        dplyr::rename(adm1guid = .data$`get(geo)`)
+        dplyr::rename(adm1guid = "get(geo)")
     },
     "dist" = {
       cases <- cases |>
-        dplyr::rename(adm2guid = .data$`get(geo)`)
+        dplyr::rename(adm2guid = "get(geo)")
     }
   )
 

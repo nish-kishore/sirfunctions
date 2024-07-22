@@ -148,7 +148,7 @@ lab_data_errors_region <- function(ctry.data, start.date, end.date,
 
   # Converting character dates to date columns
   lab.data <- lab.data |>
-    dplyr::rename(country = .data$Name) |>
+    dplyr::rename("country" = "Name") |>
     dplyr::mutate_at(
       c(
         "CaseDate",
@@ -531,11 +531,11 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
       adm2guid.x = dplyr::if_else(is.na(.data$adm2guid.x) & !is.na(.data$adm2guid.y), .data$adm2guid.y, .data$adm2guid.y)
     ) |>
     dplyr::rename(
-      adm0guid = .data$adm0guid.x,
-      adm1guid = .data$adm1guid.x,
-      adm2guid = .data$adm2guid.x,
-      prov = .data$prov.x,
-      dist = .data$dist.x
+      adm0guid = "adm0guid.x",
+      adm1guid = "adm1guid.x",
+      adm2guid = "adm2guid.x",
+      prov = "prov.x",
+      dist = "dist.x"
     ) |>
     dplyr::select(-dplyr::ends_with(".y"))
 
@@ -619,7 +619,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   if (region == "EMRO") {
     cli::cli_process_start("Converting date character columns to date types.")
     emro.lab.01 <- lab.data %>%
-      dplyr::rename(country = .data$Name) %>%
+      dplyr::rename(country = "Name") %>%
       # make country names long
       dplyr::mutate(
         country = ifelse(.data$country == "AFG", "AFGHANISTAN", .data$country),
@@ -945,15 +945,15 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   lab.data <- lab.data |>
     dplyr::left_join(geo_lookup_table, by = dplyr::join_by(epid_ctry, epid_prov, epid_dist, year))
   lab.data <- lab.data |>
-    dplyr::rename(ctry.code2 = .data$epid_ctry)
+    dplyr::rename(ctry.code2 = "epid_ctry")
   lab.data <- lab.data |>
     dplyr::mutate(CaseOrContact = "1-Case")
   lab.data <- lab.data |>
-    dplyr::rename(EpidNumber = .data$EPID)
+    dplyr::rename(EpidNumber = "EPID")
   lab.data <- lab.data |>
-    dplyr::rename(District = dist, Province = .data$prov)
+    dplyr::rename(District = "dist", Province = "prov")
   lab.data <- lab.data |>
-    dplyr::rename(DateOfOnset = .data$CaseDate)
+    dplyr::rename(DateOfOnset = "CaseDate")
   cli::cli_process_done()
 
   # adding additional subintervals (these aren't present in regional lab data, so are created as dummy variables)
@@ -1131,7 +1131,7 @@ generate_lab_timeliness <-
                 freq = n()) |>
       ungroup() |>
       mutate(type = "days.sent.field.rec.nat") |>
-      mutate(medi = as.numeric(medi))
+      mutate(medi = as.numeric(.data$medi))
 
     lab10 <- lab.data |>
       filter(as.Date(DateOfOnset) >= start.date &
@@ -1141,7 +1141,7 @@ generate_lab_timeliness <-
                 freq = n()) |>
       ungroup() |>
       mutate(type = "days.rec.nat.sent.lab") |>
-      mutate(medi = as.numeric(medi))
+      mutate(medi = as.numeric(.data$medi))
 
     lab11 <- lab.data |>
       filter(as.Date(DateOfOnset) >= start.date &
@@ -1161,7 +1161,7 @@ generate_lab_timeliness <-
                 freq = n()) |>
       ungroup() |>
       mutate(type = "days.rec.lab.culture") |>
-      mutate(medi = as.numeric(medi))
+      mutate(medi = as.numeric(.data$medi))
 
     lab <- dplyr::bind_rows(lab1, lab2, lab3, lab4, lab5, lab6, lab7,
                             lab8, lab9, lab10, lab11, lab12)
@@ -1169,13 +1169,13 @@ generate_lab_timeliness <-
 
     lab <- switch(spatial.scale,
       "ctry" = {
-        lab <- lab |> dplyr::rename(adm0guid = .data$`get(geo)`)
+        lab <- lab |> dplyr::rename(adm0guid = "get(geo)")
       },
       "prov" = {
-        lab <- lab |> dplyr::rename(adm1guid = .data$`get(geo)`)
+        lab <- lab |> dplyr::rename(adm1guid = "get(geo)")
       },
       "dist" = {
-        lab <- lab |> dplyr::rename(adm2guid = .data$`get(geo)`)
+        lab <- lab |> dplyr::rename(adm2guid = "get(geo)")
       }
     )
 

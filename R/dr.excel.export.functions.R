@@ -147,19 +147,19 @@ create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"
 create_60_day_export <- function(cases.need60day, country = Sys.getenv("DR_COUNTRY"), excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
   cases.need60day |>
     dplyr::rename(
-      Year = year,
-      "age in months" = .data$age.months,
-      "Hot Case" = .data$hot.case,
-      "Hot Case, no review" = .data$hot.case.no.review,
-      "Complete 60 day" = .data$got60day,
-      "60-day ontime" = .data$ontime.60day,
-      Country = .data$ctry,
-      Province = .data$prov,
-      District = dist,
-      "Adequate stool missing=good" = .data$adequacy.03,
-      "total OPV doses" = .data$doses.total,
-      "Potentially Compatible" = .data$pot.compatible,
-      "Missing followup date but have findings" = .data$missing.fu.date
+      "Year" = "year",
+      "age in months" = "age.months",
+      "Hot Case" = "hot.case",
+      "Hot Case, no review" = "hot.case.no.review",
+      "Complete 60 day" = "got60day",
+      "60-day ontime" = "ontime.60day",
+      "Country" = "ctry",
+      "Province" = "prov",
+      "District" = "dist",
+      "Adequate stool missing=good" = "adequacy.03",
+      "total OPV doses" = "doses.total",
+      "Potentially Compatible" = "pot.compatible",
+      "Missing followup date but have findings" = "missing.fu.date"
     ) |>
     readr::write_csv(file.path(
       excel_output_path,

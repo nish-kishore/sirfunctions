@@ -458,7 +458,7 @@ generate_es_timely <- function(es.data,
 
   per.time <- es.data %>%
     dplyr::count(timely > 3) %>%
-    dplyr::rename(c("timely" = `timely > 3`, "n" = "n"))
+    dplyr::rename(c("timely" = "timely > 3", "n" = "n"))
   # The number that are false are the percentage timely
 
   per.timely.title <- paste0(
