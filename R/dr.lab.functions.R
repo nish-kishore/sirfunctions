@@ -148,7 +148,7 @@ lab_data_errors_region <- function(ctry.data, start.date, end.date,
 
   # Converting character dates to date columns
   lab.data <- lab.data |>
-    dplyr::rename(country = .data$Name) |>
+    dplyr::rename("country" = "Name") |>
     dplyr::mutate_at(
       c(
         "CaseDate",
@@ -482,9 +482,9 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   #---- Additional data cleaning steps
   geo_lookup_table <- ctry.data$afp.all.2 |>
-    dplyr::select(.data$epid, dplyr::matches("guid"), dplyr::contains("$adm"), .data$ctry, .data$prov, .data$dist, .data$year) |>
+    dplyr::select("epid", dplyr::matches("guid"), dplyr::contains("$adm"), "ctry", "prov", "dist", "year") |>
     tidyr::separate_wider_delim(
-      cols = .data$epid, delim = delim,
+      cols = "epid", delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
         "epid_04", "epid_05"
@@ -492,21 +492,21 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
       too_many = "merge",
       too_few = "align_start"
     ) |>
-    dplyr::select(dplyr::contains("epid"), .data$ctry, .data$prov, .data$dist, dplyr::matches("adm[0-3]guid"), .data$year) |>
+    dplyr::select(dplyr::contains("epid"), "ctry", "prov", "dist", dplyr::matches("adm[0-3]guid"), "year") |>
     dplyr::distinct()
 
   prov_lookup_table <- geo_lookup_table |>
-    dplyr::select(.data$epid_prov, .data$prov, .data$adm0guid, .data$adm1guid, .data$year) |>
+    dplyr::select("epid_prov", "prov", "adm0guid", "adm1guid", "year") |>
     dplyr::distinct()
 
   dist_lookup_table <- geo_lookup_table |>
-    dplyr::select(.data$epid_dist, .data$dist, .data$adm2guid, .data$year) |>
+    dplyr::select("epid_dist", "dist", "adm2guid", "year") |>
     dplyr::distinct()
 
   # geomatching algorithm
   lab.data2 <- lab.data2 |>
     tidyr::separate_wider_delim(
-      cols = .data$EpidNumber, delim = delim,
+      cols = "EpidNumber", delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
         "epid_04", "epid_05"
@@ -531,17 +531,17 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
       adm2guid.x = dplyr::if_else(is.na(.data$adm2guid.x) & !is.na(.data$adm2guid.y), .data$adm2guid.y, .data$adm2guid.y)
     ) |>
     dplyr::rename(
-      adm0guid = .data$adm0guid.x,
-      adm1guid = .data$adm1guid.x,
-      adm2guid = .data$adm2guid.x,
-      prov = .data$prov.x,
-      dist = .data$dist.x
+      adm0guid = "adm0guid.x",
+      adm1guid = "adm1guid.x",
+      adm2guid = "adm2guid.x",
+      prov = "prov.x",
+      dist = "dist.x"
     ) |>
-    dplyr::select(-ends_with(".y"))
+    dplyr::select(-dplyr::ends_with(".y"))
 
   # check for correctness
   check <- test |>
-    dplyr::select(starts_with("epid_"), dplyr::matches("adm[1-2]"), .data$prov, .data$dist, .data$EpidNumber, .data$year)
+    dplyr::select(dplyr::starts_with("epid_"), dplyr::matches("adm[1-2]"), "prov", "dist", "EpidNumber", "year")
   mismatch_dist <- dplyr::anti_join(check, dist_lookup_table)
   # 14 mismatches in prov
   mismatch_prov <- dplyr::anti_join(check, prov_lookup_table)
@@ -619,7 +619,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   if (region == "EMRO") {
     cli::cli_process_start("Converting date character columns to date types.")
     emro.lab.01 <- lab.data %>%
-      dplyr::rename(country = .data$Name) %>%
+      dplyr::rename(country = "Name") %>%
       # make country names long
       dplyr::mutate(
         country = ifelse(.data$country == "AFG", "AFGHANISTAN", .data$country),
@@ -700,7 +700,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     emro.lab.04 <- dplyr::full_join(
       emro.lab.03,
       lab.locs |> dplyr::filter(who.region == "EMRO") |>
-        dplyr::select(.data$country:.data$num.ship.seq.samples),
+        dplyr::select("country":"num.ship.seq.samples"),
       by = "country"
     ) %>%
       # count duplicates with same epid and specimen number
@@ -716,7 +716,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
 
     emro.lab.04 <- emro.lab.04 %>%
       dplyr::filter(!is.na(EPID)) %>%
-      dplyr::select(-n)
+      dplyr::select(-"n")
 
     emro.lab.04 <- emro.lab.04[!duplicated(emro.lab.04[c("EPID", "SpecimenNumber")]), ]
     cli::cli_process_done()
@@ -759,7 +759,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
       # 1. stool can't be collected before Paralysis
       dplyr::filter((DateStoolCollected >= ParalysisOnsetDate | is.na(ParalysisOnsetDate))) |>
       dplyr::mutate(seq.capacity = ifelse(.data$seq.capacity == "yes", "Sequencing capacity", "No sequencing capacity")) %>%
-      dplyr::select(-contains("cIntratypeIs"))
+      dplyr::select(-dplyr::contains("cIntratypeIs"))
     cli::cli_process_done()
 
     lab.data <- emro.lab.05
@@ -834,13 +834,13 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
         whoregion = "AFRO"
       ) %>%
       dplyr::filter(country == ctry.data$ctry$ADM0_NAME) %>%
-      dplyr::select(-.data$Name)
+      dplyr::select(-"Name")
 
 
     # Join lab locations
     afro.lab.04 <- dplyr::full_join(
       afro.lab.03,
-      lab.locs %>% dplyr::select(.data$country:.data$num.ship.seq.samples),
+      lab.locs %>% dplyr::select("country":"num.ship.seq.samples"),
       by = "country"
     ) %>%
       # count duplicates with same epid and specimen number
@@ -856,7 +856,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     # Create intervals (currently using subset of those I need for SC PPT)
     cli::cli_process_start("Creating timeliness interval columns")
     afro.lab.05 <- afro.lab.04 %>%
-      dplyr::select(-n) %>%
+      dplyr::select(-"n") %>%
       dplyr::mutate(
         # Intervals
         days.collect.lab = .data$DateStoolReceivedinLab - .data$DateStoolCollected,
@@ -901,7 +901,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
         ParalysisOnsetDate = lubridate::ymd(.data$ParalysisOnsetDate),
         seq.capacity = ifelse(.data$seq.capacity == "yes", "Sequencing capacity", "No sequencing capacity")
       ) %>%
-      dplyr::select(-contains("cIntratypeIs"))
+      dplyr::select(-dplyr::contains("cIntratypeIs"))
 
     lab.data <- afro.lab.05
     rm(afro.lab.01b, afro.lab.02, afro.lab.03, afro.lab.04, afro.lab.05)
@@ -909,7 +909,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
 
   lab.data <- lab.data |>
     tidyr::separate_wider_delim(
-      cols = .data$EPID,
+      cols = "EPID",
       delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
@@ -921,9 +921,9 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
 
   cli::cli_process_start("Imputing missing province and district data from AFP linelist")
   geo_lookup_table <- ctry.data$afp.all.2 |>
-    dplyr::select(.data$epid, dplyr::matches("guid"), dplyr::contains("$adm"), .data$ctry, .data$prov, .data$dist, .data$year) |>
+    dplyr::select("epid", dplyr::matches("guid"), dplyr::contains("$adm"), "ctry", "prov", "dist", "year") |>
     tidyr::separate_wider_delim(
-      cols = .data$epid,
+      cols = "epid",
       delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
@@ -934,26 +934,26 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     ) |>
     dplyr::select(
       dplyr::contains("epid"),
-      .data$ctry,
-      .data$prov,
-      .data$dist,
+      "ctry",
+      "prov",
+      "dist",
       dplyr::matches("adm[0-3]guid"),
-      year
+      "year"
     ) |>
     dplyr::distinct()
 
   lab.data <- lab.data |>
     dplyr::left_join(geo_lookup_table, by = dplyr::join_by(epid_ctry, epid_prov, epid_dist, year))
   lab.data <- lab.data |>
-    dplyr::rename(ctry.code2 = .data$epid_ctry)
+    dplyr::rename(ctry.code2 = "epid_ctry")
   lab.data <- lab.data |>
     dplyr::mutate(CaseOrContact = "1-Case")
   lab.data <- lab.data |>
-    dplyr::rename(EpidNumber = .data$EPID)
+    dplyr::rename(EpidNumber = "EPID")
   lab.data <- lab.data |>
-    dplyr::rename(District = dist, Province = .data$prov)
+    dplyr::rename(District = "dist", Province = "prov")
   lab.data <- lab.data |>
-    dplyr::rename(DateOfOnset = .data$CaseDate)
+    dplyr::rename(DateOfOnset = "CaseDate")
   cli::cli_process_done()
 
   # adding additional subintervals (these aren't present in regional lab data, so are created as dummy variables)
@@ -1131,7 +1131,7 @@ generate_lab_timeliness <-
                 freq = n()) |>
       ungroup() |>
       mutate(type = "days.sent.field.rec.nat") |>
-      mutate(medi = as.numeric(medi))
+      mutate(medi = as.numeric(.data$medi))
 
     lab10 <- lab.data |>
       filter(as.Date(DateOfOnset) >= start.date &
@@ -1141,7 +1141,7 @@ generate_lab_timeliness <-
                 freq = n()) |>
       ungroup() |>
       mutate(type = "days.rec.nat.sent.lab") |>
-      mutate(medi = as.numeric(medi))
+      mutate(medi = as.numeric(.data$medi))
 
     lab11 <- lab.data |>
       filter(as.Date(DateOfOnset) >= start.date &
@@ -1161,7 +1161,7 @@ generate_lab_timeliness <-
                 freq = n()) |>
       ungroup() |>
       mutate(type = "days.rec.lab.culture") |>
-      mutate(medi = as.numeric(medi))
+      mutate(medi = as.numeric(.data$medi))
 
     lab <- dplyr::bind_rows(lab1, lab2, lab3, lab4, lab5, lab6, lab7,
                             lab8, lab9, lab10, lab11, lab12)
@@ -1169,13 +1169,13 @@ generate_lab_timeliness <-
 
     lab <- switch(spatial.scale,
       "ctry" = {
-        lab <- lab |> dplyr::rename(adm0guid = .data$`get(geo)`)
+        lab <- lab |> dplyr::rename(adm0guid = "get(geo)")
       },
       "prov" = {
-        lab <- lab |> dplyr::rename(adm1guid = .data$`get(geo)`)
+        lab <- lab |> dplyr::rename(adm1guid = "get(geo)")
       },
       "dist" = {
-        lab <- lab |> dplyr::rename(adm2guid = .data$`get(geo)`)
+        lab <- lab |> dplyr::rename(adm2guid = "get(geo)")
       }
     )
 
