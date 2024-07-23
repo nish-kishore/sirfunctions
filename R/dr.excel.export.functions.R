@@ -116,8 +116,8 @@ create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"
     )
 
   pop.check1 <- as.data.frame(tidyr::pivot_wider(pop.check,
-    names_from = .data$year,
-    values_from = .data$u15pop
+    names_from = "year",
+    values_from = "u15pop"
   ))
 
   pop_rollup_diff <- suppressMessages(check_pop_rollout(ctry.data))

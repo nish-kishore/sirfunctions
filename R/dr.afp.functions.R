@@ -278,7 +278,7 @@ add_age_group <- function(age.months) {
 #' @export
 generate_afp_by_month <- function(afp.data, start_date, end_date) {
   summary <- afp.data |>
-    tidyr::drop_na(.data$date.onset) |>
+    tidyr::drop_na("date.onset") |>
     dplyr::filter(dplyr::between(lubridate::as_date(date.onset), start_date, end_date)) |>
     dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
 
@@ -546,7 +546,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
   int.data <- switch(spatial.scale,
     "ctry" = {
       int.data <- int.data |>
-        tidyr::pivot_longer(!c(epid, year, adm0guid, ctry),
+        tidyr::pivot_longer(!c("epid", "year", "adm0guid", "ctry"),
           names_to = "type",
           values_to = "value"
         ) |>
@@ -556,7 +556,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
     "prov" = {
       int.data <- int.data |>
         tidyr::pivot_longer(
-          !c(epid, year, adm0guid, adm1guid, prov, ctry),
+          !c("epid", "year", "adm0guid", "adm1guid", "prov", "ctry"),
           names_to = "type",
           values_to = "value"
         ) %>%

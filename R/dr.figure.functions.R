@@ -1635,7 +1635,7 @@ generate_timeliness_maps <- function(ctry.data,
       "adm1guid"
     ) %>%
     tidyr::pivot_longer(
-      !c(.data$epid, .data$year, .data$prov, .data$adm1guid),
+      !c("epid", "year", "prov", "adm1guid"),
       names_to = "type",
       values_to = "value"
     ) %>%
@@ -1644,7 +1644,7 @@ generate_timeliness_maps <- function(ctry.data,
     dplyr::ungroup() %>%
     dplyr::filter(year >= lubridate::year(start_date) &
       year <= lubridate::year(end_date)) %>%
-    tidyr::complete(.data$year, .data$prov, .data$type)
+    tidyr::complete(year, prov, type)
 
 
   for (i in 1:nrow(long.timely)) {
@@ -1661,7 +1661,7 @@ generate_timeliness_maps <- function(ctry.data,
     dplyr::ungroup() %>%
     dplyr::filter(.data$year >= lubridate::year(start_date) &
       year <= lubridate::year(end_date)) %>%
-    tidyr::complete(.data$year, .data$prov, fill = list(case.num = 0))
+    tidyr::complete(year, prov, fill = list(case.num = 0))
 
   for (i in 1:nrow(all.case)) {
     if (is.na(all.case$adm1guid[i])) {
@@ -2448,14 +2448,14 @@ generate_pop_tab <- function(prov.case.ind,
 
   sub.prov.join.wide <- tidyr::pivot_wider(
     sub.prov.join,
-    names_from = year,
+    names_from = "year",
     values_from = c(
-      .data$per.stool.ad,
-      .data$diff,
-      .data$diff_per,
-      .data$n_npafp,
-      .data$npafp_rate,
-      .data$u15pop
+      "per.stool.ad",
+      "diff",
+      "diff_per",
+      "n_npafp",
+      "npafp_rate",
+      "u15pop"
     )
   ) %>%
     dplyr::select(-dplyr::all_of(pop.date.analysis))
@@ -2673,7 +2673,8 @@ generate_inad_tab <- function(ctry.data,
 
   stool.miss.any <- dplyr::summarize(
     dplyr::group_by(inads, year),
-    stoolmiss = sum(stoolmissing, stool1missing, stool2missing, na.rm = T)
+    stoolmiss =
+      sum(stool1missing == 1 | stool2missing == 1, na.rm = T)
   )
 
 

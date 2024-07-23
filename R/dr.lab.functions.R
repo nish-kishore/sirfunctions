@@ -484,7 +484,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   geo_lookup_table <- ctry.data$afp.all.2 |>
     dplyr::select("epid", dplyr::matches("guid"), dplyr::contains("$adm"), "ctry", "prov", "dist", "year") |>
     tidyr::separate_wider_delim(
-      cols = .data$epid, delim = delim,
+      cols = "epid", delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
         "epid_04", "epid_05"
@@ -506,7 +506,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   # geomatching algorithm
   lab.data2 <- lab.data2 |>
     tidyr::separate_wider_delim(
-      cols = .data$EpidNumber, delim = delim,
+      cols = "EpidNumber", delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
         "epid_04", "epid_05"
@@ -909,7 +909,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
 
   lab.data <- lab.data |>
     tidyr::separate_wider_delim(
-      cols = .data$EPID,
+      cols = "EPID",
       delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
@@ -923,7 +923,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   geo_lookup_table <- ctry.data$afp.all.2 |>
     dplyr::select("epid", dplyr::matches("guid"), dplyr::contains("$adm"), "ctry", "prov", "dist", "year") |>
     tidyr::separate_wider_delim(
-      cols = .data$epid,
+      cols = "epid",
       delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
