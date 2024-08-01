@@ -7,7 +7,7 @@
 #' @description Generate token which connects to CDC EDAV resources and
 #' validates that the individual still has access. The current tenant ID
 #' is hard coded for CDC resources.
-#' @import AzureStor AzureAuth utils dplyr
+#' @importFrom utils head
 #' @param app_id str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
 #' this can be changed if you have a service principal
 #' @param auth str: authorization type defaults to "authorization_code",
@@ -1475,11 +1475,11 @@ split_concat_raw_data <- function(
 
     for (i in 1:nrow(split.years)) {
       for (j in 1:nrow(key.table.vars)) {
-        out[[dplyr::pull(split.years[i, ], tag)]][[key.table.vars[j, ] |> dplyr::pull(data)]] <-
-          raw.data.all[[key.table.vars[j, ] |> dplyr::pull(data)]] |>
+        out[[dplyr::pull(split.years[i, ], tag)]][[key.table.vars[j, ] |> dplyr::pull("data")]] <-
+          raw.data.all[[key.table.vars[j, ] |> dplyr::pull("data")]] |>
           dplyr::filter(
-            !!sym(key.table.vars[j, ] |> dplyr::pull(year.var)) >= dplyr::pull(split.years[i, ], start.yr) &
-              !!sym(key.table.vars[j, ] |> dplyr::pull(year.var)) <= dplyr::pull(split.years[i, ], end.yr)
+            !!sym(key.table.vars[j, ] |> dplyr::pull("year.var")) >= dplyr::pull(split.years[i, ], start.yr) &
+              !!sym(key.table.vars[j, ] |> dplyr::pull("year.var")) <= dplyr::pull(split.years[i, ], end.yr)
           )
       }
 
@@ -1538,6 +1538,107 @@ split_concat_raw_data <- function(
   }
 }
 
+#' Check GUIDs present in afp.all.2 but not in the pop files
+#'
+#' @param ctry.data object containing polio data for a country
+#'
+#' @return list containing errors in province and district GUIDs
+#' @export
+check_afp_guid_ctry_data <- function(ctry.data) {
+  error_list <- list()
+
+  cli::cli_process_start("Checking province GUIDs")
+
+  prov_mismatches_pop <- setdiff(ctry.data$afp.all.2$adm1guid, ctry.data$prov.pop$adm1guid)
+  if (length(prov_mismatches_pop) > 0) {
+    cli::cli_alert_warning(paste0(
+      "There are ", length(prov_mismatches_pop),
+      " GUIDs from afp.all.2 that are not in prov.pop"
+    ))
+  }
+  error_list$prov_mismatches_pop <- ctry.data$afp.all.2 |>
+    dplyr::filter(.data$adm1guid %in% prov_mismatches_pop) |>
+    dplyr::select("prov", "year", "adm1guid") |>
+    unique()
+
+  if ("prov" %in% names(ctry.data)) {
+    prov_mismatches_shape <- setdiff(ctry.data$afp.all.2$adm1guid, ctry.data$prov$GUID)
+    if (length(prov_mismatches_shape) > 0) {
+      cli::cli_alert_warning(paste0(
+        "There are ", length(prov_mismatches_shape),
+        " GUIDs from afp.all.2 that are not in prov"
+      ))
+    }
+    error_list$prov_mismatches_shape <- ctry.data$afp.all.2 |>
+      dplyr::filter(.data$adm1guid %in% prov_mismatches_shape) |>
+      dplyr::select("prov", "year", "adm1guid") |>
+      unique()
+  }
+
+
+  cli::cli_process_done()
+
+  cli::cli_process_start("Checking district GUIDs")
+  dist_mismatches_pop <- setdiff(ctry.data$afp.all.2$adm2guid, ctry.data$dist.pop$adm2guid)
+
+  if (length(dist_mismatches_pop) > 0) {
+    cli::cli_alert_warning(paste0(
+      "There are ", length(dist_mismatches_pop),
+      " GUIDs from afp.all.2 that are not in dist.pop"
+    ))
+  }
+  error_list$dist_mismatches_pop <- ctry.data$afp.all.2 |>
+    dplyr::filter(.data$adm2guid %in% dist_mismatches_pop) |>
+    dplyr::select("prov", "dist", "year", "adm2guid") |>
+    unique()
+
+  if (!"dist" %in% names(ctry.data$dist)) {
+    dist_mismatches_shape <- setdiff(ctry.data$afp.all.2$adm2guid, ctry.data$dist$GUID)
+    if (length(dist_mismatches_shape) > 0) {
+      cli::cli_alert_warning(paste0(
+        "There are ", length(dist_mismatches_shape),
+        " GUIDs from afp.all.2 that are not in dist"
+      ))
+    }
+    error_list$dist_mismatches_shape <- ctry.data$afp.all.2 |>
+      dplyr::filter(.data$adm2guid %in% dist_mismatches_shape) |>
+      dplyr::select("prov", "dist", "year", "adm2guid") |>
+      unique()
+  }
+
+  cli::cli_process_done()
+
+  return(error_list)
+}
+
+#' Function to fix unknown GUIDs in the AFP linelist by obtaining GUIDs found in the pop files
+#' @param afp.data AFP linelist (afp.all.2)
+#' @param pop.data population file (prov.pop or dist.pop)
+#' @param guid_list list of unknown GUIDs from the AFP linelist.
+#' This is the output of check_afp_guid_ctry_data().
+#' @param spatial_scale "prov" or "dist"
+#'
+#' @return AFP data with corrected GUIDs based on the population files.
+#' @export
+fix_ctry_data_missing_guids <- function(afp.data, pop.data, guid_list, spatial_scale) {
+  afp.data <- switch(spatial_scale,
+                     "prov" = {
+                       afp.data |>
+                         dplyr::mutate(adm1guid = dplyr::if_else(adm1guid %in% guid_list, NA, adm1guid)) |>
+                         dplyr::left_join(pop.data, by = c("ctry", "prov", "year", "adm0guid", "adm1guid")) |>
+                         dplyr::mutate(adm1guid = dplyr::coalesce("adm1guid.x", "adm1guid.y"))
+                     },
+                     "dist" = {
+                       afp.data |>
+                         dplyr::mutate(adm2guid = dplyr::if_else(adm2guid %in% guid_list, NA, adm2guid)) |>
+                         dplyr::left_join(pop.data, by = c("ctry", "prov", "dist", "year",
+                                                    "adm0guid", "adm1guid", "adm2guid")) |>
+                         dplyr::mutate(adm2guid = dplyr::coalesce("adm2guid.x", "adm2guid.y"))
+                     }
+                     )
+
+  return(afp.data)
+}
 #' Compress .png files using pngquant
 #'
 #' @param img file path to the png file
