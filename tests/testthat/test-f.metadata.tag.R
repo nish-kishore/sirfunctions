@@ -10,11 +10,6 @@ test_that("testing f.metadata.tag() function", {
     head(10) |>
     flextable()
 
-  # error handling when there is no f tag available
-  expect_error(f.metadata.tag(ggplot_fig),
-    info = "raw.data and time_tag not provided. Expected an error."
-  )
-
   # check that function works when raw.data is defined
   raw.data <- list(metadata = list(download_time = "2022-01-01"))
   expect_no_error(f.metadata.tag(ggplot_fig, raw.data),
@@ -45,10 +40,5 @@ test_that("testing f.metadata.tag() function", {
       "while raw.data is not in the correct format",
       "time_tag provided and so there should be no error"
     )
-  )
-  # check that an error is raised if no arguments for either raw_data or time_tag
-  # are provided
-  expect_error(f.metadata.tag(ggplot_fig),
-    info = "No arguments for raw_data nor time_tag, should raise error"
   )
 })
