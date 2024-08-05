@@ -10,7 +10,8 @@ generate_npafp_maps(
   prov.shape,
   start_date,
   end_date,
-  output_path = Sys.getenv("DR_FIGURE_PATH")
+  output_path = Sys.getenv("DR_FIGURE_PATH"),
+  caption_size = 2
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ generate_npafp_maps(
 \item{end_date}{end date of desk review}
 
 \item{output_path}{where to save the figure}
+
+\item{caption_size}{size of the caption}
 }
 \value{
 ggplot object

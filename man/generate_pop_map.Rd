@@ -8,7 +8,8 @@ generate_pop_map(
   ctry.data,
   prov.shape,
   end_date,
-  output_path = Sys.getenv("DR_FIGURE_PATH")
+  output_path = Sys.getenv("DR_FIGURE_PATH"),
+  caption_size = 11
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ generate_pop_map(
 \item{end_date}{end date of the desk review}
 
 \item{output_path}{where to save the figure}
+
+\item{caption_size}{size of the caption}
 }
 \value{
 ggplot object

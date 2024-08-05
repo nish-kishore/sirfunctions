@@ -714,17 +714,20 @@ generate_iss_barplot <- function(iss.data = NULL,
 #' @importFrom lubridate year
 #' @importFrom sf st_crop
 #' @importFrom scales comma
+#'
 #' @param ctry.data RDS object
 #' @param prov.shape province of most recent shape file
 #' @param end_date end date of the desk review
 #' @param output_path where to save the figure
+#' @param caption_size size of the caption
 #'
 #' @returns ggplot object
 #' @export
 generate_pop_map <- function(ctry.data,
                              prov.shape,
                              end_date,
-                             output_path = Sys.getenv("DR_FIGURE_PATH")) {
+                             output_path = Sys.getenv("DR_FIGURE_PATH"),
+                             caption_size = 11) {
   prov.pop <- ctry.data$prov.pop %>%
     dplyr::filter(year == lubridate::year(end_date))
 
@@ -760,7 +763,8 @@ generate_pop_map <- function(ctry.data,
       "Major Cities and Roads - Province Level Population - ",
       lubridate::year(end_date)
     )) +
-    ggplot2::labs(fill = "Under-15 pop", caption = "- Under 15 population is shown at the province level\n- Major roads are shown in black\n- Population centers are shown in blue") +
+    ggplot2::labs(fill = "Under-15 pop",
+                  caption = "- Under 15 population is shown at the province level\n- Major roads are shown in black\n- Population centers are shown in blue") +
     sirfunctions::f.plot.looks("epicurve") +
     ggplot2::scale_size_identity() +
     ggplot2::theme(
@@ -773,8 +777,8 @@ generate_pop_map <- function(ctry.data,
       axis.text.y = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
       legend.position = "right",
-      plot.caption = ggplot2::element_text(hjust = 0, size = 11),
-      legend.background = ggplot2::element_blank()
+      plot.caption = ggplot2::element_text(hjust = 0, size = caption_size),
+      legend.background = ggplot2::element_blank(),
     )
 
   ggplot2::ggsave("pop.map.png",
@@ -792,12 +796,14 @@ generate_pop_map <- function(ctry.data,
 #' @importFrom ggrepel geom_label_repel
 #' @importFrom lubridate year
 #' @importFrom scales comma
+#'
 #' @param ctry.data RDS file of polio country data
 #' @param ctry.shape recent shape file of country
 #' @param prov.shape recent shape file of province
 #' @param dist.shape recent shape file of district
 #' @param end_date end date of the desk review
 #' @param output_path where to save the figure
+#' @param caption_size size of the caption
 #'
 #' @returns ggplot object
 #' @export
@@ -806,7 +812,8 @@ generate_dist_pop_map <- function(ctry.data,
                                   prov.shape,
                                   dist.shape,
                                   end_date,
-                                  output_path = Sys.getenv("DR_FIGURE_PATH")) {
+                                  output_path = Sys.getenv("DR_FIGURE_PATH"),
+                                  caption_size = 11) {
   prov.pop <- ctry.data$prov.pop %>%
     dplyr::filter(year == lubridate::year(end_date))
 
@@ -859,7 +866,7 @@ generate_dist_pop_map <- function(ctry.data,
       axis.text.y = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
       legend.position = "right",
-      plot.caption = ggplot2::element_text(hjust = 0, size = 11),
+      plot.caption = ggplot2::element_text(hjust = 0, size = caption_size),
       legend.background = ggplot2::element_blank()
     )
 
@@ -960,12 +967,14 @@ generate_afp_case_map <- function(ctry.data,
 
 #' Map of NPAFP rate by province
 #' @import dplyr ggplot2 lubridate sf
+#'
 #' @param prov.extract province NPAFP rate
 #' @param ctry.shape recent country shape
 #' @param prov.shape recent province shape
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#' @param caption_size size of the caption
 #'
 #' @returns ggplot object
 #' @export
@@ -974,7 +983,8 @@ generate_npafp_maps <- function(prov.extract,
                                 prov.shape,
                                 start_date,
                                 end_date,
-                                output_path = Sys.getenv("DR_FIGURE_PATH")) {
+                                output_path = Sys.getenv("DR_FIGURE_PATH"),
+                                caption_size = 2) {
   provnpafp <- prov.extract
 
   provnpafp$cats <- cut(
@@ -1075,7 +1085,7 @@ generate_npafp_maps <- function(prov.extract,
         y = min(ctcoord$Y) + adjy,
         label = labs
       ),
-      size = 2,
+      size = caption_size,
       check_overlap = TRUE,
       hjust = 0,
     ) +
@@ -1114,6 +1124,7 @@ generate_npafp_maps <- function(prov.extract,
 
 #' Generate map of NPAFP rates by district
 #' @import dplyr ggplot2 sf lubridate
+#'
 #' @param dist.extract NPAFP rates by district
 #' @param ctry.shape recent country shapefile
 #' @param prov.shape recent province shapefile
@@ -1121,6 +1132,7 @@ generate_npafp_maps <- function(prov.extract,
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#' @param caption_size size of the caption
 #'
 #' @returns ggplot object
 #' @export
@@ -1130,7 +1142,8 @@ generate_npafp_maps_dist <- function(dist.extract,
                                      dist.shape,
                                      start_date,
                                      end_date,
-                                     output_path = Sys.getenv("DR_FIGURE_PATH")) {
+                                     output_path = Sys.getenv("DR_FIGURE_PATH"),
+                                     caption_size = 2) {
   distnpafp <- dist.extract
 
   distnpafp$cats <- cut(
@@ -1229,7 +1242,7 @@ generate_npafp_maps_dist <- function(dist.extract,
         y = min(ctcoord$Y) + adjy,
         label = labs
       ),
-      size = 2,
+      size = caption_size,
       check_overlap = TRUE,
       hjust = 0
     ) +
@@ -1271,6 +1284,7 @@ generate_npafp_maps_dist <- function(dist.extract,
 
 #' Stool adequacy maps by province
 #' @import dplyr ggplot2 sf lubridate
+#'
 #' @param ctry.data RDS file for polio data of a country
 #' @param pstool stool adequacy at province level
 #' @param ctry.shape recent country shapefile
@@ -1278,6 +1292,7 @@ generate_npafp_maps_dist <- function(dist.extract,
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#' @param caption_size size of the caption
 #'
 #' @returns ggplot object
 #' @export
@@ -1287,7 +1302,8 @@ generate_stool_ad_maps <- function(ctry.data,
                                    prov.shape,
                                    start_date,
                                    end_date,
-                                   output_path = Sys.getenv("DR_FIGURE_PATH")) {
+                                   output_path = Sys.getenv("DR_FIGURE_PATH"),
+                                   caption_size = 3) {
   allafp <- ctry.data$afp.all.2 %>%
     dplyr::filter(date >= start_date & date <= end_date) %>%
     dplyr::reframe(
@@ -1391,7 +1407,7 @@ generate_stool_ad_maps <- function(ctry.data,
         y = min(ctcoord$Y) + adjy,
         label = labs
       ),
-      size = 3,
+      size = caption_size,
       check_overlap = TRUE,
       hjust = 0
     ) +
@@ -1429,6 +1445,7 @@ generate_stool_ad_maps <- function(ctry.data,
 
 #' Stool adequacy map by district
 #' @import dplyr ggplot2 sf lubridate
+#'
 #' @param ctry.data RDS file of polio data for a country
 #' @param dstool district stool adequacy
 #' @param ctry.shape recent country shapefile
@@ -1437,6 +1454,7 @@ generate_stool_ad_maps <- function(ctry.data,
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
+#' @param caption_size size of the caption
 #'
 #' @returns ggplot object
 #' @export
@@ -1447,7 +1465,8 @@ generate_stool_ad_maps_dist <- function(ctry.data,
                                         dist.shape,
                                         start_date,
                                         end_date,
-                                        output_path = Sys.getenv("DR_FIGURE_PATH")) {
+                                        output_path = Sys.getenv("DR_FIGURE_PATH"),
+                                        caption_size = 3) {
   # Get coordinates for maps that are plotted
   ctcoord <- as.data.frame(sf::st_coordinates(ctry.shape))
   # Put text at 10% below the minimum X and Y coordinates for each map
@@ -1558,7 +1577,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
         y = min(ctcoord$Y) + adjy,
         label = labs
       ),
-      size = 3,
+      size = caption_size,
       check_overlap = TRUE,
       hjust = 0
     ) +
