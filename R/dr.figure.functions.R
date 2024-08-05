@@ -985,7 +985,8 @@ generate_npafp_maps <- function(prov.extract,
                                 end_date,
                                 output_path = Sys.getenv("DR_FIGURE_PATH"),
                                 caption_size = 2) {
-  provnpafp <- prov.extract
+  provnpafp <- prov.extract |>
+    filter(!is.na(prov))
 
   provnpafp$cats <- cut(
     provnpafp$npafp_rate,
@@ -1144,7 +1145,8 @@ generate_npafp_maps_dist <- function(dist.extract,
                                      end_date,
                                      output_path = Sys.getenv("DR_FIGURE_PATH"),
                                      caption_size = 2) {
-  distnpafp <- dist.extract
+  distnpafp <- dist.extract |>
+    filter(!is.na(dist))
 
   distnpafp$cats <- cut(
     distnpafp$npafp_rate,
@@ -1334,6 +1336,7 @@ generate_stool_ad_maps <- function(ctry.data,
   )
 
   stoolad.p <- stoolad.p %>%
+    filter(!is.na(prov)) %>%
     dplyr::tibble() %>%
     dplyr::mutate(
       prop.cat = dplyr::case_when(
@@ -1504,6 +1507,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
   )
 
   stoolad.d <- stoolad.d %>%
+    filter(is.na(dist)) |>
     dplyr::tibble() %>%
     dplyr::mutate(
       prop.cat = dplyr::case_when(
