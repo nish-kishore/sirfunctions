@@ -9,7 +9,8 @@ copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
   github_raw_url <- "https://raw.githubusercontent.com/nish-kishore/sg-desk-reviews/main/resources/desk_review_template.Rmd"
 
   # download only if it doesn't already exist
-  if (!file.exists(file.path(output_path, dr_template_name))) {
+  data_folder_files <- list.files(output_path)
+  if ((stringr::str_detect(data_folder_files, "_template") |> sum()) == 0) {
     cli::cli_process_start("Downloading the desk review template.")
     download.file(github_raw_url, file.path(output_path, dr_template_name))
     cli::cli_process_done()
