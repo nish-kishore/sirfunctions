@@ -569,14 +569,19 @@ init_dr <-
 
     # Attaching ISS data if available and creating a copy to data folder
     if (!is.null(iss_data_path)) {
-      cli::cli_process_start("Saving a copy of the ISS/eSurv data to the data folder.")
       country_data$iss.data <- load_iss_data(iss_data_path)
-      dr_iss_data_path <- file.path(
-        data_path,
-        paste0(country_data$ctry$ISO_3_CODE, "_iss_data_", Sys.Date(), ".Rds")
-      )
-      saveRDS(country_data$iss.data, dr_iss_data_path)
-      Sys.setenv(DR_ISS_PATH = dr_iss_data_path)
+      # check if there is already a copy of ISS data in the data folder
+      if ((stringr::str_detect(data_folder_files, "_iss_data_") |> sum()) == 0) {
+        cli::cli_process_start("Saving a copy of the ISS/eSurv data to the data folder.")
+        dr_iss_data_path <- file.path(
+          data_path,
+          paste0(country_data$ctry$ISO_3_CODE, "_iss_data_", Sys.Date(), ".Rds")
+        )
+        saveRDS(country_data$iss.data, dr_iss_data_path)
+        Sys.setenv(DR_ISS_PATH = dr_iss_data_path)
+      } else {
+        Sys.setenv(DR_ISS_PATH = iss_data_path)
+      }
       cli::cli_process_done()
     }
 
