@@ -466,7 +466,7 @@ generate_es_timely <- function(es.data,
       100 * dplyr::filter(per.time, timely == FALSE)["n"] / sum(per.time$n),
       0
     ),
-    "% of samples were shipped to lab within 3 days of collection - \n",
+    "% of samples arrived in lab within 3 days of collection - \n",
     format(es_start_date, "%B %Y"),
     " - ",
     format(es_end_date, "%B %Y")
