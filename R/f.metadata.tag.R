@@ -6,18 +6,18 @@
 #'
 #' @param object ggplot or flextable object: the figure or table to add metadata to
 #' @param time_tag str: a date and time string, defaults to raw.data$metadata$download_time
-#' @param raw_data Rds object: polio raw data
-#' and will throw an error if "raw.data" doesn't exist in your environment or is called something else
+#' @param raw_data Rds object: polio raw data or country data
 #' @returns a `ggplot` or `flextable` object with metadata added
 #' @export
 f.metadata.tag <- function(object,
-                           raw_data = NA,
-                           time_tag = NA) {
+                           raw_data = NULL,
+                           time_tag = NULL) {
   # flag to stop if time_tag not provided
   # use raw.data time_tag by default unless tag is explicitly stated
-  if (!is.na(time_tag)) {
-
-  } else if (!is.na(raw_data)) {
+  if (is.null(raw_data) & is.null(time_tag)) {
+    cli::cli_alert_warning("Please provide raw.data, ctry.data, or a value for 'time_tag'")
+    return(object)
+  } else if (!is.null(raw_data) & is.null(time_tag)) {
     tryCatch(
       {time_tag = raw_data$metadata$download_time
       },
@@ -26,8 +26,6 @@ f.metadata.tag <- function(object,
         stop(cond)
         }
       )
-  } else {
-    stop("Please provide the raw.data file or a value for 'time_tag'")
   }
 
   #
