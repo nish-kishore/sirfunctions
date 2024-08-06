@@ -1537,3 +1537,31 @@ split_concat_raw_data <- function(
     return(out)
   }
 }
+
+#' Compress .png files using pngquant
+#'
+#' @param img file path to the png file
+#' @param pngquant_path file path to pngquant.exe
+#' @param suffix add a suffix to the compressed image
+#'
+#' @export
+compress_png <- function(img, pngquant_path = NULL, suffix = "") {
+
+  # Check
+  if (!stringr::str_detect(img, ".png$")) {
+    stop("Only .png files can be compressed.")
+
+  }
+  if (is.null(pngquant_path)) {
+    stop("Please pass an argument to the pngquant_path parameter.")
+  }
+
+  if (!file.exists(pngquant_path)) {
+    stop("Path pngquant.exe not found.")
+    }
+
+  # Compress the image file
+  system2(pngquant_path, args = c("--ext", paste0(suffix, ".png"), "--force", img))
+}
+
+
