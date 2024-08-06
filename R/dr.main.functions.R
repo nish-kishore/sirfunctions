@@ -9,7 +9,8 @@ copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
   github_raw_url <- "https://raw.githubusercontent.com/nish-kishore/sg-desk-reviews/main/resources/desk_review_template.Rmd"
 
   # download only if it doesn't already exist
-  if (!file.exists(file.path(output_path, dr_template_name))) {
+  data_folder_files <- list.files(output_path)
+  if ((stringr::str_detect(data_folder_files, "_template") |> sum()) == 0) {
     cli::cli_process_start("Downloading the desk review template.")
     download.file(github_raw_url, file.path(output_path, dr_template_name))
     cli::cli_process_done()
@@ -569,14 +570,19 @@ init_dr <-
 
     # Attaching ISS data if available and creating a copy to data folder
     if (!is.null(iss_data_path)) {
-      cli::cli_process_start("Saving a copy of the ISS/eSurv data to the data folder.")
       country_data$iss.data <- load_iss_data(iss_data_path)
-      dr_iss_data_path <- file.path(
-        data_path,
-        paste0(country_data$ctry$ISO_3_CODE, "_iss_data_", Sys.Date(), ".Rds")
-      )
-      saveRDS(country_data$iss.data, dr_iss_data_path)
-      Sys.setenv(DR_ISS_PATH = dr_iss_data_path)
+      # check if there is already a copy of ISS data in the data folder
+      if ((stringr::str_detect(data_folder_files, "_iss_data_") |> sum()) == 0) {
+        cli::cli_process_start("Saving a copy of the ISS/eSurv data to the data folder.")
+        dr_iss_data_path <- file.path(
+          data_path,
+          paste0(country_data$ctry$ISO_3_CODE, "_iss_data_", Sys.Date(), ".Rds")
+        )
+        saveRDS(country_data$iss.data, dr_iss_data_path)
+        Sys.setenv(DR_ISS_PATH = dr_iss_data_path)
+      } else {
+        Sys.setenv(DR_ISS_PATH = iss_data_path)
+      }
       cli::cli_process_done()
     }
 
