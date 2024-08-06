@@ -1,6 +1,11 @@
 # Helper functions----
 
-# helper function to generate year.data
+#' Helper function to generate year.data
+#'
+#' @param start_date start date
+#' @param end_date  end date
+#'
+#' @return a tibble with year data
 generate_year_data <- function(start_date, end_date) {
   year.data <- dplyr::tibble(
     "year" = lubridate::year(start_date):lubridate::year(end_date) # Defines year as the amount of
@@ -34,7 +39,11 @@ generate_year_data <- function(start_date, end_date) {
 
 }
 
-# helper function to add the adequacy.final column
+#' Helper function to add the adequacy.final column
+#'
+#' @param afp.data AFP dataset
+#'
+#' @return AFP dataset with the adequacy final column
 generate_ad_final_col <- function(afp.data) {
   stool.data <- afp.data |>
     dplyr::as_tibble() |>
@@ -72,14 +81,26 @@ generate_ad_final_col <- function(afp.data) {
     )) |>
     mutate(year = lubridate::year(date)) |>
     dplyr::select(
-      year, adm0guid, adm1guid, adm2guid,
-      adequacy.final, cdc.classification.all2
+      "year", "adm0guid", "adm1guid", "adm2guid",
+      "stool1tostool2", "ontostool1", "ontostool2",
+      "stool.1.condition", "stool.2.condition",
+      "adequacy.01", "adequacy.02", "adequacy.03",
+      "adequacy.final", "cdc.classification.all2"
     )
 
   return(stool.data)
 }
-# helper function to generate stool adequacy on a rolling basis
-stool_ad_rolling <- function(stool.data, pop.data, spatial_scale) {
+
+#' Helper function to generate stool adequacy on a rolling basis
+#'
+#' @param stool.data AFP dataset containing the adequacy final column
+#' @param pop.data population data
+#' @param start_date start date
+#' @param end_date  end date
+#' @param spatial_scale "ctry", "prov", or "dist".
+#'
+#' @return summary table containing stool adequacy on a rolling basis
+stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial_scale) {
 
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
@@ -104,20 +125,23 @@ stool_ad_rolling <- function(stool.data, pop.data, spatial_scale) {
     dplyr::distinct()
 
   int.data <- stool.data |>
-    dplyr::group_by(get(geo), .data$adequacy.final) |>
-    dplyr::summarise(n = dplyr::n()) |>
+    dplyr::group_by(get(geo)) |>
+    summarize(
+      total.afp.cases = n(),
+      num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
+      num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
+      num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
+      bad.data = sum(.data$adequacy.03 == 77, na.rm = T),
+      same.day.stool.collection = sum(.data$stool1tostool2 == 0, na.rm = T),
+      late.collection = sum(.data$ontostool1 > 14 | .data$ontostool2 > 14, na.rm = T),
+      bad.condition = sum(.data$stool.1.condition == "Poor" | .data$stool.2.condition == "Poor", na.rm = T),
+      missing.stool1.condition = sum(is.na(.data$stool.1.condition)),
+      missing.stool2.condition = sum(is.na(.data$stool.2.condition)),
+      missing.condition = sum(is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition))
+    ) |>
     dplyr::ungroup() |>
-    dplyr::mutate(adequacy.final = dplyr::case_when(adequacy.final == 1 ~ "adequate",
-                                                    adequacy.final == 0 ~ "inadequate",
-                                                    adequacy.final == 77 ~ "bad_data",
-                                                    adequacy.final == 99 ~ "missing_data"
-    )) |>
-    tidyr::pivot_wider(names_from = adequacy.final, values_from = n) |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(c("adequate", "inadequate", "bad_data", "missing_data")), \(x) replace_na(x, 0))) |>
-    dplyr::rowwise() |>
-    dplyr::mutate(afp.cases = sum(dplyr::c_across(dplyr::any_of(c("adequate", "inadequate", "bad_data", "missing_data"))),
-                                  na.rm = T)) |>
-    dplyr::mutate(stoolad = 100 * (.data$adequate / .data$afp.cases))
+    dplyr::mutate(per.stool.ad = 100 * (.data$num.adequate / .data$num.ad.plus.inad),
+                  days.at.risk = as.numeric(end_date - start_date + 1))
 
   int.data <- switch(spatial_scale,
                      "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
@@ -125,37 +149,25 @@ stool_ad_rolling <- function(stool.data, pop.data, spatial_scale) {
                      "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
   )
 
-
-  int.data <- dplyr::full_join(int.data, pop.data) |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(c("adequate", "inadequate", "bad_data", "afp.case", "missing_data", "stoolad")),
-                                \(x) tidyr::replace_na(x, 0)))
+  int.data <- int.data |>
+    dplyr::left_join(pop.data)
 
   int.data <- int.data |>
-    dplyr::rename(dplyr::any_of(c(
-      "num.adequate" = "adequate",
-      "num.inadequate" = "inadequate",
-      "num.missing.data" = "missing_data",
-      "num.data.error" = "bad_data",
-      # "num.ad.w.miss" = "num.ad", # remove because not present in calculation of int.data (supposed to be missing + adequate)
-      "per.stool.ad" = "stoolad",
-      "days.at.risk" = "n_days"
-    ))) |>
-    dplyr::select(dplyr::any_of(c(
-      "year", "days.at.risk", "ctry", "prov", "dist",
-      "afp.cases",
-      "num.adj.w.miss", "num.adequate", "num.inadequate",
-      "num.missing.data", "per.stool.ad",
-      "adm0guid", "adm1guid", "adm2guid"
-    )))
-
-  int.data <- int.data |>
-    mutate(per.stool.ad = dplyr::if_else(.data$afp.cases == 0, NA, .data$per.stool.ad))
+    mutate(per.stool.ad = dplyr::if_else(.data$total.afp.cases == 0, NA, .data$per.stool.ad)) |>
+    dplyr::mutate(dplyr::across("total.afp.cases":"missing.stool2.condition", \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 
 }
 
-# helper function to generate stool adequacy on a non-rolling basis
+#' Helper function to generate stool adequacy on a non-rolling basis
+#'
+#' @param stool.data AFP data with adequacy final column
+#' @param pop.data population data
+#' @param year.data table generated by the generate_year_data() function
+#' @param spatial_scale "ctry", "prov", or "dist
+#'
+#' @return summary table of stool adequacy on a yearly basis
 stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
   geo <- switch(spatial_scale,
                 "ctry" = "adm0guid",
@@ -164,20 +176,22 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
   )
 
   int.data <- stool.data |>
-    dplyr::group_by(get(geo), .data$year, .data$adequacy.final) |>
-    dplyr::summarise(n = dplyr::n()) |>
+    dplyr::group_by(get(geo), .data$year) |>
+    summarize(
+      total.afp.cases = n(),
+      num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
+      num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
+      num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
+      bad.data = sum(.data$adequacy.03 == 77, na.rm = T),
+      same.day.stool.collection = sum(.data$stool1tostool2 == 0, na.rm = T),
+      late.collection = sum(.data$ontostool1 > 14 | .data$ontostool2 > 14, na.rm = T),
+      bad.condition = sum(.data$stool.1.condition == "Poor" | .data$stool.2.condition == "Poor", na.rm = T),
+      missing.stool1.condition = sum(is.na(.data$stool.1.condition)),
+      missing.stool2.condition = sum(is.na(.data$stool.2.condition)),
+      missing.condition = sum(is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition))
+    ) |>
     dplyr::ungroup() |>
-    dplyr::mutate(adequacy.final = dplyr::case_when(adequacy.final == 1 ~ "adequate",
-                                                    adequacy.final == 0 ~ "inadequate",
-                                                    adequacy.final == 77 ~ "bad_data",
-                                                    adequacy.final == 99 ~ "missing_data"
-    )) |>
-    tidyr::pivot_wider(names_from = adequacy.final, values_from = n) |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(c("adequate", "inadequate", "bad_data", "missing_data")), \(x) replace_na(x, 0))) |>
-    dplyr::rowwise() |>
-    dplyr::mutate(afp.cases = sum(dplyr::c_across(dplyr::any_of(c("adequate", "inadequate", "bad_data", "missing_data"))),
-                                  na.rm = T)) |>
-    dplyr::mutate(stoolad = 100 * (.data$adequate / .data$afp.cases))
+    dplyr::mutate(per.stool.ad = 100 * (.data$num.adequate / .data$num.ad.plus.inad))
 
   int.data <- switch(spatial_scale,
                      "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
@@ -188,35 +202,21 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
 
   int.data <- dplyr::full_join(int.data, pop.data) |>
     dplyr::left_join(year.data) |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(c("adequate", "inadequate", "bad_data", "afp.cases", "missing_data", "stoolad")),
-                                \(x) tidyr::replace_na(x, 0)))
+    dplyr::rename("days.at.risk" = "n_days")
 
   int.data <- int.data |>
-    dplyr::rename(dplyr::any_of(c(
-      "num.adequate" = "adequate",
-      "num.inadequate" = "inadequate",
-      "num.missing.data" = "missing_data",
-      "num.data.error" = "bad_data",
-      # "num.ad.w.miss" = "num.ad", # remove because not present in calculation of int.data (supposed to be missing + adequate)
-      "per.stool.ad" = "stoolad",
-      "days.at.risk" = "n_days"
-    ))) |>
-    dplyr::select(dplyr::any_of(c(
-      "year", "days.at.risk", "ctry", "prov", "dist",
-      "afp.cases",
-      "num.adj.w.miss", "num.adequate", "num.inadequate",
-      "num.missing.data", "per.stool.ad",
-      "adm0guid", "adm1guid", "adm2guid"
-    )))
-
-  int.data <- int.data |>
-    mutate(per.stool.ad = dplyr::if_else(.data$afp.cases == 0, NA, .data$per.stool.ad))
+    dplyr::mutate(per.stool.ad = dplyr::if_else(.data$total.afp.cases == 0, NA, .data$per.stool.ad)) |>
+    dplyr::mutate(dplyr::across("total.afp.cases":"missing.stool2.condition", \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 
 }
 
-# helper function to check missing variables in the AFP linelist based on spatial scale
+#' Helper function to check missing variables in the AFP linelist based on spatial scale
+#'
+#' @param afp_data AFP dataset
+#' @param spatial_scale "ctry", "prov", or "dist"
+#'
 check_missing_afp_var <- function(afp_data, spatial_scale) {
   # file names
   names.afp.ctry <- c("adm0guid", "date", "cdc.classification.all2")
@@ -240,7 +240,11 @@ check_missing_afp_var <- function(afp_data, spatial_scale) {
   }
 }
 
-# helper function to check missing variables in the pop file based on spatial scale
+#' Helper function to check missing variables in the pop file based on spatial scale
+#'
+#' @param pop_data population dataset
+#' @param spatial_scale "ctry", "prov", or "dist"
+#'
 check_missing_pop_var <- function(pop_data, spatial_scale) {
   # file names
   names.ctry <- c("adm0guid", "year", "ctry")
@@ -263,7 +267,11 @@ check_missing_pop_var <- function(pop_data, spatial_scale) {
   }
 }
 
-# helper function to check if spatial scale of data matches spatial scale chosen
+#' Helper function to check if spatial scale of data matches spatial scale chosen
+#'
+#' @param admin_data population file dataset
+#' @param spatial_scale "ctry", "prov", or "dist"
+#'
 check_spatial_scale <- function(admin_data, spatial_scale) {
   # Define a list for spatial scales to columns that should not be present
   invalid_columns <- list(
@@ -280,7 +288,14 @@ check_spatial_scale <- function(admin_data, spatial_scale) {
   }
 }
 
-# helper function to filter GUIDs that are not consistent across temporal scale
+#' Helper function to filter GUIDs that are not consistent across temporal scale
+#'
+#' @param admin_data population dataset
+#' @param spatial_scale "ctry", "prov", or "dist"
+#' @param start_date start date
+#' @param end_date end date
+#'
+#' @return a list of GUIDs not present in the time period
 get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) {
   guid_col <- paste0("adm", match(spatial_scale, c("ctry", "prov", "dist")) - 1, "guid")
   expected_freq <- length(lubridate::year(start_date):lubridate::year(end_date))
@@ -297,7 +312,7 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 # Main function ----
 #' Calculate percent stool adequacy on a case basis
 #'
-#' @name f.stool.ad.01
+#' @name f.stool.ad.02
 #' @description creates an adequacy variable - 'missing' parameter defines how
 #' missing data is treated - "Good" classifies missing data as good quality
 #' (POLIS method)
@@ -308,24 +323,24 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #'
 #' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
 #' formatted as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2
-#' which includes "NOT-AFP"
-#' @param pop.data tibble: Full list of country administrative units by a given
+#' which includes "NOT-AFP".
+#' @param admin.data tibble: Full list of country administrative units by a given
 #' spatial scale including "year", "adm(0,1,2)guid, and "(ctry/prov/dist)"
-#' as appropriate
-#' @param start.date chr: "YYYY-MM-DD" - starting date for analysis
-#' @param end.date chr: "YYYY-MM-DD" - ending date for analysis
-#' @param spatial.scale chr: "prov" or "dist" or "ctry"
-#' @param missing chr: "good" or "bad" or "missing"; default "good"
-#' @param bad.data chr: "remove" or "inadequate" or "adequate"; default "inadequate"
-#' @param rolling boolean: Should data be annualized or calculated within the time period allotted
-#' @param sp_continuity_validation boolean: Should data excluded temporaliry inconsistent GUIDs? Default T.
+#' @param start.date chr: "YYYY-MM-DD" - starting date for analysis.
+#' @param end.date chr: "YYYY-MM-DD" - ending date for analysis.
+#' @param spatial.scale chr: "prov" or "dist" or "ctry".
+#' @param missing chr: "good" or "bad" or "missing", default "good". "good" uses "adequacy.03", "bad" uses "adequacy.01",
+#' and "missing" uses "adequacy.02" when calculating the adequacy.final column.
+#' @param bad.data chr: "remove" or "inadequate"; default "inadequate". "inadequate" treats samples bad data as inadequate.
+#' @param rolling boolean: Should data be annualized or calculated within the time period allotted.
+#' @param sp_continuity_validation boolean: Exclude GUIDs not present in all years of the dataset. Default T.
 #'
 #' @returns tibble: long format stool adequacy evaluations
 #' @export
 
 f.stool.ad.02 <- function(
     afp.data,
-    pop.data,
+    admin.data,
     start.date,
     end.date,
     spatial.scale,
@@ -341,8 +356,8 @@ f.stool.ad.02 <- function(
   names.dist <- c(names.prov, "adm2guid", "dist")
 
   # check that data inputs have the same country data
-  if (!sort(unique(pop.data$adm0guid)) == sort(unique(afp.data$adm0guid))) {
-    stop("Please make sure that your `afp.data` and `pop.data` are subset for
+  if (!sort(unique(admin.data$adm0guid)) == sort(unique(afp.data$adm0guid))) {
+    stop("Please make sure that your `afp.data` and `admin.data` are subset for
          the same countries")
   }
 
@@ -353,7 +368,7 @@ f.stool.ad.02 <- function(
       start.date <- lubridate::as_date(start.date)
       end.date <- lubridate::as_date(end.date)
       years <- lubridate::year(start.date):year(end.date)
-      ctry.years <- sort(unique(pop.data$year))
+      ctry.years <- sort(unique(admin.data$year))
     },
     error = function(cond) {
       cond$message <- paste0(
@@ -378,27 +393,37 @@ f.stool.ad.02 <- function(
     stop("'spatial.scale' can only be 'ctry', 'prov', or 'dist'")
   }
 
+  # Check that bad.data param contains appropriate arguments
+  if (!bad.data %in% c("remove", "inadequate")) {
+    stop('Only "remove" and "adequate" are valid arguments for the bad.data parameter.')
+  }
+
+  # Check that missing param contains appropriate arguments
+  if (!missing %in% c("good", "bad", "missing")) {
+    stop('Only "good", "bad", and "missing" are valid arguments for the missing parameter.')
+  }
+
   # Perform checks
   switch(spatial.scale,
          "ctry" = {
            check_missing_afp_var(afp.data, "ctry")
-           check_missing_pop_var(pop.data, "ctry")
-           check_spatial_scale(pop.data, "ctry")
+           check_missing_pop_var(admin.data, "ctry")
+           check_spatial_scale(admin.data, "ctry")
          },
          "prov" = {
            check_missing_afp_var(afp.data, "prov")
-           check_missing_pop_var(pop.data, "prov")
-           check_spatial_scale(pop.data, "prov")
+           check_missing_pop_var(admin.data, "prov")
+           check_spatial_scale(admin.data, "prov")
          },
          "dist" = {
            check_missing_afp_var(afp.data, "dist")
-           check_missing_pop_var(pop.data, "dist")
-           check_spatial_scale(pop.data, "dist")
+           check_missing_pop_var(admin.data, "dist")
+           check_spatial_scale(admin.data, "dist")
          }
   )
 
   # Get inconsistent GUIDs across temporal scale
-  incomplete.adm <- get_incomplete_adm(pop.data, spatial.scale, start.date, end.date)
+  incomplete.adm <- get_incomplete_adm(admin.data, spatial.scale, start.date, end.date)
 
   # Filter data if spatial validation is true
   if (sp_continuity_validation) {
@@ -413,7 +438,7 @@ f.stool.ad.02 <- function(
     }
 
     guid_col_name <- paste0("adm", match(spatial.scale, c("ctry", "prov", "dist")) - 1, "guid")
-    pop.data <- pop.data |>
+    admin.data <- admin.data |>
       dplyr::filter(!(.data[[guid_col_name]] %in% incomplete.adm))
 
     afp.data <- afp.data |>
@@ -436,7 +461,7 @@ f.stool.ad.02 <- function(
   afp.data <- afp.data |>
     dplyr::filter(dplyr::between(date, start.date, end.date))
   # Only years of analysis
-  pop.data <- pop.data %>%
+  admin.data <- admin.data %>%
     dplyr::filter(dplyr::between(year,
                                  lubridate::year(start.date),
                                  lubridate::year(end.date)))
@@ -452,42 +477,40 @@ f.stool.ad.02 <- function(
                                  by = c("year" = "year")
                                  )
 
-
   # Select how to treat bad data
   stool.data <- switch(bad.data,
                        "remove" = {
-                         stool.data |> dplyr::filter(adequacy.final != 77)
+                         cli::cli_alert_warning("AFP cases with bad data excluded from stool adequacy calculation.")
+                         stool.data
                        },
                        "inadequate" = {
                          stool.data |>
                            dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 77, 0, .data$adequacy.final))
-                       },
-                       "adequate" = {
-                         stool.data |>
-                           dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 77, 1, .data$adequacy.final))
-                       })
-
+                       }
+                       )
 
   # Select how to treat missing data
   stool.data <- switch(missing,
                        "good" = {
                          stool.data |>
-                           dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 99 , 1, .data$adequacy.final))
+                           dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 99 , .data$adequacy.03, .data$adequacy.final))
                        },
                        "bad" = {
                          stool.data |>
-                           dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 99, 0, .data$adequacy.final))
+                           dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.01, .data$adequacy.final))
                        },
                        "missing" = {
-                         stool.data |> dplyr::filter(adequacy.final != 99)
+                         cli::cli_alert_warning("AFP cases with missing adequacy excluded from stool adequacy calculation.")
+                         stool.data |>
+                           dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.02, .data$adequacy.final))
                        })
 
   # Calculate stool adequacy
   int.data <- NULL
   if (rolling) {
-    int.data <- stool_ad_rolling(stool.data, pop.data, spatial.scale)
+    int.data <- stool_ad_rolling(stool.data, admin.data, start_date, end_date, spatial.scale)
   } else {
-    int.data <- stool_ad_year(stool.data, pop.data, year.data, spatial.scale)
+    int.data <- stool_ad_year(stool.data, admin.data, year.data, spatial.scale)
   }
 
   return(int.data)
