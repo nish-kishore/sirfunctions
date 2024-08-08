@@ -61,9 +61,9 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
 
   # Assign the region
   region <- NULL
-  if (country_name %in% emro_ctry) {
+  if (stringr::str_to_upper(country_name) %in% emro_ctry) {
     region <- "EMRO"
-  } else if (country_name %in% afro_ctry | stringr::str_detect(country_name, "(?i)IVOIRE")) {
+  } else if (stringr::str_to_upper(country_name) %in% afro_ctry | stringr::str_detect(country_name, "(?i)IVOIRE")) {
     region <- "AFRO"
   } else {
     stop(paste0(
@@ -382,7 +382,8 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   cli::cli_process_start("Filtering country-specific lab data")
 
   lab.data <- ctry.data$lab.data |>
-    dplyr::filter(ctry.code2 == ctry.data$ctry$WHO_CODE)
+    dplyr::filter(ctry.code2 == ctry.data$ctry$WHO_CODE) |>
+    dplyr::mutate(ctry = ctry.data$ctry$ADM0_NAME)
 
   if (nrow(lab.data) == 0) {
     message("Filtering resulted in zero records. Please check that the ctry.code2 in lab.data matches ctry.data$ctry$ISO_3_CODE")
