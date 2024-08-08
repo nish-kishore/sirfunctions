@@ -61,7 +61,7 @@ generate_ad_final_col <- function(afp.data) {
     )) %>%
     mutate(adequacy.final = dplyr::case_when( # Conditions for Poor Adequacy
       is.na(adequacy.final) == TRUE & (ontostool1 > 13 | ontostool1 < 0 |
-                                         is.na(stool1tostool2) == T |
+                                         is.na(stool1tostool2) |
                                          ontostool2 > 14 | ontostool2 < 1 | stool1tostool2 < 1 |
                                          stool.1.condition == "Poor" | stool.2.condition == "Poor") ~ 0,
       TRUE ~ adequacy.final
@@ -74,8 +74,8 @@ generate_ad_final_col <- function(afp.data) {
       TRUE ~ adequacy.final
     )) %>%
     mutate(adequacy.final = dplyr::case_when( # Conditions for Missing Adequacy
-      is.na(adequacy.final) == TRUE & (is.na(stool.1.condition) == T |
-                                         is.na(stool.2.condition) == T |
+      is.na(adequacy.final) == TRUE & (is.na(stool.1.condition) |
+                                         is.na(stool.2.condition) |
                                          stool.1.condition == "Unknown" | stool.2.condition == "Unknown") ~ 99,
       TRUE ~ adequacy.final
     )) |>
@@ -85,6 +85,7 @@ generate_ad_final_col <- function(afp.data) {
       "stool1tostool2", "ontostool1", "ontostool2",
       "stool.1.condition", "stool.2.condition",
       "adequacy.01", "adequacy.02", "adequacy.03",
+      "stool1missing", "stool2missing",
       "adequacy.final", "cdc.classification.all2"
     )
 
@@ -128,16 +129,19 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
     dplyr::group_by(get(geo)) |>
     summarize(
       total.afp.cases = n(),
+      num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
       num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
-      num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       bad.data = sum(.data$adequacy.03 == 77, na.rm = T),
       same.day.stool.collection = sum(.data$stool1tostool2 == 0, na.rm = T),
       late.collection = sum(.data$ontostool1 > 14 | .data$ontostool2 > 14, na.rm = T),
       bad.condition = sum(.data$stool.1.condition == "Poor" | .data$stool.2.condition == "Poor", na.rm = T),
+      missing.condition = sum(is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition)),
       missing.stool1.condition = sum(is.na(.data$stool.1.condition)),
       missing.stool2.condition = sum(is.na(.data$stool.2.condition)),
-      missing.condition = sum(is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition))
+      missing.stool1 = sum(.data$stool1missing == 1),
+      missing.stool2 = sum(.data$stool1missing == 1),
+      one.or.no.stool = sum(.data$stool1missing == 1 | .data$stool2missing == 1)
     ) |>
     dplyr::ungroup() |>
     dplyr::mutate(per.stool.ad = 100 * (.data$num.adequate / .data$num.ad.plus.inad),
@@ -154,7 +158,7 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
 
   int.data <- int.data |>
     mutate(per.stool.ad = dplyr::if_else(.data$total.afp.cases == 0, NA, .data$per.stool.ad)) |>
-    dplyr::mutate(dplyr::across("total.afp.cases":"missing.stool2.condition", \(x) tidyr::replace_na(x, 0)))
+    dplyr::mutate(dplyr::across("total.afp.cases":"one.or.no.stool", \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 
@@ -179,16 +183,19 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
     dplyr::group_by(get(geo), .data$year) |>
     summarize(
       total.afp.cases = n(),
+      num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
       num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
-      num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       bad.data = sum(.data$adequacy.03 == 77, na.rm = T),
       same.day.stool.collection = sum(.data$stool1tostool2 == 0, na.rm = T),
       late.collection = sum(.data$ontostool1 > 14 | .data$ontostool2 > 14, na.rm = T),
       bad.condition = sum(.data$stool.1.condition == "Poor" | .data$stool.2.condition == "Poor", na.rm = T),
+      missing.condition = sum(is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition)),
       missing.stool1.condition = sum(is.na(.data$stool.1.condition)),
       missing.stool2.condition = sum(is.na(.data$stool.2.condition)),
-      missing.condition = sum(is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition))
+      missing.stool1 = sum(.data$stool1missing == 1),
+      missing.stool2 = sum(.data$stool1missing == 1),
+      one.or.no.stool = sum(.data$stool1missing == 1 | .data$stool2missing == 1)
     ) |>
     dplyr::ungroup() |>
     dplyr::mutate(per.stool.ad = 100 * (.data$num.adequate / .data$num.ad.plus.inad))
@@ -206,7 +213,7 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
 
   int.data <- int.data |>
     dplyr::mutate(per.stool.ad = dplyr::if_else(.data$total.afp.cases == 0, NA, .data$per.stool.ad)) |>
-    dplyr::mutate(dplyr::across("total.afp.cases":"missing.stool2.condition", \(x) tidyr::replace_na(x, 0)))
+    dplyr::mutate(dplyr::across("total.afp.cases":"one.or.no.stool", \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 
@@ -329,8 +336,8 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #' @param start.date chr: "YYYY-MM-DD" - starting date for analysis.
 #' @param end.date chr: "YYYY-MM-DD" - ending date for analysis.
 #' @param spatial.scale chr: "prov" or "dist" or "ctry".
-#' @param missing chr: "good" or "bad" or "missing", default "good". "good" uses "adequacy.03", "bad" uses "adequacy.01",
-#' and "missing" uses "adequacy.02" when calculating the adequacy.final column.
+#' @param missing chr: "good" or "bad" or "remove", default "good". "good" uses "adequacy.03", "bad" uses "adequacy.01",
+#' and "exclude" uses "adequacy.02" when calculating the adequacy.final column.
 #' @param bad.data chr: "remove" or "inadequate"; default "inadequate". "inadequate" treats samples bad data as inadequate.
 #' @param rolling boolean: Should data be annualized or calculated within the time period allotted.
 #' @param sp_continuity_validation boolean: Exclude GUIDs not present in all years of the dataset. Default T.
@@ -400,7 +407,7 @@ f.stool.ad.02 <- function(
 
   # Check that missing param contains appropriate arguments
   if (!missing %in% c("good", "bad", "missing")) {
-    stop('Only "good", "bad", and "missing" are valid arguments for the missing parameter.')
+    stop('Only "good", "bad", and "exclude" are valid arguments for the missing parameter.')
   }
 
   # Perform checks
@@ -490,6 +497,7 @@ f.stool.ad.02 <- function(
                        )
 
   # Select how to treat missing data
+  # adequacy.01, adequacy.02, adequacy.03 are generated in pre-processing
   stool.data <- switch(missing,
                        "good" = {
                          stool.data |>
@@ -499,7 +507,7 @@ f.stool.ad.02 <- function(
                          stool.data |>
                            dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.01, .data$adequacy.final))
                        },
-                       "missing" = {
+                       "exclude" = {
                          cli::cli_alert_warning("AFP cases with missing adequacy excluded from stool adequacy calculation.")
                          stool.data |>
                            dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.02, .data$adequacy.final))
@@ -512,6 +520,9 @@ f.stool.ad.02 <- function(
   } else {
     int.data <- stool_ad_year(stool.data, admin.data, year.data, spatial.scale)
   }
+
+  int.data <- int.data |>
+    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad")
 
   return(int.data)
 }
