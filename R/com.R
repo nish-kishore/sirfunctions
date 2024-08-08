@@ -31,7 +31,6 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #' Helper function to upload file to MS SharePoint
 #' @import Microsoft365R
 #' @import AzureAuth
-#' @import dplyr
 #' @param file_to_upload str: local path of files to be uploaded
 #' @param sharepoint_file_loc str: location in SharePoint to upload file
 #' @param site str: SharePoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"
@@ -81,9 +80,6 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 #'
 #' @description
 #' Helper function to send an email through Outlook from R
-#' @import Microsoft365R
-#' @import AzureAuth
-#' @import dplyr
 #' @param title str: Subject of message to be sent
 #' @param body str: long string of body of message to be sent
 #' @param recipient str: semicolon separated list of recipients
@@ -101,34 +97,40 @@ send_outlook_email <- function(title, body, recipient, attachment = NULL){
 
   token_hash_names <- tokens |> names()
 
-  token_list <- lapply(1:length(token_hash_names), function(x){
+  if (length(token_hash_names) > 0) {
+    token_list <- lapply(1:length(token_hash_names), function(x) {
+      obj <- tokens[[token_hash_names[x]]]
 
-    obj <- tokens[[token_hash_names[x]]]
+      dplyr::tibble(
+        "token" = token_hash_names[x],
+        "resource" = obj$resource,
+        "scope" = obj$scope
+      )
+    }) |>
+      dplyr::bind_rows() |>
+      dplyr::filter(grepl("Mail.ReadWrite", scope))
+  } else {
+    token_list = dplyr::tibble()
+  }
 
-    dplyr::tibble(
-      "token" = token_hash_names[x],
-      "resource" = obj$resource,
-      "scope" = obj$scope
-    )
-  }) |>
-    dplyr::bind_rows() |>
-    dplyr::filter(grepl("Mail.ReadWrite", scope))
-
-  if(nrow(token_list == 0)){
+  if (nrow(token_list) == 0) {
+    cli::cli_alert_warning(paste0("Authenticating Azure connection. ",
+                                  "If local host refuses to connect, ",
+                                  "then unable to authenticate with Azure Active Directory and use this function."))
     outl <- Microsoft365R::get_business_outlook()
 
-  }else{
+  } else {
     outl <- Microsoft365R::get_business_outlook(token = tokens[[dplyr::pull(token_list, token)]])
 
   }
 
   bl_em <- blastula::compose_email(
-    body=blastula::md(body),
-    footer=blastula::md("This is an automated message produced by the SIR team")
+    body = blastula::md(body),
+    footer = blastula::md("This is an automated message produced by the SIR team")
   )
-  em <- outl$create_email(bl_em, subject=title, to=recipient)
+  em <- outl$create_email(bl_em, subject = title, to = recipient)
 
-  if(!is.null(attachment)){
+  if (!is.null(attachment)) {
     # add an attachment and send it
     em$add_attachment(attachment)
   }
