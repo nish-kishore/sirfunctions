@@ -2,18 +2,26 @@
 ## Plots ----
 #' Timeliness bar graph at the country level
 #' @import ggplot2 forcats
+#'
 #' @param int.data summary table with timeliness intervals at the country level
+#' @param afp.year.lab summary table of samples sent by year
 #' @param output_path path where to output the figure
 #'
 #' @returns ggplot object
 #' @export
 generate_ctry_timeliness_graph <- function(int.data,
+                                           afp.year.lab,
                                            output_path = Sys.getenv("DR_FIGURE_PATH")) {
+  year.time <- dplyr::left_join(
+    int.data,
+    afp.year.lab) |>
+    dplyr::filter(.data$medi >= 0 | !is.na(.data$medi))
+
   timely_nation <- ggplot2::ggplot() +
     ggplot2::geom_bar(
-      data = int.data,
+      data = year.time,
       ggplot2::aes(
-        x = factor(year),
+        x = labs,
         y = medi,
         fill = forcats::fct_rev(type)
       ),
@@ -21,9 +29,9 @@ generate_ctry_timeliness_graph <- function(int.data,
       stat = "identity"
     ) +
     ggplot2::geom_text(
-      data = int.data,
+      data = year.time,
       ggplot2::aes(
-        x = factor(year),
+        x = labs,
         y = medi,
         label = medi,
         group = forcats::fct_rev(type)
