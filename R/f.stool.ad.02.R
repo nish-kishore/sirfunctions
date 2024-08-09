@@ -78,16 +78,7 @@ generate_ad_final_col <- function(afp.data) {
         is.na(stool.2.condition) |
         stool.1.condition == "Unknown" | stool.2.condition == "Unknown") ~ 99,
       TRUE ~ adequacy.final
-    )) |>
-    dplyr::mutate(year = lubridate::year(date)) |>
-    dplyr::select(
-      "year", "adm0guid", "adm1guid", "adm2guid",
-      "stool1tostool2", "ontostool1", "ontostool2",
-      "stool.1.condition", "stool.2.condition",
-      "adequacy.01", "adequacy.02", "adequacy.03",
-      "stool1missing", "stool2missing",
-      "adequacy.final", "cdc.classification.all2"
-    )
+    ))
 
   return(stool.data)
 }
@@ -478,6 +469,18 @@ f.stool.ad.02 <- function(
 
   # Coding data to be adequate (1), inadequate (0), data missing (99), or data error (77)
   stool.data <- generate_ad_final_col(afp.data)
+
+  # Selecting only relevant columns
+  stool.data <- stool.data |>
+    dplyr::mutate(year = lubridate::year(date)) |>
+    dplyr::select(
+      "year", "adm0guid", "adm1guid", "adm2guid",
+      "stool1tostool2", "ontostool1", "ontostool2",
+      "stool.1.condition", "stool.2.condition",
+      "adequacy.01", "adequacy.02", "adequacy.03",
+      "stool1missing", "stool2missing",
+      "adequacy.final", "cdc.classification.all2"
+    )
 
   # Merge stool data with days in year
   stool.data <- dplyr::full_join(stool.data, year.data,
