@@ -6,11 +6,14 @@
 \usage{
 generate_ctry_timeliness_graph(
   int.data,
+  afp.year.lab,
   output_path = Sys.getenv("DR_FIGURE_PATH")
 )
 }
 \arguments{
 \item{int.data}{summary table with timeliness intervals at the country level}
+
+\item{afp.year.lab}{summary table of samples sent by year}
 
 \item{output_path}{path where to output the figure}
 }

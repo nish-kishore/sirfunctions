@@ -571,6 +571,8 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 
   if (spatial.scale == "prov") {
     int.data$prov <- ctry.data$prov.pop$prov[match(int.data$adm1guid, ctry.data$prov.pop$adm1guid)]
+  } else if (spatial.scale == "ctry") {
+    int.data$ctry <- ctry.data$ctry.pop$ctry[match(int.data$adm0guid, ctry.data$ctry.pop$adm0guid)]
   }
 
   levs <- NULL
@@ -785,9 +787,27 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
   return(cases.need60day)
 }
 
+#' Generate a summary of samples sent to lab by year
+#' @param ctry.data Rds file containing country polio data
+#' @param start_date start date of the desk review
+#' @param end_date end date of the desk review
+#'
+#' @return a tibble containing summary of samples sent to lab by year and province
+#' @export
+generate_year_lab <- function(ctry.data, start_date, end_date) {
+  afp.year.lab <- ctry.data$afp.all.2 |>
+    dplyr::filter(dplyr::between(date.onset, start_date, end_date)) |>
+    dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
+    dplyr::mutate(labs = paste0(
+      year,
+      " (N=", n, ")"
+    ))
+
+  return(afp.year.lab)
+}
+
 #' Generate a summary of samples sent to lab by year and province
-#' @import dplyr
-#' @param ctry.data Rds file countaining country polio data
+#' @param ctry.data Rds file containing country polio data
 #' @param start_date start date of the desk review
 #' @param end_date end date of the desk review
 #'
@@ -796,7 +816,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
   afp.prov.year.lab <- ctry.data$afp.all.2 |>
     dplyr::filter(dplyr::between(date.onset, start_date, end_date)) |>
-    count(prov, adm1guid, year) |>
+    dplyr::count(prov, adm1guid, year) |>
     dplyr::mutate(labs = paste0(
       year,
       " (N=", n, ")"
@@ -804,7 +824,6 @@ generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
 
   return(afp.prov.year.lab)
 }
-
 
 #' Creating a table of compatible and potentially compatible cases
 #' @import dplyr
