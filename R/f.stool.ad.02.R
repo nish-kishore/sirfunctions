@@ -119,7 +119,7 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
   int.data <- stool.data |>
     dplyr::group_by(get(geo)) |>
     summarize(
-      total.afp.cases = n(),
+      afp.cases = n(),
       num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
       num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
@@ -131,7 +131,7 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
       missing.stool1.condition = sum(is.na(.data$stool.1.condition)),
       missing.stool2.condition = sum(is.na(.data$stool.2.condition)),
       missing.stool1 = sum(.data$stool1missing == 1),
-      missing.stool2 = sum(.data$stool1missing == 1),
+      missing.stool2 = sum(.data$stool2missing == 1),
       one.or.no.stool = sum(.data$stool1missing == 1 | .data$stool2missing == 1)
     ) |>
     dplyr::ungroup() |>
@@ -148,8 +148,8 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
     dplyr::left_join(pop.data)
 
   int.data <- int.data |>
-    mutate(per.stool.ad = dplyr::if_else(.data$total.afp.cases == 0, NA, .data$per.stool.ad)) |>
-    dplyr::mutate(dplyr::across("total.afp.cases":"one.or.no.stool", \(x) tidyr::replace_na(x, 0)))
+    mutate(per.stool.ad = dplyr::if_else(.data$afp.cases == 0, NA, .data$per.stool.ad)) |>
+    dplyr::mutate(dplyr::across("afp.cases":"one.or.no.stool", \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 
@@ -173,7 +173,7 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
   int.data <- stool.data |>
     dplyr::group_by(get(geo), .data$year) |>
     summarize(
-      total.afp.cases = n(),
+      afp.cases = n(),
       num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
       num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
@@ -185,7 +185,7 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
       missing.stool1.condition = sum(is.na(.data$stool.1.condition)),
       missing.stool2.condition = sum(is.na(.data$stool.2.condition)),
       missing.stool1 = sum(.data$stool1missing == 1),
-      missing.stool2 = sum(.data$stool1missing == 1),
+      missing.stool2 = sum(.data$stool2missing == 1),
       one.or.no.stool = sum(.data$stool1missing == 1 | .data$stool2missing == 1)
     ) |>
     dplyr::ungroup() |>
@@ -203,8 +203,8 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
     dplyr::rename("days.at.risk" = "n_days")
 
   int.data <- int.data |>
-    dplyr::mutate(per.stool.ad = dplyr::if_else(.data$total.afp.cases == 0, NA, .data$per.stool.ad)) |>
-    dplyr::mutate(dplyr::across("total.afp.cases":"one.or.no.stool", \(x) tidyr::replace_na(x, 0)))
+    dplyr::mutate(per.stool.ad = dplyr::if_else(.data$afp.cases == 0, NA, .data$per.stool.ad)) |>
+    dplyr::mutate(dplyr::across("afp.cases":"one.or.no.stool", \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 

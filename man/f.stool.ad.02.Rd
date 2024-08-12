@@ -30,8 +30,8 @@ spatial scale including "year", "adm(0,1,2)guid, and "(ctry/prov/dist)"}
 
 \item{spatial.scale}{chr: "prov" or "dist" or "ctry".}
 
-\item{missing}{chr: "good" or "bad" or "missing", default "good". "good" uses "adequacy.03", "bad" uses "adequacy.01",
-and "missing" uses "adequacy.02" when calculating the adequacy.final column.}
+\item{missing}{chr: "good" or "bad" or "remove", default "good". "good" uses "adequacy.03", "bad" uses "adequacy.01",
+and "exclude" uses "adequacy.02" when calculating the adequacy.final column.}
 
 \item{bad.data}{chr: "remove" or "inadequate"; default "inadequate". "inadequate" treats samples bad data as inadequate.}
 

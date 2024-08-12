@@ -2313,12 +2313,7 @@ generate_surv_ind_tab <- function(ctry.data,
   }
 
   dist.ind.afp <- dplyr::left_join(dis.extract,
-    dstool,
-    by = c(
-      "prov" = "prov",
-      "dist" = "dist",
-      "year" = "year"
-    )
+    dstool
   )
 
   # population meeting both >=2 NPAFP rate and >=80% stool adequacy
@@ -2661,221 +2656,87 @@ generate_inad_tab <- function(ctry.data,
          .call = FALSE)
   }
 
-  stool.sub <- cstool[, c(
-    "year",
-    "num.adj.w.miss",
-    "num.inadequate",
-    "per.stool.ad",
-    "afp.cases"
-  )]
-
-  # Late collection (%) among inadequate
-  inads <- stool.data %>%
-    dplyr::filter(dplyr::between(date, start_date, end_date)) %>%
-    dplyr::filter(adequacy.final == "Inadequate")
-
-  # Timeliness
-  late.inads <- inads %>%
-    dplyr::mutate(
-      timelystool = dplyr::case_when(
-        ontostool1 > 13 |
-          ontostool1 < 0 |
-          is.na(stool1tostool2) == T |
-          ontostool2 > 14 |
-          ontostool2 < 1 |
-          stool1tostool2 < 1 ~ "Not Timely",
-        T ~ "Timely"
-      )
-    )
-
-
-  late.stool <- dplyr::count(late.inads, .data$year, .data$timelystool) %>%
-    dplyr::filter(timelystool == "Not Timely")
-  # variables exclude bad dates as 77 or Unable to Assess
-  # Missing dates treated as absence of collection of stool as there is no variable
-  # that specifies stool was not collected
-
-  # No stool/one stool/one stool among inadequate
-  dplyr::count(
-    inads,
-    .data$stoolmissing,
-    .data$stool1missing,
-    .data$stool2missing
-  )
-
-  stool.miss.any <- dplyr::summarize(
-    dplyr::group_by(inads, year),
-    stoolmiss =
-      sum(stool1missing == 1 | stool2missing == 1, na.rm = T)
-  )
-
-
-  # Poor condition among inadequate
-  dplyr::count(inads, .data$stool.1.condition, .data$stool.2.condition)
-
-  cond.poor <- dplyr::filter(
-    inads,
-    stool.1.condition == "Poor" |
-      stool.2.condition == "Poor"
-  )
-
-  yrs <- as.data.frame(seq(lubridate::year(start_date), lubridate::year(end_date), 1))
-  names(yrs) <- "year"
-
-  cond.poor.num <- dplyr::count(cond.poor, year)
-  cond.poor.num <- dplyr::left_join(yrs, cond.poor.num, by = c("year" = "year")) %>%
-    dplyr::mutate(dplyr::across(c(n), \(x) tidyr::replace_na(x, 0)))
-
-  # ALL AFP
+  # All AFP cases
   afps.all <- ctry.data$afp.all.2 %>%
-    dplyr::filter(dplyr::between(date, start_date, end_date))
+    dplyr::filter(dplyr::between(date, start_date, end_date),
+                  cdc.classification.all2 != "NOT-AFP") |>
+    dplyr::group_by(year) |>
+    dplyr::summarise(good.cond.1 = sum((.data$ontostool1 <= 14 & (.data$stool.1.condition == "Good" | is.na(.data$stool.1.condition))) |
+                                         ( .data$ontostool2 <= 14 & (.data$stool.2.condition == "Good" | is.na(.data$stool.2.condition))),
+                                       na.rm = T),
+                     good.cond.2 = sum(.data$stool1missing == 0 &
+                                         .data$stool2missing == 0 &
+                                         .data$ontostool1 <= 21 &
+                                         .data$ontostool2 <= 21 &
+                                         (.data$stool.1.condition == "Good" | is.na(.data$stool.1.condition)) &
+                                         (.data$stool.2.condition == "Good" | is.na(.data$stool.2.condition)), na.rm = T),
+                     afp.cases = n()) |>
+    dplyr::mutate(good.cond.1per = round(.data$good.cond.1 / .data$afp.cases * 100, 0),
+                  good.cond.2per = round(.data$good.cond.2 / .data$afp.cases * 100, 0)) |>
+    dplyr::mutate(good.cond.1per = paste0(.data$good.cond.1per,
+                                          "% (", .data$good.cond.1, "/", .data$afp.cases, " cases)"),
+                  good.cond.2per = paste0(.data$good.cond.2per,
+                                          "% (", .data$good.cond.2, "/", .data$afp.cases, " cases)"))
 
-  # 1 stool within 14 days of onset (+condition)
-  good.cond.1 <- dplyr::count(
-    afps.all,
-    (.data$ontostool1 <= 14 | .data$ontostool2 <= 14) &
-      (
-        .data$stool.1.condition == "Good" |
-          is.na(.data$stool.1.condition)
-      ) &
-      (
-        .data$stool.2.condition == "Good" |
-          is.na(.data$stool.2.condition)
-      ),
-    year
-  )
+  # Join with cstool
+  allinadstool <- dplyr::left_join(cstool, afps.all) |>
+    mutate(per.stool.ad = round(per.stool.ad, 0))
 
-  colnames(good.cond.1)[1] <- "conds"
-  good.cond.1 <- good.cond.1 %>%
-    dplyr::filter(conds == TRUE)
-  # 2 stools within 21 days of onset (+condition)
-  good.cond.2 <- dplyr::count(
-    afps.all,
-    .data$stool1missing == 0 &
-      .data$stool2missing == 0 &
-      .data$ontostool2 <= 21 &
-      (
-        .data$stool.1.condition == "Good" |
-          is.na(.data$stool.1.condition)
-      ) &
-      (
-        .data$stool.2.condition == "Good" |
-          is.na(.data$stool.2.condition)
-      ),
-    year
-  )
-  colnames(good.cond.2)[1] <- "conds"
-  good.cond.2 <- good.cond.2 %>%
-    dplyr::filter(conds == TRUE)
+  # Create additional columns
+  allinadstool <- allinadstool |>
+    dplyr::mutate(timelyper = round(.data$late.collection / .data$num.inadequate * 100, 0),
+                  missingper = round(.data$one.or.no.stool / .data$num.inadequate * 100, 0),
+                  poorper = round(.data$bad.condition / .data$num.inadequate * 100, 0),
+                  badper = round(.data$bad.data / .data$num.inadequate * 100, 0)) |>
+    dplyr::mutate(timelyper = paste0(.data$late.collection, " (", .data$timelyper, "%)"),
+                  missingper = paste0(.data$one.or.no.stool, " (", .data$missingper, "%)"),
+                  poorper = paste0(.data$bad.condition, " (", .data$poorper, "%)"),
+                  badper = paste0(.data$bad.data, " (", .data$badper, "%)"))
 
-  # Time to lab
-  # !!! daysstooltolab is not a variable in afp.all.2, had to recreate it
-  medi_lab <- dplyr::summarize(
-    dplyr::group_by(ctry.data$afp.all.2, year),
-    medi = median(ctry.data$afp.all.2$daysstooltolab, na.rm = T)
-  )
-
-  # Bind together tables
-  allinadstool <- dplyr::left_join(stool.sub, late.stool, by = "year") %>%
-    dplyr::select(-"timelystool") %>%
-    dplyr::rename("timelystool" = "n") %>%
-    dplyr::left_join(stool.miss.any, by = "year") %>%
-    dplyr::left_join(cond.poor.num, by = "year") %>%
-    dplyr::rename("cond.poor.num" = "n") %>%
-    dplyr::left_join(good.cond.1, by = "year") %>%
-    dplyr::select(-"conds") %>%
-    dplyr::rename("good.cond.1" = "n") %>%
-    dplyr::left_join(good.cond.2, by = "year") %>%
-    dplyr::select(-"conds") %>%
-    dplyr::rename("good.cond.2" = "n")
-
-  allinadstool$timelyper <- paste0(
-    allinadstool$timelystool,
-    " (",
-    round(
-      100 * allinadstool$timelystool / allinadstool$num.inadequate,
-      0
-    ),
-    "%)"
-  )
-  allinadstool$poorper <- paste0(
-    allinadstool$cond.poor.num,
-    " (",
-    round(
-      100 * allinadstool$cond.poor.num / allinadstool$num.inadequate,
-      0
-    ),
-    "%)"
-  )
-  allinadstool$missingper <- paste0(
-    allinadstool$stoolmiss,
-    " (",
-    round(100 * allinadstool$stoolmiss / allinadstool$num.inadequate, 0),
-    "%)"
-  )
-  allinadstool$good.cond.1per <- paste0(
-    round(100 * allinadstool$good.cond.1 / allinadstool$afp.cases, 0),
-    "% (",
-    allinadstool$good.cond.1,
-    "/",
-    allinadstool$afp.cases,
-    " cases)"
-  )
-  allinadstool$good.cond.2per <- paste0(
-    round(100 * allinadstool$good.cond.2 / allinadstool$afp.cases, 0),
-    "% (",
-    allinadstool$good.cond.2,
-    "/",
-    allinadstool$afp.cases,
-    " cases)"
-  )
-
-  allinadstool$per.stool.ad <- round(allinadstool$per.stool.ad, 1)
-
-
-  # Among inadequate cases
-  # Among all AFP cases
-  # Transport to the lab (median days)
-  # NPENT (%)
-
-
-  inad.tab <- as.data.frame(t(allinadstool)) %>%
-    janitor::row_to_names(row_number = 1) %>%
-    tibble::rownames_to_column("type") %>%
+  inad.tab <- allinadstool |>
+    dplyr::select(-dplyr::any_of(c("days_in_year", "days.at.risk",
+                                   "adm0guid", "earliest_date", "latest_date",
+                                   "datasource", "ctry", "u15pop"))) |>
+    dplyr::mutate(dplyr::across(dplyr::everything(), \(x) as.character(x))) |>
+    tidyr::pivot_longer(cols = c("afp.cases":"badper"),
+                        names_to = "type") |>
+    tidyr::pivot_wider(names_from = "year", values_from = "value") |>
     dplyr::filter(
       type %in% c(
-        "num.adj.w.miss",
+        "num.adequate",
         "num.inadequate",
         "per.stool.ad",
         "timelyper",
         "missingper",
         "poorper",
+        "badper",
         "good.cond.1per",
         "good.cond.2per"
       )
     ) %>%
     dplyr::mutate(
       type = dplyr::case_when(
-        type == "num.adj.w.miss" ~ "Cases with adequate stools",
+        type == "num.adequate" ~ "Cases with adequate stools",
         type == "num.inadequate" ~ "Cases with inadequate stools",
         type == "per.stool.ad" ~ "Stool adequacy*",
         type == "afp.cases" ~ "",
         type == "timelyper" ~ "Late collection (%)",
         type == "missingper" ~ "No Stool/one stool",
         type == "poorper" ~ "Poor condition",
+        type == "badper" ~ "Bad dates",
         type == "good.cond.1per" ~ "1 stool within 14 days of onset (+ condition)",
         type == "good.cond.2per" ~ "2 stools within 21 days of onset (+ condition)",
         FALSE ~ type
       )
     )
 
-  inad.tab <-
-    inad.tab[c(3, 1, 2, 4, 6, 5, 7, 8), ] # Reorder the table to be in the correct order
+  inad.tab <- inad.tab[c(3, 1, 2, 6, 7, 8, 9, 4, 5), ] # Reorder the table to be in the correct order
 
   inad.tab$sub <- c(
     "",
     "",
     "",
+    "Among Inadequate Cases",
     "Among Inadequate Cases",
     "Among Inadequate Cases",
     "Among Inadequate Cases",
@@ -2898,6 +2759,7 @@ generate_inad_tab <- function(ctry.data,
   return(inad.tab.flex)
 }
 
+
 #' Table used for those requiring 60 day follow up
 #' @importFrom dplyr arrange desc group_by mutate n select summarize
 #' @importFrom flextable align bold flextable fontsize set_header_labels theme_booktabs width
@@ -2909,7 +2771,8 @@ generate_60_day_tab <- function(cases.need60day) {
   comp.by.year <- cases.need60day |>
     dplyr::group_by(year) |>
     dplyr::summarize(
-      inadequate = dplyr::n(),
+      inadequate = sum(.data$adequacy.final2 == "Inadequate"),
+      inadequate.need.60day = sum(.data$need60day.v2 == 1 & .data$adequacy.final2 == "Inadequate"),
       got60day = sum(got60day == 1, na.rm = T),
       ontime60day = sum(ontime.60day == 1, na.rm = T),
       compatible = sum(cdc.classification.all2 == "COMPATIBLE"),
@@ -2917,35 +2780,22 @@ generate_60_day_tab <- function(cases.need60day) {
       missing.fu.date = sum(missing.fu.date == 1, na.rm = T)
     ) |>
     dplyr::mutate(
-      per.got60 = round(.data$got60day / .data$inadequate * 100),
-      per.ontime60day = round(.data$ontime60day / .data$got60day * 100),
+      per.got60 = round(.data$got60day / .data$inadequate.need.60day * 100),
+      per.ontime60day = round(.data$ontime60day / .data$inadequate.need.60day * 100),
       per.comp = round(.data$compatible / .data$inadequate * 100),
       per.pot.comp = round(.data$pot.compatible / .data$inadequate * 100),
-      per.got60.2 = paste(.data$got60day, " ", "(", .data$per.got60, "%", ")", sep = ""),
-      per.ontime60day.2 = paste(
-        .data$ontime60day,
-        " ",
-        "(",
-        .data$per.ontime60day,
-        "%",
-        ")",
-        sep = ""
-      ),
+      per.got60.2 = paste0(.data$got60day, "/", .data$inadequate.need.60day, " (", .data$per.got60, "%)"),
+      per.ontime60day.2 = paste0(.data$ontime60day,  "/", .data$inadequate.need.60day, " (", .data$per.ontime60day, "%)"),
       per.comp.2 = .data$compatible,
       per.pot.comp.2 = .data$pot.compatible,
-      per.missing.fu.date = paste(
-        .data$missing.fu.date,
-        " ",
-        "(",
-        round(.data$missing.fu.date / .data$inadequate * 100),
-        "%",
-        ")",
-        sep = ""
-      )
+      per.missing.fu.date = paste0(.data$missing.fu.date, "/", .data$inadequate.need.60day, " (",
+                                   round(.data$missing.fu.date / .data$inadequate.need.60day * 100),
+                                   "%)")
     ) |>
     dplyr::select(
       "year",
       "inadequate",
+      "inadequate.need.60day",
       "per.got60.2",
       "per.ontime60day.2",
       "per.missing.fu.date",
@@ -2965,11 +2815,12 @@ generate_60_day_tab <- function(cases.need60day) {
     flextable::set_header_labels(
       year = "Year",
       inadequate = "No. inadequate cases",
+      inadequate.need.60day = "No. inadequate cases due for follow-up*",
       per.got60.2 = "Recorded 60-day follow-up",
-      per.ontime60day.2 = "Recorded 60-day ontime (out of those visited)",
-      per.missing.fu.date = "No. Missing follow up date with findings",
+      per.ontime60day.2 = "Recorded 60-day follow-up between 60-90 days of onset",
+      per.missing.fu.date = "No. missing follow up date with findings",
       per.comp.2 = "Compatible cases",
-      per.pot.comp.2 = "Potentially compatible cases*"
+      per.pot.comp.2 = "Potentially compatible cases**"
     ) |>
     flextable::align(
       j = 2:7,
@@ -2982,7 +2833,19 @@ generate_60_day_tab <- function(cases.need60day) {
       part = "all"
     ) |>
     flextable::fontsize(size = 11, part = "all") |>
-    flextable::width(j = 1:7, width = 2) #|>
+    flextable::width(j = 1:7, width = 2) |>
+    flextable::vline(j = 6)
+
+  tab.60d <- tab.60d |>
+    flextable::add_footer_row(
+      top = F,
+      paste0("*120 days post-paralysis onset (90 days to complete follow-up + 30 days to account for data lag)\n",
+             "** Defined as inadequate cases with: ",
+             "1) FU finding (Residual weakness, Lost to FU, Died) or no FU visit; ",
+             "2) Discarded or Pending Lab / Pending Classification; ",
+             '3) Filtered for "OPV/IPV status: <3 doses, or Unknown"'),
+      colwidths = ncol(comp.by.year)
+    )
 
   return(tab.60d)
 }

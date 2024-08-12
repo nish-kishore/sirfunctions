@@ -278,7 +278,7 @@ add_age_group <- function(age.months) {
 #' @export
 generate_afp_by_month <- function(afp.data, start_date, end_date) {
   summary <- afp.data |>
-    tidyr::drop_na("date.onset") |>
+    #tidyr::drop_na("date.onset") |>
     dplyr::filter(dplyr::between(lubridate::as_date(date.onset), start_date, end_date)) |>
     dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
 
@@ -298,6 +298,10 @@ generate_afp_by_month <- function(afp.data, start_date, end_date) {
 #' @return tibble summary table of AFP cases by month
 #' @export
 generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, end_date, by) {
+  afp.by.month <- afp.by.month |>
+    dplyr::filter(cdc.classification.all2 != "NOT-AFP")
+
+
   afp.by.month.summary <- switch(by,
     "prov" = {
       afp.by.month |>
@@ -672,14 +676,17 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
   cases.need60day <- stool.data.inad |>
     dplyr::as_tibble() |>
     # filter onset to be >120 days from system date
-    dplyr::filter(date <= lubridate::as_date(dplyr::if_else(
-      end_date > Sys.Date() - 120, (Sys.Date() - 120),
-      end_date
-    ))) |>
-    dplyr::filter(date >= start_date) |>
-    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final2 != "Adequate", 1, 0)) |>
-    dplyr::filter(need60day.v2 == 1 |
-      cdc.classification.all2 == "COMPATIBLE") |>
+    # dplyr::filter(date <= lubridate::as_date(dplyr::if_else(
+    #   end_date > Sys.Date() - 120, (Sys.Date() - 120),
+    #   end_date
+    # ))) |>
+    dplyr::mutate(due.60followup = dplyr::if_else(date <= (Sys.Date() - days(120)), 1, 0),
+                  need60.sys.date = Sys.Date()) |> # needed to record when the table was created
+    dplyr::filter(dplyr::between(date, start_date, end_date)) |>
+    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final == "Inadequate" &
+                                                  due.60followup == 1, 1, 0)) |>
+    # dplyr::filter(need60day.v2 == 1 |
+    #   cdc.classification.all2 == "COMPATIBLE") |>
     dplyr::mutate(
       got60day =
         dplyr::case_when(
@@ -774,7 +781,13 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
       "cdc.classification.all2",
       "missing.fu.date",
       "adm1guid",
-      "adm2guid"
+      "adm2guid",
+      "need60day",
+      "due.60followup",
+      "need60.sys.date",
+      "need60day.v2",
+      "adequacy.final",
+      "adequacy.final2"
     )
 
   return(cases.need60day)
@@ -1015,7 +1028,7 @@ generate_stool_data <- function(afp.data, missing="good", bad.data="inadequate",
         adequacy.final == 77 ~ "Bad data",
         adequacy.final == 99 ~ "Missing",
       ),
-      adequacy.final = dplyr::case_when(
+      adequacy.final2 = dplyr::case_when(
         adequacy.final2 == 0 ~ "Inadequate",
         adequacy.final2 == 1 ~ "Adequate",
         adequacy.final2 == 77 ~ "Bad data",
