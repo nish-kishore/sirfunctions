@@ -154,7 +154,8 @@ generate_afp_epicurve <- function(ctry.data,
                                   end_date = lubridate::today(),
                                   output_path = Sys.getenv("DR_FIGURE_PATH")) {
   afp.epi.date.filter <- ctry.data$afp.epi %>%
-    dplyr::filter(dplyr::between(yronset, as.numeric(lubridate::year(start_date)), as.numeric(lubridate::year(end_date))))
+    dplyr::filter(dplyr::between(yronset, as.numeric(lubridate::year(start_date)), as.numeric(lubridate::year(end_date))),
+                  .data$cdc.classification.all2 != "NOT-AFP")
 
   case.num.labs <- dplyr::reframe(
     dplyr::group_by(afp.epi.date.filter, .data$yronset),
@@ -210,6 +211,8 @@ generate_afp_prov_year <- function(afp.by.month.prov,
     dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)), !is.na(prov))
 
   afp.month.prov.g$case.cat <- factor(afp.month.prov.g$case.cat, levels = c(c("0", "1", "2-5", "6-9", "10+")))
+
+  # add a point to indicate cVDPV2 detections
 
   afp.dets.prov.year <- ggplot2::ggplot(
     afp.month.prov.g |>
@@ -1516,7 +1519,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
   )
 
   stoolad.d <- stoolad.d %>%
-    filter(is.na(dist)) |>
+    filter(!is.na(dist)) |>
     dplyr::tibble() %>%
     dplyr::mutate(
       prop.cat = dplyr::case_when(
