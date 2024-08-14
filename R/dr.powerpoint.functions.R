@@ -396,7 +396,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("draft_output_", Sys.Date(), "_", country, ".pptx")
+    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }
 
@@ -858,6 +858,6 @@ generate_dr_ppt2 <- function(ctry.data,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("draft_output_", Sys.Date(), "_", country, ".pptx")
+    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }
