@@ -261,7 +261,7 @@ add_age_group <- function(age.months) {
       age.months >= 145 & age.months < 180 ~ "145-179",
       age.months >= 180 ~ ">=180"
     )) |>
-    dplyr::select("age_group")
+    dplyr::select("age_group") |> dplyr::pull("age_group")
   cli::cli_process_done()
 
   return(age.months)
@@ -802,7 +802,8 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #' @export
 generate_year_lab <- function(ctry.data, start_date, end_date) {
   afp.year.lab <- ctry.data$afp.all.2 |>
-    dplyr::filter(dplyr::between(date.onset, start_date, end_date)) |>
+    dplyr::filter(dplyr::between(date.onset, start_date, end_date),
+                  cdc.classification.all2 != "NOT-AFP") |>
     dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
     dplyr::mutate(labs = paste0(
       year,
