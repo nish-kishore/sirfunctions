@@ -132,34 +132,13 @@ edav_io <- function(
     }
 
     if (grepl(".rds", file_loc)) {
-      corrupted.rds <- NULL
 
-      tryCatch(
-        {
-          return(suppressWarnings(AzureStor::storage_load_rds(azcontainer, file_loc)))
-          corrupted.rds <<- FALSE
-        },
-        error = function(e) {
-          cli::cli_alert_warning("RDS download from EDAV was corrupted, downloading directly...")
-          corrupted.rds <<- TRUE
-        }
-      )
+      dest <- tempfile()
+      AzureStor::storage_download(container = azcontainer, file_loc, dest)
+      x <- readRDS(dest)
+      unlink(dest)
+      return(x)
 
-      if (corrupted.rds) {
-        dest <- tempfile()
-        AzureStor::storage_download(container = azcontainer, file_loc, dest)
-        x <- readRDS(dest)
-        unlink(dest)
-        return(x)
-      }
-    }
-
-    if (grepl(".csv", file_loc)) {
-      return(suppressWarnings(AzureStor::storage_read_csv(azcontainer, file_loc)))
-    }
-
-    if (grepl(".rda", file_loc)) {
-      return(suppressWarnings(AzureStor::storage_load_rdata(azcontainer, file_loc)))
     }
   }
 
