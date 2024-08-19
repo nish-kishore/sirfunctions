@@ -14,7 +14,7 @@ raw.data <- get_all_polio_data()
 case.list <- c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")
 
 list.cases <- lapply(case.list,
-                     FUN = pull_clean_case_data,
+                     FUN = clean_case_data,
                      sia.data = raw.data$sia,
                      start.date = as.Date("2000-01-01"),
                      end.date = Sys.Date(), min.yronset = paste0(year(Sys.Date())-4),
