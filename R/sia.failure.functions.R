@@ -20,21 +20,23 @@ init_sia_impact <- function(folder_loc){
 
 }
 
-#### Pull Clean Data ####
+#### Data Cleaning/Prep ####
 #' @description function to pull clean, de-duplicated SIA campaign data for different purposes within
 #' the SIA impact report
+#' @param sia.data df sia data to be cleaned
 #' @param start.date date, start date of SIA campaigns
 #' @param end.date date, system date = today, last date of SIA campaigns, should be day of analysis
 #' @param method chr, signifies type of SIA being pulled, reg includes n/mopv2, topv and bopv, planned
 #' is limited to upcoming SIAs, IPV is for countries/regions that will only do IPV response
-pull_clean_sia_data <- function(start.date=as.Date("2016-01-01"),
+pull_clean_sia_data <- function(sia.data,
+                                start.date=as.Date("2016-01-01"),
                                 end.date = Sys.Date(),
                                 method = 'reg'){
   if(method == "reg"){
     print("----BEGINNING SIA DATA PULL / CLEANING----")
     tick <- Sys.time()
     # read in SIA files
-    sia.clean.01 <- raw.data$sia |>
+    sia.clean.01 <- sia.data |>
       filter(activity.start.date >= start.date & activity.end.date<=end.date)
 
     tock <- Sys.time()
@@ -148,7 +150,7 @@ pull_clean_sia_data <- function(start.date=as.Date("2016-01-01"),
     print("----BEGINNING SIA DATA PULL / CLEANING----")
     tick <- Sys.time()
     # read in SIA files
-    sia.clean.01 <- raw.data$sia |>
+    sia.clean.01 <- sia.data |>
       filter(activity.start.date >= Sys.Date())
 
     tock <- Sys.time()
@@ -266,7 +268,7 @@ pull_clean_sia_data <- function(start.date=as.Date("2016-01-01"),
     tick <- Sys.time()
     print("Connecting to S drive to pull latest data...")
     # read in SIA files
-    sia.clean.01 <- raw.data$sia |>
+    sia.clean.01 <- sia.data |>
       filter(activity.start.date >= start.date)
 
     tock <- Sys.time()
