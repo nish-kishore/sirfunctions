@@ -481,7 +481,9 @@ get_all_polio_data <- function(
         hot.case = ifelse(is.na(hot.case), 99, hot.case)
       )
 
-    raw.data$afp[duplicated(raw.data$afp[,c("epid", "place.admin.0", "dateonset")]),]
+    if(nrow(raw.data$afp[duplicated(raw.data$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0){
+
+    }
 
     cli::cli_process_done()
 
