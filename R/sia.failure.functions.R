@@ -20,7 +20,8 @@ init_sia_impact <- function(folder_loc){
 
 }
 
-#### Data Cleaning/Prep ####
+                                      #### Data Cleaning/Prep ####
+
 #' @description function to pull clean, de-duplicated SIA campaign data for different purposes within
 #' the SIA impact report
 #' @param sia.data df sia data to be cleaned
@@ -283,6 +284,70 @@ pull_clean_sia_data <- function(sia.data,
   }
 }
 
+#' @description
+#' a funciton to return only relevant polio cases for the sia impact report
+#' @param case.data df dataframe of positive cases
+#' @param start.date date start date for cases
+#' @param end.date date end date for cases, default is today
+#' @param .measurement str positve case types to include
+#' @param min.yronset date earliest year of onset for cases to be included
+pull_clean_case_data <- function(case.data,
+                                 start.date = as.Date("2016-01-01"),
+                                 end.date = Sys.Date(),
+                                 .measurement = NULL,
+                                 min.yronset = NULL,
+                                 type = "reg"){
+  print("----PULLING CASE DATA----")
+
+  if(type == "reg"){
+
+    out <- raw.data$pos %>%
+      filter(dateonset >=start.date & dateonset <=end.date)%>%
+      mutate(place.admin.0=ifelse(place.admin.0=="CÔTE D’IVOIRE", "COTE D IVOIRE", place.admin.0)) %>%
+      {
+        if(is.null(.measurement)){.}else{
+          filter(., measurement == .measurement)
+        }
+      } %>%
+      {
+        if(is.null(min.yronset)){.}else{
+          filter(., yronset >= min.yronset)
+        }
+      } %>%
+      select(epid, place.admin.0, place.admin.1, place.admin.2,
+             adm0guid, adm1guid, adm2guid = admin2guid,
+             measurement, yronset, dateonset, datasource,
+             latitude, longitude, ntchanges, emergencegroup, source, whoregion) %>%
+      unique()
+  }
+
+  if(type == "donut"){
+    out <- raw.data$pos %>%
+      #subset to places of interest
+      #filter(whoregion == "AFRO") %>%
+      #only look at data from 2016 onwards
+      filter(yronset >= paste0(year(Sys.Date())-4,"-01-01")) %>%
+      #look at cVDPV 1, cVDPV 2, cVDPV 3, WILD 1 data
+      filter(measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")) %>%
+      #keep variables of interest
+      select(epid, whoregion, dateonset, lat = latitude,
+             lon = longitude, datasource, measurement, ntchanges, emergencegroup,
+             viruscluster, admin2guid, source) %>%
+      #deduplicate
+      unique()
+  }
+
+
+
+  print(paste0(nrow(out), " case records loaded!"))
+
+  return(out)
+
+}
+
+
+
+                       #### Analysis functions ####
 
 #Cluster Function
 #this function identifies "cluster" or OBX response so we can identify rounds
