@@ -35,33 +35,27 @@ pull_clean_sia_data <- function(sia.data,
   if(method == "reg"){
     print("----BEGINNING SIA DATA CLEANING----")
     print("[0/3]-Starting cleaning steps")
-    tick <- Sys.time()
     # read in SIA files
 
     sia.clean.01 <- sia.data |>
-      filter(activity.start.date >= start.date & activity.end.date<=end.date)
+      dplyr::filter(activity.start.date >= start.date & activity.end.date <= end.date)
 
-    sia.02 <- sia.clean.01 %>%
+    sia.02 <- sia.clean.01 |>
       #select variables of interest to ease error checking
-      select(sia.sub.activity.code,
-             status, phase, im.loaded, lqas.loaded, vaccine.type,
-             sub.activity.start.date, adm2guid,
-             linked.obx,
-             # activity.comments,
-             yr.sia, place.admin.0,
-             place.admin.1, place.admin.2,sub.activity.end.date,
-             vaccine.type, adm0guid, adm1guid, `admin.coverage.%`)
+      dplyr::select(sia.sub.activity.code, status, phase, im.loaded, lqas.loaded,
+                    vaccine.type, sub.activity.start.date, adm2guid, linked.obx,
+                    yr.sia, place.admin.0, place.admin.1, place.admin.2,
+                    sub.activity.end.date, vaccine.type, adm0guid, adm1guid, `admin.coverage.%`)
 
 
     print("[1/3]-Removing campaigns that did not occur")
-    tick <- Sys.time()
 
-    sia.02 <- sia.02 %>%
+    sia.02 <- sia.02 |>
       #first step is to get rid of campaigns that did not occur
       #Unconfirmed was used pre-2014 for some older campaigns
       #missing status for campaigns 2004-2017 will be assigned as unconfirmed\
-      mutate(
-        complete.camp = case_when(
+      dplyr::mutate(
+        complete.camp = dplyr::case_when(
           status == "Done" |
             phase == "Completed" |
             im.loaded == "Yes" |
@@ -83,25 +77,17 @@ pull_clean_sia_data <- function(sia.data,
                               vaccine.type=="IPV + bOPV", 1, 0),
         ipv.vac = ifelse(vaccine.type == "f-IPV" |
                            vaccine.type == "IPV" |
-                           vaccine.type == "IPV + bOPV", 1, 0)) %>%
-      filter(complete.camp == "Completed" |
+                           vaccine.type == "IPV + bOPV", 1, 0)) |>
+      dplyr::filter(complete.camp == "Completed" |
                complete.camp == "Unconfirmed")
-
-    tock <- Sys.time()
-
-    print(tock - tick)
 
     print("[2/3]-Removing duplicates")
 
-    tick <- Sys.time()
-
-    sia.02 <- sia.02 %>%
-
+    sia.02 <- sia.02 |>
       #Second step is to remove duplicates:
-
-      mutate(sub.activity.start.date = as_date(sub.activity.start.date)) %>%
-      arrange(sub.activity.start.date) %>%
-      group_by(adm2guid, vaccine.type) %>%
+      dplyr::mutate(sub.activity.start.date = as_date(sub.activity.start.date)) |>
+      dplyr::arrange(sub.activity.start.date) |>
+      dplyr::group_by(adm2guid, vaccine.type) |>
       #this creates variable that is days from last campaign of that vaccine
       mutate(camp.diff.days = as.numeric(sub.activity.start.date - lag(sub.activity.start.date)))%>%
       ungroup() %>%
