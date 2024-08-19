@@ -482,7 +482,7 @@ get_all_polio_data <- function(
       )
 
     if(nrow(raw.data$afp[duplicated(raw.data$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0){
-
+      cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dup")
     }
 
     cli::cli_process_done()
