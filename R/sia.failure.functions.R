@@ -1,15 +1,22 @@
-################################################################################
 ##              SIA Failure Functions                                        ###
 ##              Writen by Stephanie Kovacs and Nishant Kishore               ###
 ##              updated by Nick Heaghney spring 2023                         ###
 ##              updated by Nick Heaghney Summer 2024                         ###
-################################################################################
+
+
+#### Set up SIA Impact Report  ####
 
 #initiate sia impact reprot function
 #this function initializes a folder structure for the purpose of running the sia impact report
 #' @export
 #' @param folder_loc str: location of folder to set up and run SIA impact report
 init_sia_impact <- function(folder_loc){
+
+  if(dir.exists(folder_loc)){
+
+  }else{
+    dir.create(folder_loc)
+  }
 
 }
 
