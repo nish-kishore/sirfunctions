@@ -26,3 +26,26 @@ cvdpv.wild.cases <- clean_case_data(case.data = raw.data$pos,
   dplyr::filter(!(place.admin.0 %in% c("AFGHANISTAN", "PAKISTAN") & measurement == "WILD 1"))
 
 
+#Read in cleaned SIA data for last 4 years, filter out bopv campaigns in afg/pak
+sia <- clean_sia_data(sia.data = raw.data$sia,
+                      start.date = paste0(lubridate::year(Sys.Date())-4,"-01-01"),
+                      method = "reg") |>
+  dplyr::filter(!(place.admin.0 %in% c("AFGHANISTAN", "PAKISTAN") & vaccine.type == "bOPV"))
+
+#read in cleaned planned SIAs
+sia.planned <- clean_sia_data(sia.data = raw.data$sia,
+                                   start.date = paste0(lubridate::year(Sys.Date())-2,"-01-01"),
+                                   method = "planned") |>
+  dplyr::select(sia.sub.activity.code, place.admin.0, sub.activity.start.date,
+                sub.activity.end.date, vaccine.type, yr.sia) |>
+  dplyr::rename(Country = place.admin.0) |>
+  dplyr::group_by(Country) |>
+  dplyr::arrange(sub.activity.start.date) |>
+  dplyr::slice(1L) |>
+  unique()
+
+#read in cleaned IPV SIAs
+sia.ipv <- clean_sia_data(sia.data = raw.data$sia,
+                               start.date = paste0(lubridate::year(Sys.Date())-4,"-01-01"),
+                               method = "ipv")
+
