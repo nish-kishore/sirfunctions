@@ -480,6 +480,9 @@ get_all_polio_data <- function(
         ),
         hot.case = ifelse(is.na(hot.case), 99, hot.case)
       )
+
+    raw.data$afp[duplicated(raw.data$afp[,c("epid", "place.admin.0", "dateonset")]),]
+
     cli::cli_process_done()
 
     cli::cli_process_start("Processing AFP data for analysis")
