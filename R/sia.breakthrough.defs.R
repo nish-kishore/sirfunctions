@@ -6,7 +6,7 @@
 ###            Updated 2024 - Nick Heaghney
 ###
 
-raw.data <- sirfunctions::get_all_polio_data()
+raw.data <- get_all_polio_data()
 
 #Read in case data
 #specify desired virustypes in case.list
