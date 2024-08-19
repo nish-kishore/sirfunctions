@@ -5,6 +5,15 @@
 ##              updated by Nick Heaghney Summer 2024                         ###
 ################################################################################
 
+#initiate sia impact reprot function
+#this function initializes a folder structure for the purpose of running the sia impact report
+#' @export
+#' @param folder_loc str: location of folder to set up and run SIA impact report
+init_sia_impact <- function(folder_loc){
+
+}
+
+
 #Cluster Function
 #this function identifies "cluster" or OBX response so we can identify rounds
 #' @export
