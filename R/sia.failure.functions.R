@@ -85,44 +85,32 @@ pull_clean_sia_data <- function(sia.data,
 
     sia.02 <- sia.02 |>
       #Second step is to remove duplicates:
-      dplyr::mutate(sub.activity.start.date = as_date(sub.activity.start.date)) |>
+      dplyr::mutate(sub.activity.start.date = lubridate::as_date(sub.activity.start.date)) |>
       dplyr::arrange(sub.activity.start.date) |>
       dplyr::group_by(adm2guid, vaccine.type) |>
       #this creates variable that is days from last campaign of that vaccine
-      mutate(camp.diff.days = as.numeric(sub.activity.start.date - lag(sub.activity.start.date)))%>%
-      ungroup() %>%
+      dplyr::mutate(camp.diff.days = as.numeric(sub.activity.start.date - dplyr::lag(sub.activity.start.date))) |>
+      dplyr::ungroup() |>
 
       #identify SIAs that are duplicated because there are no difference in campaign days
-      mutate(dup = case_when(
+      dplyr::mutate(dup = dplyr::case_when(
         camp.diff.days == 0 & !is.na(adm2guid) ~ 1,
-        camp.diff.days > 0 | is.na(adm2guid) == T | is.na(camp.diff.days) == T ~ 0)) %>%
+        camp.diff.days > 0 | is.na(adm2guid) == T | is.na(camp.diff.days) == T ~ 0)) |>
       #remove duplicates
-      filter(dup != 1) %>%
+      dplyr::filter(dup != 1) |>
       #manually removing extra duplicates
       #same date, vaccine and age range as another campaign in same dist
-      filter(sia.sub.activity.code!="PAK-2021-006-1") %>%
-      #this one no IM
-      filter(sia.sub.activity.code!="SOM-2000-002-2")
-
-    tock <- Sys.time()
-
-    print(tock - tick)
-
+      dplyr::filter(!sia.sub.activity.code %in% c("PAK-2021-006-1", "SOM-2000-002-2"))
 
     print("[3/3]-Final cleaning steps")
 
-
-    sia.reg <- sia.02%>%
-      filter(vaccine.type=="mOPV2" | vaccine.type=="nOPV2" | (vaccine.type=="tOPV" & sub.activity.start.date>"2017-01-01") | vaccine.type == "bOPV") %>%
-      select(sia.sub.activity.code, place.admin.0, place.admin.1, place.admin.2, sub.activity.start.date, sub.activity.end.date, vaccine.type, adm0guid, adm1guid, adm2guid,
-             yr.sia,
-             # num.dist.incamp,
-             # vac.round.num.count,
-             # vac.total.rounds,
-             # opv2.round.count,
-             # total.opv2.rounds,
-             #linked.obx, obx1, obx2, obx3, obx4,
-             `admin.coverage.%`)
+    sia.reg <- sia.02 |>
+      dplyr::filter(vaccine.type=="mOPV2" | vaccine.type=="nOPV2" |
+                      (vaccine.type=="tOPV" & sub.activity.start.date>"2017-01-01") |
+                      vaccine.type == "bOPV") |>
+      dplyr::select(sia.sub.activity.code, place.admin.0, place.admin.1, place.admin.2,
+             sub.activity.start.date, sub.activity.end.date, vaccine.type, adm0guid,
+             adm1guid, adm2guid, yr.sia, `admin.coverage.%`)
 
     return(sia.reg)
   }
