@@ -30,9 +30,9 @@ init_sia_impact <- function(folder_loc){
 #' @param method chr, signifies type of SIA being pulled, reg includes n/mopv2, topv and bopv, planned
 #' is limited to upcoming SIAs, IPV is for countries/regions that will only do IPV response
 clean_sia_data <- function(sia.data,
-                                start.date=as.Date("2016-01-01"),
-                                end.date = Sys.Date(),
-                                method = 'reg'){
+                           start.date=as.Date("2016-01-01"),
+                           end.date = Sys.Date(),
+                           method = 'reg'){
   if(method == "reg"){
     print("----BEGINNING SIA DATA CLEANING----")
     print("[0/3]-Starting cleaning steps")
@@ -287,62 +287,49 @@ clean_sia_data <- function(sia.data,
 #' @description
 #' a funciton to return only relevant polio cases for the sia impact report
 #' @param case.data df dataframe of positive cases
-#' @param start.date date start date for cases
+#' @param start.date date start date for sia
 #' @param end.date date end date for cases, default is today
 #' @param .measurement str positve case types to include
 #' @param min.yronset date earliest year of onset for cases to be included
 clean_case_data <- function(case.data,
-                                 start.date = as.Date("2016-01-01"),
-                                 end.date = Sys.Date(),
-                                 .measurement = NULL,
-                                 min.yronset = NULL,
-                                 type = "reg"){
-  print("----PULLING CASE DATA----")
+                            start.date = as.Date("2016-01-01"),
+                            end.date = Sys.Date(),
+                            .measurement = NULL,
+                            type = "reg"){
+  print("----CLEANING CASE DATA----")
 
   if(type == "reg"){
 
-    out <- raw.data$pos %>%
-      filter(dateonset >=start.date & dateonset <=end.date)%>%
-      mutate(place.admin.0=ifelse(place.admin.0=="CÔTE D’IVOIRE", "COTE D IVOIRE", place.admin.0)) %>%
-      {
-        if(is.null(.measurement)){.}else{
-          filter(., measurement == .measurement)
-        }
-      } %>%
-      {
-        if(is.null(min.yronset)){.}else{
-          filter(., yronset >= min.yronset)
-        }
-      } %>%
-      select(epid, place.admin.0, place.admin.1, place.admin.2,
-             adm0guid, adm1guid, adm2guid = admin2guid,
-             measurement, yronset, dateonset, datasource,
-             latitude, longitude, ntchanges, emergencegroup, source, whoregion) %>%
+    out <- case.data |>
+      dplyr::filter(dateonset >= start.date & dateonset <= end.date,
+                    measurement %in% .measurement) |>
+      dplyr::mutate(place.admin.0 = ifelse(place.admin.0 == "CÔTE D’IVOIRE", "COTE D IVOIRE", place.admin.0)) |>
+      dplyr::select(epid, place.admin.0, place.admin.1, place.admin.2, adm0guid,
+                    adm1guid, adm2guid = admin2guid, measurement, yronset, dateonset,
+                    datasource, latitude, longitude, ntchanges, emergencegroup,
+                    source, whoregion) |>
       unique()
   }
 
   if(type == "donut"){
-    out <- raw.data$pos %>%
+    out <- case.data |>
       #subset to places of interest
       #filter(whoregion == "AFRO") %>%
       #only look at data from 2016 onwards
-      filter(yronset >= paste0(year(Sys.Date())-4,"-01-01")) %>%
+      dplyr::filter(yronset >= paste0(lubridate::year(Sys.Date())-4,"-01-01")) |>
       #look at cVDPV 1, cVDPV 2, cVDPV 3, WILD 1 data
-      filter(measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")) %>%
+      dplyr::filter(measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")) |>
       #keep variables of interest
-      select(epid, whoregion, dateonset, lat = latitude,
-             lon = longitude, datasource, measurement, ntchanges, emergencegroup,
-             viruscluster, admin2guid, source) %>%
+      dplyr::select(epid, whoregion, dateonset, lat = latitude, lon = longitude,
+                    datasource, measurement, ntchanges, emergencegroup, viruscluster,
+                    admin2guid, source) |>
       #deduplicate
       unique()
   }
 
-
-
   print(paste0(nrow(out), " case records loaded!"))
 
   return(out)
-
 }
 
 
