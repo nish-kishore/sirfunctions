@@ -1,4 +1,3 @@
-#################################################################################
 ###            Defining breakthrough
 ###            Written by Stephanie Kovacs and Nishant Kishore
 ###            November 2021
@@ -6,7 +5,8 @@
 ###            Updated April 2023 - Nick Heaghney
 ###            Updated 2024 - Nick Heaghney
 ###
-#################################################################################
+
+raw.data <- sirfunctions::get_all_polio_data()
 
 #Read in case data
 #specify desired virustypes in case.list

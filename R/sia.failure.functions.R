@@ -33,17 +33,13 @@ pull_clean_sia_data <- function(sia.data,
                                 end.date = Sys.Date(),
                                 method = 'reg'){
   if(method == "reg"){
-    print("----BEGINNING SIA DATA PULL / CLEANING----")
+    print("----BEGINNING SIA DATA CLEANING----")
+    print("[0/3]-Starting cleaning steps")
     tick <- Sys.time()
     # read in SIA files
+
     sia.clean.01 <- sia.data |>
       filter(activity.start.date >= start.date & activity.end.date<=end.date)
-
-    tock <- Sys.time()
-
-    print(paste0("Data loaded successfully!"))
-    print(paste0(nrow(sia.clean.01), " records loaded in ", as.numeric(tock-tick),
-                 " seconds."))
 
     sia.02 <- sia.clean.01 %>%
       #select variables of interest to ease error checking
@@ -56,7 +52,6 @@ pull_clean_sia_data <- function(sia.data,
              place.admin.1, place.admin.2,sub.activity.end.date,
              vaccine.type, adm0guid, adm1guid, `admin.coverage.%`)
 
-    print("[0/3]-Starting cleaning steps")
 
     print("[1/3]-Removing campaigns that did not occur")
     tick <- Sys.time()
