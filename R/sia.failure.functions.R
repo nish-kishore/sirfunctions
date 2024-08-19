@@ -17,7 +17,14 @@ init_sia_impact <- function(folder_loc){
 #Cluster Function
 #this function identifies "cluster" or OBX response so we can identify rounds
 #' @export
-cluster_dates <- function(x, seed = 1234, method = "kmeans", grouping_days = 365){
+#' @param x df: data to be clustered
+#' @param seed
+#' @param method
+#' @param grouping_days int:
+cluster_dates <- function(x,
+                          seed = 1234,
+                          method = "kmeans",
+                          grouping_days = 365){
 
   if(method == "kmeans"){
     #prepare the data
