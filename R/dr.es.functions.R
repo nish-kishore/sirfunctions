@@ -186,10 +186,12 @@ clean_es_data <- function(ctry.data) {
 #' @export
 generate_es_data_long <- function(es.data) {
   es.data.long <- es.data %>%
-    dplyr::select("site.name", "ADM1_NAME", "collect.date", "early.dat", "ev.detect", "all_dets") %>%
+    dplyr::select("site.name", "ADM1_NAME", "collect.date",
+                  "early.dat", "ev.detect", "all_dets",
+                  "npev") %>%
     dplyr::mutate(ev.detect = as.character(.data$ev.detect)) %>%
     dplyr::mutate(all_dets = dplyr::case_when(
-      all_dets == "" & ev.detect == "1" ~ "NPEV only",
+      all_dets == "" & npev == "1" ~ "NPEV only",
       all_dets == "" & ev.detect == "0" ~ "No EV isolated",
       TRUE ~ all_dets
     ))
