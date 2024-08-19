@@ -29,7 +29,7 @@ init_sia_impact <- function(folder_loc){
 #' @param end.date date, system date = today, last date of SIA campaigns, should be day of analysis
 #' @param method chr, signifies type of SIA being pulled, reg includes n/mopv2, topv and bopv, planned
 #' is limited to upcoming SIAs, IPV is for countries/regions that will only do IPV response
-pull_clean_sia_data <- function(sia.data,
+clean_sia_data <- function(sia.data,
                                 start.date=as.Date("2016-01-01"),
                                 end.date = Sys.Date(),
                                 method = 'reg'){
@@ -291,7 +291,7 @@ pull_clean_sia_data <- function(sia.data,
 #' @param end.date date end date for cases, default is today
 #' @param .measurement str positve case types to include
 #' @param min.yronset date earliest year of onset for cases to be included
-pull_clean_case_data <- function(case.data,
+clean_case_data <- function(case.data,
                                  start.date = as.Date("2016-01-01"),
                                  end.date = Sys.Date(),
                                  .measurement = NULL,
