@@ -17,10 +17,10 @@ init_sia_impact <- function(folder_loc){
 
   }else{
     dir.create(folder_loc)
-    dir.create(paste0(folder_loc, "assets"))
-    dir.create(paste0(folder_loc, "assets/cache"))
-    dir.create(paste0(folder_loc, "assets/donut_maps"))
-    dir.create(paste0(folder_loc, "assets/resources"))
+    dir.create(paste0(folder_loc, "/assets"))
+    dir.create(paste0(folder_loc, "/assets/cache"))
+    dir.create(paste0(folder_loc, "/assets/donut_maps"))
+    dir.create(paste0(folder_loc, "/assets/resources"))
   }
 
 }
@@ -366,23 +366,23 @@ cluster_dates <- function(x,
 
     set.seed(seed)
     #calculate the optimal number of clusters
-    optim_k <- y |>
+    optim_k <- y %>%
       #calculate optimal number of clusters using the
       #gap statistic
-      {clusGap(., FUN = stats::kmeans, nstart = 25, K.max = max(min(nrow(.)-1, nrow(.)/2), 2), B = 100)} |>
+      {clusGap(., FUN = stats::kmeans, nstart = 25, K.max = max(min(nrow(.)-1, nrow(.)/2), 2), B = 100)} %>%
       #extract gap statistic matrix
-      {.$Tab[,"gap"]} |>
+      {.$Tab[,"gap"]} %>%
       #calculate the max gap statistic, given the sparsity in the data
       #am not limiting to the first max SE method
       which.max()
 
     set.seed(seed)
     #calculate the clusters
-    x$cluster <- stats::kmeans(y, optim_k)$cluster |>
+    x$cluster <- stats::kmeans(y, optim_k)$cluster %>%
       #clusters don't always come out in the order we want them to
       #so here we convert them into factors, relevel and then extract
       #the numeric value to ensure that the cluster numbers are in order
-      {factor(., levels = unique(.))} |>
+      {factor(., levels = unique(.))} %>%
       as.numeric()
 
     #outputting the method used
