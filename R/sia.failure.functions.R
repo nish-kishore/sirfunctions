@@ -398,3 +398,47 @@ cluster_dates <- function(x,
 
 
 }
+
+#' @description
+#' A short description...
+#'
+cluster_dates_for_sias <- function(sia.type2){
+
+
+  tick <- Sys.time()
+  #original vax types
+  out_mopv2 <- sia.type2 %>%
+    run_cluster_dates(min_obs = 4, type = "mOPV2")
+
+  out_nopv2 <- sia.type2 %>%
+    run_cluster_dates(min_obs = 4, type = "nOPV2")
+
+  out_topv <- sia.type2 %>%
+    run_cluster_dates(min_obs = 4, type = "tOPV")
+
+  #add bopv
+  out_bopv <- sia.type2 %>%
+    run_cluster_dates(min_obs = 4, type = "bOPV")
+
+  cluster <- bind_rows(out_mopv2, out_nopv2, out_topv, out_bopv) %>%
+    select(sia.sub.activity.code, adm2guid, cluster)
+
+  #merge back with SIA data
+
+  case.sia <- left_join(sia.type2, cluster, by = c("sia.sub.activity.code"="sia.sub.activity.code", "adm2guid"="adm2guid")) %>%
+    arrange(adm2guid, sub.activity.start.date) %>%
+    group_by(adm2guid, vaccine.type, cluster) %>%
+    mutate(round.num = row_number()) %>%
+    ungroup() %>%
+    group_by(adm2guid) %>%
+    mutate(max.round = max(sub.activity.start.date)) %>%
+    ungroup() %>%
+    mutate(last.camp = ifelse(max.round == sub.activity.start.date, 1, 0))
+
+  tock <- Sys.time()
+
+  print(tock - tick)
+
+  return(case.sia)
+
+}
