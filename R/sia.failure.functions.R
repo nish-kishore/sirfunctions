@@ -9,6 +9,7 @@
 #initiate sia impact reprot function
 #this function initializes a folder structure for the purpose of running the sia impact report
 #' @export
+#' @import package
 #' @param folder_loc str: location of folder to set up and run SIA impact report
 init_sia_impact <- function(folder_loc){
 
@@ -16,6 +17,10 @@ init_sia_impact <- function(folder_loc){
 
   }else{
     dir.create(folder_loc)
+    dir.create(paste0(folder_loc, "assets"))
+    dir.create(paste0(folder_loc, "assets/cache"))
+    dir.create(paste0(folder_loc, "assets/donut_maps"))
+    dir.create(paste0(folder_loc, "assets/resources"))
   }
 
 }
