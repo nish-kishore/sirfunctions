@@ -340,8 +340,8 @@ clean_case_data <- function(case.data,
 #this function identifies "cluster" or OBX response so we can identify rounds
 #' @export
 #' @param x df: data to be clustered
-#' @param seed
-#' @param method
+#' @param seed num
+#' @param method str cluster method to use, can be "kmeans" or "mindate"
 #' @param grouping_days int:
 cluster_dates <- function(x,
                           seed = 1234,
@@ -400,8 +400,8 @@ cluster_dates <- function(x,
 }
 
 #' @description
-#' A short description...
-#'
+#' manager function to run the cluster_dates() function using helper function run_cluster_dates to cluster SIAs by type
+#' @param df dataframe of SIAs to identify rounds by vaccine type
 cluster_dates_for_sias <- function(sia.type2){
 
 
