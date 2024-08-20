@@ -670,6 +670,19 @@ get_all_polio_data <- function(
         file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
           dplyr::pull(file), default_dir = NULL
       )
+
+    if (nrow(raw.data$pos[duplicated(raw.data$pos[,c("epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
+                                                     "env.sample.id", "place.admin.0", "source", "datasource",
+                                                     "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup")]),]) > 0) {
+      cli::cli_alert_warning("There are potential duplicates in the Positives data, please check pos.dup")
+      raw.data$pos.dup <- raw.data$pos |>
+        dplyr::group_by(epid, epid.in.polis, pons.epid, virus.id, polis.case.id, env.sample.id, place.admin.0,
+                        source, datasource, virustype, dateonset, yronset, ntchanges, emergencegroup) |>
+        dplyr::mutate(count = dplyr::n()) |>
+        dplyr::ungroup() |>
+        dplyr::filter(count > 1) |>
+        dplyr::arrange(epid)
+    }
     cli::cli_process_done()
 
     cli::cli_process_start("10) Loading other surveillance linelist from EDAV")
