@@ -449,7 +449,7 @@ cluster_dates_for_sias <- function(sia.type2){
 #' Wrapper around the cluster_dates function to do some error checking
 #'
 #' @export
-#' @import package
+#' @import dplyr
 #' @param data df dataframe on which to run cluster dates function
 #' @param min_obs int
 #' @param type str vaccine type
@@ -458,10 +458,10 @@ run_cluster_dates <- function(data,
                               type){
 
   #check which locations meet minimum obs requirements
-  in_data <- data %>%
-    filter(vaccine.type == type) %>%
-    group_by(adm2guid) %>%
-    summarize(count = n())
+  in_data <- data |>
+    dplyr::filter(vaccine.type == type) |>
+    dplyr::group_by(adm2guid) |>
+    dplyr::summarize(count = n())
 
   #check if cache exists
   cache_exists <- file.exists(here("sia_impact_pipeline","assets","cache",paste0(type,"_cluster_cache.rds")))
