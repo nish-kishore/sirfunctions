@@ -661,8 +661,6 @@ get_all_polio_data <- function(
       }
     cli::cli_process_done()
 
-
-
     cli::cli_process_start("9) Loading all positives from EDAV")
     raw.data$pos <-
       edav_io(
@@ -692,6 +690,8 @@ get_all_polio_data <- function(
         file_loc = dplyr::filter(dl_table, grepl("/other", file)) |>
           dplyr::pull(file), default_dir = NULL
       )
+
+
     cli::cli_process_done()
 
     cli::cli_process_start("11) Loading road network data")
