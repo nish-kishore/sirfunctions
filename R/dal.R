@@ -691,7 +691,16 @@ get_all_polio_data <- function(
           dplyr::pull(file), default_dir = NULL
       )
 
+    if (nrow(raw.data$other[duplicated(raw.data$other[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
+      cli::cli_alert_warning("There are potential duplicates in the Other Surveillance linelist, please check other.dup")
+      raw.data$other.dup <- raw.data$other |>
+        dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
+        dplyr::mutate(count = dplyr::n()) |>
+        dplyr::ungroup() |>
+        dplyr::filter(count > 1) |>
+        dplyr::arrange(.data$epid)
 
+    }
     cli::cli_process_done()
 
     cli::cli_process_start("11) Loading road network data")
