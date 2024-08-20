@@ -300,6 +300,7 @@ clean_case_data <- function(case.data,
                             start.date = as.Date("2016-01-01"),
                             end.date = Sys.Date(),
                             .measurement = NULL,
+                            min.yronset = NULL,
                             type = "reg"){
   print("----CLEANING CASE DATA----")
 
@@ -308,7 +309,17 @@ clean_case_data <- function(case.data,
     out <- case.data |>
       dplyr::filter(dateonset >= start.date & dateonset <= end.date,
                     measurement %in% .measurement) |>
-      dplyr::mutate(place.admin.0 = ifelse(place.admin.0 == "CÔTE D’IVOIRE", "COTE D IVOIRE", place.admin.0)) |>
+      dplyr::mutate(place.admin.0 = ifelse(place.admin.0 == "CÔTE D’IVOIRE", "COTE D IVOIRE", place.admin.0)) %>%
+      {
+        if(is.null(.measurement)){.}else{
+          filter(., measurement == .measurement)
+        }
+      } %>%
+      {
+        if(is.null(min.yronset)){.}else{
+          filter(., yronset >= min.yronset)
+        }
+      } |>
       dplyr::select(epid, place.admin.0, place.admin.1, place.admin.2, adm0guid,
                     adm1guid, adm2guid = admin2guid, measurement, yronset, dateonset,
                     datasource, latitude, longitude, ntchanges, emergencegroup,
