@@ -11,21 +11,23 @@
 #' @export
 #' @import package
 #' @param folder_loc str: location of folder to set up and run SIA impact report
-init_sia_impact <- function(folder_loc){
+#' @param edav boolean: should the system use EDAV as it's cache; default is FALSE
+init_sia_impact <- function(folder_loc,
+                            edav = F){
 
-  if(dir.exists(folder_loc)){
+  if(edav_io(io = "exists.dir", folder_loc)){
 
     Sys.setenv(SIA_FOLDER = folder_loc)
 
   }else{
-    dir.create(folder_loc)
+    edav_io(io = "create", file_loc = folder_loc)
 
     Sys.setenv(SIA_FOLDER = folder_loc)
 
-    dir.create(paste0(folder_loc, "/assets"))
-    dir.create(paste0(folder_loc, "/assets/cache"))
-    dir.create(paste0(folder_loc, "/assets/donut_maps"))
-    dir.create(paste0(folder_loc, "/assets/resources"))
+    edav_io(io = "create", file_loc = paste0(folder_loc, "/assets"))
+    edav_io(io = "create", file_loc = paste0(folder_loc, "/assets/cache"))
+    edav_io(io = "create", file_loc = paste0(folder_loc, "/assets/donut_maps"))
+    edav_io(io = "create", file_loc = paste0(folder_loc, "/assets/resources"))
   }
 
 }
