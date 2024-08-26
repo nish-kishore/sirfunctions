@@ -9,25 +9,31 @@
 #initiate sia impact reprot function
 #this function initializes a folder structure for the purpose of running the sia impact report
 #' @export
-#' @import package
+#' @import tidypolis
 #' @param folder_loc str: location of folder to set up and run SIA impact report
 #' @param edav boolean: should the system use EDAV as it's cache; default is FALSE
 init_sia_impact <- function(folder_loc,
                             edav = F){
 
-  if(edav_io(io = "exists.dir", folder_loc)){
+  if(edav == T){
+    Sys.setenv(POLIS_EDAV_FLAG = T)
+  }else{
+    Sys.setenv(POLIS_EDAV_FLAG = F)
+  }
+
+  if(tidypolis:::tidypolis_io(io = "exists.dir", file_path = folder_loc)){
 
     Sys.setenv(SIA_FOLDER = folder_loc)
 
   }else{
-    edav_io(io = "create", file_loc = folder_loc)
+    tidypolis:::tidypolis_io(io = "create", file_path = folder_loc)
 
     Sys.setenv(SIA_FOLDER = folder_loc)
 
-    edav_io(io = "create", file_loc = paste0(folder_loc, "/assets"))
-    edav_io(io = "create", file_loc = paste0(folder_loc, "/assets/cache"))
-    edav_io(io = "create", file_loc = paste0(folder_loc, "/assets/donut_maps"))
-    edav_io(io = "create", file_loc = paste0(folder_loc, "/assets/resources"))
+    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets"))
+    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/cache"))
+    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/donut_maps"))
+    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/resources"))
   }
 
 }
