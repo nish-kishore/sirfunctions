@@ -15,8 +15,13 @@ init_sia_impact <- function(folder_loc){
 
   if(dir.exists(folder_loc)){
 
+    Sys.setenv(SIA_FOLDER = folder_loc)
+
   }else{
     dir.create(folder_loc)
+
+    Sys.setenv(SIA_FOLDER = folder_loc)
+
     dir.create(paste0(folder_loc, "/assets"))
     dir.create(paste0(folder_loc, "/assets/cache"))
     dir.create(paste0(folder_loc, "/assets/donut_maps"))
@@ -465,11 +470,12 @@ cluster_dates_for_sias <- function(sia.type2){
 #' Wrapper around the cluster_dates function to do some error checking
 #'
 #' @export
-#' @import dplyr
+#' @import dplyr readr
 #' @param data df dataframe on which to run cluster dates function
 #' @param min_obs int
 #' @param type str vaccine type
 run_cluster_dates <- function(data,
+                              sia_folder = Sys.getenv("SIA_FOLDER"),
                               min_obs = 4,
                               type){
 
@@ -480,54 +486,54 @@ run_cluster_dates <- function(data,
     dplyr::summarize(count = n())
 
   #check if cache exists
-  cache_exists <- file.exists(here("sia_impact_pipeline","assets","cache",paste0(type,"_cluster_cache.rds")))
+  cache_exists <- file.exists(paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
 
   if(cache_exists){
-    cache <- read_rds(here("sia_impact_pipeline","assets","cache",paste0(type,"_cluster_cache.rds")))
+    cache <- readr::read_rds(paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
     in_data <- setdiff(in_data, cache)
 
     print(paste0(nrow(in_data), " potentially new SIAs in [",type,"] found for clustering analysis"))
 
     #drop cache rows where the adm2guid is in in_data with a different count
-    cache <- cache %>%
-      filter(!(adm2guid %in% in_data$adm2guid))
+    cache <- cache |>
+      dplyr::filter(!(adm2guid %in% in_data$adm2guid))
 
-    bind_rows(in_data, cache) %>%
-      write_rds(here("sia_impact_pipeline","assets","cache",paste0(type,"_cluster_cache.rds")))
+    dplyr::bind_rows(in_data, cache) |>
+      readr::write_rds(paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
   }else{
     print(paste0("No cache found for [", type, "], creating cache and running clustering for ", nrow(in_data), " SIAs"))
-    write_rds(in_data, here("sia_impact_pipeline","assets","cache",paste0(type,"_cluster_cache.rds")))
+    readr::write_rds(in_data, paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
   }
 
   if(nrow(in_data) > 0){
     print("Clustering new SIA data")
-    in_data <- in_data %>%
-      filter(count >= min_obs)
+    in_data <- in_data |>
+      dplyr::filter(count >= min_obs)
 
-    included <- data %>%
-      filter(vaccine.type == type) %>%
-      filter(adm2guid %in% in_data$adm2guid)
+    included <- data |>
+      dplyr::filter(vaccine.type == type) |>
+      dplyr::filter(adm2guid %in% in_data$adm2guid)
 
     #observations which didn't meet the minimum requirement
-    dropped <- setdiff(filter(data, vaccine.type == type), included)
+    dropped <- setdiff(dplyr::filter(data, vaccine.type == type), included)
 
     #for data with at least a minimum number of observations
-    out <- ungroup(included) %>%
-      group_by(adm2guid) %>%
-      group_split() %>%
+    out <- dplyr::ungroup(included) |>
+      dplyr::group_by(adm2guid) |>
+      dplyr::group_split() |>
       #apply function to each subset
-      lapply(cluster_dates) %>%
+      lapply(cluster_dates) |>
       #bind output back together
-      bind_rows()
+      dplyr::bind_rows()
 
     #error checking for situations where no data < min_obs
     if(nrow(dropped) > 0){
       #for data with low obs
-      out2 <- ungroup(dropped) %>%
-        group_by(adm2guid) %>%
-        group_split() %>%
-        lapply(function(x) cluster_dates(x, method = "mindate")) %>%
-        bind_rows()
+      out2 <- dplyr::ungroup(dropped) |>
+        dplyr::group_by(adm2guid) |>
+        dplyr::group_split() |>
+        lapply(function(x) cluster_dates(x, method = "mindate")) |>
+        dplyr::bind_rows()
     }
 
 
@@ -538,10 +544,10 @@ run_cluster_dates <- function(data,
     }
 
     #data cache
-    data_cache_exists <- file.exists(here("sia_impact_pipeline","assets","cache",paste0(type,"data_cluster_cache.rds")))
+    data_cache_exists <- file.exists(paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
 
     if(data_cache_exists){
-      data_cache <- read_rds(here("sia_impact_pipeline","assets","cache",paste0(type,"data_cluster_cache.rds")))
+      data_cache <- read_rds(paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
 
       out <- filter(data_cache, !sia.sub.activity.code %in% unique(out$sia.sub.activity.code)) %>%
         bind_rows(out)
@@ -550,10 +556,10 @@ run_cluster_dates <- function(data,
       # out <- data_cache2 %>%
       #   bind_rows(out)
 
-      write_rds(out, here("sia_impact_pipeline","assets","cache",paste0(type,"data_cluster_cache.rds")))
+      write_rds(out, paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
     }else{
       print(paste0("No data cache found for [", type, "], creating data cache and saving clustering results for ", nrow(out), " SIAs"))
-      write_rds(out, here("sia_impact_pipeline","assets","cache",paste0(type,"data_cluster_cache.rds")))
+      write_rds(out, paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
     }
 
 
@@ -561,7 +567,7 @@ run_cluster_dates <- function(data,
 
   }else{
     print(paste0("No new SIA data found for [", type, "], loading cached data!"))
-    out <- read_rds(here("sia_impact_pipeline","assets","cache",paste0(type,"data_cluster_cache.rds")))
+    out <- read_rds(paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
   }
 
   return(out)
