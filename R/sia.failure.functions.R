@@ -362,7 +362,7 @@ clean_case_data <- function(case.data,
 #Cluster Function
 #this function identifies "cluster" or OBX response so we can identify rounds
 #' @export
-#' @import dplyr stats
+#' @import dplyr stats cluster
 #' @param x df: data to be clustered
 #' @param seed num
 #' @param method str cluster method to use, can be "kmeans" or "mindate"
@@ -387,7 +387,7 @@ cluster_dates <- function(x,
     optim_k <- y %>%
       #calculate optimal number of clusters using the
       #gap statistic
-      {clusGap(., FUN = stats::kmeans, nstart = 25, K.max = max(min(nrow(.)-1, nrow(.)/2), 2), B = 100)} %>%
+      {cluster::clusGap(., FUN = stats::kmeans, nstart = 25, K.max = max(min(nrow(.)-1, nrow(.)/2), 2), B = 100)} %>%
       #extract gap statistic matrix
       {.$Tab[,"gap"]} %>%
       #calculate the max gap statistic, given the sparsity in the data
@@ -500,11 +500,10 @@ run_cluster_dates <- function(data,
     cache <- cache |>
       dplyr::filter(!(adm2guid %in% in_data$adm2guid))
 
-    dplyr::bind_rows(in_data, cache) |>
-      edav_io(io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
+   edav_io(obj =  dplyr::bind_rows(in_data, cache), io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
   }else{
     print(paste0("No cache found for [", type, "], creating cache and running clustering for ", nrow(in_data), " SIAs"))
-    edav_io(io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
+    edav_io(obj = in_data, io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
   }
 
   if(nrow(in_data) > 0){
@@ -558,11 +557,11 @@ run_cluster_dates <- function(data,
       # out <- data_cache2 %>%
       #   bind_rows(out)
 
-      edav_io(io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
+      edav_io(obj = out, io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
 
     }else{
       print(paste0("No data cache found for [", type, "], creating data cache and saving clustering results for ", nrow(out), " SIAs"))
-      edav_io(io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
+      edav_io(obj = out, io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
   }
 
 
