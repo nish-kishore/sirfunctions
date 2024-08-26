@@ -494,10 +494,10 @@ run_cluster_dates <- function(data,
     dplyr::summarize(count = n())
 
   #check if cache exists
-  cache_exists <- edav_io(io = "exists.file", file_loc = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
+  cache_exists <- tidypolis:::tidypolis_io(io = "exists.file", file_path = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
 
   if(cache_exists){
-    cache <- edav_io(io = "read", file_loc = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
+    cache <- tidypolis:::tidypolis_io(io = "read", file_path = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
     in_data <- setdiff(in_data, cache)
 
     print(paste0(nrow(in_data), " potentially new SIAs in [",type,"] found for clustering analysis"))
@@ -506,10 +506,10 @@ run_cluster_dates <- function(data,
     cache <- cache |>
       dplyr::filter(!(adm2guid %in% in_data$adm2guid))
 
-   edav_io(obj =  dplyr::bind_rows(in_data, cache), io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
+    tidypolis:::tidypolis_io(obj = dplyr::bind_rows(in_data, cache), io = "write", file_path = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
   }else{
     print(paste0("No cache found for [", type, "], creating cache and running clustering for ", nrow(in_data), " SIAs"))
-    edav_io(obj = in_data, io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
+    tidypolis:::tidypolis_io(obj = in_data, io = "write", file_path = paste0(sia_folder, "/assets/cache/", type,"_cluster_cache.rds"))
   }
 
   if(nrow(in_data) > 0){
@@ -551,10 +551,10 @@ run_cluster_dates <- function(data,
     }
 
     #data cache
-    data_cache_exists <- edav_io(io = "exists.file", file_loc = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
+    data_cache_exists <- tidypolis:::tidypolis_io(io = "exists.file", file_path = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
 
     if(data_cache_exists){
-      data_cache <- edav_io(io = "read", paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
+      data_cache <- tidypolis:::tidypolis_io(io = "read", file_path = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
 
       out <- filter(data_cache, !sia.sub.activity.code %in% unique(out$sia.sub.activity.code)) %>%
         bind_rows(out)
@@ -563,11 +563,11 @@ run_cluster_dates <- function(data,
       # out <- data_cache2 %>%
       #   bind_rows(out)
 
-      edav_io(obj = out, io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
+      tidypolis:::tidypolis_io(obj = out, io = "write", file_path = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
 
     }else{
       print(paste0("No data cache found for [", type, "], creating data cache and saving clustering results for ", nrow(out), " SIAs"))
-      edav_io(obj = out, io = "write", file_loc = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
+      tidypolis:::tidypolis_io(obj = out, io = "write", file_path = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
   }
 
 
@@ -575,7 +575,7 @@ run_cluster_dates <- function(data,
 
   }else{
     print(paste0("No new SIA data found for [", type, "], loading cached data!"))
-    out <- edav_io(io = "read", file_loc = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
+    out <- tidypolis::tidypolis_io(io = "read", file_path = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
   }
 
   return(out)
