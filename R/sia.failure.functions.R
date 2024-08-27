@@ -38,6 +38,58 @@ init_sia_impact <- function(folder_loc,
 
 }
 
+
+#' @description
+#' Store parameters in cache
+#' @import
+#' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
+#' @param start_date date start date of analysis
+#' @param end_date date end date of analysis, default is present day
+#' @param recent_sia_start_year int year of earliest SIA in analysis, default is 2 years prior to present year
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+#' @param breakthrough_max_date int maximum number of days a case could be considered breakthrough
+#' @param detection_pre_sia_date int used to restrict "Recent SIA with breakthrough transmission" figures to 'recent' SIAs in f.geompoint.case()
+set_parameters <- function(breakthrough_min_date = NULL,
+                           start_date = NULL,
+                           end_date = Sys.Date(),
+                           recent_sia_start_year = lubridate::year(Sys.Date())-2,
+                           breakthrough_middle_date = NULL,
+                           breakthrough_max_date = NULL,
+                           detection_pre_sia_date = NULL){
+  parameter_list <- list(
+    breakthrough_min_date = breakthrough_min_date,
+    start_date = start_date,
+    end_date = end_date,
+    recent_sia_start_year = recent_sia_start_year,
+    breakthrough_middle_date = breakthrough_middle_date,
+    breakthrough_max_date = breakthrough_max_date,
+    detection_pre_sia_date = detection_pre_sia_date)
+  #If NULL, stop and prompt for entry
+  for(i in 1:length(parameter_list)){
+    value <- parameter_list[i][[1]]
+    if(is.null(value)){
+      stop(paste0(names(parameter_list[i]), " cannot be left blank. Please re-run set_parameters() with a value specified."))
+    }
+  }
+  #move old parameters to cache
+  if(file.exists(here("sia_impact_pipeline",
+                      "assets",
+                      "cache",
+                      "report_parameters.rds")) == TRUE){
+    old_parameters <- load_parameters()
+    rio::export(old_parameters, here("sia_impact_pipeline",
+                                     "assets",
+                                     "cache",
+                                     "previous_report_parameters.rds"))
+  }
+  rio::export(parameter_list, here("sia_impact_pipeline",
+                                   "assets",
+                                   "cache",
+                                   "report_parameters.rds"))
+
+}
+
+
                                       #### Data Cleaning/Prep ####
 
 #' @description function to pull clean, de-duplicated SIA campaign data for different purposes within
