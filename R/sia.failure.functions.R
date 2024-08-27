@@ -579,6 +579,46 @@ run_cluster_dates <- function(data,
   }
 
   return(out)
+}
 
+#' @description
+#' function to identify afp or env detections with no follow up SIA
+#' @import dplyr
+#' @param x tibble dataframe of positive cases to be passed into the function
+#' @param case.sia tibble dataframe created from cases joined to SIAs and passed into clustering algorithm
+#' @param breakthrough_max_date int the maximum days post-SIA to be considered breakthrough
+detection_no_sia.v2 <- function(x,
+                                case.sia,
+                                breakthrough_max_date = load_parameters()$breakthrough_max_date){
+
+  sias <- filter(case.sia, adm1guid == x$adm1guid)
+
+  max_diff <- NA
+
+  if(nrow(sias) > 0){
+    diffs <- sias %>%
+      mutate(timediff = sub.activity.start.date - unique(x$dateonset)) %>%
+      pull(timediff)
+
+    max_diff <- max(diffs)
+
+    flag <- (max_diff < -breakthrough_max_date)
+  }else{flag <- T}
+
+  return(
+    tibble(
+      "epid" = unique(x$epid),
+      "virus" = x$measurement,
+      "emergencegroup" = x$emergencegroup,
+      "ctry" = unique(x$place.admin.0),
+      "prov" = unique(x$place.admin.1),
+      "flag" = flag,
+      "max_diff" = max_diff,
+      "last_sia" = min(x$dateonset) + max_diff,
+      "date_first_detect" = min(x$dateonset),
+      "date_last_detect" = max(x$dateonset),
+      "days_since_last_detect" = Sys.Date() - min(x$dateonset)
+    )
+  )
 
 }
