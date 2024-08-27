@@ -41,7 +41,7 @@ init_sia_impact <- function(folder_loc,
 
 #' @description
 #' Store parameters in cache
-#' @import lubridate
+#' @import lubridate tidypolis
 #' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
 #' @param start_date date start date of analysis
 #' @param end_date date end date of analysis, default is present day
@@ -78,6 +78,23 @@ set_parameters <- function(breakthrough_min_date = NULL,
   }
   tidypolis:::tidypolis_io(obj = parameter_list, io = "write", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/assets/cache/report_parameters.rds"))
 
+}
+
+#' @description
+#' a function to load parameters
+#' @import
+load_parameters <- function(){
+  if(file.exists(here("sia_impact_pipeline",
+                      "assets",
+                      "cache",
+                      "report_parameters.rds")) == FALSE){
+    stop("Parameters not yet specified. Please specify parameters using set_parameters().")
+  }
+  parameters <- rio::import(here("sia_impact_pipeline",
+                                 "assets",
+                                 "cache",
+                                 "report_parameters.rds"))
+  return(parameters)
 }
 
 
