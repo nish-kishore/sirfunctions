@@ -591,14 +591,14 @@ detection_no_sia.v2 <- function(x,
                                 case.sia,
                                 breakthrough_max_date = load_parameters()$breakthrough_max_date){
 
-  sias <- filter(case.sia, adm1guid == x$adm1guid)
+  sias <- dplyr::filter(case.sia, adm1guid == x$adm1guid)
 
   max_diff <- NA
 
   if(nrow(sias) > 0){
-    diffs <- sias %>%
-      mutate(timediff = sub.activity.start.date - unique(x$dateonset)) %>%
-      pull(timediff)
+    diffs <- sias |>
+      dplyr::mutate(timediff = sub.activity.start.date - unique(x$dateonset)) |>
+      dplyr::pull(timediff)
 
     max_diff <- max(diffs)
 
