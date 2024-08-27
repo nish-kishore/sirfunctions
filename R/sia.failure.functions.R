@@ -82,18 +82,13 @@ set_parameters <- function(breakthrough_min_date = NULL,
 
 #' @description
 #' a function to load parameters
-#' @import
+#' @import tidypolis
 load_parameters <- function(){
-  if(file.exists(here("sia_impact_pipeline",
-                      "assets",
-                      "cache",
-                      "report_parameters.rds")) == FALSE){
+  if(!tidypolis:::tidypolis_io(io = "exists.file", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/assets/cache/report_parameters.rds"))){
     stop("Parameters not yet specified. Please specify parameters using set_parameters().")
   }
-  parameters <- rio::import(here("sia_impact_pipeline",
-                                 "assets",
-                                 "cache",
-                                 "report_parameters.rds"))
+  parameters <- tidypolis:::tidypolis_io(io = "read", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/assets/cache/report_parameters.rds"))
+
   return(parameters)
 }
 
