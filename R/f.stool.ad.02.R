@@ -119,7 +119,7 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
   int.data <- stool.data |>
     dplyr::group_by(get(geo)) |>
     summarize(
-      afp.cases = n(),
+      afp.cases = sum(!is.na(cdc.classification.all2)),
       num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
       num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
@@ -127,9 +127,9 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
       same.day.stool.collection = sum(.data$stool1tostool2 == 0, na.rm = T),
       late.collection = sum(.data$ontostool1 > 14 | .data$ontostool2 > 14, na.rm = T),
       bad.condition = sum(.data$stool.1.condition == "Poor" | .data$stool.2.condition == "Poor", na.rm = T),
-      missing.condition = sum(is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition)),
-      missing.stool1.condition = sum(is.na(.data$stool.1.condition)),
-      missing.stool2.condition = sum(is.na(.data$stool.2.condition)),
+      missing.condition = sum((is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition)) & afp.cases != 0),
+      missing.stool1.condition = sum(is.na(.data$stool.1.condition) & afp.cases != 0),
+      missing.stool2.condition = sum(is.na(.data$stool.2.condition) & afp.cases != 0),
       missing.stool1 = sum(.data$stool1missing == 1),
       missing.stool2 = sum(.data$stool2missing == 1),
       one.or.no.stool = sum(.data$stool1missing == 1 | .data$stool2missing == 1)
@@ -173,7 +173,7 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
   int.data <- stool.data |>
     dplyr::group_by(get(geo), .data$year) |>
     summarize(
-      afp.cases = n(),
+      afp.cases = sum(!is.na(cdc.classification.all2)),
       num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
       num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
@@ -181,9 +181,9 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
       same.day.stool.collection = sum(.data$stool1tostool2 == 0, na.rm = T),
       late.collection = sum(.data$ontostool1 > 14 | .data$ontostool2 > 14, na.rm = T),
       bad.condition = sum(.data$stool.1.condition == "Poor" | .data$stool.2.condition == "Poor", na.rm = T),
-      missing.condition = sum(is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition)),
-      missing.stool1.condition = sum(is.na(.data$stool.1.condition)),
-      missing.stool2.condition = sum(is.na(.data$stool.2.condition)),
+      missing.condition = sum((is.na(.data$stool.1.condition) | is.na(.data$stool.2.condition)) & afp.cases != 0),
+      missing.stool1.condition = sum(is.na(.data$stool.1.condition) & afp.cases != 0),
+      missing.stool2.condition = sum(is.na(.data$stool.2.condition) & afp.cases != 0),
       missing.stool1 = sum(.data$stool1missing == 1),
       missing.stool2 = sum(.data$stool2missing == 1),
       one.or.no.stool = sum(.data$stool1missing == 1 | .data$stool2missing == 1)
@@ -483,9 +483,9 @@ f.stool.ad.02 <- function(
     )
 
   # Merge stool data with days in year
-  stool.data <- dplyr::full_join(stool.data, year.data,
-                                 by = c("year" = "year")
-                                 )
+  year.pop.data <- dplyr::left_join(year.data, admin.data)
+  stool.data <- dplyr::full_join(stool.data, year.pop.data)
+
 
   # Select how to treat bad data
   stool.data <- switch(bad.data,
