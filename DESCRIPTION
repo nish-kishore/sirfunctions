@@ -34,7 +34,7 @@ Imports:
     tidyr,
     writexl,
     zoo
-Suggests: 
+Suggests:
     blastula,
     git2r,
     janitor,
@@ -44,6 +44,7 @@ Suggests:
     magick,
     tibble,
     vctrs,
+    ggspatial,
     rmarkdown,
     purrr,
     prettyunits,
