@@ -786,3 +786,69 @@ calc_first_break_case <- function(case.sia.01,
 
   return(first.break.case)
 }
+
+#' @description
+#' a function to identify SIAs with breakthrough detections for which there is no followup
+#' rounds
+#' @import dplyr
+#' @param case.sia.02 tibble df from create_case_sia_02
+#' @param case.sia tibble df of all SIAs with round numbers included from clustering
+#' @param cases tibble df of all detections
+#' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+#' @param breakthrough_max_date int maximum number of days a case could be considered breakthrough
+create_recent_sia_fail <- function(case.sia.02,
+                                   case.sia,
+                                   cases,
+                                   breakthrough_min_date=load_parameters()$breakthrough_min_date,
+                                   breakthrough_middle_date = load_parameters()$breakthrough_middle_date,
+                                   breakthrough_max_date = load_parameters()$breakthrough_max_date){
+
+  recent.sia.failure <- case.sia.02 %>%
+    filter(adm2guid %in% create_case_sia_figs(case.sia.02, case.sia, cases, method = "latest.cases", breakthrough_min_date = breakthrough_min_date, breakthrough_middle_date = breakthrough_middle_date, breakthrough_max_date = breakthrough_max_date)$adm2guid) %>%
+    group_by(adm2guid) %>%
+    mutate(max.sia = max(sub.activity.start.date)) %>%
+    filter(max.sia == sub.activity.start.date) %>%
+    ungroup() %>%
+    select(sia.sub.activity.code, place.admin.0, sub.activity.start.date,
+           vaccine.type, timetofirstcase, num.case28.180days, num.case180.365) %>%
+    group_by(sia.sub.activity.code) %>%
+    mutate(min.timetocase = min(timetofirstcase, na.rm = T),
+           tot.cases28.180days = sum(num.case28.180days),
+           tot.cases180.365days = sum(num.case180.365)) %>%
+    ungroup() %>%
+    select(sia.sub.activity.code, place.admin.0, sub.activity.start.date,
+           vaccine.type, min.timetocase, tot.cases28.180days, tot.cases180.365days) %>%
+    filter(tot.cases28.180days>0 | tot.cases180.365days>0) %>%
+    distinct()
+
+  #adding in round using sia.failure
+  sia.round <- case.sia.02 %>%
+    group_by(sia.sub.activity.code) %>%
+    mutate(round.num.sia = Mode(round.num),
+           num.breakthrough.01 = sum(breakthrough.01),
+           num.breakthrough.02 = sum(breakthrough.02)) %>%
+    select(sia.sub.activity.code, yr.sia, place.admin.0, vaccine.type,
+           round.num.sia, emerge1, emerge2, emerge3, emerge4, emerge5, emerge6,
+           emerge7, emerge8) %>%
+    distinct() %>%
+    select(sia.sub.activity.code, round.num.sia, emerge1, emerge2, emerge3,
+           emerge3, emerge4, emerge5, emerge6, emerge7, emerge8)
+
+
+  recent.sia.failure.01 <- left_join(recent.sia.failure, sia.round,
+                                     by=c("sia.sub.activity.code")) %>%
+    unite("Emergences", emerge1:emerge8, na.rm=T, sep=", ") %>%
+    rename(SIA = sia.sub.activity.code,
+           Country = place.admin.0,
+           "Start Date" = sub.activity.start.date,
+           Vaccine = vaccine.type,
+           "Time to First Breakthrough" = min.timetocase,
+           !!(paste0("Detections ",breakthrough_min_date,"-",breakthrough_middle_date," days")) := tot.cases28.180days,
+           !!(paste0("Detections ",breakthrough_middle_date,"-",breakthrough_max_date," days")) := tot.cases180.365days,
+           Round = round.num.sia) %>%
+    select(Country, SIA, Round, everything())
+
+  return(recent.sia.failure.01)
+
+}
