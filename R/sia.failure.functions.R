@@ -731,7 +731,7 @@ create_case_sia_02 <- function(case.sia.01,
 
     #add cluster and round number
     dplyr::ungroup() |>
-    dply::distinct() |>
+    dplyr::distinct() |>
 
     #any early break through of transmission
     dplyr::mutate(breakthrough.01 = ifelse(num.case28.180days > 0, 1, 0),
