@@ -630,7 +630,7 @@ run_cluster_dates <- function(data,
 
   }else{
     print(paste0("No new SIA data found for [", type, "], loading cached data!"))
-    out <- tidypolis::tidypolis_io(io = "read", file_path = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
+    out <- tidypolis:::tidypolis_io(io = "read", file_path = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
   }
 
   return(out)
@@ -740,4 +740,29 @@ create_case_sia_02 <- function(case.sia.01,
     dplyr::full_join(calc_first_break_case(case.sia.01, breakthrough_min_date),
                      by = c("adm2guid", "sia.sub.activity.code"))
 
+}
+
+#' @description
+#' a function to identify all emergences within SIA area within 365 to 0 days BEFORE SIA round to note emergences for rounds
+#' @import dplyr
+#' @param case.sia.01 tibble a df of detections and SIAs at district level
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+calc_sia_emerge <- function(case.sia.01,
+                            breakthrough_middle_date = load_parameters()$breakthrough_middle_date){
+
+  #note for now we will focus only on breakthrough regardless of emergence but this can be used later
+
+  sia.emerge <- case.sia.01 %>%
+    ungroup() %>%
+    filter(timetocase> -breakthrough_middle_date & timetocase< breakthrough_middle_date) %>%
+    select(sia.sub.activity.code, timetocase, emergencegroup)%>%
+    arrange(sia.sub.activity.code, timetocase)%>%
+    select(-timetocase)%>%
+    distinct()%>%
+    group_by(sia.sub.activity.code)%>%
+    mutate(num.emerge=row_number())%>%
+    mutate(num.emerge=paste("emerge", num.emerge, sep=""))%>%
+    pivot_wider(names_from=num.emerge, values_from=emergencegroup)
+
+  return(sia.emerge)
 }
