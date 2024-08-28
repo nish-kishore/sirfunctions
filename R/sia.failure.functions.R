@@ -693,56 +693,51 @@ create_case_sia_02 <- function(case.sia.01,
 
   print("----CREATING CASE.SIA.02----")
 
-  case.sia.02 <- full_join(case.sia.01, calc_sia_emerge(case.sia.01),
-                           by = c("sia.sub.activity.code" = "sia.sub.activity.code")) %>%
+  case.sia.02 <- dplyr::full_join(case.sia.01, calc_sia_emerge(case.sia.01),
+                           by = c("sia.sub.activity.code" = "sia.sub.activity.code")) |>
 
-    mutate(new.emerge = ifelse(emergencegroup == emerge1 | emergencegroup == emerge2 |
-                                 emergencegroup == emerge3 | emergencegroup == emerge4 |
-                                 emergencegroup == emerge5 | emergencegroup == emerge6 |
-                                 emergencegroup == emerge7 | emergencegroup == emerge8, 0, 1)) %>%
+    dplyr::mutate(new.emerge = ifelse(emergencegroup == emerge1 | emergencegroup == emerge2 |
+                                      emergencegroup == emerge3 | emergencegroup == emerge4 |
+                                      emergencegroup == emerge5 | emergencegroup == emerge6 |
+                                      emergencegroup == emerge7 | emergencegroup == emerge8, 0, 1)) |>
 
-    mutate(break.through1 = case_when(timetocase < breakthrough_min_date ~"Early Case",
-                                      timetocase >= breakthrough_min_date & timetocase <= breakthrough_middle_date ~ "Break through",
-                                      timetocase > breakthrough_middle_date & timetocase <= breakthrough_max_date ~"Late Break through",
-                                      timetocase > breakthrough_max_date ~"Very late break through",
-                                      is.na(dateonset) == T ~"Never case"),
-           #new emergence in response zone likely not due to current OPV use
-           new.emergence.01 = ifelse(timetocase >= -30 & timetocase < breakthrough_max_date & new.emerge == 1, 1,0),
-           new.emergence.01 = ifelse(is.na(new.emergence.01) == T, 0, new.emergence.01),
-           #new emergence in response zone likely due to OPV2 use
-           new.emergence.02 = ifelse(timetocase >= breakthrough_max_date & new.emerge == 1, 1, 0),
-           new.emergence.02 = ifelse(is.na(new.emergence.02) == T, 0, new.emergence.02)) %>%
+    dplyr::mutate(break.through1 = dplyr::case_when(timetocase < breakthrough_min_date ~"Early Case",
+                                                    timetocase >= breakthrough_min_date & timetocase <= breakthrough_middle_date ~ "Break through",
+                                                    timetocase > breakthrough_middle_date & timetocase <= breakthrough_max_date ~"Late Break through",
+                                                    timetocase > breakthrough_max_date ~"Very late break through",
+                                                    is.na(dateonset) == T ~"Never case"),
+                  #new emergence in response zone likely not due to current OPV use
+                  new.emergence.01 = ifelse(timetocase >= -30 & timetocase < breakthrough_max_date & new.emerge == 1, 1,0),
+                  new.emergence.01 = ifelse(is.na(new.emergence.01) == T, 0, new.emergence.01),
+                  #new emergence in response zone likely due to OPV2 use
+                  new.emergence.02 = ifelse(timetocase >= breakthrough_max_date & new.emerge == 1, 1, 0),
+                  new.emergence.02 = ifelse(is.na(new.emergence.02) == T, 0, new.emergence.02)) |>
 
-    group_by(adm2guid, sia.sub.activity.code) %>%
-    mutate(num.case28.180days = sum(break.through1 == "Break through"),
-           num.case180.365 = sum(break.through1 == "Late Break through"),
-           num.case.after365 = sum(break.through1 == "Very late break through"),
-           num.new.emerge.01 = sum(new.emergence.01),
-           num.new.emerge.02 = sum(new.emergence.02)) %>%
+    dplyr::group_by(adm2guid, sia.sub.activity.code) |>
+    dplyr::mutate(num.case28.180days = sum(break.through1 == "Break through"),
+                  num.case180.365 = sum(break.through1 == "Late Break through"),
+                  num.case.after365 = sum(break.through1 == "Very late break through"),
+                  num.new.emerge.01 = sum(new.emergence.01),
+                  num.new.emerge.02 = sum(new.emergence.02)) |>
 
-    select(sia.sub.activity.code, place.admin.0, place.admin.1, place.admin.2,
-           sub.activity.start.date, sub.activity.end.date, vaccine.type, adm0guid,
-           adm1guid, adm2guid, yr.sia, sia.type,
-           # num.dist.incamp,
-           # round.num.01,
-           # vac.round.num.count,
-           # vac.total.rounds,
-           # opv2.round.count,
-           # total.opv2.rounds,
-           `admin.coverage.%`, #linked.obx, obx1, obx2, obx3, obx4,
-           emerge1, emerge2,
-           emerge3, emerge4, emerge5, emerge6, emerge7, emerge8, num.case28.180days,
-           num.case180.365, num.case.after365, num.new.emerge.01, num.new.emerge.02, cluster, round.num) %>%
+    dplyr::select(sia.sub.activity.code, place.admin.0, place.admin.1, place.admin.2,
+                  sub.activity.start.date, sub.activity.end.date, vaccine.type, adm0guid,
+                  adm1guid, adm2guid, yr.sia, sia.type,
+                  # num.dist.incamp, round.num.01, vac.round.num.count, vac.total.rounds, opv2.round.count,
+                  # total.opv2.rounds, linked.obx, obx1, obx2, obx3, obx4,
+                  `admin.coverage.%`, emerge1, emerge2, emerge3, emerge4, emerge5,
+                  emerge6, emerge7, emerge8, num.case28.180days, num.case180.365,
+                  num.case.after365, num.new.emerge.01, num.new.emerge.02, cluster, round.num) |>
 
     #add cluster and round number
-    ungroup() %>%
-    distinct() %>%
+    dplyr::ungroup() |>
+    dply::distinct() |>
 
     #any early break through of transmission
-    mutate(breakthrough.01 = ifelse(num.case28.180days > 0, 1, 0),
-           #transmission 180-365 days
-           breakthrough.02 = ifelse(num.case180.365 > 0, 1, 0)) %>%
-    full_join(., calc_first_break_case(case.sia.01, breakthrough_min_date),
-              by = c("adm2guid", "sia.sub.activity.code"))
+    dplyr::mutate(breakthrough.01 = ifelse(num.case28.180days > 0, 1, 0),
+                  #transmission 180-365 days
+                  breakthrough.02 = ifelse(num.case180.365 > 0, 1, 0)) |>
+    dplyr::full_join(calc_first_break_case(case.sia.01, breakthrough_min_date),
+                     by = c("adm2guid", "sia.sub.activity.code"))
 
 }
