@@ -766,3 +766,23 @@ calc_sia_emerge <- function(case.sia.01,
 
   return(sia.emerge)
 }
+
+#' @description
+#' a function to identify first breakthrough case by district/SIA round
+#' @import dplyr
+#' @param case.sia.01 tibble a df of detections and SIAs at district level
+#' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
+calc_first_break_case <- function(case.sia.01,
+                                  breakthrough_min_date=load_parameters()$breakthrough_min_date){
+  first.break.case <- case.sia.01 %>%
+    mutate(break.case = ifelse(timetocase >= breakthrough_min_date, 1, 0)) %>%
+    filter(break.case == 1)%>%
+    group_by(adm2guid, sia.sub.activity.code) %>%
+    mutate(first.break.case = min(dateonset)) %>%
+    filter(first.break.case == dateonset) %>%
+    select(adm2guid, sia.sub.activity.code, first.break.case, timetocase) %>%
+    distinct() %>%
+    rename(timetofirstcase=timetocase)
+
+  return(first.break.case)
+}
