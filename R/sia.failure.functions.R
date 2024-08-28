@@ -860,7 +860,7 @@ create_recent_sia_fail <- function(case.sia.02,
 
 #' @description
 #' a function to create figures of SIA rounds and detections
-#' @import dplyr
+#' @import dplyr lubridate
 #' @param case.sia.02 tibble df from create_case_sia_02 function
 #' @param case.sia tibble df of all SIAs with round numbers included from clustering
 #' @param cases tibble df of all detections
@@ -880,50 +880,54 @@ create_case_sia_figs <- function(case.sia.02,
 
     #case.by.break.01 is EVERY cVDPV2 detection with whether or not its is a breakthrough
     #note because of AFG and PAK using tOPV, for now they are excluded
-    case.sia.fig.01 <- bind_rows(create_cases_by_break(case.sia, cases, breakthrough_min_date, breakthrough_middle_date, breakthrough_max_date) %>%
-                                   select(id = epid, adm2guid, date = dateonset,
-                                          breakthrough.01case, breakthrough.02case,
-                                          place.admin.0, place.admin.1, place.admin.2,
-                                          source, measurement, emergencegroup),
-                                 case.sia.02 %>%
-                                   select(id = sia.sub.activity.code, adm2guid,
-                                          date = sub.activity.start.date,
-                                          place.admin.0, place.admin.1, place.admin.2,
-                                          round.num, vaccine.type)) %>%
-      mutate(typea=case_when(round.num == 1 & vaccine.type == "mOPV2"~ "mOPV2 R1",
-                             round.num == 2 & vaccine.type == "mOPV2"~ "mOPV2 R2",
-                             round.num == 3 & vaccine.type == "mOPV2"~ "mOPV2 R3",
-                             round.num == 4 & vaccine.type == "mOPV2"~ "mOPV2 R4",
-                             round.num == 5 & vaccine.type == "mOPV2"~ "mOPV2 R5",
-                             round.num == 6 & vaccine.type == "mOPV2"~ "mOPV2 R6",
-                             round.num == 7 & vaccine.type == "mOPV2"~ "mOPV2 R7",
-                             round.num == 8 & vaccine.type == "mOPV2"~ "mOPV2 R8",
-                             round.num >= 9 & vaccine.type == "mOPV2"~ "mOPV2 R9+",
+    case.sia.fig.01 <- dplyr::bind_rows(create_cases_by_break(case.sia,
+                                                              cases,
+                                                              breakthrough_min_date,
+                                                              breakthrough_middle_date,
+                                                              breakthrough_max_date) |>
+                                          dplyr::select(id = epid, adm2guid, date = dateonset,
+                                                        breakthrough.01case, breakthrough.02case,
+                                                        place.admin.0, place.admin.1, place.admin.2,
+                                                        source, measurement, emergencegroup),
+                                        case.sia.02 |>
+                                          dplyr::select(id = sia.sub.activity.code, adm2guid,
+                                                        date = sub.activity.start.date,
+                                                        place.admin.0, place.admin.1, place.admin.2,
+                                                        round.num, vaccine.type)) |>
+      dplyr::mutate(typea = dplyr::case_when(round.num == 1 & vaccine.type == "mOPV2"~ "mOPV2 R1",
+                                             round.num == 2 & vaccine.type == "mOPV2"~ "mOPV2 R2",
+                                             round.num == 3 & vaccine.type == "mOPV2"~ "mOPV2 R3",
+                                             round.num == 4 & vaccine.type == "mOPV2"~ "mOPV2 R4",
+                                             round.num == 5 & vaccine.type == "mOPV2"~ "mOPV2 R5",
+                                             round.num == 6 & vaccine.type == "mOPV2"~ "mOPV2 R6",
+                                             round.num == 7 & vaccine.type == "mOPV2"~ "mOPV2 R7",
+                                             round.num == 8 & vaccine.type == "mOPV2"~ "mOPV2 R8",
+                                             round.num >= 9 & vaccine.type == "mOPV2"~ "mOPV2 R9+",
 
-                             round.num == 1 & vaccine.type == "nOPV2"~ "nOPV2 R1",
-                             round.num == 2 & vaccine.type == "nOPV2"~ "nOPV2 R2",
-                             round.num == 3 & vaccine.type == "nOPV2"~ "nOPV2 R3",
-                             round.num == 4 & vaccine.type == "nOPV2"~ "nOPV2 R4",
-                             round.num >= 5 & vaccine.type == "nOPV2"~ "nOPV2 R5+",
+                                             round.num == 1 & vaccine.type == "nOPV2"~ "nOPV2 R1",
+                                             round.num == 2 & vaccine.type == "nOPV2"~ "nOPV2 R2",
+                                             round.num == 3 & vaccine.type == "nOPV2"~ "nOPV2 R3",
+                                             round.num == 4 & vaccine.type == "nOPV2"~ "nOPV2 R4",
+                                             round.num >= 5 & vaccine.type == "nOPV2"~ "nOPV2 R5+",
 
-                             round.num == 1 & vaccine.type == "tOPV"~ "tOPV R1",
-                             round.num == 2 & vaccine.type == "tOPV"~ "tOPV R2",
-                             round.num == 3 & vaccine.type == "tOPV"~ "tOPV R3",
-                             round.num == 4 & vaccine.type == "tOPV"~ "tOPV R4",
-                             round.num >= 5 & vaccine.type == "tOPV"~ "tOPV R5+",
+                                             round.num == 1 & vaccine.type == "tOPV"~ "tOPV R1",
+                                             round.num == 2 & vaccine.type == "tOPV"~ "tOPV R2",
+                                             round.num == 3 & vaccine.type == "tOPV"~ "tOPV R3",
+                                             round.num == 4 & vaccine.type == "tOPV"~ "tOPV R4",
+                                             round.num >= 5 & vaccine.type == "tOPV"~ "tOPV R5+",
 
-                             round.num == 1 & vaccine.type == "bOPV"~ "bOPV R1",
-                             round.num == 2 & vaccine.type == "bOPV"~ "bOPV R2",
-                             round.num == 3 & vaccine.type == "bOPV"~ "bOPV R3",
-                             round.num == 4 & vaccine.type == "bOPV"~ "bOPV R4",
-                             round.num >= 5 & vaccine.type == "bOPV"~ "bOPV R5+",
+                                             round.num == 1 & vaccine.type == "bOPV"~ "bOPV R1",
+                                             round.num == 2 & vaccine.type == "bOPV"~ "bOPV R2",
+                                             round.num == 3 & vaccine.type == "bOPV"~ "bOPV R3",
+                                             round.num == 4 & vaccine.type == "bOPV"~ "bOPV R4",
+                                             round.num >= 5 & vaccine.type == "bOPV"~ "bOPV R5+",
 
-                             breakthrough.01case == 1~ paste0("Breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
-                             breakthrough.02case == 1 ~ paste0("Breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
-                             breakthrough.02case == 0 & breakthrough.01case == 0 ~ "Not breakthrough"),
-             typeb = ifelse(is.na(round.num) ==T, "Detection", "SIA")) %>%
-      mutate(geo.list = paste(place.admin.1, place.admin.0, sep=", "),
-             yr.sia = year(date))
+                                             breakthrough.01case == 1~ paste0("Breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+                                             breakthrough.02case == 1 ~ paste0("Breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+                                             breakthrough.02case == 0 & breakthrough.01case == 0 ~ "Not breakthrough"),
+                                             typeb = ifelse(is.na(round.num) ==T, "Detection", "SIA")) |>
+      dplyr::mutate(geo.list = paste(place.admin.1, place.admin.0, sep=", "),
+             yr.sia = lubridate::year(date))
 
     return(case.sia.fig.01)
   }
@@ -931,12 +935,16 @@ create_case_sia_figs <- function(case.sia.02,
   if(method == "latest.cases"){
     #Code to limit sia to only failures in past 365 days for figures
 
-    latest.cases <- create_cases_by_break(case.sia, cases, breakthrough_min_date, breakthrough_middle_date, breakthrough_max_date) %>%
-      mutate(time.from.detect = Sys.Date()-dateonset) %>%
-      filter(time.from.detect <= breakthrough_max_date) %>%
-      filter(breakthrough.01case == 1 | breakthrough.02case == 1) %>%
-      select(adm2guid) %>%
-      distinct()
+    latest.cases <- create_cases_by_break(case.sia,
+                                          cases,
+                                          breakthrough_min_date,
+                                          breakthrough_middle_date,
+                                          breakthrough_max_date) |>
+      dplyr::mutate(time.from.detect = Sys.Date()-dateonset) |>
+      dplyr::filter(time.from.detect <= breakthrough_max_date) |>
+      dplyr::filter(breakthrough.01case == 1 | breakthrough.02case == 1) |>
+      dplyr::select(adm2guid) |>
+      dplyr::distinct()
     #above are only breakthroughs in past year
 
     return(latest.cases)
@@ -946,71 +954,79 @@ create_case_sia_figs <- function(case.sia.02,
 
     #case.by.break.01 is EVERY cVDPV2 detection with whether or not its is a breakthrough
     #note because of AFG and PAK using tOPV, for now they are excluded
-    case.sia.fig.01 <- bind_rows(create_cases_by_break(case.sia, cases, breakthrough_min_date, breakthrough_middle_date, breakthrough_max_date) %>%
-                                   select(id = epid, adm2guid, date = dateonset,
-                                          breakthrough.01case, breakthrough.02case,
-                                          place.admin.0, place.admin.1, place.admin.2,
-                                          source, measurement, emergencegroup),
-                                 case.sia.02 %>%
-                                   select(id = sia.sub.activity.code, adm2guid,
-                                          date = sub.activity.start.date,
-                                          place.admin.0, place.admin.1, place.admin.2,
-                                          round.num, vaccine.type)) %>%
-      mutate(typea=case_when(round.num == 1 & vaccine.type == "mOPV2"~ "mOPV2 R1",
-                             round.num == 2 & vaccine.type == "mOPV2"~ "mOPV2 R2",
-                             round.num == 3 & vaccine.type == "mOPV2"~ "mOPV2 R3",
-                             round.num == 4 & vaccine.type == "mOPV2"~ "mOPV2 R4",
-                             round.num == 5 & vaccine.type == "mOPV2"~ "mOPV2 R5",
-                             round.num == 6 & vaccine.type == "mOPV2"~ "mOPV2 R6",
-                             round.num == 7 & vaccine.type == "mOPV2"~ "mOPV2 R7",
-                             round.num == 8 & vaccine.type == "mOPV2"~ "mOPV2 R8",
-                             round.num >= 9 & vaccine.type == "mOPV2"~ "mOPV2 R9+",
+    case.sia.fig.01 <- dplyr::bind_rows(create_cases_by_break(case.sia,
+                                                              cases,
+                                                              breakthrough_min_date,
+                                                              breakthrough_middle_date,
+                                                              breakthrough_max_date) |>
+                                   dplyr::select(id = epid, adm2guid, date = dateonset,
+                                                 breakthrough.01case, breakthrough.02case,
+                                                 place.admin.0, place.admin.1, place.admin.2,
+                                                 source, measurement, emergencegroup),
+                                   case.sia.02 |>
+                                   dplyr::select(id = sia.sub.activity.code, adm2guid,
+                                                 date = sub.activity.start.date,
+                                                 place.admin.0, place.admin.1, place.admin.2,
+                                                 round.num, vaccine.type)) |>
+      dplyr::mutate(typea = dplyr::case_when(round.num == 1 & vaccine.type == "mOPV2"~ "mOPV2 R1",
+                                             round.num == 2 & vaccine.type == "mOPV2"~ "mOPV2 R2",
+                                             round.num == 3 & vaccine.type == "mOPV2"~ "mOPV2 R3",
+                                             round.num == 4 & vaccine.type == "mOPV2"~ "mOPV2 R4",
+                                             round.num == 5 & vaccine.type == "mOPV2"~ "mOPV2 R5",
+                                             round.num == 6 & vaccine.type == "mOPV2"~ "mOPV2 R6",
+                                             round.num == 7 & vaccine.type == "mOPV2"~ "mOPV2 R7",
+                                             round.num == 8 & vaccine.type == "mOPV2"~ "mOPV2 R8",
+                                             round.num >= 9 & vaccine.type == "mOPV2"~ "mOPV2 R9+",
 
-                             round.num == 1 & vaccine.type == "nOPV2"~ "nOPV2 R1",
-                             round.num == 2 & vaccine.type == "nOPV2"~ "nOPV2 R2",
-                             round.num == 3 & vaccine.type == "nOPV2"~ "nOPV2 R3",
-                             round.num == 4 & vaccine.type == "nOPV2"~ "nOPV2 R4",
-                             round.num >= 5 & vaccine.type == "nOPV2"~ "nOPV2 R5+",
+                                             round.num == 1 & vaccine.type == "nOPV2"~ "nOPV2 R1",
+                                             round.num == 2 & vaccine.type == "nOPV2"~ "nOPV2 R2",
+                                             round.num == 3 & vaccine.type == "nOPV2"~ "nOPV2 R3",
+                                             round.num == 4 & vaccine.type == "nOPV2"~ "nOPV2 R4",
+                                             round.num >= 5 & vaccine.type == "nOPV2"~ "nOPV2 R5+",
 
-                             round.num == 1 & vaccine.type == "tOPV"~ "tOPV R1",
-                             round.num == 2 & vaccine.type == "tOPV"~ "tOPV R2",
-                             round.num == 3 & vaccine.type == "tOPV"~ "tOPV R3",
-                             round.num == 4 & vaccine.type == "tOPV"~ "tOPV R4",
-                             round.num >= 5 & vaccine.type == "tOPV"~ "tOPV R5+",
+                                             round.num == 1 & vaccine.type == "tOPV"~ "tOPV R1",
+                                             round.num == 2 & vaccine.type == "tOPV"~ "tOPV R2",
+                                             round.num == 3 & vaccine.type == "tOPV"~ "tOPV R3",
+                                             round.num == 4 & vaccine.type == "tOPV"~ "tOPV R4",
+                                             round.num >= 5 & vaccine.type == "tOPV"~ "tOPV R5+",
 
-                             round.num == 1 & vaccine.type == "bOPV"~ "bOPV R1",
-                             round.num == 2 & vaccine.type == "bOPV"~ "bOPV R2",
-                             round.num == 3 & vaccine.type == "bOPV"~ "bOPV R3",
-                             round.num == 4 & vaccine.type == "bOPV"~ "bOPV R4",
-                             round.num >= 5 & vaccine.type == "bOPV"~ "bOPV R5+",
+                                             round.num == 1 & vaccine.type == "bOPV"~ "bOPV R1",
+                                             round.num == 2 & vaccine.type == "bOPV"~ "bOPV R2",
+                                             round.num == 3 & vaccine.type == "bOPV"~ "bOPV R3",
+                                             round.num == 4 & vaccine.type == "bOPV"~ "bOPV R4",
+                                             round.num >= 5 & vaccine.type == "bOPV"~ "bOPV R5+",
 
-                             breakthrough.01case == 1~ paste0("Breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
-                             breakthrough.02case == 1 ~ paste0("Breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
-                             breakthrough.02case == 0 & breakthrough.01case == 0 ~ "Not breakthrough"),
-             typeb = ifelse(is.na(round.num) ==T, "Detection", "SIA")) %>%
-      mutate(geo.list = paste(place.admin.1, place.admin.0, sep=", "),
-             yr.sia = year(date))
+                                             breakthrough.01case == 1~ paste0("Breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+                                             breakthrough.02case == 1 ~ paste0("Breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+                                             breakthrough.02case == 0 & breakthrough.01case == 0 ~ "Not breakthrough"),
+                                             typeb = ifelse(is.na(round.num) ==T, "Detection", "SIA")) |>
+      dplyr::mutate(geo.list = paste(place.admin.1, place.admin.0, sep=", "),
+                    yr.sia = lubridate::year(date))
 
-    latest.cases <- create_cases_by_break(case.sia, cases, breakthrough_min_date, breakthrough_middle_date, breakthrough_max_date) %>%
-      mutate(time.from.detect = Sys.Date()-dateonset) %>%
-      filter(time.from.detect <= breakthrough_max_date) %>%
-      filter(breakthrough.01case == 1 | breakthrough.02case == 1) %>%
-      select(adm2guid) %>%
-      distinct()
+    latest.cases <- create_cases_by_break(case.sia,
+                                          cases,
+                                          breakthrough_min_date,
+                                          breakthrough_middle_date,
+                                          breakthrough_max_date) |>
+      dplyr::mutate(time.from.detect = Sys.Date()-dateonset) |>
+      dplyr::filter(time.from.detect <= breakthrough_max_date) |>
+      dplyr::filter(breakthrough.01case == 1 | breakthrough.02case == 1) |>
+      dplyr::select(adm2guid) |>
+      dplyr::distinct()
 
-    case.sia.fig.02 <- case.sia.fig.01 %>%
-      filter(adm2guid %in% latest.cases$adm2guid) %>%
-      group_by(adm2guid) %>%
-      mutate(max.date = max(date)) %>%
-      filter(max.date == date) %>%
-      filter(typeb == "Detection" &
-               (typea == paste0("Breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days") |
-                  typea == paste0("Breakthrough ", breakthrough_middle_date+1,"-",breakthrough_max_date," days"))) %>%
-      ungroup() %>%
-      select(place.admin.1, place.admin.0) %>%
-      mutate(geo.list = paste(place.admin.1, place.admin.0, sep=", ")) %>%
-      select(geo.list) %>%
-      distinct()
+    case.sia.fig.02 <- case.sia.fig.01 |>
+      dplyr::filter(adm2guid %in% latest.cases$adm2guid) |>
+      dplyr::group_by(adm2guid) |>
+      dplyr::mutate(max.date = max(date)) |>
+      dplyr::filter(max.date == date) |>
+      dplyr::filter(typeb == "Detection" &
+                      (typea == paste0("Breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days") |
+                         typea == paste0("Breakthrough ", breakthrough_middle_date+1,"-",breakthrough_max_date," days"))) |>
+      dplyr::ungroup() |>
+      dplyr::select(place.admin.1, place.admin.0) |>
+      dplyr::mutate(geo.list = paste(place.admin.1, place.admin.0, sep=", ")) |>
+      dplyr::select(geo.list) |>
+      dplyr::distinct()
 
     return(case.sia.fig.02)
 
