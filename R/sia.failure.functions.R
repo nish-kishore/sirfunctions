@@ -774,15 +774,15 @@ calc_sia_emerge <- function(case.sia.01,
 #' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
 calc_first_break_case <- function(case.sia.01,
                                   breakthrough_min_date=load_parameters()$breakthrough_min_date){
-  first.break.case <- case.sia.01 %>%
-    mutate(break.case = ifelse(timetocase >= breakthrough_min_date, 1, 0)) %>%
-    filter(break.case == 1)%>%
-    group_by(adm2guid, sia.sub.activity.code) %>%
-    mutate(first.break.case = min(dateonset)) %>%
-    filter(first.break.case == dateonset) %>%
-    select(adm2guid, sia.sub.activity.code, first.break.case, timetocase) %>%
-    distinct() %>%
-    rename(timetofirstcase=timetocase)
+  first.break.case <- case.sia.01 |>
+    dplyr::mutate(break.case = ifelse(timetocase >= breakthrough_min_date, 1, 0)) |>
+    dplyr::filter(break.case == 1) |>
+    dplyr::group_by(adm2guid, sia.sub.activity.code) |>
+    dplyr::mutate(first.break.case = min(dateonset)) |>
+    dplyr::filter(first.break.case == dateonset) |>
+    dplyr::select(adm2guid, sia.sub.activity.code, first.break.case, timetocase) |>
+    dplyr::distinct() |>
+    dplyr::rename(timetofirstcase=timetocase)
 
   return(first.break.case)
 }
