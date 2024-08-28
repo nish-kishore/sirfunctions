@@ -744,7 +744,7 @@ create_case_sia_02 <- function(case.sia.01,
 
 #' @description
 #' a function to identify all emergences within SIA area within 365 to 0 days BEFORE SIA round to note emergences for rounds
-#' @import dplyr
+#' @import dplyr tidyr
 #' @param case.sia.01 tibble a df of detections and SIAs at district level
 #' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
 calc_sia_emerge <- function(case.sia.01,
@@ -752,17 +752,17 @@ calc_sia_emerge <- function(case.sia.01,
 
   #note for now we will focus only on breakthrough regardless of emergence but this can be used later
 
-  sia.emerge <- case.sia.01 %>%
-    ungroup() %>%
-    filter(timetocase> -breakthrough_middle_date & timetocase< breakthrough_middle_date) %>%
-    select(sia.sub.activity.code, timetocase, emergencegroup)%>%
-    arrange(sia.sub.activity.code, timetocase)%>%
-    select(-timetocase)%>%
-    distinct()%>%
-    group_by(sia.sub.activity.code)%>%
-    mutate(num.emerge=row_number())%>%
-    mutate(num.emerge=paste("emerge", num.emerge, sep=""))%>%
-    pivot_wider(names_from=num.emerge, values_from=emergencegroup)
+  sia.emerge <- case.sia.01 |>
+    dplyr::ungroup() |>
+    dplyr::filter(timetocase> -breakthrough_middle_date & timetocase< breakthrough_middle_date) |>
+    dplyr::select(sia.sub.activity.code, timetocase, emergencegroup) |>
+    dplyr::arrange(sia.sub.activity.code, timetocase) |>
+    dplyr::select(-timetocase) |>
+    dplyr::distinct() |>
+    dplyr::group_by(sia.sub.activity.code) |>
+    dplyr::mutate(num.emerge = dplyr::row_number()) |>
+    dplyr::mutate(num.emerge=paste("emerge", num.emerge, sep="")) |>
+    tidyr::pivot_wider(names_from=num.emerge, values_from=emergencegroup)
 
   return(sia.emerge)
 }
