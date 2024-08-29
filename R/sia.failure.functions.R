@@ -1032,3 +1032,40 @@ create_case_sia_figs <- function(case.sia.02,
 
   }
 }
+
+#' @description
+#' a function to determine if individual cases are breakthrough
+#' @import dplyr
+#' @param case.sia tibble df of all SIAs with round numbers included from clustering
+#' @param cases tibble df of detections
+#' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+#' @param breakthrough_max_date int maximum number of days a case could be considered breakthrough
+create_cases_by_break <- function(case.sia,
+                                  cases,
+                                  breakthrough_min_date=load_parameters()$breakthrough_min_date,
+                                  breakthrough_middle_date = load_parameters()$breakthrough_middle_date,
+                                  breakthrough_max_date = load_parameters()$breakthrough_max_date){
+
+  cases.by.break <- dplyr::full_join(case.sia, cases, by=c("adm2guid", "place.admin.0",
+                                                           "place.admin.1", "place.admin.2")) |>
+    dplyr::select(sia.sub.activity.code, sub.activity.start.date, last.camp, place.admin.2,
+                  place.admin.1, place.admin.0, adm2guid, cluster, round.num, epid, dateonset, source) |>
+    dplyr::filter(!is.na(sia.sub.activity.code) & !is.na(epid)) |>
+    dplyr::mutate(timetocase = dateonset-sub.activity.start.date) |>
+    dplyr::filter(timetocase >= breakthrough_min_date & timetocase <= breakthrough_max_date & last.camp == 1) |>
+    dplyr::mutate(breakthrough.01case = ifelse(timetocase >= breakthrough_min_date & timetocase <= breakthrough_middle_date, 1, 0),
+                  breakthrough.02case = ifelse(timetocase > breakthrough_min_date & timetocase <= breakthrough_max_date, 1, 0)) |>
+    dplyr::select(epid,timetocase, breakthrough.01case, breakthrough.02case) |>
+    dplyr::distinct() |>
+    dplyr::group_by(epid) |>
+    dplyr::mutate(min.timetocase=min(timetocase)) |>
+    dplyr::filter(min.timetocase==timetocase)
+
+
+  cases.by.break.01 <- dplyr::left_join(cases, cases.by.break, by = c("epid")) |>
+    dplyr::mutate(breakthrough.01case = ifelse(is.na(breakthrough.01case) == T, 0, breakthrough.01case),
+                  breakthrough.02case = ifelse(is.na(breakthrough.02case) == T, 0, breakthrough.02case))
+
+  return(cases.by.break.01)
+}
