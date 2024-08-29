@@ -1077,7 +1077,7 @@ create_cases_by_break <- function(case.sia,
 
 #' @description
 #' a function to create donut maps
-#' @import dplyr
+#' @import dplyr tidyr tidypolis stringr
 #' @param .folder str folder location to output donut maps
 #' @param case.sia.02 tibble df from create_case_sia_02 function
 #' @param dist.shapes sf object of district shapes default is raw.data$global.dist
@@ -1106,21 +1106,19 @@ run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km
   global.ctry <- ctry.shapes
 
   #create dataset of country names for plotting
-  sia.to.ctry <- left_join(
-    select(sia.04, sia.sub.activity.code, GUID),
-    as_tibble(global.dist) %>%
-      select(GUID, ADM0_VIZ_NAME, WHO_REGION),
-    by = "GUID"
-  ) %>%
-    select(sia.sub.activity.code, ctry = ADM0_VIZ_NAME, WHO_REGION) %>%
-    unique() %>%
-    rowwise() %>%
-    mutate(ctry.code = strsplit(sia.sub.activity.code, "-")[[1]][1]) %>%
-    ungroup() %>%
-    select(ctry.code, WHO_REGION, ctry) %>%
-    unique() %>%
-    drop_na() %>%
-    add_row("ctry.code" = "LBR", "WHO_REGION" = "AFRO", "ctry" = "Liberia")
+  sia.to.ctry <- dplyr::left_join(dplyr::select(sia.04, sia.sub.activity.code, GUID),
+                                  as_tibble(global.dist) |>
+                                    dplyr::select(GUID, ADM0_VIZ_NAME, WHO_REGION),
+                                  by = "GUID") |>
+    dplyr::select(sia.sub.activity.code, ctry = ADM0_VIZ_NAME, WHO_REGION) |>
+    unique() |>
+    dplyr::rowwise() |>
+    dplyr::mutate(ctry.code = strsplit(sia.sub.activity.code, "-")[[1]][1]) |>
+    dplyr::ungroup() |>
+    dplyr::select(ctry.code, WHO_REGION, ctry) |>
+    unique() |>
+    tidyr::drop_na() |>
+    dplyr::add_row("ctry.code" = "LBR", "WHO_REGION" = "AFRO", "ctry" = "Liberia")
 
   #run across all sia codes
   run_sia_spatial_fail(folder = .folder,
@@ -1128,95 +1126,94 @@ run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km
                        global.dist = global.dist,
                        pos = pos)
 
-  sia.donut <- read_csv(here("sia_impact_pipeline", "outputs", "100km", "primary_output.csv"), lazy = F) %>%
-    group_by(sia.sub.activity.code) %>%
-    filter(updated == max(updated)) %>%
-    ungroup() |>
-    filter(sia.sub.activity.code %in% sia.04$sia.sub.activity.code)
+  sia.donut <- tidypolis:::tidypolis_io(io = "read", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km/primary_output.csv")) |>
+    dplyr::group_by(sia.sub.activity.code) |>
+    dplyr::filter(updated == max(updated)) |>
+    dplyr::ungroup() |>
+    dplyr::filter(sia.sub.activity.code %in% sia.04$sia.sub.activity.code)
 
-  donut.cases <- read_csv(here("sia_impact_pipeline", "outputs", "100km", "case_output.csv"), lazy = F) %>%
-    group_by(epid, sia.sub.activity.code, emergencegroup) %>%
-    mutate(n=n()) %>%
-    ungroup() %>%
-    group_by(sia.sub.activity.code, epid) %>%
-    filter(updated == max(updated)) %>%
-    ungroup()
+  donut.cases <- tidypolis:::tidypolis_io(io = "read", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km/case_output.csv")) |>
+    dplyr::group_by(epid, sia.sub.activity.code, emergencegroup) |>
+    dplry::mutate(n = n()) |>
+    dplyr::ungroup() |>
+    dplyr::group_by(sia.sub.activity.code, epid) |>
+    dplyr::filter(updated == max(updated)) |>
+    dplyr::ungroup()
 
   #merging sia.donut with larger sia data
 
-  all.sia <- case.sia.02 %>%
-    group_by(sia.sub.activity.code) %>%
-    mutate(round.num.sia = Mode(round.num),
-           num.breakthrough.01 = sum(breakthrough.01),
-           num.breakthrough.02 = sum(breakthrough.02)) %>%
-    select(sia.sub.activity.code, yr.sia, sub.activity.start.date, place.admin.0,
-           vaccine.type, round.num.sia, num.breakthrough.01, num.breakthrough.02) %>%
-    distinct() %>%
-    mutate(breakthrough.01 = ifelse(num.breakthrough.01>0, 1, 0),
-           breakthrough.02 = ifelse(num.breakthrough.02>0, 1, 0))
+  all.sia <- case.sia.02 |>
+    dplyr::group_by(sia.sub.activity.code) |>
+    dplyr::mutate(round.num.sia = omde(round.num),
+                  num.breakthrough.01 = sum(breakthrough.01),
+                  num.breakthrough.02 = sum(breakthrough.02)) |>
+    dplyr::select(sia.sub.activity.code, yr.sia, sub.activity.start.date, place.admin.0,
+                  vaccine.type, round.num.sia, num.breakthrough.01, num.breakthrough.02) |>
+    dplyr::distinct() |>
+    dplyr::mutate(breakthrough.01 = ifelse(num.breakthrough.01>0, 1, 0),
+                  breakthrough.02 = ifelse(num.breakthrough.02>0, 1, 0))
 
-  sia.donut.02 <- full_join(sia.donut, all.sia,
-                            by = c("sia.sub.activity.code")) %>%
-    filter(!is.na(place.admin.0) & !is.na(cases_in_region))
+  sia.donut.02 <- dplyr::full_join(sia.donut, all.sia, by = c("sia.sub.activity.code")) |>
+    dplyr::filter(!is.na(place.admin.0) & !is.na(cases_in_region))
 
 
   #merging donut cases to original case.sia.01 which links cases to SIAs
 
-  donut.cases.01 <- donut.cases %>%
-    rename(donut.sia.code = sia.sub.activity.code) %>%
-    mutate(dateonset = as.Date(dateonset)) %>%
-    full_join(., case.sia.01, by = c("epid", "dateonset")) %>%
-    filter(!is.na(donut.sia.code)) %>%
-    mutate(covered.by.sia60 = ifelse(timetocase >= -60 & timetocase < 0, 1, 0)) %>%
-    group_by(epid) %>%
-    mutate(sia.after.case60 = sum(covered.by.sia60)) %>%
-    ungroup() %>%
-    select(donut.sia.code, sia.date, epid, dateonset, type,
-           emergencegroup.x, place.admin.0, place.admin.1,
-           place.admin.2, sia.after.case60) %>%
-    distinct()
+  donut.cases.01 <- donut.cases |>
+    dplyr::rename(donut.sia.code = sia.sub.activity.code) |>
+    dplyr::mutate(dateonset = as.Date(dateonset)) |>
+    dplyr::full_join(case.sia.01, by = c("epid", "dateonset")) |>
+    dplyr::filter(!is.na(donut.sia.code)) |>
+    dplyr::mutate(covered.by.sia60 = ifelse(timetocase >= -60 & timetocase < 0, 1, 0)) |>
+    dplyr::group_by(epid) |>
+    dplyr::mutate(sia.after.case60 = sum(covered.by.sia60)) |>
+    dplyr::ungroup() |>
+    dplyr::select(donut.sia.code, sia.date, epid, dateonset, type,
+                  emergencegroup.x, place.admin.0, place.admin.1,
+                  place.admin.2, sia.after.case60) |>
+    dplyr::distinct()
 
-  donut.cases.02 <- donut.cases %>%
-    mutate(dateonset = as.Date(dateonset)) %>%
-    left_join(., donut.cases.01, by=c("epid", "dateonset",
-                                      "sia.sub.activity.code"="donut.sia.code",
-                                      "sia.date",
-                                      "type")) %>%
-    distinct(sia.sub.activity.code, emergencegroup, epid, .keep_all=T) %>%
-    mutate(sia.after.case60 = ifelse(sia.after.case60 >= 1, 1, 0),
-           type.v2=case_when(type == "In Spatial Buffer" & (sia.after.case60 == 0 | is.na(sia.after.case60)) ~ "In Spatial Buffer, no SIA w/in 60 days",
-                             type == "In Spatial Buffer" & sia.after.case60 == 1  ~ "In Spatial Buffer, SIA w/in 60 days",
-                             type == paste0("In Spatial Buffer -",detection_pre_sia_date," to 0 days")  &  (sia.after.case60 == 0 | is.na(sia.after.case60)) ~ paste0("In Spatial Buffer ",detection_pre_sia_date," to 0 days, no SIA w/in 60 days"),
-                             type == paste0("In Spatial Buffer -",detection_pre_sia_date," to 0 days")  &  sia.after.case60 == 1 ~paste0("In Spatial Buffer ",detection_pre_sia_date," to 0 days, SIA w/in 60 days"),
-                             type == "In SIA Region" ~ "In SIA Region"))
+  donut.cases.02 <- donut.cases |>
+    dplyr::mutate(dateonset = as.Date(dateonset)) |>
+    dplyr::left_join(donut.cases.01, by=c("epid", "dateonset", "sia.sub.activity.code"="donut.sia.code",
+                                          "sia.date", "type")) |>
+    dplyr::distinct(sia.sub.activity.code, emergencegroup, epid, .keep_all=T) |>
+    dplyr::mutate(sia.after.case60 = ifelse(sia.after.case60 >= 1, 1, 0),
+                  type.v2=case_when(type == "In Spatial Buffer" & (sia.after.case60 == 0 | is.na(sia.after.case60)) ~ "In Spatial Buffer, no SIA w/in 60 days",
+                                    type == "In Spatial Buffer" & sia.after.case60 == 1  ~ "In Spatial Buffer, SIA w/in 60 days",
+                                    type == paste0("In Spatial Buffer -",detection_pre_sia_date," to 0 days")  &  (sia.after.case60 == 0 | is.na(sia.after.case60)) ~ paste0("In Spatial Buffer ",detection_pre_sia_date," to 0 days, no SIA w/in 60 days"),
+                                    type == paste0("In Spatial Buffer -",detection_pre_sia_date," to 0 days")  &  sia.after.case60 == 1 ~paste0("In Spatial Buffer ",detection_pre_sia_date," to 0 days, SIA w/in 60 days"),
+                                    type == "In SIA Region" ~ "In SIA Region"))
 
 
-  aoi_list <- sia.donut$sia.sub.activity.code %>% unique()
+  aoi_list <- sia.donut$sia.sub.activity.code |>
+    unique()
 
-  if(file.exists(here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))){
+  if(tidypolis:::tidypolis_io(io = "exists.file", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/plot_aoi_list.rds"))){
 
     print("Previous plot log identified!")
 
     # old_aoi_list <- read_rds(here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))
-    old_aoi_list <- list.files(path=here("sia_impact_pipeline/assets/donut_maps"), pattern=".png", all.files=TRUE, full.names=FALSE) |> str_replace(".png", "")
-    write_rds(old_aoi_list, here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))
+    old_aoi_list <- tidypolis:::tidypolis_io(io = "list", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/assets/donut_maps")) |>
+      stringr::str_replace(".png", "")
+    tidypolis:::tidypolis_io(io = "write", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/plot_aoi_list.rds"))
     aoi_list <- aoi_list[!aoi_list %in% old_aoi_list]
 
     if(length(aoi_list) == 0){print("All previous SIAs have been plotted, replotting SIAs from the last 180 days.")}
 
-    recent_aoi_list <- sia.donut %>%
-      filter(Sys.Date() - start_date <= breakthrough_middle_date) %>%
-      pull(sia.sub.activity.code) %>%
+    recent_aoi_list <- sia.donut |>
+      dplyr::filter(Sys.Date() - start_date <= breakthrough_middle_date) |>
+      dplyr::pull(sia.sub.activity.code) |>
       #c(aoi_list) %>%
       unique()
 
     print(paste0("Plotting ", length(aoi_list)+length(recent_aoi_list), " figures."))
 
-    write_rds(unique(c(aoi_list, old_aoi_list)), here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))
+    tidypolis:::tidypolis_io(obj = unique(c(aoi_list, old_aoi_list)), io = "write", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/plot_aoi_list.rds"))
 
   }else{
 
-    write_rds(aoi_list, here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))
+    tidypolis:::tidypolis_io(obj = aoi_list, io = "write", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/plot_aoi_list.rds"))
 
   }
 
@@ -1233,7 +1230,7 @@ run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km
                                 pos = pos,
                                 sia.to.ctry = sia.to.ctry,
                                 global.ctry = global.ctry,
-                                plot_folder = here("sia_impact_pipeline", "assets", "donut_maps"))
+                                plot_folder = paste0(Sys.getenv("SIA_FOLDER"), "/assets/donut_maps"))
 
 
   return(list(
