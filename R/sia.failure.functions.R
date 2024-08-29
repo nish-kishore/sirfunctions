@@ -367,6 +367,7 @@ clean_sia_data <- function(sia.data,
 #' @param end.date date end date for cases, default is today
 #' @param .measurement str positve case types to include
 #' @param min.yronset date earliest year of onset for cases to be included
+#' @param type str options are "reg" or "donut"
 clean_case_data <- function(case.data,
                             start.date = as.Date("2016-01-01"),
                             end.date = Sys.Date(),
@@ -1079,27 +1080,30 @@ create_cases_by_break <- function(case.sia,
 #' @import dplyr
 #' @param .folder str folder location to output donut maps
 #' @param case.sia.02 tibble df from create_case_sia_02 function
+#' @param dist.shapes sf object of district shapes default is raw.data$global.dist
+#' @param ctry.shapes sf object of country shapes default is raw.data$global.ctry
 #' @param detection_pre_sia_date int used to restrict "Recent SIA with breakthrough transmission" figures to 'recent' SIAs
 #' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
 run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km"),
                       case.sia.02,
+                      dist.shapes = raw.data$global.dist,
+                      ctry.shapes = raw.data$global.ctry,
                       detection_pre_sia_date = load_parameters()$detection_pre_sia_date,
                       breakthrough_middle_date = load_parameters()$breakthrough_middle_date){
   #load data
 
-  sia.04 <- case.sia.02 %>%
-    ungroup() %>%
-    filter(yr.sia >= lubridate::year(load_parameters()$start_date), vaccine.type %in% c("mOPV2", "nOPV2", "tOPV", "bOPV")) %>%
-    select(sia.sub.activity.code, GUID = adm2guid,
-           activity.start.date = sub.activity.start.date,
-           activity.end.date = sub.activity.end.date, vaccine.type, round.num) %>%
-    mutate(activity.end.date = as_date(activity.end.date))
+  sia.04 <- case.sia.02 |>
+    dplyr::ungroup() |>
+    dplyr::filter(yr.sia >= lubridate::year(load_parameters()$start_date), vaccine.type %in% c("mOPV2", "nOPV2", "tOPV", "bOPV")) |>
+    dplyr::select(sia.sub.activity.code, GUID = adm2guid, activity.start.date = sub.activity.start.date,
+                  activity.end.date = sub.activity.end.date, vaccine.type, round.num) |>
+    dplyr::mutate(activity.end.date = as_date(activity.end.date))
 
-  pos <- pull_clean_case_data(type = "donut")
+  pos <- clean_case_data(type = "donut")
 
-  global.dist <- sirfunctions::load_clean_dist_sp()
+  global.dist <- dist.shapes
 
-  global.ctry <- sirfunctions::load_clean_ctry_sp()
+  global.ctry <- ctry.shapes
 
   #create dataset of country names for plotting
   sia.to.ctry <- left_join(
