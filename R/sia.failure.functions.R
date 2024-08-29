@@ -34,6 +34,9 @@ init_sia_impact <- function(folder_loc,
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/cache"))
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/donut_maps"))
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/resources"))
+    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/outputs"))
+    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/outputs/100km"))
+    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/outputs/emergences"))
   }
 
 }
@@ -1078,7 +1081,7 @@ create_cases_by_break <- function(case.sia,
 #' @param case.sia.02 tibble df from create_case_sia_02 function
 #' @param detection_pre_sia_date int used to restrict "Recent SIA with breakthrough transmission" figures to 'recent' SIAs
 #' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
-run_donut <- function(.folder = here("sia_impact_pipeline","outputs","100km"),
+run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km"),
                       case.sia.02,
                       detection_pre_sia_date = load_parameters()$detection_pre_sia_date,
                       breakthrough_middle_date = load_parameters()$breakthrough_middle_date){
