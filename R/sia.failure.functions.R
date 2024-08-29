@@ -1240,3 +1240,84 @@ run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km
   ))
 
 }
+
+
+#' Run SIA spatial fail, error checking and logs
+#' @description
+#' a function to run sia spatial fail, inlcuding error checking and logs
+#' @import dplyr
+#' @param overwrite boolean delete existing folders (not yet implemented)
+#' @param sia.04 tibble The latest sia datset created by SK.
+#' @param global.dist sf The shapefile of global districts as cleaned in pre-processing but not deshaped .
+#' @param pos tibble The list of positives with latitude changed to "lat" and longitude change to "lon".
+#' @param day_min int The minimum number of days to wait before cases are counted
+#' as an SIA failure within the super region, default is breakthrough_min_date days.
+#' @param day_max int The maximum number of days to wait till cases are counted as
+#' an SIA failure within the super region, default is 180 days.
+#' @param dist_min int The minimum distance in meters that the buffer should be, default is 100km.
+#' @param dist_max int The maximum distance in meters that the buffer should be, default is 500km.
+#' @param hard_dist boolean describing if the buffer distance is hard coded
+#' @param dist int If 'hard_dist' is true, this value sets the distance of the buffer zone.
+#' @param plots boolean Determines if function should return a tibble or the plot
+#' features. If plotting, highly recommend just doing one at a time. The
+#' default is FALSE
+#' @param folder String which describes the folder location
+run_sia_spatial_fail <- function(overwrite = T,
+                                 sia.04,
+                                 global.dist,
+                                 pos,
+                                 day_min = load_parameters()$breakthrough_min_date,
+                                 day_max = load_parameters()$breakthrough_middle_date,
+                                 dist_min = 100000,
+                                 dist_max = 500000,
+                                 hard_dist = T,
+                                 dist = 100000,
+                                 plots = F,
+                                 folder){
+
+  #create folder and files of interest
+  if(!dir.exists(folder)){
+    dir.create(folder,recursive = T)
+
+    #create file copies from template
+    file.copy(dir(paste0(here("sia_impact_pipeline", "assets","resources")), full.names = T), folder, overwrite = T)
+
+  }
+
+
+  #create cache objects
+
+  aoi_list <- sort(unique(sia.04$sia.sub.activity.code))
+
+  #check if cache exists
+  if(file.exists(paste0(folder, "/done_aoi_list.rds"))){
+
+    print("Previous run log found!")
+
+    old_aoi_list <- read_rds(paste0(folder, "/done_aoi_list.rds"))
+    aoi_list <- aoi_list[!aoi_list %in% old_aoi_list]
+
+    print(paste0(length(aoi_list), " new records identified"))
+
+    aoi_list <- sia.04 %>%
+      filter(Sys.Date() - activity.start.date <= 180) %>%
+      pull(sia.sub.activity.code) %>%
+      c(aoi_list) %>%
+      unique()
+
+    print(paste0(length(aoi_list), " total new records being processed including those that occured in the last 180 days"))
+
+
+    write_rds(c(old_aoi_list, aoi_list) %>% unique(), paste0(folder, "/done_aoi_list.rds"))
+
+  }else{
+
+    write_rds(aoi_list, paste0(folder, "/done_aoi_list.rds"))
+
+  }
+
+  lapply(aoi_list, function(x) sia_spatial_fail(aoi = x,sia.04 = sia.04,
+                                                global.dist = global.dist, pos = pos, plots = F,
+                                                folder = paste0(folder,"/")))
+
+}
