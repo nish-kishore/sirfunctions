@@ -831,7 +831,7 @@ create_recent_sia_fail <- function(case.sia.02,
   #adding in round using sia.failure
   sia.round <- case.sia.02 |>
     dplyr::group_by(sia.sub.activity.code) |>
-    dplyr::mutate(round.num.sia = Mode(round.num),
+    dplyr::mutate(round.num.sia = mode(round.num),
                   num.breakthrough.01 = sum(breakthrough.01),
                   num.breakthrough.02 = sum(breakthrough.02)) |>
     dplyr::select(sia.sub.activity.code, yr.sia, place.admin.0, vaccine.type,
@@ -1068,4 +1068,171 @@ create_cases_by_break <- function(case.sia,
                   breakthrough.02case = ifelse(is.na(breakthrough.02case) == T, 0, breakthrough.02case))
 
   return(cases.by.break.01)
+}
+
+
+#' @description
+#' a function to create donut maps
+#' @import dplyr
+#' @param .folder str folder location to output donut maps
+#' @param case.sia.02 tibble df from create_case_sia_02 function
+#' @param detection_pre_sia_date int used to restrict "Recent SIA with breakthrough transmission" figures to 'recent' SIAs
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+run_donut <- function(.folder = here("sia_impact_pipeline","outputs","100km"),
+                      case.sia.02,
+                      detection_pre_sia_date = load_parameters()$detection_pre_sia_date,
+                      breakthrough_middle_date = load_parameters()$breakthrough_middle_date){
+  #load data
+
+  sia.04 <- case.sia.02 %>%
+    ungroup() %>%
+    filter(yr.sia >= lubridate::year(load_parameters()$start_date), vaccine.type %in% c("mOPV2", "nOPV2", "tOPV", "bOPV")) %>%
+    select(sia.sub.activity.code, GUID = adm2guid,
+           activity.start.date = sub.activity.start.date,
+           activity.end.date = sub.activity.end.date, vaccine.type, round.num) %>%
+    mutate(activity.end.date = as_date(activity.end.date))
+
+  pos <- pull_clean_case_data(type = "donut")
+
+  global.dist <- sirfunctions::load_clean_dist_sp()
+
+  global.ctry <- sirfunctions::load_clean_ctry_sp()
+
+  #create dataset of country names for plotting
+  sia.to.ctry <- left_join(
+    select(sia.04, sia.sub.activity.code, GUID),
+    as_tibble(global.dist) %>%
+      select(GUID, ADM0_VIZ_NAME, WHO_REGION),
+    by = "GUID"
+  ) %>%
+    select(sia.sub.activity.code, ctry = ADM0_VIZ_NAME, WHO_REGION) %>%
+    unique() %>%
+    rowwise() %>%
+    mutate(ctry.code = strsplit(sia.sub.activity.code, "-")[[1]][1]) %>%
+    ungroup() %>%
+    select(ctry.code, WHO_REGION, ctry) %>%
+    unique() %>%
+    drop_na() %>%
+    add_row("ctry.code" = "LBR", "WHO_REGION" = "AFRO", "ctry" = "Liberia")
+
+  #run across all sia codes
+  run_sia_spatial_fail(folder = .folder,
+                       sia.04 = sia.04,
+                       global.dist = global.dist,
+                       pos = pos)
+
+  sia.donut <- read_csv(here("sia_impact_pipeline", "outputs", "100km", "primary_output.csv"), lazy = F) %>%
+    group_by(sia.sub.activity.code) %>%
+    filter(updated == max(updated)) %>%
+    ungroup() |>
+    filter(sia.sub.activity.code %in% sia.04$sia.sub.activity.code)
+
+  donut.cases <- read_csv(here("sia_impact_pipeline", "outputs", "100km", "case_output.csv"), lazy = F) %>%
+    group_by(epid, sia.sub.activity.code, emergencegroup) %>%
+    mutate(n=n()) %>%
+    ungroup() %>%
+    group_by(sia.sub.activity.code, epid) %>%
+    filter(updated == max(updated)) %>%
+    ungroup()
+
+  #merging sia.donut with larger sia data
+
+  all.sia <- case.sia.02 %>%
+    group_by(sia.sub.activity.code) %>%
+    mutate(round.num.sia = Mode(round.num),
+           num.breakthrough.01 = sum(breakthrough.01),
+           num.breakthrough.02 = sum(breakthrough.02)) %>%
+    select(sia.sub.activity.code, yr.sia, sub.activity.start.date, place.admin.0,
+           vaccine.type, round.num.sia, num.breakthrough.01, num.breakthrough.02) %>%
+    distinct() %>%
+    mutate(breakthrough.01 = ifelse(num.breakthrough.01>0, 1, 0),
+           breakthrough.02 = ifelse(num.breakthrough.02>0, 1, 0))
+
+  sia.donut.02 <- full_join(sia.donut, all.sia,
+                            by = c("sia.sub.activity.code")) %>%
+    filter(!is.na(place.admin.0) & !is.na(cases_in_region))
+
+
+  #merging donut cases to original case.sia.01 which links cases to SIAs
+
+  donut.cases.01 <- donut.cases %>%
+    rename(donut.sia.code = sia.sub.activity.code) %>%
+    mutate(dateonset = as.Date(dateonset)) %>%
+    full_join(., case.sia.01, by = c("epid", "dateonset")) %>%
+    filter(!is.na(donut.sia.code)) %>%
+    mutate(covered.by.sia60 = ifelse(timetocase >= -60 & timetocase < 0, 1, 0)) %>%
+    group_by(epid) %>%
+    mutate(sia.after.case60 = sum(covered.by.sia60)) %>%
+    ungroup() %>%
+    select(donut.sia.code, sia.date, epid, dateonset, type,
+           emergencegroup.x, place.admin.0, place.admin.1,
+           place.admin.2, sia.after.case60) %>%
+    distinct()
+
+  donut.cases.02 <- donut.cases %>%
+    mutate(dateonset = as.Date(dateonset)) %>%
+    left_join(., donut.cases.01, by=c("epid", "dateonset",
+                                      "sia.sub.activity.code"="donut.sia.code",
+                                      "sia.date",
+                                      "type")) %>%
+    distinct(sia.sub.activity.code, emergencegroup, epid, .keep_all=T) %>%
+    mutate(sia.after.case60 = ifelse(sia.after.case60 >= 1, 1, 0),
+           type.v2=case_when(type == "In Spatial Buffer" & (sia.after.case60 == 0 | is.na(sia.after.case60)) ~ "In Spatial Buffer, no SIA w/in 60 days",
+                             type == "In Spatial Buffer" & sia.after.case60 == 1  ~ "In Spatial Buffer, SIA w/in 60 days",
+                             type == paste0("In Spatial Buffer -",detection_pre_sia_date," to 0 days")  &  (sia.after.case60 == 0 | is.na(sia.after.case60)) ~ paste0("In Spatial Buffer ",detection_pre_sia_date," to 0 days, no SIA w/in 60 days"),
+                             type == paste0("In Spatial Buffer -",detection_pre_sia_date," to 0 days")  &  sia.after.case60 == 1 ~paste0("In Spatial Buffer ",detection_pre_sia_date," to 0 days, SIA w/in 60 days"),
+                             type == "In SIA Region" ~ "In SIA Region"))
+
+
+  aoi_list <- sia.donut$sia.sub.activity.code %>% unique()
+
+  if(file.exists(here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))){
+
+    print("Previous plot log identified!")
+
+    # old_aoi_list <- read_rds(here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))
+    old_aoi_list <- list.files(path=here("sia_impact_pipeline/assets/donut_maps"), pattern=".png", all.files=TRUE, full.names=FALSE) |> str_replace(".png", "")
+    write_rds(old_aoi_list, here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))
+    aoi_list <- aoi_list[!aoi_list %in% old_aoi_list]
+
+    if(length(aoi_list) == 0){print("All previous SIAs have been plotted, replotting SIAs from the last 180 days.")}
+
+    recent_aoi_list <- sia.donut %>%
+      filter(Sys.Date() - start_date <= breakthrough_middle_date) %>%
+      pull(sia.sub.activity.code) %>%
+      #c(aoi_list) %>%
+      unique()
+
+    print(paste0("Plotting ", length(aoi_list)+length(recent_aoi_list), " figures."))
+
+    write_rds(unique(c(aoi_list, old_aoi_list)), here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))
+
+  }else{
+
+    write_rds(aoi_list, here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))
+
+  }
+
+  #delete now canceled sia
+  aoi_list <- aoi_list[aoi_list %in% sia.04$sia.sub.activity.code] |>
+    c(recent_aoi_list) |>
+    unique() |>
+    sort()
+
+  run_sia_spatial_fail_plots_v2(aoi_list = aoi_list,
+                                sia.04 = sia.04,
+                                global.dist = global.dist,
+                                sk_output = donut.cases.02,
+                                pos = pos,
+                                sia.to.ctry = sia.to.ctry,
+                                global.ctry = global.ctry,
+                                plot_folder = here("sia_impact_pipeline", "assets", "donut_maps"))
+
+
+  return(list(
+    "sia.donut" = sia.donut,
+    "all.sia" = all.sia,
+    "donut.cases.02" = donut.cases.02
+  ))
+
 }
