@@ -1276,12 +1276,142 @@ run_sia_spatial_fail <- function(overwrite = T,
                                  folder){
 
   #create folder and files of interest
-  if(!dir.exists(folder)){
-    dir.create(folder,recursive = T)
+  if(!tidypolis:::tidypolis_io(io = "exists.dir", file_path = folder)){
+    tidypolis:::tidypolis_io(io = "create", file_path = folder)
 
-    #create file copies from template
-    file.copy(dir(paste0(here("sia_impact_pipeline", "assets","resources")), full.names = T), folder, overwrite = T)
+    #create template files from original report
+    prime_output_temp <- data.frame(matrix(ncol = 9, nrow = 0))
+    colnames(prime_output_temp) <- c("sia.sub.activity.code", "cases_in_region", "cases_in_buffer_lte28",
+                                     "cases_in_buffer_gt28", "cases_in_buffer_lt0", "dist", "day_min",
+                                     "day_max", "start_date")
+    tidypolis:::tidypolis_io(obj = prime_output_temp, io = "write", file_path = paste0(folder, "/primary_output.csv"))
 
+    case_output_temp <- data.frame(matrix(ncol = 6, nrow = 0))
+    colnames(case_output_temp) <- c("sia.sub.activity.code", "sia.date", "epid", "dateonset",
+                                    "type", "emergencegroup")
+    tidypolis:::tidypolis_io(obj = case_output_temp, io = "write", file_path = paste0(folder, "/case_output.csv"))
+
+    type <- c("country", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg",
+              "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "country", "country",
+              "country", "country", "country", "country", "country", "country",
+              "country", "country", "country", "country", "country", "country",
+              "country", "country", "country", "country", "country", "country",
+              "country", "country", "country", "country", "country", "country",
+              "country", "country", "country", "country", "country", "country",
+              "country", "country", "country", "country", "country", "country",
+              "country", "country", "country", "country", "country", "country",
+              "country", "country", "country", "country", "country", "country",
+              "country", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg",
+              "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg",
+              "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg",
+              "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg",
+              "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg",
+              "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg",
+              "cg", "cg", "cg", "cg", "cg")
+    label <- c("Nigeria", "Lake Chad", "Lake Chad", "Lake Chad", "Lake Chad", "Lake Chad",
+               "Lake Chad", "Lake Chad", "Lake Chad", "Lake Chad", "Lake Chad", "Lake Chad",
+               "Lake Chad", "Lake Chad", "Lake Chad", "Lake Chad", "Lake Chad", "Lake Chad",
+               "Lake Chad", "Pakistan", "Lao People's Democratic Republic", "Nigeria",
+               "Afghanistan", "Angola", "Democratic Republic Of The Congo", "Ghana",
+               "Syrian Arab Republic", "Philippines", "Niger", "Central African Republic",
+               "Burkina Faso", "Malaysia", "Papua New Guinea", "Chad", "Ethiopia",
+               "Somalia", "China", "Benin", "Togo", "Indonesia", "Yemen", "Myanmar",
+               "Mozambique", "Zambia", "Cote D Ivoire", "Sudan", "South Sudan",
+               "Madagascar", "Guinea", "Senegal", "Mali", "Cameroon", "Tajikistan",
+               "Guinea-Bissau", "Eritrea", "Ukraine", "Sierra Leone", "Congo", "Liberia",
+               "Algeria", "Malawi", "Israel", "Djibouti", "Occupied Palestinian Territory, Including East Jerusalem",
+               "Egypt", "Uganda", "Gambia", "Mauritania", "Iran (Islamic Republic Of)", "Kenya",
+               "Northern Nigeria", "Northern Nigeria", "Northern Nigeria", "Northern Nigeria",
+               "Northern Nigeria", "Northern Nigeria", "Northern Nigeria", "Northern Nigeria",
+               "Northern Nigeria", "Northern Nigeria", "Northern Nigeria", "Eastern DRC",
+               "Eastern DRC", "Eastern DRC", "North Yemen", "North Yemen", "North Yemen",
+               "North Yemen", "North Yemen", "North Yemen", "North Yemen", "North Yemen",
+               "North Yemen", "North Yemen", "North Yemen", "North Yemen", "North Yemen",
+               "North Yemen", "North Yemen", "North Yemen", "North Yemen", "North Yemen",
+               "North Yemen", "South Central Somalia", "South Central Somalia",
+               "South Central Somalia", "South Central Somalia", "South Central Somalia",
+               "South Central Somalia", "South Central Somalia", "South Central Somalia",
+               "South Central Somalia", "South Central Somalia", "High Risk Afghanistan",
+               "High Risk Afghanistan", "High Risk Afghanistan", "High Risk Afghanistan",
+               "High Risk Afghanistan", "High Risk Afghanistan", "High Risk Afghanistan",
+               "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan",
+               "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan",
+               "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan",
+               "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan",
+               "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan",
+               "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan", "High Risk Pakistan",
+               "High Risk Pakistan")
+    ctry <- c("NIGERIA", "NIGER", "NIGER", "NIGERIA", "NIGERIA", "NIGERIA", "NIGERIA",
+              "NIGERIA", "NIGERIA", "NIGERIA", "NIGERIA", "NIGERIA", "NIGERIA", "CHAD",
+              "CHAD", "CHAD", "CHAD", "CHAD", "CHAD", "PAKISTAN", "LAO PEOPLE'S DEMOCRATIC REPUBLIC",
+              "NIGERIA", "AFGHANISTAN", "ANGOLA", "DEMOCRATIC REPUBLIC OF THE CONGO", "GHANA",
+              "SYRIAN ARAB REPUBLIC", "PHILIPPINES", "NIGER", "CENTRAL AFRICAN REPUBLIC",
+              "BURKINA FASO", "MALAYSIA", "PAPUA NEW GUINEA", "CHAD", "ETHIOPIA", "SOMALIA",
+              "CHINA", "BENIN", "TOGO", "INDONESIA", "YEMEN", "MYANMAR", "MOZAMBIQUE",
+              "ZAMBIA", "COTE D IVOIRE", "SUDAN", "SOUTH SUDAN", "MADAGASCAR", "GUINEA",
+              "SENEGAL", "MALI", "CAMEROON", "TAJIKISTAN", "GUINEA-BISSAU", "ERITREA",
+              "UKRAINE", "SIERRA LEONE", "CONGO", "LIBERIA", "ALGERIA", "MALAWI", "ISRAEL",
+              "DJIBOUTI", "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM", "EGYPT",
+              "UGANDA", "GAMBIA", "MAURITANIA", "IRAN (ISLAMIC REPUBLIC OF)", "KENYA",
+              "NIGERIA", "NIGERIA", "NIGERIA", "NIGERIA", "NIGERIA", "NIGERIA", "NIGERIA",
+              "NIGERIA", "NIGERIA", "NIGERIA", "NIGERIA", "DEMOCRATIC REPUBLIC OF THE CONGO",
+              "DEMOCRATIC REPUBLIC OF THE CONGO", "DEMOCRATIC REPUBLIC OF THE CONGO",
+              "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN",
+              "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN", "YEMEN",
+              "YEMEN", "SOMALIA", "SOMALIA", "SOMALIA", "SOMALIA", "SOMALIA", "SOMALIA",
+              "SOMALIA", "SOMALIA", "SOMALIA", "SOMALIA", "AFGHANISTAN", "AFGHANISTAN",
+              "AFGHANISTAN", "AFGHANISTAN", "AFGHANISTAN", "AFGHANISTAN", "AFGHANISTAN",
+              "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN",
+              "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN",
+              "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN",
+              "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN", "PAKISTAN",
+              "PAKISTAN")
+    prov <- c("", "DIFFA", "ZINDER", "BAUCHI", "BORNO", "JIGAWA", "KADUNA", "KANO", "KATSINA",
+              "KEBBI", "SOKOTO", "YOBE", "ZAMFARA", "CHARI BAGUIRMI", "HADJER LAMIS",
+              "LAC", "MAYO KEBBI EST", "MAYO KEBBI OUEST", "N'DJAMENA", "", "", "", "",
+              "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+              "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+              "", "", "", "", "", "", "", "", "", "", "", "BAUCHI", "BORNO", "JIGAWA",
+              "KADUNA", "KANO", "KATSINA", "KEBBI", "SOKOTO", "YOBE", "GOMBE", "ZAMFARA",
+              "MANIEMA", "TANGANYIKA", "HAUT LOMAMI", "SAADAH", "ALJAWF", "HAJJAH",
+              "AMRAN", "ALHUDAIDAH", "ALMAHAWEET", "SANAA", "SANAA CITY", "MARIB",
+              "RIMAH", "DHAMAR", "IBB", "ALBAIDAH", "DHAMAR", "TAIZ", "LAHAJ", "ADEN",
+              "ALDHALE", "ABYAN", "GALGADUD", "HIRAN", "MIDDLE SHABELLE", "LOWER SHABELLE",
+              "BANADIR", "BAKOL", "BAY", "GEDO", "MIDDLE JUBA", "LOWER JUBA", "KANDAHAR",
+              "HILMAND", "URUZGAN", "NANGARHAR", "KUNAR", "PAKTIKA", "FARAH", "BALOCHISTAN",
+              "BALOCHISTAN", "BALOCHISTAN", "BALOCHISTAN", "ISLAMABAD", "ISLAMABAD",
+              "KPAKHTUNKHWA", "KPAKHTUNKHWA", "KPAKHTUNKHWA", "KPAKHTUNKHWA", "KPAKHTUNKHWA",
+              "KPAKHTUNKHWA", "KPAKHTUNKHWA", "KPAKHTUNKHWA", "PUNJAB", "PUNJAB", "PUNJAB",
+              "SINDH", "SINDH", "SINDH", "SINDH", "SINDH", "SINDH", "SINDH","SINDH")
+    dist <- c("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+              "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+              "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+              "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+              "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+              "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+              "", "", "", "", "", "", "", "", "", "", "", "", "KABDULAH", "MASTUNG",
+              "PISHIN", "QUETTA", "CDA", "ICT", "BANNU", "DIKHAN", "KHYBER", "LAKKIMRWT",
+              "PESHAWAR", "TANK", "WAZIR-N", "WAZIR-S", "FAISALABAD", "LAHORE", "RAWALPINDI",
+              "HYDERABAD", "KHICENTRAL", "KHIEAST", "KHIKAMARI", "KHIKORANGI", "KHIMALIR",
+              "KHISOUTH", "KHIWEST")
+    adm_level <- c("", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1",
+                   "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1",
+                   "adm1", "adm1", "", "", "", "", "", "", "", "", "", "", "", "",
+                   "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+                   "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+                   "", "", "", "", "", "", "", "adm1", "adm1", "adm1", "adm1", "adm1",
+                   "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1",
+                   "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1",
+                   "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1",
+                   "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1",
+                   "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1", "adm1",
+                   "adm1", "adm1", "adm1", "adm1", "adm1", "adm2", "adm2", "adm2",
+                   "adm2", "adm2", "adm2", "adm2", "adm2", "adm2", "adm2", "adm2",
+                   "adm2", "adm2", "adm2", "adm2", "adm2", "adm2", "adm2", "adm2",
+                   "adm2", "adm2", "adm2", "adm2", "adm2", "adm2")
+    geo_temp <- data.frame(type, label, ctry, prov, dist, adm_level)
+
+    tidypolis:::tidypolis_io(obj = geo_temp, io = "write", file_path = paste0(folder, "/geographies.csv"))
   }
 
 
