@@ -744,6 +744,7 @@ create_case_sia_02 <- function(case.sia.01,
     dplyr::full_join(calc_first_break_case(case.sia.01, breakthrough_min_date),
                      by = c("adm2guid", "sia.sub.activity.code"))
 
+  print("----CASE.SIA.02 CREATED----")
 }
 
 #' @description
