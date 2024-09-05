@@ -1643,3 +1643,38 @@ expand_bbox <- function(bbox,
     sf::st_transform(crs = crs_out) |>
     sf::st_bbox()
 }
+
+
+#' @description  Function to generate plots and guarantee folder exists
+#' @import ggplot2
+#' @param plot_folder str:
+#' @param plot_name str:
+#' @param p plot_object:
+#' @param save_plot boolean: use `save_plot` instead of `ggsave`
+#' @param ... Pass any plotting specific paramters
+f.save.plot <- function(plot_folder,
+                        plot_name,
+                        p,
+                        save_plot,
+                        ...){
+
+  .filename <- paste0(plot_folder, "/", plot_name, ".png")
+
+  if(!tidypolis:::tidypolis_io(io = "exists.dir", file_path = plot_folder)){
+    tidypolis:::tidypolis_io(io = "create", file_path = plot_folder)
+  }
+
+  if(save_plot){
+    save_plot(plot = p,
+              filename = .filename,
+              bg = "white",
+              ...)
+  }else{
+    ggplot2::ggsave(
+      filename = .filename,
+      plot = p,
+      bg = "white",
+      ...
+    )
+  }
+}
