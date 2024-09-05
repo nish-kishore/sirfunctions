@@ -1461,8 +1461,11 @@ run_sia_spatial_fail <- function(overwrite = T,
 
   }
 
-  lapply(aoi_list, function(x) sia_spatial_fail(aoi = x,sia.04 = sia.04,
-                                                global.dist = global.dist, pos = pos, plots = F,
+  lapply(aoi_list, function(x) sia_spatial_fail(aoi = x,
+                                                sia.04 = sia.04,
+                                                global.dist = global.dist,
+                                                pos = pos,
+                                                plots = F,
                                                 folder = paste0(folder,"/")))
 
 }
