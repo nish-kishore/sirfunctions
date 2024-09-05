@@ -1526,7 +1526,9 @@ run_sia_spatial_fail_plots_v2 <- function(aoi_list,
     viz_bbox <- sf::st_bbox(x$buffer) |>
       expand_bbox(100000, 100000)
 
-    ctry.name <- dplyr::filter(sia.to.ctry, ctry.code == x$sia.sub.activity.code |> str_split("-") |> {.[[1]][1]}) |>
+    ctry.name <- dplyr::filter(sia.to.ctry, ctry.code == x$sia.sub.activity.code |>
+                                 str_split("-") %>%
+                                 {.[[1]][1]}) |>
       dplyr::pull(ctry)
 
     round.num <- dplyr::filter(sia.04, sia.sub.activity.code == x$sia.sub.activity.code) |>
