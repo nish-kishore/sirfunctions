@@ -1093,12 +1093,14 @@ create_cases_by_break <- function(case.sia,
 #' @import dplyr tidyr tidypolis stringr
 #' @param .folder str folder location to output donut maps
 #' @param case.sia.02 tibble df from create_case_sia_02 function
+#' @param .case.data tibble df of cases to be used
 #' @param dist.shapes sf object of district shapes default is raw.data$global.dist
 #' @param ctry.shapes sf object of country shapes default is raw.data$global.ctry
 #' @param detection_pre_sia_date int used to restrict "Recent SIA with breakthrough transmission" figures to 'recent' SIAs
 #' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
 run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km"),
                       case.sia.02,
+                      .case.data,
                       dist.shapes = raw.data$global.dist,
                       ctry.shapes = raw.data$global.ctry,
                       detection_pre_sia_date = load_parameters()$detection_pre_sia_date,
@@ -1112,7 +1114,7 @@ run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km
                   activity.end.date = sub.activity.end.date, vaccine.type, round.num) |>
     dplyr::mutate(activity.end.date = as_date(activity.end.date))
 
-  pos <- clean_case_data(type = "donut")
+  pos <- clean_case_data(.case.data, type = "donut")
 
   global.dist <- dist.shapes
 
