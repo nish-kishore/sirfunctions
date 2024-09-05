@@ -1460,7 +1460,7 @@ run_sia_spatial_fail <- function(overwrite = T,
 #' A wrapper function to create spatial map outputs version 2 including
 #' classification by outputs provided by SK
 #' Run SIA spatial fail, error checking and logs
-#' @import dplyr
+#' @import dplyr sf ggplot2
 #' @param aoi_list character vector of sia sub activity codes
 #' @param overwrite Boolean, delete existing folders (not yet implemented)
 #' @param sia.04 The latest sia datset created by SK.
@@ -1499,33 +1499,36 @@ run_sia_spatial_fail_plots_v2 <- function(aoi_list,
                                           dist_max = 500000,
                                           hard_dist = T,
                                           dist = 100000,
-                                          plot_folder = file.path('', '', 'cdc.gov', 'project', 'CGH_GID_Active', 'PEB',
-                                                                  'SIR', 'DATA', 'Core 2.0', 'datafiles_01',
-                                                                  'donut_maps')){
+                                          plot_folder = paste0(Sys.getenv("SIA_FOLDER"), "/assets/donut_maps")){
 
   for(i in 1:length(aoi_list)){
     aoi <- aoi_list[i]
     print(paste0(i, " of ", length(aoi_list)))
     #generate spatial output
-    x <- sia_spatial_fail(aoi = aoi,sia.04 = sia.04,
-                          global.dist = global.dist, pos = pos, plots = T)
+    x <- sia_spatial_fail(aoi = aoi,
+                          sia.04 = sia.04,
+                          global.dist = global.dist,
+                          pos = pos,
+                          plots = T)
 
-    viz_bbox <- st_bbox(x$buffer) %>%
+    viz_bbox <- sf::st_bbox(x$buffer) |>
       expand_bbox(100000, 100000)
 
-    ctry.name <- filter(sia.to.ctry, ctry.code == x$sia.sub.activity.code %>% str_split("-") %>% {.[[1]][1]}) %>%
-      pull(ctry)
+    ctry.name <- dplyr::filter(sia.to.ctry, ctry.code == x$sia.sub.activity.code |> str_split("-") |> {.[[1]][1]}) |>
+      dplyr::pull(ctry)
 
-    round.num <- filter(sia.04, sia.sub.activity.code == x$sia.sub.activity.code) %>%
-      pull(round.num) %>% max()
+    round.num <- dplyr::filter(sia.04, sia.sub.activity.code == x$sia.sub.activity.code) |>
+      dplyr::pull(round.num) |>
+      max()
 
-    ctry.geom <- global.ctry %>% filter(ADM0_VIZ_NAME == ctry.name)
+    ctry.geom <- global.ctry |>
+      dplyr::filter(ADM0_VIZ_NAME == ctry.name)
 
-    cases <- bind_rows(x$cases_in_buffer, x$cases_in_region, x$cases_prev_in_buffer) %>%
-      left_join(filter(sk_output, sia.sub.activity.code == aoi) %>%
-                  select(epid, emergencegroup, dateonset, type.v2),
-                by = c("epid", "emergencegroup", "dateonset")) %>%
-      mutate(type.v2 = case_when(
+    cases <- dplyr::bind_rows(x$cases_in_buffer, x$cases_in_region, x$cases_prev_in_buffer) |>
+      dplyr::left_join(dplyr::filter(sk_output, sia.sub.activity.code == aoi) |>
+                         dplyr::select(epid, emergencegroup, dateonset, type.v2),
+                       by = c("epid", "emergencegroup", "dateonset")) |>
+      dplyr::mutate(type.v2 = case_when(
         type.v2 == "In Spatial Buffer, no SIA w/in 60 days" ~ "In Spatial Buffer after SIA,\n not covered by other SIA",
         type.v2 == "In Spatial Buffer, SIA w/in 60 days" ~ "In Spatial Buffer,\n covered by other SIA",
         type.v2 == paste0("In Spatial Buffer ",detection_pre_sia_date," to 0 days, SIA w/in 60 days") ~ paste0("In Spatial Buffer,\n covered by other SIA"),
@@ -1536,50 +1539,48 @@ run_sia_spatial_fail_plots_v2 <- function(aoi_list,
                        levels = c("In SIA Region",
                                   "In Spatial Buffer,\n covered by other SIA",
                                   "In Spatial Buffer before SIA,\n not covered by other SIA",
-                                  "In Spatial Buffer after SIA,\n not covered by other SIA"))) %>%
-      filter(!is.na(type.v2))
+                                  "In Spatial Buffer after SIA,\n not covered by other SIA"))) |>
+      dplyr::filter(!is.na(type.v2))
 
-    map <- ggplot() +
-      geom_sf(data = global.ctry, fill = "white", size = 1.01, color = "gray", alpha=0.4) +
-      geom_sf(data = ctry.geom, fill = "#e5d8bd", size = 1.01, color = "black", alpha=0.6) +
-      geom_sf(data = x$sr, color = "black", size = 1.5, fill = "gray", alpha=0.8) +
-      geom_sf(data = x$buffer, color = "blue", size = 1.01, fill = NA, alpha=0.6) +
-      geom_sf(data = cases, aes(color = type.v2, shape = type.v2, size = type.v2), alpha=0.8) +
-      coord_sf(xlim = viz_bbox[c(1,3)], ylim = viz_bbox[c(2,4)]) +
-      scale_color_manual(values = c("black", "black", "#a50f15", "#a50f15"),
-                         drop = F) +
+    map <- ggplot2::ggplot() +
+      ggplot2::geom_sf(data = global.ctry, fill = "white", size = 1.01, color = "gray", alpha=0.4) +
+      ggplot2::geom_sf(data = ctry.geom, fill = "#e5d8bd", size = 1.01, color = "black", alpha=0.6) +
+      ggplot2::geom_sf(data = x$sr, color = "black", size = 1.5, fill = "gray", alpha=0.8) +
+      ggplot2::geom_sf(data = x$buffer, color = "blue", size = 1.01, fill = NA, alpha=0.6) +
+      ggplot2::geom_sf(data = cases, aes(color = type.v2, shape = type.v2, size = type.v2), alpha=0.8) +
+      ggplot2::coord_sf(xlim = viz_bbox[c(1,3)], ylim = viz_bbox[c(2,4)]) +
+      ggplot2::scale_color_manual(values = c("black", "black", "#a50f15", "#a50f15"), drop = F) +
       # scale_color_manual(values = c("orange", "red", "blue", "purple", "green"),
       #                    drop = F) +
-      scale_shape_manual(values = c(16, 1, 18, 13), drop = F) +
+      ggplot2::scale_shape_manual(values = c(16, 1, 18, 13), drop = F) +
       # scale_shape_manual(values = c(16, 18, 16, 1, 1), drop = F) +
       # scale_size_manual(values = c(2, 4, 2, 2, 2), drop = F) +
-      scale_size_manual(values = c(2, 2, 3, 3), drop = F) +
-      theme_bw() +
-      theme(legend.position = "bottom",
-            axis.text = element_blank(),
-            axis.ticks = element_blank(),
-            panel.grid.major = element_blank(),
-            plot.title = element_text(hjust = 0.5),
-            plot.subtitle = element_text(hjust = 0.5)) +
-      guides(color=guide_legend(nrow=2,byrow=TRUE)) +
-      labs(color = "Type of Detection", shape = "Type of Detection", size = "Type of Detection",
-           title = paste0("\nRound ", round.num, " SIA in ", ctry.name,
-                          " (in brown), started on ", x$start_date),
-           subtitle = paste0(nrow(x$cases_in_region), " detection(s) in SIA zone and ",
-                             nrow(x$cases_in_buffer) + nrow(x$cases_prev_in_buffer), " in buffer, ",
-                             nrow(filter(cases, type.v2 %in% c("In Spatial Buffer before SIA,\n not covered by other SIA",
-                                                               "In Spatial Buffer after SIA,\n not covered by other SIA"))),
-                             " not covered by an SIA"),
-           caption = paste0("SIA Code: ",
-                            x$sia.sub.activity.code,"; Buffer Size: ", round(x$dist/1000,0),
-                            "km;\nBefore SIA: Detection 0-",detection_pre_sia_date," days before SIA;\nAfter SIA: Detection ",day_min,"-",day_max," days after SIA;\nCovered by other SIA: Other SIA covered the district 0-60 days after detection." ))
+      ggplot2::scale_size_manual(values = c(2, 2, 3, 3), drop = F) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(legend.position = "bottom",
+                     axis.text = ggplot2::element_blank(),
+                     axis.ticks = ggplot2::element_blank(),
+                     panel.grid.major = ggplot2::element_blank(),
+                     plot.title = ggplot2::element_text(hjust = 0.5),
+                     plot.subtitle = ggplot2::element_text(hjust = 0.5)) +
+      ggplot2::guides(color=guide_legend(nrow=2,byrow=TRUE)) +
+      ggplot2::labs(color = "Type of Detection", shape = "Type of Detection", size = "Type of Detection",
+                    title = paste0("\nRound ", round.num, " SIA in ", ctry.name, " (in brown), started on ", x$start_date),
+                    subtitle = paste0(nrow(x$cases_in_region), " detection(s) in SIA zone and ",
+                                      nrow(x$cases_in_buffer) + nrow(x$cases_prev_in_buffer), " in buffer, ",
+                                      nrow(dplyr::filter(cases, type.v2 %in% c("In Spatial Buffer before SIA,\n not covered by other SIA",
+                                                                               "In Spatial Buffer after SIA,\n not covered by other SIA"))), " not covered by an SIA"),
+                    caption = paste0("SIA Code: ", x$sia.sub.activity.code,"; Buffer Size: ", round(x$dist/1000,0),
+                                     "km;\nBefore SIA: Detection 0-",detection_pre_sia_date," days before SIA;\nAfter SIA: Detection ",day_min,"-",day_max," days after SIA;\nCovered by other SIA: Other SIA covered the district 0-60 days after detection." ))
 
     print(paste0("Writing map to: ", paste0(plot_folder, "/", x$sia.sub.activity.code, ".png")))
     f.save.plot(plot_folder,
                 plot_name = x$sia.sub.activity.code,
                 p = map,
                 save_plot = F,
-                width = 9, height = 9, dpi = 300)
+                width = 9,
+                height = 9,
+                dpi = 300)
 
     print(paste0(x$sia.sub.activity.code, " map completed and saved!"))
 
