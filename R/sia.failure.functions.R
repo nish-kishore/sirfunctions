@@ -836,7 +836,7 @@ create_recent_sia_fail <- function(case.sia.02,
   #adding in round using sia.failure
   sia.round <- case.sia.02 |>
     dplyr::group_by(sia.sub.activity.code) |>
-    dplyr::mutate(round.num.sia = mode(round.num),
+    dplyr::mutate(round.num.sia = Mode(round.num),
                   num.breakthrough.01 = sum(breakthrough.01),
                   num.breakthrough.02 = sum(breakthrough.02)) |>
     dplyr::select(sia.sub.activity.code, yr.sia, place.admin.0, vaccine.type,
@@ -862,6 +862,18 @@ create_recent_sia_fail <- function(case.sia.02,
   return(recent.sia.failure.01)
 
 }
+
+
+#' Mode function
+#' @description
+#' this function is used to identify the most common district level round response to assign
+#' a campaign specific round
+#' @export
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
 
 #' @description
 #' a function to create figures of SIA rounds and detections
