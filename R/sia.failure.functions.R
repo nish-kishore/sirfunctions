@@ -33,9 +33,7 @@ init_sia_impact <- function(folder_loc,
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets"))
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/cache"))
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/donut_maps"))
-    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/resources"))
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/outputs"))
-    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/outputs/100km"))
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/outputs/emergences"))
   }
 
@@ -745,6 +743,7 @@ create_case_sia_02 <- function(case.sia.01,
                      by = c("adm2guid", "sia.sub.activity.code"))
 
   print("----CASE.SIA.02 CREATED----")
+  return(case.sia.02)
 }
 
 #' @description
@@ -1149,7 +1148,7 @@ run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km
 
   donut.cases <- tidypolis:::tidypolis_io(io = "read", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km/case_output.csv")) |>
     dplyr::group_by(epid, sia.sub.activity.code, emergencegroup) |>
-    dplry::mutate(n = n()) |>
+    dplyr::mutate(n = n()) |>
     dplyr::ungroup() |>
     dplyr::group_by(sia.sub.activity.code, epid) |>
     dplyr::filter(updated == max(updated)) |>
@@ -1159,7 +1158,7 @@ run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km
 
   all.sia <- case.sia.02 |>
     dplyr::group_by(sia.sub.activity.code) |>
-    dplyr::mutate(round.num.sia = omde(round.num),
+    dplyr::mutate(round.num.sia = Mode(round.num),
                   num.breakthrough.01 = sum(breakthrough.01),
                   num.breakthrough.02 = sum(breakthrough.02)) |>
     dplyr::select(sia.sub.activity.code, yr.sia, sub.activity.start.date, place.admin.0,
@@ -1295,15 +1294,16 @@ run_sia_spatial_fail <- function(overwrite = T,
     tidypolis:::tidypolis_io(io = "create", file_path = folder)
 
     #create template files from original report
-    prime_output_temp <- data.frame(matrix(ncol = 9, nrow = 0))
-    colnames(prime_output_temp) <- c("sia.sub.activity.code", "cases_in_region", "cases_in_buffer_lte28",
-                                     "cases_in_buffer_gt28", "cases_in_buffer_lt0", "dist", "day_min",
-                                     "day_max", "start_date")
+    prime_output_temp <- data.frame(matrix(ncol = 19, nrow = 0))
+    colnames(prime_output_temp) <- c("sia.sub.activity.code", "cases_in_region", "cases_in_buffer_lte28", "x_min",
+                                     "x_max", "x_prop_zero", "cases_in_buffer_gt28", "y_min", "y_max", "y_prop_zero",
+                                     "cases_in_buffer_lt0", "z_min", "z_max", "z_prop_zero", "dist", "day_min",
+                                     "day_max", "start_date", "updated")
     tidypolis:::tidypolis_io(obj = prime_output_temp, io = "write", file_path = paste0(folder, "/primary_output.csv"))
 
-    case_output_temp <- data.frame(matrix(ncol = 6, nrow = 0))
+    case_output_temp <- data.frame(matrix(ncol = 7, nrow = 0))
     colnames(case_output_temp) <- c("sia.sub.activity.code", "sia.date", "epid", "dateonset",
-                                    "type", "emergencegroup")
+                                    "type", "emergencegroup", "updated")
     tidypolis:::tidypolis_io(obj = case_output_temp, io = "write", file_path = paste0(folder, "/case_output.csv"))
 
     type <- c("country", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg", "cg",
@@ -1613,7 +1613,7 @@ run_sia_spatial_fail_plots_v2 <- function(aoi_list,
 #' @description
 #' Check if a spatial super region and buffer zone contains cases in the
 #' time period of interest after activity
-#' @import dplyr
+#' @import dplyr sf lubridate
 #' @param aoi Activity of interest, the sia sub activity code used to
 #' subset the sia data.
 #' @param sia.04 The latest sia datset created by SK.
@@ -1636,7 +1636,10 @@ run_sia_spatial_fail_plots_v2 <- function(aoi_list,
 #' features. If plotting, highly recommend just doing one at a time. The
 #' default is FALSE
 #' @param folder String which describes the folder location
-sia_spatial_fail <- function(aoi, sia.04, global.dist, pos,
+sia_spatial_fail <- function(aoi,
+                             sia.04,
+                             global.dist,
+                             pos,
                              day_min = load_parameters()$breakthrough_min_date,
                              day_max = load_parameters()$breakthrough_middle_date,
                              detection_pre_sia_date = load_parameters()$detection_pre_sia_date,
@@ -1651,47 +1654,47 @@ sia_spatial_fail <- function(aoi, sia.04, global.dist, pos,
     {
 
       #set the use of S2 geometries to F to avoid overlapping vertices issues
-      sf_use_s2(F)
+      sf::sf_use_s2(F)
       print(aoi)
       #activity start date
-      start_date <- filter(sia.04, sia.sub.activity.code == aoi) %>%
-        pull(activity.start.date) %>%
-        as_date() %>%
+      start_date <- dplyr::filter(sia.04, sia.sub.activity.code == aoi) |>
+        dplyr::pull(activity.start.date) |>
+        lubridate::as_date() |>
         min()
 
       #create a super region
-      super_region <- filter(sia.04, sia.sub.activity.code == aoi) %>%
-        pull(GUID) %>%
-        {subset(global.dist, GUID %in% .)} %>%
-        st_union()
+      super_region <- dplyr::filter(sia.04, sia.sub.activity.code == aoi) |>
+        dplyr::pull(GUID) %>%
+        {subset(global.dist, GUID %in% .)} |>
+        sf::st_union()
 
       #find size of super region
-      bbox <- st_bbox(super_region)
+      bbox <- sf::st_bbox(super_region)
 
-      length <- bbox %>%
+      length <- bbox |>
         #find points of the bounding box
         matrix() %>%
         {
-          tibble(
+          tibble::tibble(
             "lon" = c(.[1,1],.[1,1],.[3,1],.[3,1]),
             "lat" = c(.[2,1],.[4,1],.[2,1],.[4,1])
           )
-        } %>%
+        } |>
         #turn into geom points
-        st_as_sf(coords = c("lon", "lat"),
-                 crs = 4326, agr = "constant") %>%
+        sf::st_as_sf(coords = c("lon", "lat"),
+                     crs = 4326, agr = "constant") |>
         #calculate all distances
-        st_distance() %>%
+        sf::st_distance() |>
         max() %>%
         #distance is divided by 4 for buffering (just trial and error)
-        {./4} %>%
+        {./4} |>
         as.numeric()
 
       #adjusts buffer distance to max / min
       if(hard_dist){
         length <- dist
       }else{
-        length <- case_when(
+        length <- dplyr::case_when(
           length < dist_min ~ dist_min,
           length > dist_max ~ dist_max,
           T ~ length
@@ -1699,80 +1702,81 @@ sia_spatial_fail <- function(aoi, sia.04, global.dist, pos,
       }
 
 
-      sf_use_s2(T)
+      sf::sf_use_s2(T)
 
-      super_region2 <- st_make_valid(super_region)
+      super_region2 <- sf::st_make_valid(super_region)
       #super_region2 <- st_convex_hull(super_region)
 
       #create buffer zone
-      buffer <- st_buffer(super_region2, length)
+      buffer <- sf::st_buffer(super_region2, length)
 
       #subset positives by time period convert into points and spatially subset
       #poi = positivies of interest
-      poi <- pos %>%
-        filter(!is.na(lon), !is.na(lat),
-               #all cases that could be of interest
-               dateonset > start_date,
-               dateonset <= start_date + day_max) %>%
-        st_as_sf(coords = c("lon", "lat"),
-                 crs = 4326, agr = "constant")
+      poi <- pos |>
+        dplyr::filter(!is.na(lon), !is.na(lat),
+                      #all cases that could be of interest
+                      dateonset > start_date,
+                      dateonset <= start_date + day_max) |>
+        sf::st_as_sf(coords = c("lon", "lat"),
+                     crs = 4326, agr = "constant")
 
       #all positive cases in super region and > day_min days after activity day
-      pos_in_sr <- poi[st_intersects(poi,super_region2, sparse = F),] %>%
-        filter(dateonset >= start_date + day_min) %>%
-        select(epid, dateonset, emergencegroup) %>%
-        mutate(type = "In SIA Region") %>%
+      pos_in_sr <- poi[sf::st_intersects(poi,super_region2, sparse = F),] |>
+        dplyr::filter(dateonset >= start_date + day_min) |>
+        dplyr::select(epid, dateonset, emergencegroup) |>
+        dplyr::mutate(type = "In SIA Region") |>
         unique()
 
       #all positive cases inside the buffer zone
-      pos_in_buffer <- poi[st_intersects(poi,buffer, sparse = F),] %>%
-        select(epid, dateonset, emergencegroup, admin2guid) %>%
-        mutate(type = "In Spatial Buffer") %>%
-        filter(!(epid %in% pos_in_sr$epid)) %>%
+      pos_in_buffer <- poi[sf::st_intersects(poi,buffer, sparse = F),] |>
+        dplyr::select(epid, dateonset, emergencegroup, admin2guid) |>
+        dplyr::mutate(type = "In Spatial Buffer") |>
+        dplyr::filter(!(epid %in% pos_in_sr$epid)) |>
         unique()
 
       if(nrow(pos_in_buffer) > 0){
-        pos_in_buffer <- {pos_in_buffer[!st_intersects(pos_in_buffer,super_region2,sparse = F),]}
+        pos_in_buffer <- {pos_in_buffer[!sf::st_intersects(pos_in_buffer,super_region2,sparse = F),]}
 
         #if buffer values matched guid from SIA place in buffer
 
         for(i in pos_in_buffer$epid){
-          if(filter(pos, epid == i) |>
-             pull(admin2guid) %>%
-             {. %in% (filter(sia.04, sia.sub.activity.code == aoi) %>%
-                      pull(GUID) )}){
-            pos_in_sr <- bind_rows(pos_in_sr, filter(pos_in_buffer, epid == i))
-            pos_in_buffer <- filter(pos_in_buffer, epid != i)
+          if(dplyr::filter(pos, epid == i) |>
+             dplyr::pull(admin2guid) |>
+             unique() %>%
+             {. %in% (dplyr::filter(sia.04, sia.sub.activity.code == aoi) |>
+                      dplyr::pull(GUID) )}){
+            pos_in_sr <- dplyr::bind_rows(pos_in_sr, dplyr::filter(pos_in_buffer, epid == i))
+            pos_in_buffer <- dplyr::filter(pos_in_buffer, epid != i)
           }
         }
 
       }
 
       #all positives outside the SIA region leading up to activity
-      pos_prev_in_buffer <- pos %>%
-        filter(!is.na(lon), !is.na(lat),
-               #all cases that could be of interest
-               dateonset >= start_date - detection_pre_sia_date,
-               dateonset < start_date) %>%
-        st_as_sf(coords = c("lon", "lat"),
-                 crs = 4326, agr = "constant") %>%
-        {.[st_intersects(.,buffer, sparse = F),]} %>%
-        select(epid, dateonset, emergencegroup) %>%
-        mutate(type = paste0("In Spatial Buffer -",detection_pre_sia_date," to 0 days")) %>%
+      pos_prev_in_buffer <- pos |>
+        dplyr::filter(!is.na(lon), !is.na(lat),
+                      #all cases that could be of interest
+                      dateonset >= start_date - detection_pre_sia_date,
+                      dateonset < start_date) |>
+        sf::st_as_sf(coords = c("lon", "lat"),
+                     crs = 4326, agr = "constant") %>%
+        {.[sf::st_intersects(.,buffer, sparse = F),]} |>
+        dplyr::select(epid, dateonset, emergencegroup) |>
+        dplyr::mutate(type = paste0("In Spatial Buffer -",detection_pre_sia_date," to 0 days")) |>
         unique()
 
       if(nrow(pos_prev_in_buffer) > 0){
-        pos_prev_in_buffer <- {pos_prev_in_buffer[!st_intersects(pos_prev_in_buffer,super_region2,sparse = F),]}
+        pos_prev_in_buffer <- {pos_prev_in_buffer[!sf::st_intersects(pos_prev_in_buffer, super_region2, sparse = F),]}
 
         #if buffer values matched guid from SIA place in buffer
 
         for(i in pos_prev_in_buffer$epid){
-          if(filter(pos, epid == i) |>
-             pull(admin2guid) %>%
-             {. %in% (filter(sia.04, sia.sub.activity.code == aoi) %>%
-                      pull(GUID) )}){
-            pos_in_sr <- bind_rows(pos_in_sr, filter(pos_prev_in_buffer, epid == i))
-            pos_prev_in_buffer <- filter(pos_prev_in_buffer, epid != i)
+          if(dplyr::filter(pos, epid == i) |>
+             dplyr::pull(admin2guid) %>%
+             {. %in% (dplyr::filter(sia.04, sia.sub.activity.code == aoi) |>
+                      dplyr::pull(GUID) )}){
+            pos_in_sr <- dplyr::bind_rows(pos_in_sr, dplyr::filter(pos_prev_in_buffer, epid == i))
+            pos_prev_in_buffer <- dplyr::filter(pos_prev_in_buffer, epid != i)
           }
         }
 
@@ -1934,18 +1938,18 @@ sia_spatial_fail <- function(aoi, sia.04, global.dist, pos,
 
       if(!plots){
         #primary output of the run
-        primary_output <- tibble(
+        primary_output <- tibble::tibble(
           "sia.sub.activity.code" = aoi,
           "cases_in_region" = nrow(pos_in_sr),
-          "cases_in_buffer_lte28" = filter(pos_in_buffer, dateonset <= start_date + day_min) %>% nrow(),
+          "cases_in_buffer_lte28" = dplyr::filter(pos_in_buffer, dateonset <= start_date + day_min) |> nrow(),
           "x_min" = NA, #x$min
           "x_max" = NA, #x$max,
           "x_prop_zero" = NA, #x$prop_zero,
-          "cases_in_buffer_gt28" = filter(pos_in_buffer, dateonset > start_date + day_min) %>% nrow(),
+          "cases_in_buffer_gt28" = dplyr::filter(pos_in_buffer, dateonset > start_date + day_min) |> nrow(),
           "y_min" = NA, # y$min,
           "y_max" = NA, # y$max,
           "y_prop_zero" = NA, # y$prop_zero,
-          "cases_in_buffer_lt0" = filter(pos_prev_in_buffer) %>% nrow(),
+          "cases_in_buffer_lt0" = dplyr::filter(pos_prev_in_buffer) |> nrow(),
           "z_min" = NA, # z$min,
           "z_max" = NA, # z$max,
           "z_prop_zero" = NA, # z$prop_zero,
@@ -1957,22 +1961,21 @@ sia_spatial_fail <- function(aoi, sia.04, global.dist, pos,
         )
 
         #case output
-        case_output <- bind_rows(
-          tibble(pos_in_sr) %>%
-            select(epid, dateonset, emergencegroup, type) %>%
-            mutate(sia.sub.activity.code = aoi,
-                   sia.date = start_date),
-          tibble(pos_in_buffer) %>%
-            select(epid, dateonset, emergencegroup, type) %>%
-            mutate(sia.sub.activity.code = aoi,
-                   sia.date = start_date),
-          tibble(pos_prev_in_buffer) %>%
-            select(epid, dateonset, emergencegroup, type) %>%
-            mutate(sia.sub.activity.code = aoi,
-                   sia.date = start_date)
-        ) %>%
-          dplyr::select(sia.sub.activity.code, sia.date, epid, dateonset, type, emergencegroup) %>%
-          mutate(updated = Sys.time())
+        case_output <- dplyr::bind_rows(
+          tibble::tibble(pos_in_sr) |>
+            dplyr::select(epid, dateonset, emergencegroup, type) |>
+            dplyr::mutate(sia.sub.activity.code = aoi,
+                          sia.date = start_date),
+          tibble::tibble(pos_in_buffer) |>
+            dplyr::select(epid, dateonset, emergencegroup, type) |>
+            dplyr::mutate(sia.sub.activity.code = aoi,
+                          sia.date = start_date),
+          tibble::tibble(pos_prev_in_buffer) |>
+            dplyr::select(epid, dateonset, emergencegroup, type) |>
+            dplyr::mutate(sia.sub.activity.code = aoi,
+                          sia.date = start_date)) |>
+          dplyr::select(sia.sub.activity.code, sia.date, epid, dateonset, type, emergencegroup) |>
+          dplyr::mutate(updated = Sys.time())
 
       }
 
@@ -1981,45 +1984,19 @@ sia_spatial_fail <- function(aoi, sia.04, global.dist, pos,
         return(plot_output)
       }else{
         #print output files
-        write_csv(
-          bind_rows(
-            read_csv(paste0(folder,"primary_output.csv"),
-                     col_types =  list(
-                       cases_in_region = col_integer(),
-                       cases_in_buffer_lte28 = col_integer(),
-                       cases_in_buffer_gt28 = col_integer(),
-                       cases_in_buffer_lt0 = col_integer(),
-                       dist = col_integer(),
-                       day_min = col_integer(),
-                       day_max = col_integer(),
-                       start_date = col_date()
-                     ),
-                     lazy = F
-            ),
-            primary_output
-          ),
-          paste0(folder,"primary_output.csv")
-        )
+        tidypolis:::tidypolis_io(io = "write",
+                                 obj = bind_rows(tidypolis:::tidypolis_io(io = "read", file_path = paste0(folder, "primary_output.csv")) |>
+                                                   dplyr::mutate(dplyr::across(c("cases_in_region", "cases_in_buffer_lte28", "x_min", "x_max", "x_prop_zero",
+                                                                                 "cases_in_buffer_gt28", "y_min", ,"y_max", "y_prop_zero", "cases_in_buffer_lt0",
+                                                                                 "z_min", "z_max", "z_prop_zero", "dist", "day_min", "day_max"), as.integer),
+                                                                 dplyr::across(c("start_date", "updated"), as.Date)), primary_output),
+                                 file_path = paste0(folder,"primary_output.csv"))
 
         #print case files
-        write_csv(
-          bind_rows(
-            read_csv(paste0(folder,"case_output.csv"),
-                     col_types =  list(
-                       sia.sub.activity.code = col_character(),
-                       sia.date = col_date(),
-                       epid = col_character(),
-                       dateonset = col_date(),
-                       type = col_character(),
-                       emergencegroup = col_character()
-                     ),
-                     lazy = F
-            ),
-            case_output
-          ),
-          paste0(folder,"case_output.csv")
-        )
-
+        tidypolis:::tidypolis_io(io = "write",
+                                 obj = bind_rows(tidypolis:::tidypolis_io(io = "read", file_path = paste0(folder, "case_output.csv")) |>
+                                                   dplyr::mutate(dplyr::across(c("sia.date", "dateonset", "updated"), as.Date)), case_output),
+                                 file_path = paste0(folder,"case_output.csv"))
       }
     },
     error = function(e){
