@@ -1210,7 +1210,7 @@ run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km
     # old_aoi_list <- read_rds(here("sia_impact_pipeline", "outputs", "plot_aoi_list.rds"))
     old_aoi_list <- tidypolis:::tidypolis_io(io = "list", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/assets/donut_maps")) |>
       stringr::str_replace(".png", "")
-    tidypolis:::tidypolis_io(io = "write", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/plot_aoi_list.rds"))
+    tidypolis:::tidypolis_io(obj = old_aoi_list, io = "write", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/plot_aoi_list.rds"))
     aoi_list <- aoi_list[!aoi_list %in% old_aoi_list]
 
     if(length(aoi_list) == 0){print("All previous SIAs have been plotted, replotting SIAs from the last 180 days.")}
