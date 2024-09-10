@@ -613,8 +613,8 @@ run_cluster_dates <- function(data,
     if(data_cache_exists){
       data_cache <- tidypolis:::tidypolis_io(io = "read", file_path = paste0(sia_folder, "/assets/cache/", type, "data_cluster_cache.rds"))
 
-      out <- filter(data_cache, !sia.sub.activity.code %in% unique(out$sia.sub.activity.code)) %>%
-        bind_rows(out)
+      out <- filter(data_cache, !sia.sub.activity.code %in% unique(out$sia.sub.activity.code)) |>
+        dplyr::bind_rows(out)
       # data_cache2 <- data_cache %>%
       #   anti_join(out, by=c("sia.sub.activity.code", "adm2guid"))
       # out <- data_cache2 %>%
@@ -1225,17 +1225,22 @@ run_donut <- function(.folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/100km
 
     tidypolis:::tidypolis_io(obj = unique(c(aoi_list, old_aoi_list)), io = "write", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/plot_aoi_list.rds"))
 
+    #delete now canceled sia
+    aoi_list <- aoi_list[aoi_list %in% sia.04$sia.sub.activity.code] |>
+      c(recent_aoi_list) |>
+      unique() |>
+      sort()
+
   }else{
 
     tidypolis:::tidypolis_io(obj = aoi_list, io = "write", file_path = paste0(Sys.getenv("SIA_FOLDER"), "/outputs/plot_aoi_list.rds"))
 
-  }
+    #delete now canceled sia
+    aoi_list <- aoi_list[aoi_list %in% sia.04$sia.sub.activity.code] |>
+      unique() |>
+      sort()
 
-  #delete now canceled sia
-  aoi_list <- aoi_list[aoi_list %in% sia.04$sia.sub.activity.code] |>
-    c(recent_aoi_list) |>
-    unique() |>
-    sort()
+  }
 
   run_sia_spatial_fail_plots_v2(aoi_list = aoi_list,
                                 sia.04 = sia.04,
@@ -1444,10 +1449,10 @@ run_sia_spatial_fail <- function(overwrite = T,
 
     print(paste0(length(aoi_list), " new records identified"))
 
-    aoi_list <- sia.04 %>%
-      filter(Sys.Date() - activity.start.date <= 180) %>%
-      pull(sia.sub.activity.code) %>%
-      c(aoi_list) %>%
+    aoi_list <- sia.04 |>
+      dplyr::filter(Sys.Date() - activity.start.date <= 180) |>
+      dplyr::pull(sia.sub.activity.code) |>
+      c(aoi_list) |>
       unique()
 
     print(paste0(length(aoi_list), " total new records being processed including those that occured in the last 180 days"))
