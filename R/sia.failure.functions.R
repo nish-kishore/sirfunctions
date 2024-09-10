@@ -1458,11 +1458,11 @@ run_sia_spatial_fail <- function(overwrite = T,
     print(paste0(length(aoi_list), " total new records being processed including those that occured in the last 180 days"))
 
 
-    write_rds(c(old_aoi_list, aoi_list) %>% unique(), paste0(folder, "/done_aoi_list.rds"))
+    tidypolis:::tidypolis_io(obj = c(old_aoi_list, aoi_list) %>% unique(), io = "write", file_path = paste0(folder, "/done_aoi_list.rds"))
 
   }else{
 
-    write_rds(aoi_list, paste0(folder, "/done_aoi_list.rds"))
+    tidypolis:::tidypolis_io(obj = aoi_list, io = "write", file_path = paste0(folder, "/done_aoi_list.rds"))
 
   }
 
