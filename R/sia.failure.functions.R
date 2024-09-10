@@ -2147,3 +2147,78 @@ country_surv_plot <- function(a,
                      "vaccine.type" = d,
                      "ctry" = e)
 }
+
+#' @description
+#' a function to create survival plots based on first breakthrough cases
+#' @import dplyr
+#' @param region str WHO region to create survival plots for
+#' @param folder str folder location to save plots
+#' @param plot_data tibble df to use to craete surv plots
+#' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+#' @param breakthrough_max_date int maximum number of days a case could be considered breakthrough
+surv_plot_func <- function(region,
+                           folder = paste0(Sys.getenv("SIA_FOLDER"), "/outputs"),
+                           plot_data,
+                           breakthrough_min_date = load_parameters()$breakthrough_min_date,
+                           breakthrough_middle_date = load_parameters()$breakthrough_middle_date,
+                           breakthrough_max_date = load_parameters()$breakthrough_max_date){
+
+  tmp <- plot_data %>%
+    mutate(ctry = case_when(
+      ctry == "Democratic Republic of the Congo" ~ "DRC",
+      ctry == "Central African Republic" ~ "CAR",
+      T ~ ctry
+    )) %>%
+    filter(timetofirstcase <= breakthrough_max_date,WHO_REGION == region) %>%
+    mutate(ctry = factor(ctry))
+
+  a <- filter(tmp, round.num.sia == 1) %>%
+    ggplot(aes(x = timetofirstcase, y = surv.01, group = vaccine.type, color = vaccine.type)) +
+    #geom_point(alpha = 0.5, fill = NA) +
+    geom_point() +
+    geom_line() +
+    facet_wrap(~ctry, drop = F, ncol = 3) +
+    theme_bw() +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    scale_color_manual(values = color.surv.plots) +
+    labs(x = "Days to first case", y = "Percent of campaigns that succeeded",
+         shape = paste0("Failed before ",breakthrough_middle_date," days"), color = "Vaccine\nType",
+         title = "Round 1") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    coord_cartesian(ylim = c(0.8,1))
+
+  b <- filter(tmp, round.num.sia == 2) %>%
+    ggplot(aes(x = timetofirstcase, y = surv.01, group = vaccine.type, color = vaccine.type)) +
+    #geom_point(alpha = 0.5, fill = NA) +
+    geom_point() +
+    geom_line() +
+    facet_wrap(~ctry, drop = F, ncol = 3) +
+    theme_bw() +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    scale_color_manual(values = color.surv.plots) +
+    labs(x = "Days to first case", y = "Percent of campaigns that succeeded",
+         shape = paste0("Failed before ",breakthrough_middle_date," days"), color = "Vaccine\nType",
+         title = "Round 2") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    coord_cartesian(ylim = c(0.8,1))
+
+  figure <- ggarrange(a,b,
+                      common.legend = T,
+                      #labels = NULL, ncol = 2,
+                      legend = "bottom", align = "hv",
+                      font.label = list(size = 10, color = "black", face = "bold", family = NULL, position = "top"))
+
+  p <- annotate_figure(figure, top = text_grob(region, color = "black", face = "bold", size = 14) ,
+                       bottom = text_grob(paste0("Failures defined as those ",breakthrough_min_date," - ",breakthrough_max_date," days from activity"), color = "black",
+                                          hjust = 1, x = 1, face = "italic", size = 10))
+
+  if(region == "AFRO"){
+    ggsave(paste0(folder, "/", region, ".png"), width = 11, height = 20, plot = p, bg = "white")
+  }else{
+    ggsave(paste0(folder, "/", region, ".png"), width = 11, height = 8.5, plot = p, bg = "white")
+  }
+
+  print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
+
+}
