@@ -2071,7 +2071,7 @@ expand_bbox <- function(bbox,
 
 
 #' @description  Function to generate plots and guarantee folder exists
-#' @import ggplot2
+#' @import ggplot2 cowplot
 #' @param plot_folder str:
 #' @param plot_name str:
 #' @param p plot_object:
@@ -2090,7 +2090,7 @@ f.save.plot <- function(plot_folder,
   }
 
   if(save_plot){
-    save_plot(plot = p,
+    cowplot::save_plot(plot = p,
               filename = .filename,
               bg = "white",
               ...)
@@ -2102,4 +2102,46 @@ f.save.plot <- function(plot_folder,
       ...
     )
   }
+}
+
+
+#' @description Generate data for within region analysis
+#' @import dplyr
+#' @param a variable WHO region in df
+#' @param b variable year sia
+#' @param c variable round number
+#' @param d variable vaccine type
+#' @param e variable country name
+country_surv_plot <- function(a,
+                              b,
+                              c,
+                              d,
+                              e){
+  filter(left_join(case.sia.02, ctry.region.2, by = c("place.admin.0" = "ADM0_NAME")),
+         WHO_REGION == a,
+         #yr.sia == b,
+         round.num == c, vaccine.type == d, place.admin.0 == e) %>%
+    select(breakthrough.01, breakthrough.02, timetofirstcase) %>%
+    arrange(timetofirstcase) %>%
+    mutate(num.camps = n(),
+           surv.01 = 1 - (cumsum(breakthrough.01)/num.camps),
+           surv.02 = 1 - (cumsum(breakthrough.02)/num.camps)) %>%
+    group_by(timetofirstcase) %>%
+    mutate(surv.01 = min(surv.01),
+           surv.02 = min(surv.02)) %>%
+    ungroup() %>%
+    distinct() %>%
+    select(timetofirstcase, surv.01, surv.02) %>%
+    mutate(timetofirstcase = as.numeric(timetofirstcase)) %>%
+    add_row(timetofirstcase = 0, surv.01 = 1, surv.02 = 1, .before = 1) %>%
+    {bind_rows(.,
+               bind_cols(.[2:nrow(.),"timetofirstcase"],
+                         .[1:nrow(.)-1,"surv.01"],
+                         .[1:nrow(.)-1,"surv.02"]))} %>%
+    arrange(timetofirstcase, -surv.01) %>%
+    bind_cols("WHO_REGION" = a,
+              #"yr.sia" = b,
+              "round.num.sia" = c,
+              "vaccine.type" = d,
+              "ctry" = e)
 }
