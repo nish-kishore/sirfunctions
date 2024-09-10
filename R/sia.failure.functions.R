@@ -2117,31 +2117,33 @@ country_surv_plot <- function(a,
                               c,
                               d,
                               e){
-  filter(left_join(case.sia.02, ctry.region.2, by = c("place.admin.0" = "ADM0_NAME")),
+  dplyr::filter(dplyr::left_join(case.sia.02, ctry.region.2, by = c("place.admin.0" = "ADM0_NAME")),
          WHO_REGION == a,
          #yr.sia == b,
-         round.num == c, vaccine.type == d, place.admin.0 == e) %>%
-    select(breakthrough.01, breakthrough.02, timetofirstcase) %>%
-    arrange(timetofirstcase) %>%
-    mutate(num.camps = n(),
-           surv.01 = 1 - (cumsum(breakthrough.01)/num.camps),
-           surv.02 = 1 - (cumsum(breakthrough.02)/num.camps)) %>%
-    group_by(timetofirstcase) %>%
-    mutate(surv.01 = min(surv.01),
-           surv.02 = min(surv.02)) %>%
-    ungroup() %>%
-    distinct() %>%
-    select(timetofirstcase, surv.01, surv.02) %>%
-    mutate(timetofirstcase = as.numeric(timetofirstcase)) %>%
-    add_row(timetofirstcase = 0, surv.01 = 1, surv.02 = 1, .before = 1) %>%
-    {bind_rows(.,
-               bind_cols(.[2:nrow(.),"timetofirstcase"],
-                         .[1:nrow(.)-1,"surv.01"],
-                         .[1:nrow(.)-1,"surv.02"]))} %>%
-    arrange(timetofirstcase, -surv.01) %>%
-    bind_cols("WHO_REGION" = a,
-              #"yr.sia" = b,
-              "round.num.sia" = c,
-              "vaccine.type" = d,
-              "ctry" = e)
+         round.num == c,
+         vaccine.type == d,
+         place.admin.0 == e) |>
+    dplyr::select(breakthrough.01, breakthrough.02, timetofirstcase) |>
+    dplyr::arrange(timetofirstcase) |>
+    dplyr::mutate(num.camps = n(),
+                  surv.01 = 1 - (cumsum(breakthrough.01)/num.camps),
+                  surv.02 = 1 - (cumsum(breakthrough.02)/num.camps)) |>
+    dplyr::group_by(timetofirstcase) |>
+    dplyr::mutate(surv.01 = min(surv.01),
+                  surv.02 = min(surv.02)) |>
+    dplyr::ungroup() |>
+    dplyr::distinct() |>
+    dplyr::select(timetofirstcase, surv.01, surv.02) |>
+    dplyr::mutate(timetofirstcase = as.numeric(timetofirstcase)) |>
+    dplyr::add_row(timetofirstcase = 0, surv.01 = 1, surv.02 = 1, .before = 1) %>%
+    {dplyr::bind_rows(.,
+               dplyr::bind_cols(.[2:nrow(.),"timetofirstcase"],
+                                .[1:nrow(.)-1,"surv.01"],
+                                .[1:nrow(.)-1,"surv.02"]))} |>
+    dplyr::arrange(timetofirstcase, -surv.01) |>
+    dplyr::bind_cols("WHO_REGION" = a,
+                     #"yr.sia" = b,
+                     "round.num.sia" = c,
+                     "vaccine.type" = d,
+                     "ctry" = e)
 }
