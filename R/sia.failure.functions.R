@@ -2164,14 +2164,14 @@ surv_plot_func <- function(region,
                            breakthrough_middle_date = load_parameters()$breakthrough_middle_date,
                            breakthrough_max_date = load_parameters()$breakthrough_max_date){
 
-  tmp <- plot_data %>%
-    mutate(ctry = case_when(
+  tmp <- plot_data |>
+    dplyr::mutate(ctry = dplyr::case_when(
       ctry == "Democratic Republic of the Congo" ~ "DRC",
       ctry == "Central African Republic" ~ "CAR",
       T ~ ctry
-    )) %>%
-    filter(timetofirstcase <= breakthrough_max_date,WHO_REGION == region) %>%
-    mutate(ctry = factor(ctry))
+    )) |>
+    dplyr::filter(timetofirstcase <= breakthrough_max_date,WHO_REGION == region) |>
+    dplyr::mutate(ctry = factor(ctry))
 
   a <- filter(tmp, round.num.sia == 1) %>%
     ggplot(aes(x = timetofirstcase, y = surv.01, group = vaccine.type, color = vaccine.type)) +
