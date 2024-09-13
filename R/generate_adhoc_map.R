@@ -488,6 +488,7 @@ set_emergence_colors <- function(raw.data, download_date) {
 #' @importFrom lubridate as_date days floor_date today
 #' @importFrom stringr regex str_detect str_to_lower str_to_upper str_trim
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning
+#'
 #' @param raw.data global polio data
 #' @param country `str` or `list` country name or a list of country names
 #' @param start_date start date. If not specified, defaults to 13 months prior to the download date of raw.data
@@ -500,17 +501,21 @@ set_emergence_colors <- function(raw.data, download_date) {
 #' @param labels Include labels for regions with virus detections.
 #' Options: "ALL": All regions, "YES": Recent Detections - <13 months
 #' @param owner who produced the map. Defaults to "CDC-GID-PEB"
-#' @param expand_report whether to expand the reporting window. Defaults to FALSE.
+#' @param new_detect_expand whether to expand the reporting window. Defaults to FALSE.
 #' @param height height of the map
 #' @param width width of the map
 #' @param scale scale of the map
+#' @param image_size standard sizes of the map outputs. Options are: "full_slide", "soco_slide", "half_slide". Defaults to NULL.
 #' @param dpi dpi of the map
+#'
 #' @export
-generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2", vdpv = T, new_detect = T,
+generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
+                               vdpv = T, new_detect = T,
                       surv = c("AFP", "ES", "OTHER"), labels = "YES",
                       owner = "CDC-GID-PEB",
-                      expand_report = F,
+                      new_detect_expand = F,
                       start_date = NULL, end_date = NULL, output = NULL,
+                      image_size = NULL,
                       height = 6.2, width = 4.5, scale = 1.25, dpi = 300) {
 
   if (!requireNamespace("ggspatial", quietly = TRUE)) {
@@ -621,7 +626,7 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2", vdpv =
 
     cli::cli_alert_info(paste("Data was pulled on ", download_date, " and will highlight all reported detections from the last week."))
     d_add <- 0
-    if (expand_report) {
+    if (new_detect_expand) {
       cli::cli_alert_info(paste0(
         "If you would like to expand the window, please specify below:\n",
         "For example, if you would like to show all detections from the last month use 21."
