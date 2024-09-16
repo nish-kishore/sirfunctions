@@ -42,7 +42,15 @@ Imports:
     tidyr (>= 1.3.0)
 Suggests:
     blastula,
-    forcats,
+    tools,
+    git2r,
+    janitor,
+    knitr,
+    rvg,
+    readxl,
+    magick,
+    tibble,
+    vctrs,
     ggspatial,
     git2r,
     officer,
