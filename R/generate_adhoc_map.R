@@ -1,8 +1,3 @@
-# Example ----
-# raw.data <- sirfunctions::get_all_polio_data()
-# country <- c("central african republic", "south sudan", "sudan")
-# adhoc_map(raw.data, country)
-
 # Private Functions ----
 # NOTE: These functions are not meant to be used outside of generate_adhoc_map()
 
@@ -505,10 +500,10 @@ set_emergence_colors <- function(raw.data, download_date) {
 #' Options: "ALL": All regions, "YES": Recent Detections - <13 months
 #' @param owner who produced the map. Defaults to "CDC-GID-PEB"
 #' @param new_detect_expand whether to expand the reporting window. Defaults to FALSE.
+#' @param image_size standard sizes of the map outputs. Options are: "full_slide", "soco_slide", "half_slide". Defaults to NULL.
 #' @param height height of the map
 #' @param width width of the map
 #' @param scale scale of the map
-#' @param image_size standard sizes of the map outputs. Options are: "full_slide", "soco_slide", "half_slide". Defaults to NULL.
 #' @param dpi dpi of the map
 #'
 #' @export
@@ -566,7 +561,7 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   # }
 
   if (length(setdiff(virus_type, c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1"))) > 0) {
-    cli::cli_alert_warning("Not a valid argument for virus_type.")
+    cli::cli_alert_warning("Not a valid argument for virus_type. Valid arguments are: cVDPV 1, cVDPV 2, cVDPV 3, WILD 1")
     return(NULL)
   }
 
@@ -579,7 +574,7 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
 
   if (!is.null(image_size)) {
     if (length(setdiff(image_size, c("full_slide", "soco_slide", "half_slide"))) > 0) {
-      cli::cli_alert_warning("Not a valid argument for image_size.")
+      cli::cli_alert_warning("Not a valid argument for image_size. Valid arguments are: full_slide, soco_slide, half_slide.")
       return(NULL)
     }
   }
@@ -754,13 +749,13 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
     cli::cli_alert_info("Saving to Sharepoint")
 
     fn1 <- paste0(
-      virus_type, "_", paste(who_region, collapse = "_"), "_",
+      paste(virus_type, collapse = "_"), "_", paste(who_region, collapse = "_"), "_",
       paste(country, collapse = "_"), "_", run_date, ".png"
     )
     temp_path <- paste0(tempdir(), "/", fn1)
 
     # Save Locally
-    ggplot2::ggsave(temp_path, height = 6.2, width = 4.5, scale = 1.25, dpi = 300)
+    ggplot2::ggsave(temp_path, height = height, width = width, scale = scale, dpi = dpi)
     sp_newpath_full <- file.path(sp_newpath, fn1)
 
     # Upload to Sharepoint
@@ -772,13 +767,19 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
     )
   } else {
     fn10 <- paste0(
-      "map_", virus_type, "_", paste(who_region, collapse = "_"), "_",
+      "map_", paste(virus_type, collapse = "_"), "_", paste(who_region, collapse = "_"), "_",
       paste(country, collapse = "_"), "_", run_date, ".png"
     )
     temp_path1 <- file.path(output, fn10)
-    ggsave(temp_path1, width = 6.29, height = 4.5, scale = 1.25, dpi = 300)
+    ggplot2::ggsave(temp_path1, height = height, width = width, scale = scale, dpi = dpi)
     cli::cli_alert_info("Output written to local hard drive")
   }
 
   cli::cli_alert_success("Beep Beep - maps are ready")
 }
+
+# Example ----
+# raw.data <- sirfunctions::get_all_polio_data()
+# country <- c("central african republic", "south sudan", "sudan")
+# adhoc_map(raw.data, country)
+
