@@ -90,7 +90,8 @@ set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
 #' @param country country or countries of interest
 #' @param labels whether to label provinces
 #' @param clean_maps clean maps
-#' @param data_r ???
+#' @param data_r reported detections
+#' @param .owner entity that produced the map
 #'
 #' @importFrom ggplot2 aes geom_sf ggplot alpha element_blank element_rect element_text geom_point geom_sf_text guide_legend guides labs scale_color_manual scale_fill_manual scale_shape_manual theme theme_bw unit
 #' @importFrom ggrepel geom_label_repel
@@ -99,7 +100,8 @@ set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
 
 build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
                                 new_detect, virus_type, surv_options, start_date, date_3a,
-                                download_date, emg_cols, country, labels, clean_maps, data_r) {
+                                download_date, emg_cols, country, labels, clean_maps, data_r,
+                                .owner) {
   g1 <- ggplot2::ggplot() +
     ggplot2::geom_sf(data = m_base_region, fill = "grey80", color = "black", lwd = 0.6, show.legend = FALSE) +
     ggplot2::geom_sf(data = m_base_prov, aes(fill = .data$detect_status2), color = "grey", lwd = 0.5, show.legend = TRUE) +
@@ -199,10 +201,10 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
     {
       if (new_detect) {
         ggplot2::labs(
-          caption = paste(virus_type, " poliovirus outbreak include: ", surv_options, " dectections since ", start_date, ".\n ",
+          caption = paste(paste(virus_type, collapse = ", "), " poliovirus outbreak include: ", surv_options, " dectections since ", start_date, ".\n ",
             "Recent detections highlighted include all reported by WHO HQ since ", date_3a, ".\n ",
             "Notes: Dates are based on paralysis onset (cases) or sample collections (environmental or other ) dates.\n AFP cases are randomly assigned in each district.\n",
-            "Produced by CDC-GID-PEB. Source: POLIS. Data as of ", download_date, ".",
+            "Produced by ", .owner, ". Source: POLIS. Data as of ", download_date, ".",
             sep = ""
           )
         )
@@ -211,9 +213,9 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
     {
       if (!new_detect) {
         ggplot2::labs(
-          caption = paste(virus_type, " poliovirus outbreak include: ", surv_options, " dectections since ", start_date, ".\n ",
+          caption = paste(paste(virus_type, collapse = ", "), " poliovirus outbreak include: ", surv_options, " dectections since ", start_date, ".\n ",
             "Notes: Dates are based on paralysis onset (cases) or sample collections (environmental or other ) dates.\n AFP cases are randomly assigned in each district.\n",
-            "Produced by CDC-GID-PEB. Source: POLIS. Data as of ", download_date, ".",
+            "Produced by ", .owner, ". Source: POLIS. Data as of ", download_date, ".",
             sep = ""
           )
         )
@@ -302,11 +304,12 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
 #' @return dataset used to build the map
 pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_date, .end_date) {
   if (.vdpv == "YES") {
-    virus_type_modified <- switch(virus_type,
-      "cVDPV 1" = "vtype 1",
-      "cVDPV 2" = "vtype 2",
-      "cVDPV 3" = "vtype 3",
-      "WILD 1" = "wtype 1"
+
+    virus_type_modified <- dplyr::case_when(virus_type =="cVDPV 1" ~ "vtype 1",
+                                  virus_type == "cVDPV 2" ~ "vtype 2",
+                                  virus_type == "cVDPV 3" ~ "vtype 3",
+                                  virus_type == "WILD 1" ~ "wtype 1",
+                                  .default = as.character(virus_type)
     )
 
     data_p <- raw.data$pos |>
@@ -328,7 +331,7 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
       dplyr::filter(
         place.admin.0 %in% country,
         dplyr::between(dateonset, .start_date, .end_date),
-        .data$vtype_mod == virus_type_modified
+        .data$vtype_mod %in% virus_type_modified
       )
   } else {
     data_p <- raw.data$pos |>
@@ -496,7 +499,7 @@ set_emergence_colors <- function(raw.data, download_date) {
 #' @param vdpv `bool` whether to include VPDV in maps. Default TRUE.
 #' @param new_detect `bool` whether to highlight new detections based on WHO HQ report date. Default TRUE.
 #' @param output either a path to a local folder to save the map to, "sharepoint", or none. Defaults to NULL.
-#' @param virus_type `str` virus type to include. Valid entries are "cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1".
+#' @param virus_type `str` virus type to include. Valid entries are "cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1". Can pass a list.
 #' @param surv surveillance options. AFP, ES, OTHER (Includes Case Contact, Community, Healthy Children Sampling).
 #' @param labels Include labels for regions with virus detections.
 #' Options: "ALL": All regions, "YES": Recent Detections - <13 months
@@ -536,7 +539,6 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
     )
   }
 
-
   # Standardize inputs
   country <- stringr::str_trim(stringr::str_to_upper(country))
   surv <- stringr::str_trim(stringr::str_to_upper(surv))
@@ -558,10 +560,10 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
     return(NULL)
   }
 
-  if (length(virus_type) != 1) {
-    cli::cli_alert_warning("Only the mapping of one virus type is supported at this time.")
-    return(NULL)
-  }
+  # if (length(virus_type) != 1) {
+  #   cli::cli_alert_warning("Only the mapping of one virus type is supported at this time.")
+  #   return(NULL)
+  # }
 
   if (length(setdiff(virus_type, c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1"))) > 0) {
     cli::cli_alert_warning("Not a valid argument for virus_type.")
@@ -571,6 +573,13 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   if (output != "none" & !stringr::str_detect(output, stringr::regex("^sharepoint$", ignore_case = TRUE))) {
     if (!dir.exists(output)) {
       cli::cli_alert_warning("The local folder does not exist. Please check the output argument and try again.")
+      return(NULL)
+    }
+  }
+
+  if (!is.null(image_size)) {
+    if (length(setdiff(image_size, c("full_slide", "soco_slide", "half_slide"))) > 0) {
+      cli::cli_alert_warning("Not a valid argument for image_size.")
       return(NULL)
     }
   }
@@ -594,6 +603,20 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   m_data_prov <- NULL
   sp_newpath <- NULL
 
+  # Change images params if image_size is not null
+  if (!is.null(image_size)) {
+    dpi <- 300
+    if (image_size == "full_slide") {
+      height <- 7.5
+      width <- 13.33
+    } else if (image_size == "soco_slide") {
+      height <- 4.76
+      width <- 11.5
+    } else if (image_size == "half_slide") {
+      height <- 4.6
+      width <- 6.75
+    }
+  }
 
   # Default start and end dates
   if (is.null(end_date)) {
@@ -717,7 +740,8 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   g1 <- build_detection_map(
     m_base_region, m_base_prov, data_p, m_data_prov,
     new_detect, virus_type, surv_options, start_date, date_3a,
-    download_date, emg_cols, country, labels, clean_maps, data_r
+    download_date, emg_cols, country, labels, clean_maps, data_r,
+    owner
   )
 
   # Adjust zoom level of map
