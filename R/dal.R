@@ -1391,6 +1391,7 @@ duplicate_check <- function(.raw.data = raw.data) {
 
   return(.raw.data)
 #' Update a local dataset with new data
+#' Update a local global polio data (raw.data) with new data
 #'
 #' @param local_dataset file path to the RDS file
 #' @importFrom tools file_path_sans_ext
@@ -1418,9 +1419,17 @@ update_polio_data <- function(local_dataset) {
   for (i in old_data_names) {
     cli::cli_alert_info(paste0("Updating ", i))
     if (i %in% c("metadata", "global.ctry", "global.prov", "global.dist", "roads", "cities")) {
+      cli::cli_process_start(paste0("Replacing ", i, " with the most recent data."))
       updated_data[i] <- list(new_data[[i]])
+      cli::cli_process_done()
     } else {
       updated_data[i] <- list(suppressMessages(dplyr::full_join(old_data[[i]], new_data[[i]])))
+      cli::cli_process_start("Deduplicating records")
+      nrow_before <- nrow(updated_data[[i]])
+      updated_data[[i]] <- updated_data[[i]] |> dplyr::distinct()
+      nrow_after <- nrow(updated_data[[i]])
+      cli::cli_alert_info(paste0((nrow_before - nrow_after), " duplicate records removed."))
+      cli::cli_process_done()
     }
   }
 
@@ -1436,7 +1445,7 @@ update_polio_data <- function(local_dataset) {
       next
     }
 
-    if (response == "y") {
+    if (response == "yes") {
       readr::write_rds(updated_data, local_dataset)
       cli::cli_alert_success("File overwritten successfully.")
       wait <- F
@@ -1448,6 +1457,10 @@ update_polio_data <- function(local_dataset) {
       wait <- F
     }
   }
+
+  # Cleaning up environment
+  rm(old_data, new_data, updated_data)
+  invisible(gc())
 
 }
 
