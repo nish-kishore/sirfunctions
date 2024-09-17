@@ -1624,15 +1624,15 @@ fix_ctry_data_missing_guids <- function(afp.data, pop.data, guid_list, spatial_s
   afp.data <- switch(spatial_scale,
                      "prov" = {
                        afp.data |>
-                         dplyr::mutate(adm1guid = dplyr::if_else(.data$adm1guid %in% guid_list, NA, adm1guid)) |>
-                         dplyr::left_join(pop.data, by = c("ctry", "prov", "year", "adm0guid", "adm1guid")) |>
+                         dplyr::mutate(adm1guid = dplyr::if_else(.data$adm1guid %in% guid_list, NA, .data$adm1guid)) |>
+                         dplyr::left_join(pop.data, by = c("ctry", "prov", "year", "adm0guid")) |>
                          dplyr::mutate(adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y))
                      },
                      "dist" = {
                        afp.data |>
-                         dplyr::mutate(adm2guid = dplyr::if_else(.data$adm2guid %in% guid_list, NA, adm2guid)) |>
+                         dplyr::mutate(adm2guid = dplyr::if_else(.data$adm2guid %in% guid_list, NA, .data$adm2guid)) |>
                          dplyr::left_join(pop.data, by = c("ctry", "prov", "dist", "year",
-                                                    "adm0guid", "adm1guid", "adm2guid")) |>
+                                                    "adm0guid", "adm1guid")) |>
                          dplyr::mutate(adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y))
                      }
                      )
