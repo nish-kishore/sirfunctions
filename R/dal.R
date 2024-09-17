@@ -1626,14 +1626,16 @@ fix_ctry_data_missing_guids <- function(afp.data, pop.data, guid_list, spatial_s
                        afp.data |>
                          dplyr::mutate(adm1guid = dplyr::if_else(.data$adm1guid %in% guid_list, NA, .data$adm1guid)) |>
                          dplyr::left_join(pop.data, by = c("ctry", "prov", "year", "adm0guid")) |>
-                         dplyr::mutate(adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y))
+                         dplyr::mutate(adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)) |>
+                         dplyr::select(-dplyr::any_of(c("adm1guid.x", "adm1guid.y")))
                      },
                      "dist" = {
                        afp.data |>
                          dplyr::mutate(adm2guid = dplyr::if_else(.data$adm2guid %in% guid_list, NA, .data$adm2guid)) |>
                          dplyr::left_join(pop.data, by = c("ctry", "prov", "dist", "year",
                                                     "adm0guid", "adm1guid")) |>
-                         dplyr::mutate(adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y))
+                         dplyr::mutate(adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)) |>
+                         dplyr::select(-dplyr::any_of(c("adm2guid.x", "adm2guid.y")))
                      }
                      )
 
