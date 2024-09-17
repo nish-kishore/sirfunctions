@@ -39,11 +39,10 @@ generate_pptx_assumptions <- function(start_date, end_date) {
 #' Get path of the PowerPoint template
 #'
 #' @param path path to the PowerPoint template. If NULL, will prompt user to download from the sg-desk-review GitHub repository
-#' @param filename name of the PowerPoint template
 #'
 #' @return a string containing the path of the PowerPoint template
 #' @export
-get_ppt_template <- function(path = NULL, filename = "desk_review_template.pptx") {
+get_ppt_template <- function(path = NULL) {
   if (is.null(path)) {
     url <- "https://github.com/nish-kishore/sg-desk-reviews/tree/main/resources"
 
@@ -56,6 +55,7 @@ get_ppt_template <- function(path = NULL, filename = "desk_review_template.pptx"
 
 #' Generate the desk review slide deck
 #' @importFrom officer add_slide layout_properties layout_summary ph_location_label ph_location_type ph_with read_pptx
+#'
 #' @param ppt_template_path path to the PowerPoint template
 #' @param ctry.data RDS file containing polio data for a country
 #' @param start_date start date of desk review
@@ -81,6 +81,7 @@ get_ppt_template <- function(path = NULL, filename = "desk_review_template.pptx"
 #' @param es.table ES table
 #' @param country name of the country
 #' @param ppt_output_path path where the powerpoint should be outputted
+#' @param case.num.dose.g figure containing immunization rates per year
 #'
 #' @return does not return anything
 #' @export
@@ -88,9 +89,12 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
                             pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
                             surv.ind.tab, afp.dets.prov.year, npafp.map,
                             npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
-                            inad.tab.flex, tab.60d, timely_nation, timely_prov,
+                            inad.tab.flex, tab.60d, case.num.dose.g,
+                            timely_nation, timely_prov,
                             mapt_all, es.site.det, es.det.map, es.timely,
-                            es.table, country, ppt_output_path) {
+                            es.table,
+                            country = Sys.getenv("DR_COUNTRY"),
+                            ppt_output_path = Sys.getenv("DR_POWERPOINT_PATH")) {
   if (!requireNamespace("rvg", quietly = TRUE)) {
     stop('Package "rvg" must be installed to use this function.',
       .call = FALSE
@@ -107,6 +111,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
     stop("Ppt template path does not exist. Please try again.")
   }
 
+  ppt_template_path <- get_ppt_template(ppt_template_path)
   tempi <- officer::read_pptx(ppt_template_path)
 
   officer::layout_summary(tempi)
@@ -391,7 +396,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("draft_output_", Sys.Date(), "_", country, ".pptx")
+    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }
 
@@ -853,6 +858,6 @@ generate_dr_ppt2 <- function(ctry.data,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("draft_output_", Sys.Date(), "_", country, ".pptx")
+    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }

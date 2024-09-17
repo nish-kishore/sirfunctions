@@ -4,10 +4,21 @@
 \alias{generate_stool_data}
 \title{Generate stool adequacy columns in the AFP dataset}
 \usage{
-generate_stool_data(afp.data, start_date, end_date)
+generate_stool_data(
+  afp.data,
+  missing = "good",
+  bad.data = "inadequate",
+  start_date,
+  end_date
+)
 }
 \arguments{
 \item{afp.data}{tibble of AFP data (afp.all.2)}
+
+\item{missing}{chr: "good" or "bad" or "remove", default "good". "good" uses "adequacy.03", "bad" uses "adequacy.01",
+and "exclude" uses "adequacy.02" when calculating the adequacy.final2 column.}
+
+\item{bad.data}{chr: "remove" or "inadequate"; default "inadequate". "inadequate" treats samples bad data as inadequate.}
 
 \item{start_date}{start date of the desk review}
 

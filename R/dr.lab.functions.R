@@ -149,8 +149,8 @@ lab_data_errors_region <- function(ctry.data, start.date, end.date,
   # Converting character dates to date columns
   lab.data <- lab.data |>
     dplyr::rename("country" = "Name") |>
-    dplyr::mutate_at(
-      c(
+    dplyr::mutate(
+      dplyr::across(dplyr::any_of(c(
         "CaseDate",
         "ParalysisOnsetDate",
         "DateStoolCollected",
@@ -164,9 +164,8 @@ lab_data_errors_region <- function(ctry.data, start.date, end.date,
         "DateRArmIsolate",
         "DateofSequencing",
         "DateNotificationtoHQ"
-      ),
-      as.Date.character, "%m/%d/%Y"
-    )
+      )), \(x) as.Date.character(x, "%m/%d/%Y")
+    ))
 
   # Check for duplicates
   cli::cli_process_start("Checking for duplicate data")
@@ -410,7 +409,8 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   # remove time portion of any date time columns
   cli::cli_process_start("Converting date/date-time character columns to date columns")
   lab.data2 <- lab.data2 |>
-    dplyr::mutate(dplyr::across(dplyr::starts_with("Date"), \(x) lubridate::as_date(x)))
+    dplyr::mutate(dplyr::across(dplyr::starts_with("Date"),
+                                \(x) lubridate::as_date(x)))
   cli::cli_process_done()
 
   # Don't run additional cleaning steps if no data is present
@@ -646,8 +646,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
         country = ifelse(.data$country == "UAE", "UNITED ARAB EMIRATES", .data$country),
         country = ifelse(.data$country == "YEM", "YEMEN", .data$country)
       ) %>%
-      dplyr::mutate_at(
-        c(
+      dplyr::mutate(
+        dplyr::across(dplyr::any_of(c(
           "CaseDate",
           "ParalysisOnsetDate",
           "DateStoolCollected",
@@ -661,9 +661,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
           "DateRArmIsolate",
           "DateofSequencing",
           "DateNotificationtoHQ"
-        ),
-        as.Date.character, "%m/%d/%Y"
-      )
+        )), \(x) as.Date.character(x, "%m/%d/%Y")
+      ))
     cli::cli_process_done()
 
 
@@ -789,8 +788,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
         DateofSequencing = ifelse(.data$DateofSequencing == "NULL", NA, .data$DateofSequencing),
         DateNotificationtoHQ = ifelse(.data$DateNotificationtoHQ == "NULL", NA, .data$DateNotificationtoHQ)
       ) |>
-      dplyr::mutate_at(
-        c(
+      dplyr::mutate(
+        dplyr::across(dplyr::any_of(c(
           "CaseDate",
           "ParalysisOnsetDate",
           "DateStoolCollected",
@@ -804,9 +803,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
           "DateRArmIsolate",
           "DateofSequencing",
           "DateNotificationtoHQ"
-        ),
-        as.Date.character, "%m/%d/%Y"
-      )
+        )), \(x) as.Date.character(x, "%m/%d/%Y")
+      ))
     cli::cli_process_done()
     # This is a very quick clean and can be improved upon with futher steps such as:
     #  - eliminating nonsensical dates
@@ -994,7 +992,7 @@ clean_lab_data <- function(ctry.data, start.date = start_date, end.date = end_da
   # Determine the type of cleaning to do
   lab.data.cols <- names(ctry.data$lab.data)
 
-  if ("ICLabID" %in% lab.data.cols) {
+  if ("ctry.code2" %in% lab.data.cols) {
     lab.data <- clean_lab_data_who(ctry.data, start.date, end.date, delim)
   } else {
     lab.data <- clean_lab_data_regional(ctry.data, start.date, end.date, delim, lab_locs_path)

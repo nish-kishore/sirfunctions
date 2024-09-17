@@ -21,6 +21,7 @@ generate_dr_ppt(
   stool.ad.maps.dist,
   inad.tab.flex,
   tab.60d,
+  case.num.dose.g,
   timely_nation,
   timely_prov,
   mapt_all,
@@ -28,8 +29,8 @@ generate_dr_ppt(
   es.det.map,
   es.timely,
   es.table,
-  country,
-  ppt_output_path
+  country = Sys.getenv("DR_COUNTRY"),
+  ppt_output_path = Sys.getenv("DR_POWERPOINT_PATH")
 )
 }
 \arguments{
@@ -64,6 +65,8 @@ generate_dr_ppt(
 \item{inad.tab.flex}{inadequacy table}
 
 \item{tab.60d}{60 day follow up table}
+
+\item{case.num.dose.g}{figure containing immunization rates per year}
 
 \item{timely_nation}{timeliness at country level}
 

@@ -19,25 +19,25 @@ f.stool.ad.01(
 \arguments{
 \item{afp.data}{tibble: AFP data which includes GUID at a given spatial scale
 formatted as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2
-which includes "NOT-AFP"}
+which includes "NOT-AFP".}
 
 \item{admin.data}{tibble: Full list of country administrative units by a given
-spatial scale including "year", "adm(0,1,2)guid, and "(ctry/prov/dist)"
-as appropriate}
+spatial scale including "year", "adm(0,1,2)guid, and "(ctry/prov/dist)"}
 
-\item{start.date}{chr: "YYYY-MM-DD" - starting date for analysis}
+\item{start.date}{chr: "YYYY-MM-DD" - starting date for analysis.}
 
-\item{end.date}{chr: "YYYY-MM-DD" - ending date for analysis}
+\item{end.date}{chr: "YYYY-MM-DD" - ending date for analysis.}
 
-\item{spatial.scale}{chr: "prov" or "dist" or "ctry"}
+\item{spatial.scale}{chr: "prov" or "dist" or "ctry".}
 
-\item{missing}{chr: "good" or "bad" or "missing"; default "good"}
+\item{missing}{chr: "good" or "bad" or "remove", default "good". "good" uses "adequacy.03", "bad" uses "adequacy.01",
+and "exclude" uses "adequacy.02" when calculating the adequacy.final column.}
 
-\item{bad.data}{chr: "remove" or "inadequate" or "adequate"; default "inadequate"}
+\item{bad.data}{chr: "remove" or "inadequate"; default "inadequate". "inadequate" treats samples bad data as inadequate.}
 
-\item{rolling}{boolean: Should data be annualized or calculated within the time period allotted}
+\item{rolling}{boolean: Should data be annualized or calculated within the time period allotted.}
 
-\item{sp_continuity_validation}{boolean: Should data excluded temporaliry inconsistent GUIDs? Default T.}
+\item{sp_continuity_validation}{boolean: Exclude GUIDs not present in all years of the dataset. Default T.}
 }
 \value{
 tibble: long format stool adequacy evaluations

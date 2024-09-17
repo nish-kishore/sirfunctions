@@ -23,6 +23,7 @@ copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
 #' Get functions used for the desk review from Github
 #' @import dplyr tidyr cli
 #' @importFrom httr GET content
+#' @importFrom utils download.file
 #' @param branch which branch to use
 #' @param output_folder where the function scripts should be stored
 #'
@@ -80,7 +81,7 @@ copy_dr_functions <- function(branch = "main", output_folder = Sys.getenv("DR_FU
   cli::cli_process_start("Downloading desk review functions")
   for (i in seq(1, nrow(file_path))) {
     file_url <- file.path(github_raw_url, repo, branch, file_path$paths[i])
-    suppressWarnings(download.file(file_url, file.path(output_folder, file_path$name[i])))
+    suppressWarnings(utils::download.file(file_url, file.path(output_folder, file_path$name[i])))
     Sys.sleep(1)
   }
   cli::cli_alert_success(paste0("Desk review functions downloaded successfully at:\n", output_folder))
