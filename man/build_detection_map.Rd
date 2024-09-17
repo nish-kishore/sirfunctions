@@ -19,7 +19,8 @@ build_detection_map(
   country,
   labels,
   clean_maps,
-  data_r
+  data_r,
+  .owner
 )
 }
 \arguments{
@@ -51,7 +52,9 @@ build_detection_map(
 
 \item{clean_maps}{clean maps}
 
-\item{data_r}{???}
+\item{data_r}{reported detections}
+
+\item{.owner}{entity that produced the map}
 }
 \value{
 a ggplot map

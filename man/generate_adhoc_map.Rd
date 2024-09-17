@@ -13,10 +13,11 @@ generate_adhoc_map(
   surv = c("AFP", "ES", "OTHER"),
   labels = "YES",
   owner = "CDC-GID-PEB",
-  expand_report = F,
+  new_detect_expand = F,
   start_date = NULL,
   end_date = NULL,
   output = NULL,
+  image_size = NULL,
   height = 6.2,
   width = 4.5,
   scale = 1.25,
@@ -28,7 +29,7 @@ generate_adhoc_map(
 
 \item{country}{\code{str} or \code{list} country name or a list of country names}
 
-\item{virus_type}{\code{str} virus type to include. Valid entries are "cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1".}
+\item{virus_type}{\code{str} virus type to include. Valid entries are "cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1". Can pass a list.}
 
 \item{vdpv}{\code{bool} whether to include VPDV in maps. Default TRUE.}
 
@@ -41,13 +42,15 @@ Options: "ALL": All regions, "YES": Recent Detections - <13 months}
 
 \item{owner}{who produced the map. Defaults to "CDC-GID-PEB"}
 
-\item{expand_report}{whether to expand the reporting window. Defaults to FALSE.}
+\item{new_detect_expand}{whether to expand the reporting window. Defaults to FALSE.}
 
 \item{start_date}{start date. If not specified, defaults to 13 months prior to the download date of raw.data}
 
 \item{end_date}{end date. If not specified, defaults to the download date of raw.data}
 
 \item{output}{either a path to a local folder to save the map to, "sharepoint", or none. Defaults to NULL.}
+
+\item{image_size}{standard sizes of the map outputs. Options are: "full_slide", "soco_slide", "half_slide". Defaults to NULL.}
 
 \item{height}{height of the map}
 
