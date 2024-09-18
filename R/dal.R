@@ -1394,6 +1394,8 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' Update a local global polio data (raw.data) with new data
 #'
 #' @param local_dataset file path to the RDS file
+#' #' @param overwrite should the file be overwritten? Default TRUE.
+#'
 #' @importFrom tools file_path_sans_ext
 #' @importFrom stringr str_trim str_to_lower
 #' @importFrom lubridate today
@@ -1401,7 +1403,7 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' @importFrom readr read_rds write_rds
 #'
 #' @export
-update_polio_data <- function(local_dataset) {
+update_polio_data <- function(local_dataset, overwrite = T) {
   cli::cli_process_start("Reading local dataset")
   old_data <- readr::read_rds(local_dataset)
   old_data_names <- names(old_data)
@@ -1435,27 +1437,14 @@ update_polio_data <- function(local_dataset) {
 
   cli::cli_alert_success("Local dataset updated.")
 
-  wait <- T
-  while (wait) {
-    response <- readline("Overwrite previous save? (yes/no) ")
-    response <- stringr::str_trim(stringr::str_to_lower(response))
-
-    if (!response %in% c("yes", "no")) {
-      cli::cli_alert_warning("Invalid response. Please try again.")
-      next
-    }
-
-    if (response == "yes") {
-      readr::write_rds(updated_data, local_dataset)
-      cli::cli_alert_success("File overwritten successfully.")
-      wait <- F
-    } else {
-      new_dataset <- file.path(dirname(local_dataset),
-                               paste0(tools::file_path_sans_ext(dataset_name), "_saved_", lubridate::today(), ".rds"))
-      readr::write_rds(updated_data, new_dataset)
-      cli::cli_alert_success("File written successfully.")
-      wait <- F
-    }
+  if (overwrite) {
+    readr::write_rds(updated_data, local_dataset)
+    cli::cli_alert_success("File overwritten successfully.")
+  } else {
+    new_dataset <- file.path(dirname(local_dataset),
+                             paste0(tools::file_path_sans_ext(dataset_name), "_saved_", lubridate::today(), ".rds"))
+    readr::write_rds(updated_data, new_dataset)
+    cli::cli_alert_success("Updated file written successfully.")
   }
 
   # Cleaning up environment
