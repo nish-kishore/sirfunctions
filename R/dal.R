@@ -1394,7 +1394,7 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' Update a local global polio data (raw.data) with new data
 #'
 #' @param local_dataset file path to the RDS file
-#' #' @param overwrite should the file be overwritten? Default TRUE.
+#' @param overwrite should the file be overwritten? Default TRUE.
 #'
 #' @importFrom tools file_path_sans_ext
 #' @importFrom stringr str_trim str_to_lower
