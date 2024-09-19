@@ -1198,35 +1198,34 @@ extract_country_data <- function(
 #' @description
 #' checks for duplicate records in afp, other surveillance, sia, and virus data
 #' @import dplyr cli
-#' @param df list a list of df produced from get_all_polio_data
-#'
+#' @param df list a list of dfs produced from get_all_polio_data
 duplicate_check <- function(df = raw.data){
 
-  if(nrow(raw.data$afp[duplicated(raw.data$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
+  if(nrow(df$afp[duplicated(df$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dup")
-    raw.data$afp.dup <- raw.data$afp |>
-      dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
+    df$afp.dup <- df$afp |>
+      dplyr::group_by(epid, place.admin.0, dateonset) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
       dplyr::filter(count > 1) |>
-      dplyr::arrange(.data$epid)
+      dplyr::arrange(epid)
   }
 
-  if(nrow(raw.data$other[duplicated(raw.data$other[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
+  if(nrow(df$other[duplicated(df$other[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the Other Surveillance linelist, please check other.dup")
-    raw.data$other.dup <- raw.data$other |>
-      dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
+    df$other.dup <- df$other |>
+      dplyr::group_by(epid, place.admin.0, dateonset) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
       dplyr::filter(count > 1) |>
-      dplyr::arrange(.data$epid)
+      dplyr::arrange(epid)
 
   }
 
-  if(nrow(raw.data$sia[duplicated(raw.data$sia[,c("adm2guid", "sub.activity.start.date",
-                                                   "vaccine.type", "age.group", "status", "lqas.loaded", "im.loaded")]),]) > 0) {
+  if(nrow(df$sia[duplicated(df$sia[,c("adm2guid", "sub.activity.start.date", "vaccine.type", "age.group",
+                                      "status", "lqas.loaded", "im.loaded")]),]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dup")
-    raw.data$sia.dup <- raw.data$sia |>
+    df$sia.dup <- df$sia |>
       dplyr::group_by(adm2guid, sub.activity.start.date, vaccine.type, age.group, status, lqas.loaded, im.loaded) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
@@ -1234,22 +1233,22 @@ duplicate_check <- function(df = raw.data){
       dplyr::arrange(sia.sub.activity.code)
   }
 
-  if(nrow(raw.data$es[duplicated(raw.data$es[,c("env.sample.id", "virus.type", "emergence.group", "nt.changes",
-                                                "site.id", "collection.date", "collect.yr")]),]) > 0){
+  if(nrow(df$es[duplicated(df$es[,c("env.sample.id", "virus.type", "emergence.group", "nt.changes",
+                                    "site.id", "collection.date", "collect.yr")]),]) > 0){
     cli::cli_alert_warning("There are potential duplicates in the ES data, please check es.dup")
-    raw.data$es.dup <- raw.data$es |>
+    df$es.dup <- df$es |>
       dplyr::group_by(env.sample.id, virus.type, emergence.group, nt.changes, site.id, collection.date, collect.yr) |>
       dplyr::mutate(es.dups = dplyr::n()) |>
       dplyr::filter(es.dups > 1)|>
       dplyr::select(env.sample.manual.edit.id, env.sample.id, sample.id, site.id, site.code, site.name, sample.condition,
-                    collection.date, virus.type, nt.changes, emergence.group, collect.date, collect.yr, es.dups )
+                    collection.date, virus.type, nt.changes, emergence.group, collect.date, collect.yr, es.dups)
   }
 
-  if(nrow(raw.data$pos[duplicated(raw.data$pos[,c("epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
-                                                   "env.sample.id", "place.admin.0", "source", "datasource",
-                                                   "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup")]),]) > 0) {
+  if(nrow(df$pos[duplicated(df$pos[,c("epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
+                                      "env.sample.id", "place.admin.0", "source", "datasource",
+                                      "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup")]),]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the Positives data, please check pos.dup")
-    raw.data$pos.dup <- raw.data$pos |>
+    df$pos.dup <- df$pos |>
       dplyr::group_by(epid, epid.in.polis, pons.epid, virus.id, polis.case.id, env.sample.id, place.admin.0,
                       source, datasource, virustype, dateonset, yronset, ntchanges, emergencegroup) |>
       dplyr::mutate(count = dplyr::n()) |>
@@ -1258,13 +1257,13 @@ duplicate_check <- function(df = raw.data){
       dplyr::arrange(epid)
   }
 
-  return(raw.data)
+  return(df)
 }
 
 #### 3) Secondary SP Functions ####
 
 #' Standard function to load District data
-#'
+#
 #' @description Pulls district shapefiles directly from the geodatabase
 #' @param fp str: Location of geodatabase
 #' @import stringr AzureStor dplyr lubridate
