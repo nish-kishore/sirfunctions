@@ -1202,8 +1202,8 @@ extract_country_data <- function(
 duplicate_check <- function(df = raw.data){
 
   if(nrow(df$afp[duplicated(df$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
-    cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dup")
-    df$afp.dup <- df$afp |>
+    cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dupe")
+    df$afp.dupe <- df$afp |>
       dplyr::group_by(epid, place.admin.0, dateonset) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
@@ -1212,8 +1212,8 @@ duplicate_check <- function(df = raw.data){
   }
 
   if(nrow(df$other[duplicated(df$other[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
-    cli::cli_alert_warning("There are potential duplicates in the Other Surveillance linelist, please check other.dup")
-    df$other.dup <- df$other |>
+    cli::cli_alert_warning("There are potential duplicates in the Other Surveillance linelist, please check other.dupe")
+    df$other.dupe <- df$other |>
       dplyr::group_by(epid, place.admin.0, dateonset) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
@@ -1224,8 +1224,8 @@ duplicate_check <- function(df = raw.data){
 
   if(nrow(df$sia[duplicated(df$sia[,c("adm2guid", "sub.activity.start.date", "vaccine.type", "age.group",
                                       "status", "lqas.loaded", "im.loaded")]),]) > 0) {
-    cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dup")
-    df$sia.dup <- df$sia |>
+    cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dupe")
+    df$sia.dupe <- df$sia |>
       dplyr::group_by(adm2guid, sub.activity.start.date, vaccine.type, age.group, status, lqas.loaded, im.loaded) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
@@ -1235,8 +1235,8 @@ duplicate_check <- function(df = raw.data){
 
   if(nrow(df$es[duplicated(df$es[,c("env.sample.id", "virus.type", "emergence.group", "nt.changes",
                                     "site.id", "collection.date", "collect.yr")]),]) > 0){
-    cli::cli_alert_warning("There are potential duplicates in the ES data, please check es.dup")
-    df$es.dup <- df$es |>
+    cli::cli_alert_warning("There are potential duplicates in the ES data, please check es.dupe")
+    df$es.dupe <- df$es |>
       dplyr::group_by(env.sample.id, virus.type, emergence.group, nt.changes, site.id, collection.date, collect.yr) |>
       dplyr::mutate(es.dups = dplyr::n()) |>
       dplyr::filter(es.dups > 1)|>
@@ -1247,8 +1247,8 @@ duplicate_check <- function(df = raw.data){
   if(nrow(df$pos[duplicated(df$pos[,c("epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
                                       "env.sample.id", "place.admin.0", "source", "datasource",
                                       "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup")]),]) > 0) {
-    cli::cli_alert_warning("There are potential duplicates in the Positives data, please check pos.dup")
-    df$pos.dup <- df$pos |>
+    cli::cli_alert_warning("There are potential duplicates in the Positives data, please check pos.dupe")
+    df$pos.dupe <- df$pos |>
       dplyr::group_by(epid, epid.in.polis, pons.epid, virus.id, polis.case.id, env.sample.id, place.admin.0,
                       source, datasource, virustype, dateonset, yronset, ntchanges, emergencegroup) |>
       dplyr::mutate(count = dplyr::n()) |>
