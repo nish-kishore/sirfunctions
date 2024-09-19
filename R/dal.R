@@ -1198,66 +1198,82 @@ extract_country_data <- function(
 #' @description
 #' checks for duplicate records in afp, other surveillance, sia, and virus data
 #' @import dplyr cli
-#' @param df list a list of dfs produced from get_all_polio_data
-duplicate_check <- function(df = raw.data){
-
-  if(nrow(df$afp[duplicated(df$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
+#' @param .raw.data list a list of dataframes produced from get_all_polio_data
+duplicate_check <- function(.raw.data = raw.data) {
+  if (nrow(.raw.data$afp[duplicated(.raw.data$afp[, c("epid", "place.admin.0", "dateonset")]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dupe")
-    df$afp.dupe <- df$afp |>
-      dplyr::group_by(epid, place.admin.0, dateonset) |>
+    .raw.data$afp.dupe <- .raw.data$afp |>
+      dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
       dplyr::filter(count > 1) |>
-      dplyr::arrange(epid)
+      dplyr::arrange(.data$epid)
   }
 
-  if(nrow(df$other[duplicated(df$other[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
+  if (nrow(.raw.data$other[duplicated(.raw.data$other[, c("epid", "place.admin.0", "dateonset")]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the Other Surveillance linelist, please check other.dupe")
-    df$other.dupe <- df$other |>
-      dplyr::group_by(epid, place.admin.0, dateonset) |>
+    .raw.data$other.dupe <- .raw.data$other |>
+      dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
       dplyr::filter(count > 1) |>
-      dplyr::arrange(epid)
-
+      dplyr::arrange(.data$epid)
   }
 
-  if(nrow(df$sia[duplicated(df$sia[,c("adm2guid", "sub.activity.start.date", "vaccine.type", "age.group",
-                                      "status", "lqas.loaded", "im.loaded")]),]) > 0) {
+  if (nrow(.raw.data$sia[duplicated(.raw.data$sia[, c(
+    "adm2guid", "sub.activity.start.date", "vaccine.type", "age.group",
+    "status", "lqas.loaded", "im.loaded"
+  )]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dupe")
-    df$sia.dupe <- df$sia |>
-      dplyr::group_by(adm2guid, sub.activity.start.date, vaccine.type, age.group, status, lqas.loaded, im.loaded) |>
+    .raw.data$sia.dupe <- .raw.data$sia |>
+      dplyr::group_by(.data$adm2guid, .data$sub.activity.start.date,
+                      .data$vaccine.type, .data$age.group, .data$status,
+                      .data$lqas.loaded, .data$im.loaded) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
       dplyr::filter(count > 1) |>
-      dplyr::arrange(sia.sub.activity.code)
+      dplyr::arrange(.data$sia.sub.activity.code)
   }
 
-  if(nrow(df$es[duplicated(df$es[,c("env.sample.id", "virus.type", "emergence.group", "nt.changes",
-                                    "site.id", "collection.date", "collect.yr")]),]) > 0){
+  if (nrow(.raw.data$es[duplicated(.raw.data$es[, c(
+    "env.sample.id", "virus.type", "emergence.group", "nt.changes",
+    "site.id", "collection.date", "collect.yr"
+  )]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the ES data, please check es.dupe")
-    df$es.dupe <- df$es |>
-      dplyr::group_by(env.sample.id, virus.type, emergence.group, nt.changes, site.id, collection.date, collect.yr) |>
+    .raw.data$es.dupe <- .raw.data$es |>
+      dplyr::group_by(.data$env.sample.id, .data$virus.type, .data$emergence.group,
+                      .data$nt.changes, .data$site.id, .data$collection.date,
+                      .data$collect.yr) |>
       dplyr::mutate(es.dups = dplyr::n()) |>
-      dplyr::filter(es.dups > 1)|>
-      dplyr::select(env.sample.manual.edit.id, env.sample.id, sample.id, site.id, site.code, site.name, sample.condition,
-                    collection.date, virus.type, nt.changes, emergence.group, collect.date, collect.yr, es.dups)
+      dplyr::filter(.data$es.dups > 1) |>
+      dplyr::select(dplyr::all_of(c("env.sample.manual.edit.id", "env.sample.id",
+                                  "sample.id", "site.id", "site.code", "site.name",
+                                  "sample.condition", "collection.date", "virus.type",
+                                  "nt.changes", "emergence.group", "collect.date", "collect.yr", "es.dups")
+                                  )
+      )
   }
 
-  if(nrow(df$pos[duplicated(df$pos[,c("epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
-                                      "env.sample.id", "place.admin.0", "source", "datasource",
-                                      "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup")]),]) > 0) {
+  if (nrow(.raw.data$pos[duplicated(.raw.data$pos[, c(
+    "epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
+    "env.sample.id", "place.admin.0", "source", "datasource",
+    "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup"
+  )]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the Positives data, please check pos.dupe")
-    df$pos.dupe <- df$pos |>
-      dplyr::group_by(epid, epid.in.polis, pons.epid, virus.id, polis.case.id, env.sample.id, place.admin.0,
-                      source, datasource, virustype, dateonset, yronset, ntchanges, emergencegroup) |>
+    .raw.data$pos.dupe <- .raw.data$pos |>
+      dplyr::group_by(
+        .data$epid, .data$epid.in.polis, .data$pons.epid, .data$virus.id,
+        .data$polis.case.id, .data$env.sample.id, .data$place.admin.0,
+        .data$source, .data$datasource, .data$virustype, .data$dateonset,
+        .data$yronset, .data$ntchanges, .data$emergencegroup
+      ) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
       dplyr::filter(count > 1) |>
-      dplyr::arrange(epid)
+      dplyr::arrange(.data$epid)
   }
 
-  return(df)
+  return(.raw.data)
 }
 
 #### 3) Secondary SP Functions ####
