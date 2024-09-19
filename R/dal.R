@@ -1197,7 +1197,8 @@ extract_country_data <- function(
 #'
 #' @description
 #' checks for duplicate records in afp, other surveillance, sia, and virus data
-#' @import dplyr
+#' @import dplyr cli
+#' @param df list a list of df produced from get_all_polio_data
 #'
 duplicate_check <- function(df = raw.data){
 
@@ -1237,10 +1238,11 @@ duplicate_check <- function(df = raw.data){
                                                 "site.id", "collection.date", "collect.yr")]),]) > 0){
     cli::cli_alert_warning("There are potential duplicates in the ES data, please check es.dup")
     raw.data$es.dup <- raw.data$es |>
+      dplyr::group_by(env.sample.id, virus.type, emergence.group, nt.changes, site.id, collection.date, collect.yr) |>
       dplyr::mutate(es.dups = dplyr::n()) |>
       dplyr::filter(es.dups > 1)|>
       dplyr::select(env.sample.manual.edit.id, env.sample.id, sample.id, site.id, site.code, site.name, sample.condition,
-                    collection.date, virus.type, nt.changes, emergence.group,ctry, collect.date, collect.yr, es.dups )
+                    collection.date, virus.type, nt.changes, emergence.group, collect.date, collect.yr, es.dups )
   }
 
   if(nrow(raw.data$pos[duplicated(raw.data$pos[,c("epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
@@ -1255,6 +1257,8 @@ duplicate_check <- function(df = raw.data){
       dplyr::filter(count > 1) |>
       dplyr::arrange(epid)
   }
+
+  return(raw.data)
 }
 
 #### 3) Secondary SP Functions ####
