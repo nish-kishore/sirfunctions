@@ -649,16 +649,6 @@ get_all_polio_data <- function(
           dplyr::pull(file), default_dir = NULL
       )
 
-    if (nrow(raw.data$sia[duplicated(raw.data$sia[,c("adm2guid", "sub.activity.start.date",
-                                                     "vaccine.type", "age.group", "status", "lqas.loaded", "im.loaded")]),]) > 0) {
-      cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dup")
-      raw.data$sia.dup <- raw.data$sia |>
-        dplyr::group_by(adm2guid, sub.activity.start.date, vaccine.type, age.group, status, lqas.loaded, im.loaded) |>
-        dplyr::mutate(count = dplyr::n()) |>
-        dplyr::ungroup() |>
-        dplyr::filter(count > 1) |>
-        dplyr::arrange(sia.sub.activity.code)
-      }
     cli::cli_process_done()
 
     cli::cli_process_start("9) Loading all positives from EDAV")
@@ -1233,6 +1223,27 @@ extract_country_data <- function(
   gc()
 
   return(ctry.data)
+}
+
+
+#' function to assess duplicates in output from get_all_polio_data
+#'
+#' @description
+#' checks for duplicate records in afp, other surveillance, sia, and virus data
+#' @import dplyr
+#'
+duplicate_check <- function(df = raw.data){
+
+  if (nrow(raw.data$sia[duplicated(raw.data$sia[,c("adm2guid", "sub.activity.start.date",
+                                                   "vaccine.type", "age.group", "status", "lqas.loaded", "im.loaded")]),]) > 0) {
+    cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dup")
+    raw.data$sia.dup <- raw.data$sia |>
+      dplyr::group_by(adm2guid, sub.activity.start.date, vaccine.type, age.group, status, lqas.loaded, im.loaded) |>
+      dplyr::mutate(count = dplyr::n()) |>
+      dplyr::ungroup() |>
+      dplyr::filter(count > 1) |>
+      dplyr::arrange(sia.sub.activity.code)
+  }
 }
 
 #### 3) Secondary SP Functions ####
