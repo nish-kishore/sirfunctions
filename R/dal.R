@@ -1201,7 +1201,7 @@ extract_country_data <- function(
 #'
 duplicate_check <- function(df = raw.data){
 
-  if (nrow(raw.data$afp[duplicated(raw.data$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
+  if(nrow(raw.data$afp[duplicated(raw.data$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dup")
     raw.data$afp.dup <- raw.data$afp |>
       dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
@@ -1211,7 +1211,7 @@ duplicate_check <- function(df = raw.data){
       dplyr::arrange(.data$epid)
   }
 
-  if (nrow(raw.data$other[duplicated(raw.data$other[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
+  if(nrow(raw.data$other[duplicated(raw.data$other[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the Other Surveillance linelist, please check other.dup")
     raw.data$other.dup <- raw.data$other |>
       dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
@@ -1222,7 +1222,7 @@ duplicate_check <- function(df = raw.data){
 
   }
 
-  if (nrow(raw.data$sia[duplicated(raw.data$sia[,c("adm2guid", "sub.activity.start.date",
+  if(nrow(raw.data$sia[duplicated(raw.data$sia[,c("adm2guid", "sub.activity.start.date",
                                                    "vaccine.type", "age.group", "status", "lqas.loaded", "im.loaded")]),]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dup")
     raw.data$sia.dup <- raw.data$sia |>
@@ -1233,7 +1233,7 @@ duplicate_check <- function(df = raw.data){
       dplyr::arrange(sia.sub.activity.code)
   }
 
-  if (nrow(raw.data$pos[duplicated(raw.data$pos[,c("epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
+  if(nrow(raw.data$pos[duplicated(raw.data$pos[,c("epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
                                                    "env.sample.id", "place.admin.0", "source", "datasource",
                                                    "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup")]),]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the Positives data, please check pos.dup")
@@ -1245,9 +1245,6 @@ duplicate_check <- function(df = raw.data){
       dplyr::filter(count > 1) |>
       dplyr::arrange(epid)
   }
-
-
-
 }
 
 #### 3) Secondary SP Functions ####
