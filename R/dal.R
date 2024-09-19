@@ -402,6 +402,9 @@ get_all_polio_data <- function(
       cli::cli_process_done()
     }
 
+    cli::cli_process_start("Checking for duplicates in datasets.")
+    raw.data <- duplicate_check(raw.data)
+    cli::cli_process_done()
 
     return(raw.data)
   } else {
@@ -780,6 +783,9 @@ get_all_polio_data <- function(
     cli::cli_process_done()
   }
 
+  cli::cli_process_start("Checking for duplicates in datasets.")
+  raw.data <- duplicate_check(raw.data)
+  cli::cli_process_done()
 
   return(raw.data)
 }
@@ -1198,7 +1204,7 @@ extract_country_data <- function(
 #' @description
 #' checks for duplicate records in afp, other surveillance, sia, and virus data
 #' @import dplyr cli
-#' @param .raw.data list a list of dataframes produced from get_all_polio_data
+#' @param .raw.data `named list` list of dataframes produced from `get_all_polio_data()`
 duplicate_check <- function(.raw.data = raw.data) {
   if (nrow(.raw.data$afp[duplicated(.raw.data$afp[, c("epid", "place.admin.0", "dateonset")]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dupe")

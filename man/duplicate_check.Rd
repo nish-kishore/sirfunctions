@@ -7,7 +7,7 @@
 duplicate_check(.raw.data = raw.data)
 }
 \arguments{
-\item{.raw.data}{list a list of dataframes produced from get_all_polio_data}
+\item{.raw.data}{\verb{named list} list of dataframes produced from \code{get_all_polio_data()}}
 }
 \description{
 checks for duplicate records in afp, other surveillance, sia, and virus data
