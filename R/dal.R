@@ -1233,6 +1233,16 @@ duplicate_check <- function(df = raw.data){
       dplyr::arrange(sia.sub.activity.code)
   }
 
+  if(nrow(raw.data$es[duplicated(raw.data$es[,c("env.sample.id", "virus.type", "emergence.group", "nt.changes",
+                                                "site.id", "collection.date", "collect.yr")]),]) > 0){
+    cli::cli_alert_warning("There are potential duplicates in the ES data, please check es.dup")
+    raw.data$es.dup <- raw.data$es |>
+      dplyr::mutate(es.dups = dplyr::n()) |>
+      dplyr::filter(es.dups > 1)|>
+      dplyr::select(env.sample.manual.edit.id, env.sample.id, sample.id, site.id, site.code, site.name, sample.condition,
+                    collection.date, virus.type, nt.changes, emergence.group,ctry, collect.date, collect.yr, es.dups )
+  }
+
   if(nrow(raw.data$pos[duplicated(raw.data$pos[,c("epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
                                                    "env.sample.id", "place.admin.0", "source", "datasource",
                                                    "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup")]),]) > 0) {
