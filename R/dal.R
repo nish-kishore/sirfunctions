@@ -481,17 +481,6 @@ get_all_polio_data <- function(
         hot.case = ifelse(is.na(hot.case), 99, hot.case)
       )
 
-    if (nrow(raw.data$afp[duplicated(raw.data$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
-      cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dup")
-      raw.data$afp.dup <- raw.data$afp |>
-        dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
-        dplyr::mutate(count = dplyr::n()) |>
-        dplyr::ungroup() |>
-        dplyr::filter(count > 1) |>
-        dplyr::arrange(.data$epid)
-
-    }
-
     cli::cli_process_done()
 
     cli::cli_process_start("Processing AFP data for analysis")
@@ -1221,6 +1210,16 @@ extract_country_data <- function(
 #' @import dplyr
 #'
 duplicate_check <- function(df = raw.data){
+
+  if (nrow(raw.data$afp[duplicated(raw.data$afp[,c("epid", "place.admin.0", "dateonset")]),]) > 0) {
+    cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dup")
+    raw.data$afp.dup <- raw.data$afp |>
+      dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
+      dplyr::mutate(count = dplyr::n()) |>
+      dplyr::ungroup() |>
+      dplyr::filter(count > 1) |>
+      dplyr::arrange(.data$epid)
+  }
 
   if (nrow(raw.data$sia[duplicated(raw.data$sia[,c("adm2guid", "sub.activity.start.date",
                                                    "vaccine.type", "age.group", "status", "lqas.loaded", "im.loaded")]),]) > 0) {
