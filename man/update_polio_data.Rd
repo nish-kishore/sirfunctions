@@ -2,7 +2,8 @@
 % Please edit documentation in R/dal.R
 \name{update_polio_data}
 \alias{update_polio_data}
-\title{Update a local global polio data (raw.data) with new data}
+\title{Update a local dataset with new data
+Update a local global polio data (raw.data) with new data}
 \usage{
 update_polio_data(local_dataset, overwrite = T)
 }
@@ -12,5 +13,6 @@ update_polio_data(local_dataset, overwrite = T)
 \item{overwrite}{should the file be overwritten? Default TRUE.}
 }
 \description{
+Update a local dataset with new data
 Update a local global polio data (raw.data) with new data
 }
