@@ -1400,7 +1400,7 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' @importFrom tools file_path_sans_ext
 #' @importFrom stringr str_trim str_to_lower
 #' @importFrom lubridate today
-#' @importFrom dplyr full_join all_of across
+#' @importFrom dplyr full_join slice_tail ungroup syms group_by
 #' @importFrom readr read_rds write_rds
 #'
 #' @export
@@ -1450,7 +1450,9 @@ update_polio_data <- function(local_dataset, overwrite = T) {
         cli::cli_process_start("Deduplicating records")
         nrow_before <- nrow(updated_data[[i]])
         updated_data[[i]] <- updated_data[[i]] |>
-          dplyr::distinct(dplyr::across(dplyr::all_of(dedup_col)),.keep_all = T)
+          dplyr::group_by(!!!dplyr::syms(dedup_col)) |>
+          dplyr::slice_tail() |>
+          dplyr::ungroup()
         nrow_after <- nrow(updated_data[[i]])
         cli::cli_alert_info(paste0((nrow_before - nrow_after), " duplicate records removed."))
         cli::cli_process_done()
@@ -2178,14 +2180,14 @@ compress_png <- function(img, pngquant_path = NULL, suffix = "") {
 #' @return tibble showing the columns where duplicates differ
 #' @export
 get_diff_cols <- function(df, id_col) {
-  col_with_differences <- raw.data.updated$afp.dupe |> head(100) |>
+  col_with_differences <- df$afp.dupe |> head(100) |>
     dplyr::mutate(dplyr::across(dplyr::everything(), \(x) as.character(x))) |>
     dplyr::group_by(!!!syms(id_col)) |>
     dplyr::summarise(dplyr::across(dplyr::everything(), \(x) length(unique(x)) == 1)) |>
     tidyr::pivot_longer(cols = -c(id_col), names_to = "column_name", values_to = "logical") |>
     dplyr::filter(logical == FALSE) |>
     dplyr::group_by(!!!syms(id_col)) |>
-    dplyr::summarise(col_with_diff = paste(unique(column_name), collapse = ", "))
+    dplyr::summarise(col_with_diff = paste(unique(.data$column_name), collapse = ", "))
 
   return(col_with_differences)
 }
