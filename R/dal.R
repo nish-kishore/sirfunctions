@@ -1290,7 +1290,7 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' @importFrom tools file_path_sans_ext
 #' @importFrom stringr str_trim str_to_lower
 #' @importFrom lubridate today
-#' @importFrom dplyr full_join
+#' @importFrom dplyr full_join all_of across
 #' @importFrom readr read_rds write_rds
 #'
 #' @export
@@ -1308,27 +1308,49 @@ update_polio_data <- function(local_dataset, overwrite = T) {
 
   new_data <- get_all_polio_data(attach.spatial.data = spatial_data)
 
+
   updated_data <- list()
+  afp_dedup_col <- c("epid", "place.admin.0", "dateonset")
+  pos_dedup_col <- c("epid", "polis.case.id", "env.sample.id", "place.admin.0",
+                     "virustype", "ntchanges", "emergencegroup", "dateonset",
+                     "source")
+  sia_dedup_col <- c("adm2guid", "sub.activity.start.date", "vaccine.type",
+                     "age.group","status", "lqas.loaded", "im.loaded")
+  es_dedup_col <- c("env.sample.id", "virus.type", "emergence.group",
+                    "nt.changes", "site.id", "collection.date", "collect.yr")
+
   for (i in old_data_names) {
     cli::cli_alert_info(paste0("Updating ", i))
     if (i %in% c("metadata", "global.ctry", "global.prov", "global.dist", "roads", "cities")) {
-      cli::cli_process_start(paste0("Replacing ", i, " with the most recent data."))
+      cli::cli_process_start(paste0("Replacing ", i, " with the most recent data"))
       updated_data[i] <- list(new_data[[i]])
       cli::cli_process_done()
     } else {
       updated_data[i] <- list(suppressMessages(dplyr::full_join(old_data[[i]], new_data[[i]])))
-      cli::cli_process_start("Deduplicating records")
-      nrow_before <- nrow(updated_data[[i]])
-      updated_data[[i]] <- updated_data[[i]] |> dplyr::distinct()
-      nrow_after <- nrow(updated_data[[i]])
-      cli::cli_alert_info(paste0((nrow_before - nrow_after), " duplicate records removed."))
-      cli::cli_process_done()
+
+      dedup_col <- switch(i,
+                          "afp"  = afp_dedup_col,
+                          "para.case" = afp_dedup_col,
+                          "other" = afp_dedup_col,
+                          "pos" = pos_dedup_col,
+                          "sia" = sia_dedup_col,
+                          "es" = es_dedup_col)
+
+      if (i %in% c("afp", "other", "pos", "sia", "es", "para.case")) {
+        cli::cli_process_start("Deduplicating records")
+        nrow_before <- nrow(updated_data[[i]])
+        updated_data[[i]] <- updated_data[[i]] |>
+          dplyr::distinct(dplyr::across(dplyr::all_of(dedup_col)),.keep_all = T)
+        nrow_after <- nrow(updated_data[[i]])
+        cli::cli_alert_info(paste0((nrow_before - nrow_after), " duplicate records removed."))
+        cli::cli_process_done()
+      }
     }
   }
 
   cli::cli_alert_success("Local dataset updated.")
 
-  cli::cli_process_start("Checking for duplicates in the updated dataset.")
+  cli::cli_process_start("Final duplicate checking in the updated dataset.")
   updated_data <- duplicate_check(updated_data)
   cli::cli_process_done()
 
@@ -1827,4 +1849,24 @@ compress_png <- function(img, pngquant_path = NULL, suffix = "") {
   system2(pngquant_path, args = c("--ext", paste0(suffix, ".png"), "--force", img))
 }
 
+#' Get the columns where records differ in a group. Useful for identifying where duplicates differ after
+#' performing a distinct() operation
+#'
+#' @param df data frame or tibble
+#' @param id_col `string` column used as a unique identifier for records
+#' @importFrom dplyr syms mutate everything across group_by summarise filter
+#' @importFrom tidyr pivot_longer
+#' @return tibble showing the columns where duplicates differ
+#' @export
+get_diff_cols <- function(df, id_col) {
+  col_with_differences <- raw.data.updated$afp.dupe |> head(100) |>
+    dplyr::mutate(dplyr::across(dplyr::everything(), \(x) as.character(x))) |>
+    dplyr::group_by(!!!syms(id_col)) |>
+    dplyr::summarise(dplyr::across(dplyr::everything(), \(x) length(unique(x)) == 1)) |>
+    tidyr::pivot_longer(cols = -c(id_col), names_to = "column_name", values_to = "logical") |>
+    dplyr::filter(logical == FALSE) |>
+    dplyr::group_by(!!!syms(id_col)) |>
+    dplyr::summarise(col_with_diff = paste(unique(column_name), collapse = ", "))
 
+  return(col_with_differences)
+}
