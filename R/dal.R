@@ -1280,6 +1280,7 @@ duplicate_check <- function(.raw.data = raw.data) {
   }
 
   return(.raw.data)
+}
 #' Update a local dataset with new data
 #' Update a local global polio data (raw.data) with new data
 #'
@@ -1326,6 +1327,10 @@ update_polio_data <- function(local_dataset, overwrite = T) {
   }
 
   cli::cli_alert_success("Local dataset updated.")
+
+  cli::cli_process_start("Checking for duplicates in the updated dataset.")
+  updated_data <- duplicate_check(updated_data)
+  cli::cli_process_done()
 
   if (overwrite) {
     readr::write_rds(updated_data, local_dataset)
