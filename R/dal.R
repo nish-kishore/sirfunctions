@@ -164,8 +164,8 @@ edav_io <- function(
   }
 
   if (io == "write") {
-    if (!grepl(".rds|.csv", file_loc)) {
-      stop("At the moment only 'rds' 'rda' and 'csv' are supported for reading.")
+    if (!grepl(".rds|.csv|.png", file_loc)) {
+      stop("At the moment only 'rds' 'rda' 'csv' and 'png' are supported for reading.")
     }
 
     if (grepl(".rds", file_loc)) {
@@ -174,6 +174,10 @@ edav_io <- function(
 
     if (grepl(".csv", file_loc)) {
       AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
+    }
+
+    if (grepl(".csv", file_loc)){
+
     }
   }
 
