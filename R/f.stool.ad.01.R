@@ -217,7 +217,7 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
 #'
 check_missing_afp_var <- function(afp_data, spatial_scale) {
   # file names
-  names.afp.ctry <- c("adm0guid", "date", "cdc.classification.all2")
+  names.afp.ctry <- c("adm0guid", "date", "dateonset", "cdc.classification.all2")
   names.afp.prov <- c(names.afp.ctry, "adm1guid")
   names.afp.dist <- c(names.afp.prov, "adm2guid")
 
@@ -354,7 +354,7 @@ f.stool.ad.01 <- function(
   names.dist <- c(names.prov, "adm2guid", "dist")
 
   # check that data inputs have the same country data
-  if (!sort(unique(admin.data$adm0guid)) == sort(unique(afp.data$adm0guid))) {
+  if (setdiff(sort(unique(afp.data$adm0guid)), sort(unique(admin.data$adm0guid))) |> length() > 0) {
     stop("Please make sure that your `afp.data` and `admin.data` are subset for
          the same countries")
   }
