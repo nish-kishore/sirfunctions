@@ -7,6 +7,9 @@
 #'
 #' @return a tibble with year data
 generate_year_data <- function(start_date, end_date) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
   year.data <- dplyr::tibble(
     "year" = lubridate::year(start_date):lubridate::year(end_date) # Defines year as the amount of
     # time between the start date and end date by calendar year (eg 2019:2020)
@@ -32,7 +35,8 @@ generate_year_data <- function(start_date, end_date) {
       latest_date = lubridate::as_date(latest_date),
       n_days = as.integer(latest_date - earliest_date + 1), # Calculate number
       # of days in calendar year between earliest and latest date of that
-      # calendar year
+      # calendar year,
+      weight = n_days / days_in_year
     )
 
   return(year.data)
@@ -217,7 +221,7 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
 #'
 check_missing_afp_var <- function(afp_data, spatial_scale) {
   # file names
-  names.afp.ctry <- c("adm0guid", "date", "dateonset", "cdc.classification.all2")
+  names.afp.ctry <- c("adm0guid", "date", "cdc.classification.all2")
   names.afp.prov <- c(names.afp.ctry, "adm1guid")
   names.afp.dist <- c(names.afp.prov, "adm2guid")
 
