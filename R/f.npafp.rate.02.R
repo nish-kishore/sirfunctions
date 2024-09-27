@@ -47,10 +47,10 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
   int.data <- dplyr::full_join(int.data, pop.data) |>
     dplyr::left_join(year.data) |>
     dplyr::mutate(npafp_rate = .data$n_npafp / .data$u15pop * 100000 / .data$weight) |>
-    dplyr::select(all_of(c("year", "n_npafp", "u15pop",
-                           "n_days", "days_in_year", "weight",
-                           "earliest_date", "latest_date", "npafp_rate",
-                           pop_cols))) |>
+    dplyr::select(dplyr::all_of(c("year", "n_npafp", "u15pop",
+                                  "n_days", "days_in_year", "weight",
+                                  "earliest_date", "latest_date", "npafp_rate",
+                                  pop_cols))) |>
     arrange(!!!dplyr::syms(spatial_scale), .data$year)
 
   return(int.data)
@@ -156,10 +156,34 @@ f.npafp.rate.02 <- function(
     pending = T,
     rolling = F,
     sp_continuity_validation = T) {
-  # check if afp.data and pop.data has arguments
+
+  # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
   }
+
+  # Ensure that if using raw.data, required renamed columns are present. Borrowed from
+  # extract.country.data()
+
+  afp.data <- dplyr::rename_with(afp.data, recode,
+      place.admin.0 = "ctry",
+      place.admin.1 = "prov",
+      place.admin.2 = "dist",
+      person.sex = "sex",
+      dateonset = "date",
+      yronset = "year",
+      datenotify = "date.notify",
+      dateinvest = "date.invest",
+      cdc.classification.all = "cdc.class"
+    )
+  pop.data <- dplyr::rename_with(pop.data, recode,
+                       ADM0_NAME = "ctry",
+                       ADM1_NAME = "prov",
+                       ADM2_NAME = "dist",
+                       ADM0_GUID = "adm0guid",
+                       u15pop.prov = "u15pop"
+    )
+
 
   # Local static vars
   names.ctry <- c("adm0guid", "year", "ctry")
@@ -296,8 +320,10 @@ f.npafp.rate.02 <- function(
       dplyr::filter(!is.na(.data$year))
   }
 
+  numeric_cols <- c("n_npafp", "u15pop", "npafp_rate", "par")
   int.data <- int.data |>
-    dplyr::mutate(dplyr::across(dplyr::everything(), \(x) tidyr::replace_na(x, 0)))
+    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols), \(x) tidyr::replace_na(x, 0))) |>
+    tidyr::drop_na(dplyr::any_of(spatial.scale))
 
   return(int.data)
 }

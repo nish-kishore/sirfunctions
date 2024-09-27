@@ -352,16 +352,32 @@ f.stool.ad.01 <- function(
     sp_continuity_validation = T) {
 
 
-  # local static vars
+  # Local static vars
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
 
-  # check that data inputs have the same country data
-  if (setdiff(sort(unique(afp.data$adm0guid)), sort(unique(admin.data$adm0guid))) |> length() > 0) {
-    stop("Please make sure that your `afp.data` and `admin.data` are subset for
-         the same countries")
-  }
+  # Ensure that if using raw.data, required renamed columns are present. Borrowed from
+  # extract.country.data()
+
+  afp.data <- dplyr::rename_with(afp.data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+  admin.data <- dplyr::rename_with(admin.data, recode,
+                                 ADM0_NAME = "ctry",
+                                 ADM1_NAME = "prov",
+                                 ADM2_NAME = "dist",
+                                 ADM0_GUID = "adm0guid",
+                                 u15pop.prov = "u15pop"
+  )
 
   # Check data inputs
   # Analysis start and end date as defined by user (as a character)
@@ -523,13 +539,14 @@ f.stool.ad.01 <- function(
   # Calculate stool adequacy
   int.data <- NULL
   if (rolling) {
-    int.data <- stool_ad_rolling(stool.data, admin.data, start_date, end_date, spatial.scale)
+    int.data <- stool_ad_rolling(stool.data, admin.data, start.date, end.date, spatial.scale)
   } else {
     int.data <- stool_ad_year(stool.data, admin.data, year.data, spatial.scale)
   }
 
   int.data <- int.data |>
-    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad")
+    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad") |>
+    tidyr::drop_na(dplyr::any_of(spatial.scale))
 
   return(int.data)
 }
