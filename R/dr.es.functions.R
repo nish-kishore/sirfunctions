@@ -21,7 +21,7 @@ impute_site_coord <- function(ctry.data) {
     by = c("GUID" = "adm2guid")
   )
 
-  df01.shape <- dplyr::right_join(shape.dist.pop %>% dplyr::select(.data$GUID),
+  df01.shape <- dplyr::right_join(shape.dist.pop %>% dplyr::select("GUID"),
     df01 %>% dplyr::filter(!is.na(dist.guid)),
     by = c("GUID" = "dist.guid")
   ) %>%
@@ -47,7 +47,7 @@ impute_site_coord <- function(ctry.data) {
 
 
   df03 <- pt01_joined %>%
-    dplyr::select(-.data$nperarm, -id) %>%
+    dplyr::select(-"nperarm", -"id") %>%
     dplyr::group_by(.data$GUID) %>%
     dplyr::arrange(.data$GUID, .by_group = TRUE) %>%
     dplyr::mutate(id = dplyr::row_number()) %>%
@@ -77,7 +77,7 @@ impute_site_coord <- function(ctry.data) {
 
 
   df06 <- df05 %>%
-    dplyr::select(.data$ADM0_NAME, .data$site.name, "lng" = .data$lon, .data$lat) %>%
+    dplyr::select("ADM0_NAME", "site.name", "lng" = "lon", "lat") %>%
     dplyr::mutate_at(c("lng", "lat"), as.character)
 
   es.data <- ctry.data$es %>%
@@ -86,7 +86,7 @@ impute_site_coord <- function(ctry.data) {
       lat = ifelse(is.na(.data$lat.x), .data$lat.y, .data$lat.x),
       lng = ifelse(is.na(.data$lng.x), .data$lng.y, .data$lng.x)
     ) %>%
-    dplyr::select(-c(.data$lat.x, .data$lat.y, .data$lng.x, .data$lng.y))
+    dplyr::select(-c("lat.x", "lat.y", "lng.x", "lng.y"))
 
   cli::cli_process_done()
 
@@ -186,10 +186,12 @@ clean_es_data <- function(ctry.data) {
 #' @export
 generate_es_data_long <- function(es.data) {
   es.data.long <- es.data %>%
-    dplyr::select(.data$site.name, .data$ADM1_NAME, .data$collect.date, .data$early.dat, .data$ev.detect, .data$all_dets) %>%
+    dplyr::select("site.name", "ADM1_NAME", "collect.date",
+                  "early.dat", "ev.detect", "all_dets",
+                  "npev") %>%
     dplyr::mutate(ev.detect = as.character(.data$ev.detect)) %>%
     dplyr::mutate(all_dets = dplyr::case_when(
-      all_dets == "" & ev.detect == "1" ~ "NPEV only",
+      all_dets == "" & npev == "1" ~ "NPEV only",
       all_dets == "" & ev.detect == "0" ~ "No EV isolated",
       TRUE ~ all_dets
     ))

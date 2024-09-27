@@ -12,7 +12,8 @@ generate_stool_ad_maps_dist(
   dist.shape,
   start_date,
   end_date,
-  output_path = Sys.getenv("DR_FIGURE_PATH")
+  output_path = Sys.getenv("DR_FIGURE_PATH"),
+  caption_size = 3
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ generate_stool_ad_maps_dist(
 \item{end_date}{end date of desk review}
 
 \item{output_path}{where to save the figure}
+
+\item{caption_size}{size of the caption}
 }
 \value{
 ggplot object

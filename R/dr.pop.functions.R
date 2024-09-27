@@ -123,7 +123,7 @@ spatial_validation <- function(pop.data, spatial.scale) {
           ctry = unique(ctry)
         ) |>
         dplyr::filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
-        dplyr::select(.data$ctry, .data$adm0guid, .data$years_active) |>
+        dplyr::select("ctry", "adm0guid", "years_active") |>
         dplyr::arrange(.data$ctry, .data$years_active)
     },
     "prov" = {
@@ -134,7 +134,7 @@ spatial_validation <- function(pop.data, spatial.scale) {
           prov = unique(prov)
         ) |>
         dplyr::filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
-        dplyr::select(.data$prov, .data$adm1guid, .data$years_active) |>
+        dplyr::select("prov", "adm1guid", "years_active") |>
         dplyr::arrange(.data$prov, .data$years_active)
     },
     "dist" = {
@@ -145,7 +145,7 @@ spatial_validation <- function(pop.data, spatial.scale) {
           dist = unique(dist)
         ) |>
         dplyr::filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
-        dplyr::select(.data$dist, .data$adm2guid, .data$years_active) |>
+        dplyr::select("dist", "adm2guid", "years_active") |>
         dplyr::arrange(.data$dist, .data$years_active)
     }
   )

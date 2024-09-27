@@ -39,11 +39,10 @@ generate_pptx_assumptions <- function(start_date, end_date) {
 #' Get path of the PowerPoint template
 #'
 #' @param path path to the PowerPoint template. If NULL, will prompt user to download from the sg-desk-review GitHub repository
-#' @param filename name of the PowerPoint template
 #'
 #' @return a string containing the path of the PowerPoint template
 #' @export
-get_ppt_template <- function(path = NULL, filename = "desk_review_template.pptx") {
+get_ppt_template <- function(path = NULL) {
   if (is.null(path)) {
     url <- "https://github.com/nish-kishore/sg-desk-reviews/tree/main/resources"
 
@@ -56,6 +55,7 @@ get_ppt_template <- function(path = NULL, filename = "desk_review_template.pptx"
 
 #' Generate the desk review slide deck
 #' @importFrom officer add_slide layout_properties layout_summary ph_location_label ph_location_type ph_with read_pptx
+#'
 #' @param ppt_template_path path to the PowerPoint template
 #' @param ctry.data RDS file containing polio data for a country
 #' @param start_date start date of desk review
@@ -81,6 +81,7 @@ get_ppt_template <- function(path = NULL, filename = "desk_review_template.pptx"
 #' @param es.table ES table
 #' @param country name of the country
 #' @param ppt_output_path path where the powerpoint should be outputted
+#' @param case.num.dose.g figure containing immunization rates per year
 #'
 #' @return does not return anything
 #' @export
@@ -88,9 +89,12 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
                             pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
                             surv.ind.tab, afp.dets.prov.year, npafp.map,
                             npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
-                            inad.tab.flex, tab.60d, timely_nation, timely_prov,
+                            inad.tab.flex, tab.60d, case.num.dose.g,
+                            timely_nation, timely_prov,
                             mapt_all, es.site.det, es.det.map, es.timely,
-                            es.table, country, ppt_output_path) {
+                            es.table,
+                            country = Sys.getenv("DR_COUNTRY"),
+                            ppt_output_path = Sys.getenv("DR_POWERPOINT_PATH")) {
   if (!requireNamespace("rvg", quietly = TRUE)) {
     stop('Package "rvg" must be installed to use this function.',
       .call = FALSE
@@ -107,6 +111,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
     stop("Ppt template path does not exist. Please try again.")
   }
 
+  ppt_template_path <- get_ppt_template(ppt_template_path)
   tempi <- officer::read_pptx(ppt_template_path)
 
   officer::layout_summary(tempi)
@@ -391,7 +396,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("draft_output_", Sys.Date(), "_", country, ".pptx")
+    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }
 
@@ -787,17 +792,17 @@ generate_dr_ppt2 <- function(ctry.data,
     officer::ph_with(
       value = officer::block_list(
         officer::fpar(officer::ftext("CDC case classification uses lab classification first and then epi data - if epi and lab disagree, lab is considered correct", officer::fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Categories includes not AFP, NPAFP, compatible, pending, lab pending, and all virus types (eg VDPV, Wild 1) ", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Pending is when there is no virus type and classification is pending ", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext('Lab pending is no virus type, classification is pending, and final culture result is "not received in lab"', fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Laboratory classification is determined from Virus Type field", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Note that this does not take into account the vdpv1, vdpv2, vdpv3, and wild1 computed variables in POLIS ", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Extract virus from virus type and then use classification vdpv to determine ambiguous, immune deficient, or circulating for VDPVs", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Important caveats", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Case classification and lab results are updated in POLIS as lab results come in - this can and does result in varying time delays based on shipping and lab testing times", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Vdpv1, 2, and 3 variables in POLIS are also extracted from virus type ", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("There can be discrepancies between the two", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Can be difficult to identify dual infections", fp_text(font.size = 17)))
+        officer::fpar(officer::ftext("Categories includes not AFP, NPAFP, compatible, pending, lab pending, and all virus types (eg VDPV, Wild 1) ", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Pending is when there is no virus type and classification is pending ", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext('Lab pending is no virus type, classification is pending, and final culture result is "not received in lab"', officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Laboratory classification is determined from Virus Type field", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Note that this does not take into account the vdpv1, vdpv2, vdpv3, and wild1 computed variables in POLIS ", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Extract virus from virus type and then use classification vdpv to determine ambiguous, immune deficient, or circulating for VDPVs", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Important caveats", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Case classification and lab results are updated in POLIS as lab results come in - this can and does result in varying time delays based on shipping and lab testing times", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Vdpv1, 2, and 3 variables in POLIS are also extracted from virus type ", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("There can be discrepancies between the two", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Can be difficult to identify dual infections", officer::fp_text(font.size = 17)))
       ),
       location = officer::ph_location_type("body"),
       level_list = c(1L, 2L, 2L, 2L, 1L, 2L, 2L, 1L, 2L, 2L, 2L, 2L)
@@ -809,11 +814,11 @@ generate_dr_ppt2 <- function(ctry.data,
     ) %>%
     officer::ph_with(
       value = officer::block_list(
-        officer::fpar(officer::ftext("Filling missing geographic data", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Compare epid with previously reported case epids ", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("If EPID prov and dist code match with previously reported case in the same onset year, then backfill prov and dist", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("If no match, expand search to any year, then backfill prov and dist", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("If there are multiple guids identified with the same prov and dist for the match, then do not match and leave blank (cannot tell which GUID to use)", fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Filling missing geographic data", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Compare epid with previously reported case epids ", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("If EPID prov and dist code match with previously reported case in the same onset year, then backfill prov and dist", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("If no match, expand search to any year, then backfill prov and dist", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("If there are multiple guids identified with the same prov and dist for the match, then do not match and leave blank (cannot tell which GUID to use)", officer::fp_text(font.size = 17))),
         officer::fpar(officer::ftext(paste0("There are ", (nrow(incomplete.adm.dist)), " missing district from raw data"), officer::fp_text(font.size = 17))),
         officer::fpar(officer::ftext("Able to extract district from EPID for (manually fill here) cases.", officer::fp_text(font.size = 17)))
       ),
@@ -827,20 +832,20 @@ generate_dr_ppt2 <- function(ctry.data,
     ) %>%
     officer::ph_with(
       value = officer::block_list(
-        officer::fpar(officer::ftext("Steps for lab cleaning", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Extract year from onset date if available", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("For non-cases/no onset date - extracted from EPID", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Deduplicated using lab master key (MasterKey)", fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Steps for lab cleaning", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Extract year from onset date if available", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("For non-cases/no onset date - extracted from EPID", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Deduplicated using lab master key (MasterKey)", officer::fp_text(font.size = 17))),
         officer::fpar(officer::ftext("Data current up to (manually edit here)", officer::fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("If a master key was duplicated, used the more recent appearance (the later database)", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Matching province", fp_text(font.size = 17))),
-        officer::fpar(officer::ftext("Match epids between lab and epi data - use province from epi data", fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("If a master key was duplicated, used the more recent appearance (the later database)", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Matching province", officer::fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Match epids between lab and epi data - use province from epi data", officer::fp_text(font.size = 17))),
         officer::fpar(officer::ftext("Note: a number of mismatches observed (hard to quantify since a subset of these are spelling differences)", officer::fp_text(font.size = 17, color = "red"))),
-        officer::fpar(officer::ftext("Cross check epids with previous epids to identify same province code", fp_text(font.size = 17))),
+        officer::fpar(officer::ftext("Cross check epids with previous epids to identify same province code", officer::fp_text(font.size = 17))),
         officer::fpar(officer::ftext(paste0(
           "Created look up table for provinces and districts from previous epids",
           " matching geographic columns from other complete entries."
-        ), fp_text(font.size = 17)))
+        ), officer::fp_text(font.size = 17)))
       ),
       location = officer::ph_location_type("body"),
       level_list = c(1L, 2L, 2L, 1L, 2L, 2L, 1L, 2L, 3L, 1L, 1L)
@@ -853,6 +858,6 @@ generate_dr_ppt2 <- function(ctry.data,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("draft_output_", Sys.Date(), "_", country, ".pptx")
+    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }

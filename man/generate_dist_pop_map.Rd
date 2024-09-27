@@ -10,7 +10,8 @@ generate_dist_pop_map(
   prov.shape,
   dist.shape,
   end_date,
-  output_path = Sys.getenv("DR_FIGURE_PATH")
+  output_path = Sys.getenv("DR_FIGURE_PATH"),
+  caption_size = 11
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ generate_dist_pop_map(
 \item{end_date}{end date of the desk review}
 
 \item{output_path}{where to save the figure}
+
+\item{caption_size}{size of the caption}
 }
 \value{
 ggplot object

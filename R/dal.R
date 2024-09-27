@@ -7,7 +7,7 @@
 #' @description Generate token which connects to CDC EDAV resources and
 #' validates that the individual still has access. The current tenant ID
 #' is hard coded for CDC resources.
-#' @import AzureStor AzureAuth utils dplyr
+#' @importFrom utils head
 #' @param app_id str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
 #' this can be changed if you have a service principal
 #' @param auth str: authorization type defaults to "authorization_code",
@@ -99,7 +99,7 @@ edav_io <- function(
     }
 
     return(AzureStor::list_storage_files(azcontainer, file_loc) |>
-      dplyr::as_tibble())
+             dplyr::as_tibble())
   }
 
   if (io == "exists.dir") {
@@ -137,11 +137,11 @@ edav_io <- function(
       tryCatch(
         {
           return(suppressWarnings(AzureStor::storage_load_rds(azcontainer, file_loc)))
-          corrupted.rds <- FALSE
+          corrupted.rds <<- FALSE
         },
         error = function(e) {
           cli::cli_alert_warning("RDS download from EDAV was corrupted, downloading directly...")
-          corrupted.rds <- TRUE
+          corrupted.rds <<- TRUE
         }
       )
 
@@ -402,6 +402,9 @@ get_all_polio_data <- function(
       cli::cli_process_done()
     }
 
+    cli::cli_process_start("Checking for duplicates in datasets.")
+    raw.data <- duplicate_check(raw.data)
+    cli::cli_process_done()
 
     return(raw.data)
   } else {
@@ -480,6 +483,7 @@ get_all_polio_data <- function(
         ),
         hot.case = ifelse(is.na(hot.case), 99, hot.case)
       )
+
     cli::cli_process_done()
 
     cli::cli_process_start("Processing AFP data for analysis")
@@ -636,6 +640,7 @@ get_all_polio_data <- function(
         file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
           dplyr::pull(file), default_dir = NULL
       )
+
     cli::cli_process_done()
 
     cli::cli_process_start("9) Loading all positives from EDAV")
@@ -645,6 +650,7 @@ get_all_polio_data <- function(
         file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
           dplyr::pull(file), default_dir = NULL
       )
+
     cli::cli_process_done()
 
     cli::cli_process_start("10) Loading other surveillance linelist from EDAV")
@@ -654,6 +660,7 @@ get_all_polio_data <- function(
         file_loc = dplyr::filter(dl_table, grepl("/other", file)) |>
           dplyr::pull(file), default_dir = NULL
       )
+
     cli::cli_process_done()
 
     cli::cli_process_start("11) Loading road network data")
@@ -776,6 +783,9 @@ get_all_polio_data <- function(
     cli::cli_process_done()
   }
 
+  cli::cli_process_start("Checking for duplicates in datasets.")
+  raw.data <- duplicate_check(raw.data)
+  cli::cli_process_done()
 
   return(raw.data)
 }
@@ -1188,10 +1198,94 @@ extract_country_data <- function(
   return(ctry.data)
 }
 
+
+#' function to assess duplicates in output from get_all_polio_data
+#'
+#' @description
+#' checks for duplicate records in afp, other surveillance, sia, and virus data
+#' @import dplyr cli
+#' @param .raw.data `named list` list of dataframes produced from `get_all_polio_data()`
+duplicate_check <- function(.raw.data = raw.data) {
+  if (nrow(.raw.data$afp[duplicated(.raw.data$afp[, c("epid", "place.admin.0", "dateonset")]), ]) > 0) {
+    cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dupe")
+    .raw.data$afp.dupe <- .raw.data$afp |>
+      dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
+      dplyr::mutate(count = dplyr::n()) |>
+      dplyr::ungroup() |>
+      dplyr::filter(count > 1) |>
+      dplyr::arrange(.data$epid)
+  }
+
+  if (nrow(.raw.data$other[duplicated(.raw.data$other[, c("epid", "place.admin.0", "dateonset")]), ]) > 0) {
+    cli::cli_alert_warning("There are potential duplicates in the Other Surveillance linelist, please check other.dupe")
+    .raw.data$other.dupe <- .raw.data$other |>
+      dplyr::group_by(.data$epid, .data$place.admin.0, .data$dateonset) |>
+      dplyr::mutate(count = dplyr::n()) |>
+      dplyr::ungroup() |>
+      dplyr::filter(count > 1) |>
+      dplyr::arrange(.data$epid)
+  }
+
+  if (nrow(.raw.data$sia[duplicated(.raw.data$sia[, c(
+    "adm2guid", "sub.activity.start.date", "vaccine.type", "age.group",
+    "status", "lqas.loaded", "im.loaded"
+  )]), ]) > 0) {
+    cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dupe")
+    .raw.data$sia.dupe <- .raw.data$sia |>
+      dplyr::group_by(.data$adm2guid, .data$sub.activity.start.date,
+                      .data$vaccine.type, .data$age.group, .data$status,
+                      .data$lqas.loaded, .data$im.loaded) |>
+      dplyr::mutate(count = dplyr::n()) |>
+      dplyr::ungroup() |>
+      dplyr::filter(count > 1) |>
+      dplyr::arrange(.data$sia.sub.activity.code)
+  }
+
+  if (nrow(.raw.data$es[duplicated(.raw.data$es[, c(
+    "env.sample.id", "virus.type", "emergence.group", "nt.changes",
+    "site.id", "collection.date", "collect.yr"
+  )]), ]) > 0) {
+    cli::cli_alert_warning("There are potential duplicates in the ES data, please check es.dupe")
+    .raw.data$es.dupe <- .raw.data$es |>
+      dplyr::group_by(.data$env.sample.id, .data$virus.type, .data$emergence.group,
+                      .data$nt.changes, .data$site.id, .data$collection.date,
+                      .data$collect.yr) |>
+      dplyr::mutate(es.dups = dplyr::n()) |>
+      dplyr::filter(.data$es.dups > 1) |>
+      dplyr::select(dplyr::all_of(c("env.sample.manual.edit.id", "env.sample.id",
+                                  "sample.id", "site.id", "site.code", "site.name",
+                                  "sample.condition", "collection.date", "virus.type",
+                                  "nt.changes", "emergence.group", "collect.date", "collect.yr", "es.dups")
+                                  )
+      )
+  }
+
+  if (nrow(.raw.data$pos[duplicated(.raw.data$pos[, c(
+    "epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
+    "env.sample.id", "place.admin.0", "source", "datasource",
+    "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup"
+  )]), ]) > 0) {
+    cli::cli_alert_warning("There are potential duplicates in the Positives data, please check pos.dupe")
+    .raw.data$pos.dupe <- .raw.data$pos |>
+      dplyr::group_by(
+        .data$epid, .data$epid.in.polis, .data$pons.epid, .data$virus.id,
+        .data$polis.case.id, .data$env.sample.id, .data$place.admin.0,
+        .data$source, .data$datasource, .data$virustype, .data$dateonset,
+        .data$yronset, .data$ntchanges, .data$emergencegroup
+      ) |>
+      dplyr::mutate(count = dplyr::n()) |>
+      dplyr::ungroup() |>
+      dplyr::filter(count > 1) |>
+      dplyr::arrange(.data$epid)
+  }
+
+  return(.raw.data)
+}
+
 #### 3) Secondary SP Functions ####
 
 #' Standard function to load District data
-#'
+#
 #' @description Pulls district shapefiles directly from the geodatabase
 #' @param fp str: Location of geodatabase
 #' @import stringr AzureStor dplyr lubridate
@@ -1475,11 +1569,11 @@ split_concat_raw_data <- function(
 
     for (i in 1:nrow(split.years)) {
       for (j in 1:nrow(key.table.vars)) {
-        out[[dplyr::pull(split.years[i, ], tag)]][[key.table.vars[j, ] |> dplyr::pull(data)]] <-
-          raw.data.all[[key.table.vars[j, ] |> dplyr::pull(data)]] |>
+        out[[dplyr::pull(split.years[i, ], tag)]][[key.table.vars[j, ] |> dplyr::pull("data")]] <-
+          raw.data.all[[key.table.vars[j, ] |> dplyr::pull("data")]] |>
           dplyr::filter(
-            !!sym(key.table.vars[j, ] |> dplyr::pull(year.var)) >= dplyr::pull(split.years[i, ], start.yr) &
-              !!sym(key.table.vars[j, ] |> dplyr::pull(year.var)) <= dplyr::pull(split.years[i, ], end.yr)
+            !!sym(key.table.vars[j, ] |> dplyr::pull("year.var")) >= dplyr::pull(split.years[i, ], start.yr) &
+              !!sym(key.table.vars[j, ] |> dplyr::pull("year.var")) <= dplyr::pull(split.years[i, ], end.yr)
           )
       }
 
@@ -1537,3 +1631,134 @@ split_concat_raw_data <- function(
     return(out)
   }
 }
+
+#' Check GUIDs present in afp.all.2 but not in the pop files
+#'
+#' @param ctry.data object containing polio data for a country
+#'
+#' @return list containing errors in province and district GUIDs
+#' @export
+check_afp_guid_ctry_data <- function(ctry.data) {
+  error_list <- list()
+
+  cli::cli_process_start("Checking province GUIDs")
+
+  prov_mismatches_pop <- setdiff(ctry.data$afp.all.2$adm1guid, ctry.data$prov.pop$adm1guid)
+  if (length(prov_mismatches_pop) > 0) {
+    cli::cli_alert_warning(paste0(
+      "There are ", length(prov_mismatches_pop),
+      " GUIDs from afp.all.2 that are not in prov.pop"
+    ))
+  }
+  error_list$prov_mismatches_pop <- ctry.data$afp.all.2 |>
+    dplyr::filter(.data$adm1guid %in% prov_mismatches_pop) |>
+    dplyr::select("prov", "year", "adm1guid") |>
+    unique()
+
+  if ("prov" %in% names(ctry.data)) {
+    prov_mismatches_shape <- setdiff(ctry.data$afp.all.2$adm1guid, ctry.data$prov$GUID)
+    if (length(prov_mismatches_shape) > 0) {
+      cli::cli_alert_warning(paste0(
+        "There are ", length(prov_mismatches_shape),
+        " GUIDs from afp.all.2 that are not in prov"
+      ))
+    }
+    error_list$prov_mismatches_shape <- ctry.data$afp.all.2 |>
+      dplyr::filter(.data$adm1guid %in% prov_mismatches_shape) |>
+      dplyr::select("prov", "year", "adm1guid") |>
+      unique()
+  }
+
+
+  cli::cli_process_done()
+
+  cli::cli_process_start("Checking district GUIDs")
+  dist_mismatches_pop <- setdiff(ctry.data$afp.all.2$adm2guid, ctry.data$dist.pop$adm2guid)
+
+  if (length(dist_mismatches_pop) > 0) {
+    cli::cli_alert_warning(paste0(
+      "There are ", length(dist_mismatches_pop),
+      " GUIDs from afp.all.2 that are not in dist.pop"
+    ))
+  }
+  error_list$dist_mismatches_pop <- ctry.data$afp.all.2 |>
+    dplyr::filter(.data$adm2guid %in% dist_mismatches_pop) |>
+    dplyr::select("prov", "dist", "year", "adm2guid") |>
+    unique()
+
+  if (!"dist" %in% names(ctry.data$dist)) {
+    dist_mismatches_shape <- setdiff(ctry.data$afp.all.2$adm2guid, ctry.data$dist$GUID)
+    if (length(dist_mismatches_shape) > 0) {
+      cli::cli_alert_warning(paste0(
+        "There are ", length(dist_mismatches_shape),
+        " GUIDs from afp.all.2 that are not in dist"
+      ))
+    }
+    error_list$dist_mismatches_shape <- ctry.data$afp.all.2 |>
+      dplyr::filter(.data$adm2guid %in% dist_mismatches_shape) |>
+      dplyr::select("prov", "dist", "year", "adm2guid") |>
+      unique()
+  }
+
+  cli::cli_process_done()
+
+  return(error_list)
+}
+
+#' Function to fix unknown GUIDs in the AFP linelist by obtaining GUIDs found in the pop files
+#' @param afp.data AFP linelist (afp.all.2)
+#' @param pop.data population file (prov.pop or dist.pop)
+#' @param guid_list list of unknown GUIDs from the AFP linelist.
+#' This is the output of check_afp_guid_ctry_data().
+#' @param spatial_scale "prov" or "dist"
+#'
+#' @return AFP data with corrected GUIDs based on the population files.
+#' @export
+fix_ctry_data_missing_guids <- function(afp.data, pop.data, guid_list, spatial_scale) {
+  afp.data <- switch(spatial_scale,
+                     "prov" = {
+                       afp.data |>
+                         dplyr::mutate(adm1guid = dplyr::if_else(.data$adm1guid %in% guid_list, NA, .data$adm1guid)) |>
+                         dplyr::left_join(pop.data, by = c("ctry", "prov", "year", "adm0guid")) |>
+                         dplyr::mutate(adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)) |>
+                         dplyr::select(-dplyr::any_of(c("adm1guid.x", "adm1guid.y")))
+                     },
+                     "dist" = {
+                       afp.data |>
+                         dplyr::mutate(adm2guid = dplyr::if_else(.data$adm2guid %in% guid_list, NA, .data$adm2guid)) |>
+                         dplyr::left_join(pop.data, by = c("ctry", "prov", "dist", "year",
+                                                    "adm0guid", "adm1guid")) |>
+                         dplyr::mutate(adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)) |>
+                         dplyr::select(-dplyr::any_of(c("adm2guid.x", "adm2guid.y")))
+                     }
+                     )
+
+  return(afp.data)
+}
+#' Compress .png files using pngquant
+#'
+#' @param img file path to the png file
+#' @param pngquant_path file path to pngquant.exe
+#' @param suffix add a suffix to the compressed image
+#'
+#' @export
+compress_png <- function(img, pngquant_path = NULL, suffix = "") {
+
+  # Check
+  if (!stringr::str_detect(img, ".png$")) {
+    stop("Only .png files can be compressed.")
+
+  }
+  if (is.null(pngquant_path)) {
+    stop("Please pass an argument to the pngquant_path parameter.")
+  }
+
+  if (!file.exists(pngquant_path)) {
+    stop("Path pngquant.exe not found.")
+    }
+
+  # Compress the image file
+  system2(pngquant_path, args = c("--ext", paste0(suffix, ".png"), "--force", img))
+}
+
+
