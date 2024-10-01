@@ -7,9 +7,6 @@
 #'
 #' @return a tibble with year data
 generate_year_data <- function(start_date, end_date) {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
   year.data <- dplyr::tibble(
     "year" = lubridate::year(start_date):lubridate::year(end_date) # Defines year as the amount of
     # time between the start date and end date by calendar year (eg 2019:2020)
@@ -35,8 +32,7 @@ generate_year_data <- function(start_date, end_date) {
       latest_date = lubridate::as_date(latest_date),
       n_days = as.integer(latest_date - earliest_date + 1), # Calculate number
       # of days in calendar year between earliest and latest date of that
-      # calendar year,
-      weight = n_days / days_in_year
+      # calendar year
     )
 
   return(year.data)
@@ -352,32 +348,16 @@ f.stool.ad.01 <- function(
     sp_continuity_validation = T) {
 
 
-  # Local static vars
+  # local static vars
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
 
-  # Ensure that if using raw.data, required renamed columns are present. Borrowed from
-  # extract.country.data()
-
-  afp.data <- dplyr::rename_with(afp.data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
-  )
-  admin.data <- dplyr::rename_with(admin.data, recode,
-                                 ADM0_NAME = "ctry",
-                                 ADM1_NAME = "prov",
-                                 ADM2_NAME = "dist",
-                                 ADM0_GUID = "adm0guid",
-                                 u15pop.prov = "u15pop"
-  )
+  # check that data inputs have the same country data
+  if (!sort(unique(admin.data$adm0guid)) == sort(unique(afp.data$adm0guid))) {
+    stop("Please make sure that your `afp.data` and `admin.data` are subset for
+         the same countries")
+  }
 
   # Check data inputs
   # Analysis start and end date as defined by user (as a character)
@@ -539,14 +519,13 @@ f.stool.ad.01 <- function(
   # Calculate stool adequacy
   int.data <- NULL
   if (rolling) {
-    int.data <- stool_ad_rolling(stool.data, admin.data, start.date, end.date, spatial.scale)
+    int.data <- stool_ad_rolling(stool.data, admin.data, start_date, end_date, spatial.scale)
   } else {
     int.data <- stool_ad_year(stool.data, admin.data, year.data, spatial.scale)
   }
 
   int.data <- int.data |>
-    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad") |>
-    tidyr::drop_na(dplyr::any_of(spatial.scale))
+    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad")
 
   return(int.data)
 }
