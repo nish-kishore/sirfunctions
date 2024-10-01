@@ -62,6 +62,7 @@ get_azure_storage_connection <- function(
 #' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
 #' the information in `default_dir` if you set that parameter to NULL.
 #' @param obj default NULL object to be saved, needed for "write"
+#' @param plot_name str: default NULL, name of plot to save, needed for "write" if saving non-rds/csv
 #' @param azcontainer azure container object returned from `get_azure_storage_connection()`
 #' @param force_delete boolean: use delete io without verification in the command line
 #' @returns output dependent on "io"
@@ -71,6 +72,7 @@ edav_io <- function(
     default_dir = "GID/PEB/SIR",
     file_loc = NULL,
     obj = NULL,
+    plot_name = NULL,
     azcontainer = suppressMessages(get_azure_storage_connection()),
     force_delete = F) {
   if (!is.null(file_loc)) {
@@ -165,7 +167,7 @@ edav_io <- function(
 
   if (io == "write") {
     if (!grepl(".rds|.csv|.png", file_loc)) {
-      stop("At the moment only 'rds' 'rda' 'csv' and 'png' are supported for reading.")
+      stop("At the moment only 'rds' 'rda' 'csv' and 'png' are supported for writing.")
     }
 
     if (grepl(".rds", file_loc)) {
@@ -176,8 +178,12 @@ edav_io <- function(
       AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
     }
 
-    if (grepl(".csv", file_loc)){
-
+    if (grepl(".png", file_loc)){
+      temp <- tempfile()
+      ggplot2::ggsave(filename = paste0(temp, "/", plot_name, ".png"), plot = obj)
+      AzureStor::storage_upload(container = suppressMessages(get_azure_storage_connection()),
+                                dest = file_loc, src = paste0(temp, "/", plot_name, ".png"))
+      unlink(temp)
     }
   }
 
