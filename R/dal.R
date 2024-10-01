@@ -95,6 +95,10 @@ edav_io <- function(
     stop("Need to supply an object to be written")
   }
 
+  if (io == "write" & grepl(".png", file_loc) & is.na(plot_name)){
+    stop(".png files need a plot_name to be written")
+  }
+
   if (io == "list") {
     if (!AzureStor::storage_dir_exists(azcontainer, file_loc)) {
       stop("Directory does not exist")
@@ -181,8 +185,8 @@ edav_io <- function(
     if (grepl(".png", file_loc)){
       temp <- tempfile()
       ggplot2::ggsave(filename = paste0(temp, "/", plot_name, ".png"), plot = obj)
-      AzureStor::storage_upload(container = azcontainer,
-                                dest = file_loc, src = paste0(temp, "/", plot_name, ".png"))
+      AzureStor::storage_upload(container = azcontainer, dest = file_loc,
+                                src = paste0(temp, "/", plot_name, ".png"))
       unlink(temp)
     }
   }
