@@ -181,7 +181,7 @@ edav_io <- function(
     if (grepl(".png", file_loc)){
       temp <- tempfile()
       ggplot2::ggsave(filename = paste0(temp, "/", plot_name, ".png"), plot = obj)
-      AzureStor::storage_upload(container = suppressMessages(get_azure_storage_connection()),
+      AzureStor::storage_upload(container = azcontainer,
                                 dest = file_loc, src = paste0(temp, "/", plot_name, ".png"))
       unlink(temp)
     }
