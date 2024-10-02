@@ -1311,9 +1311,11 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 
   if(version == "dev"){
     fp <- "GID/PEB/SIR/Data/spatial_dev/global.dist.rds"
+    cli::cli_alert_info("Loading under development district spatial files")
+  }else{
+    cli::cli_alert_info("Loading district spatial files")
   }
 
-  cli::cli_alert_info("Loading district spatial files")
   out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
       STARTDATE = lubridate::as_date(STARTDATE),
@@ -1389,7 +1391,8 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                end.year = lubridate::year(Sys.Date()),
                                st.year = 2000,
                                data.only = F,
-                               type = NULL) {
+                               type = NULL,
+                               version = "regular") {
   cli::cli_alert_info("Loading province spatial files")
   out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
