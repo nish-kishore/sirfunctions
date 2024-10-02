@@ -1381,6 +1381,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' @param st.year int: earlier year of spatial data you want to pull - default is 2000
 #' @param data.only boolean: default F, if true, returns a rectangular tibble instead of a shape file
 #' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
+#' @param version str: "regular" or "dev", default is "regular, specifies whether to return standard shapefiles or new shapefiles still under evaluation/development
 #' @returns tibble or sf dataframe
 #' @export
 load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
@@ -1393,7 +1394,14 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                data.only = F,
                                type = NULL,
                                version = "regular") {
-  cli::cli_alert_info("Loading province spatial files")
+
+  if(version == "dev"){
+    fp <- "GID/PEB/SIR/Data/spatial_dev/global.prov.rds"
+    cli::cli_alert_info("Loading under development province spatial files")
+  }else{
+    cli::cli_alert_info("Loading province spatial files")
+  }
+
   out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
       yr.st = lubridate::year(STARTDATE),
