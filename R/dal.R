@@ -1469,7 +1469,14 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                data.only = F,
                                type = NULL,
                                version = "standard") {
-  cli::cli_alert_info("Loading country spatial files")
+
+  if(version == "dev"){
+    fp <- "GID/PEB/SIR/Data/spatial_dev/global.ctry.rds"
+    cli::cli_alert_info("Loading under development country spatial files")
+  }else{
+    cli::cli_alert_info("Loading country spatial files")
+  }
+
   out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
       yr.st = lubridate::year(STARTDATE),
