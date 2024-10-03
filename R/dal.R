@@ -185,6 +185,7 @@ edav_io <- function(
       temp <- tempfile()
       flextable::save_as_image(obj, path = paste0(temp, "/", sub(".*\\/", "", file_loc)))
       AzureStor::storage_upload(container = azcontainer, dest = file_loc,
+                                src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
       unlink(temp)
     }
 
