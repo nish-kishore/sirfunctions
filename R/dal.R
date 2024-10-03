@@ -64,6 +64,7 @@ get_azure_storage_connection <- function(
 #' @param obj default NULL object to be saved, needed for "write"
 #' @param azcontainer azure container object returned from `get_azure_storage_connection()`
 #' @param force_delete boolean: use delete io without verification in the command line
+#' @param local_path str: local file pathway to upload a file to edav, default is NULL, only required when using 'upload' option
 #' @returns output dependent on "io"
 #' @export
 edav_io <- function(
@@ -72,7 +73,8 @@ edav_io <- function(
     file_loc = NULL,
     obj = NULL,
     azcontainer = suppressMessages(get_azure_storage_connection()),
-    force_delete = F) {
+    force_delete = F,
+    local_path = NULL) {
   if (!is.null(file_loc)) {
     if (is.null(default_dir)) {
       file_loc <- file_loc
