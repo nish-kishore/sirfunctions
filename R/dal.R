@@ -179,7 +179,7 @@ edav_io <- function(
       AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
     }
 
-    if ("gg" %in% class(obj)){
+    if ("gg" %in% class(obj)) {
       temp <- tempfile()
       ggplot2::ggsave(filename = paste0(temp, "/", sub(".*\\/", "", file_loc)), plot = obj)
       AzureStor::storage_upload(container = azcontainer, dest = file_loc,
@@ -187,7 +187,7 @@ edav_io <- function(
       unlink(temp)
     }
 
-    if ("flextable" %in% class(obj)){
+    if ("flextable" %in% class(obj)) {
       temp <- tempfile()
       flextable::save_as_image(obj, path = paste0(temp, "/", sub(".*\\/", "", file_loc)))
       AzureStor::storage_upload(container = azcontainer, dest = file_loc,
