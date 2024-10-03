@@ -95,6 +95,10 @@ edav_io <- function(
     stop("Need to supply an object to be written")
   }
 
+  if (io == "upload" & is.null(local_path)) {
+    stop("Need to supply file pathway of file to be uploaded")
+  }
+
   if (io == "list") {
     if (!AzureStor::storage_dir_exists(azcontainer, file_loc)) {
       stop("Directory does not exist")
