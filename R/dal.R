@@ -173,13 +173,18 @@ edav_io <- function(
       AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
     }
 
-    if (!grepl(".cvs|.rds", file_loc)){
+    if ("gg" %in% class(obj)){
       temp <- tempfile()
       ggplot2::ggsave(filename = paste0(temp, "/", sub(".*\\/", "", file_loc)), plot = obj)
       AzureStor::storage_upload(container = azcontainer, dest = file_loc,
                                 src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
       unlink(temp)
     }
+
+    if ("flextable" %in% class(obj)){
+
+    }
+
   }
 
   if (io == "delete") {
