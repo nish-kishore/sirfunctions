@@ -49,7 +49,7 @@ get_azure_storage_connection <- function(
 #' Helper function to read and write key data to the EDAV environment
 #'
 #' @description Helper function read and write key data to EDAV
-#' @import cli AzureStor
+#' @import cli AzureStor ggplot2 flextable
 #' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list".
 #' "read" - read a file from EDAV, must be an rds, csv, or rda;
 #' "write" - write a file from EDAV, must be an rds, csv or rda;
@@ -182,7 +182,10 @@ edav_io <- function(
     }
 
     if ("flextable" %in% class(obj)){
-
+      temp <- tempfile()
+      flextable::save_as_image(obj, path = paste0(temp, "/", sub(".*\\/", "", file_loc)))
+      AzureStor::storage_upload(container = azcontainer, dest = file_loc,
+      unlink(temp)
     }
 
   }
