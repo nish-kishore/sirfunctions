@@ -197,7 +197,7 @@ edav_io <- function(
   }
 
   if (io == "upload") {
-
+    AzureStor::storage_upload(container = azcontainer, dest = file_loc, src = local_path)
   }
 
   if (io == "delete") {
