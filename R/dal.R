@@ -83,10 +83,10 @@ edav_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create")
+  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create", "upload")
 
   if (!io %in% opts) {
-    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' or 'list'")
+    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' 'list' or 'upload'")
   }
 
   if (io == "write" & is.null(obj)) {
@@ -188,6 +188,9 @@ edav_io <- function(
                                 src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
       unlink(temp)
     }
+  }
+
+  if (io == "upload") {
 
   }
 
