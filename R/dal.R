@@ -50,13 +50,14 @@ get_azure_storage_connection <- function(
 #'
 #' @description Helper function read and write key data to EDAV
 #' @import cli AzureStor ggplot2 flextable
-#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list".
+#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create", "list", or "upload".
 #' "read" - read a file from EDAV, must be an rds, csv, or rda;
 #' "write" - write a file from EDAV, must be an rds, csv or rda;
 #' "exists.dir" - returns a boolean after checking to see if a folder exists;
 #' "exists.file" - returns a boolean after checking to see if a file exists;
 #' "create" - creates a folder and all preceding folders
 #' "list" - returns a tibble with all objects in a folder
+#' "upload" - moves a file of any type to EDAV
 #' @param default_dir str: "GID/PEB/SIR" - the default directory for all SIR data in EDAV, can be set to NULL
 #' if you provide the full directory path in `file_loc`
 #' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
