@@ -49,14 +49,15 @@ get_azure_storage_connection <- function(
 #' Helper function to read and write key data to the EDAV environment
 #'
 #' @description Helper function read and write key data to EDAV
-#' @import cli AzureStor
-#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list".
+#' @import cli AzureStor ggplot2 flextable
+#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create", "list", or "upload".
 #' "read" - read a file from EDAV, must be an rds, csv, or rda;
 #' "write" - write a file from EDAV, must be an rds, csv or rda;
 #' "exists.dir" - returns a boolean after checking to see if a folder exists;
 #' "exists.file" - returns a boolean after checking to see if a file exists;
 #' "create" - creates a folder and all preceding folders
 #' "list" - returns a tibble with all objects in a folder
+#' "upload" - moves a file of any type to EDAV
 #' @param default_dir str: "GID/PEB/SIR" - the default directory for all SIR data in EDAV, can be set to NULL
 #' if you provide the full directory path in `file_loc`
 #' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
@@ -64,6 +65,7 @@ get_azure_storage_connection <- function(
 #' @param obj default NULL object to be saved, needed for "write"
 #' @param azcontainer azure container object returned from `get_azure_storage_connection()`
 #' @param force_delete boolean: use delete io without verification in the command line
+#' @param local_path str: local file pathway to upload a file to edav, default is NULL, only required when using 'upload' option
 #' @returns output dependent on "io"
 #' @export
 edav_io <- function(
@@ -72,7 +74,8 @@ edav_io <- function(
     file_loc = NULL,
     obj = NULL,
     azcontainer = suppressMessages(get_azure_storage_connection()),
-    force_delete = F) {
+    force_delete = F,
+    local_path = NULL) {
   if (!is.null(file_loc)) {
     if (is.null(default_dir)) {
       file_loc <- file_loc
@@ -83,14 +86,18 @@ edav_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create")
+  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create", "upload")
 
   if (!io %in% opts) {
-    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' or 'list'")
+    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' 'list' or 'upload'")
   }
 
   if (io == "write" & is.null(obj)) {
     stop("Need to supply an object to be written")
+  }
+
+  if (io == "upload" & is.null(local_path)) {
+    stop("Need to supply file pathway of file to be uploaded")
   }
 
   if (io == "list") {
@@ -164,9 +171,6 @@ edav_io <- function(
   }
 
   if (io == "write") {
-    if (!grepl(".rds|.csv", file_loc)) {
-      stop("At the moment only 'rds' 'rda' and 'csv' are supported for reading.")
-    }
 
     if (grepl(".rds", file_loc)) {
       AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
@@ -175,6 +179,26 @@ edav_io <- function(
     if (grepl(".csv", file_loc)) {
       AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
     }
+
+    if ("gg" %in% class(obj)) {
+      temp <- tempfile()
+      ggplot2::ggsave(filename = paste0(temp, "/", sub(".*\\/", "", file_loc)), plot = obj)
+      AzureStor::storage_upload(container = azcontainer, dest = file_loc,
+                                src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
+      unlink(temp)
+    }
+
+    if ("flextable" %in% class(obj)) {
+      temp <- tempfile()
+      flextable::save_as_image(obj, path = paste0(temp, "/", sub(".*\\/", "", file_loc)))
+      AzureStor::storage_upload(container = azcontainer, dest = file_loc,
+                                src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
+      unlink(temp)
+    }
+  }
+
+  if (io == "upload") {
+    AzureStor::storage_upload(container = azcontainer, dest = file_loc, src = local_path)
   }
 
   if (io == "delete") {
