@@ -1024,146 +1024,26 @@ generate_lab_timeliness <-
 
     # Check if the lab data is attached
     if (is.null(lab.data)) {
-      stop("Lab data not attached to ctry.data. Please attach and try again.")
+      stop("Lab data not attached. Please attach and try again.")
     }
 
-    lab1 <- lab.data |>
+    lab_medians <- lab.data |>
       dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
       dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.collect.lab, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.collect.lab") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab2 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
+      dplyr::summarise(dplyr::across(dplyr::starts_with("days."),
+                                     \(x) median(x, na.rm = T))) |>
+      tidyr::pivot_longer(cols = dplyr::starts_with("days."),
+                          names_to = "type", values_to = "medi")
+    lab_counts <- lab.data |>
+      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
       dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.lab.culture, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.lab.culture") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
+      dplyr::summarise(dplyr::across(dplyr::starts_with("days."),
+                                     \(x) sum(!is.na(x)))) |>
+      tidyr::pivot_longer(cols = dplyr::starts_with("days."),
+                          names_to = "type", values_to = "freq")
 
+    lab <- dplyr::full_join(lab_counts, lab_medians)
 
-    lab3 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.seq.ship, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.seq.ship") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab4 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.lab.seq, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.lab.seq") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab5 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.itd.seqres, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.itd.seqres") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab6 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.itd.arriveseq, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.itd.arriveseq") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab7 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.seq.rec.res, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.seq.rec.res") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    # Additional sub-intervals that may be of interest
-    lab8 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.coll.sent.field, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.coll.sent.field") |>
-      mutate(medi = as.numeric(.data$medi))
-
-    lab9 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.sent.field.rec.nat, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.sent.field.rec.nat") |>
-      mutate(medi = as.numeric(.data$medi))
-
-    lab10 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.rec.nat.sent.lab, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.rec.nat.sent.lab") |>
-      mutate(medi = as.numeric(.data$medi))
-
-    lab11 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.sent.lab.rec.lab, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.sent.lab.rec.lab") |>
-      mutate(medi = as.numeric(medi))
-
-    lab12 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.rec.lab.culture, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.rec.lab.culture") |>
-      mutate(medi = as.numeric(.data$medi))
-
-    lab <- dplyr::bind_rows(lab1, lab2, lab3, lab4, lab5, lab6, lab7,
-                            lab8, lab9, lab10, lab11, lab12)
     lab <- lab |> dplyr::filter(!is.na(`get(geo)`))
 
     lab <- switch(spatial.scale,
