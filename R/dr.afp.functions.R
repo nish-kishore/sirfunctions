@@ -506,67 +506,67 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 
   select_criteria <- NULL
   select_criteria <- switch(spatial.scale,
-    "ctry" = {
-      c(
-        "epid", "ontonot", "nottoinvest", "investtostool1",
-        "stool1tostool2", stool_to_lab_name, "year",
-        "adm0guid", "ctry"
-      )
-    },
-    "prov" = {
-      c(
-        "epid", "ontonot", "nottoinvest", "investtostool1",
-        "stool1tostool2", stool_to_lab_name, "year",
-        "adm0guid", "adm1guid", "ctry", "prov"
-      )
-    }
+                            "ctry" = {
+                              c(
+                                "epid", "ontonot", "nottoinvest", "investtostool1",
+                                "stool1tostool2", stool_to_lab_name, "year",
+                                "adm0guid", "ctry"
+                              )
+                            },
+                            "prov" = {
+                              c(
+                                "epid", "ontonot", "nottoinvest", "investtostool1",
+                                "stool1tostool2", stool_to_lab_name, "year",
+                                "adm0guid", "adm1guid", "ctry", "prov"
+                              )
+                            }
   )
   as_num_conversion <- c(stool_to_lab_name, "ontonot", "nottoinvest", "investtostool1", "stool1tostool2")
 
 
   int.data <- switch(spatial.scale,
-    "ctry" = {
-      int.data <- afp.data |>
-        dplyr::mutate(year = lubridate::year(date)) |>
-        dplyr::group_by(adm0guid, year) |>
-        dplyr::select(any_of(select_criteria)) %>%
-        dplyr::mutate(dplyr::across(
-          dplyr::any_of(as_num_conversion),
-          as.numeric
-        ))
-    },
-    "prov" = {
-      int.data <- afp.data |>
-        dplyr::mutate(year = lubridate::year(date)) |>
-        dplyr::group_by(adm1guid, year) |>
-        dplyr::select(dplyr::any_of(select_criteria)) %>%
-        dplyr::mutate(dplyr::across(
-          dplyr::any_of(as_num_conversion),
-          as.numeric
-        ))
-    }
+                     "ctry" = {
+                       int.data <- afp.data |>
+                         dplyr::mutate(year = lubridate::year(date)) |>
+                         dplyr::group_by(adm0guid, year) |>
+                         dplyr::select(any_of(select_criteria)) %>%
+                         dplyr::mutate(dplyr::across(
+                           dplyr::any_of(as_num_conversion),
+                           as.numeric
+                         ))
+                     },
+                     "prov" = {
+                       int.data <- afp.data |>
+                         dplyr::mutate(year = lubridate::year(date)) |>
+                         dplyr::group_by(adm1guid, year) |>
+                         dplyr::select(dplyr::any_of(select_criteria)) %>%
+                         dplyr::mutate(dplyr::across(
+                           dplyr::any_of(as_num_conversion),
+                           as.numeric
+                         ))
+                     }
   )
 
   int.data <- switch(spatial.scale,
-    "ctry" = {
-      int.data <- int.data |>
-        tidyr::pivot_longer(!c("epid", "year", "adm0guid", "ctry"),
-          names_to = "type",
-          values_to = "value"
-        ) |>
-        dplyr::group_by(year, type, adm0guid, ctry) |>
-        dplyr::summarize(medi = median(value, na.rm = T), freq = n())
-    },
-    "prov" = {
-      int.data <- int.data |>
-        tidyr::pivot_longer(
-          !c("epid", "year", "adm0guid", "adm1guid", "prov", "ctry"),
-          names_to = "type",
-          values_to = "value"
-        ) %>%
-        dplyr::group_by(year, type, adm1guid, prov, ctry) %>%
-        dplyr::summarize(medi = median(value, na.rm = T), freq = n())
-    }
+                     "ctry" = {
+                       int.data <- int.data |>
+                         tidyr::pivot_longer(!c("epid", "year", "adm0guid", "ctry"),
+                                             names_to = "type",
+                                             values_to = "value"
+                         ) |>
+                         dplyr::group_by(year, type, adm0guid, ctry) |>
+                         dplyr::summarize(medi = median(value, na.rm = T), freq = n())
+                     },
+                     "prov" = {
+                       int.data <- int.data |>
+                         tidyr::pivot_longer(
+                           !c("epid", "year", "adm0guid", "adm1guid", "prov", "ctry"),
+                           names_to = "type",
+                           values_to = "value"
+                         ) %>%
+                         dplyr::group_by(year, type, adm1guid, prov, ctry) %>%
+                         dplyr::summarize(medi = median(value, na.rm = T), freq = n())
+                     }
   )
 
   if (!is.null(lab.data)) {
@@ -617,16 +617,34 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 
   int.data$type <- ordered(int.data$type, levels = names(levs), labels = levs)
 
-  int.data <- int.data |>
-    dplyr::filter(
-      type %in% c(
+  # Need to choose between the type of graphs to produce depending on source of
+  # lab data
+  cols_chosen <- NULL
+  if (!is.null(lab.data)) {
+    days.coll.sent.field <- sum(is.na(ctry.data$lab.data$days.coll.sent.field)) == nrow(ctry.data$lab.data)
+    days.sent.field.rec.nat <- sum(is.na(ctry.data$lab.data$days.sent.field.rec.nat)) == nrow(ctry.data$lab.data)
+    days.rec.nat.sent.lab <- sum(is.na(ctry.data$lab.data$days.rec.nat.sent.lab)) == nrow(ctry.data$lab.data)
+    days.sent.lab.rec.lab <- sum(is.na(ctry.data$lab.data$days.sent.lab.rec.lab)) == nrow(ctry.data$lab.data)
+    days.rec.lab.culture <- sum(is.na(ctry.data$lab.data$days.rec.lab.culture)) == nrow(ctry.data$lab.data)
+
+    if ((days.coll.sent.field + days.sent.field.rec.nat +
+         days.rec.nat.sent.lab + days.sent.lab.rec.lab +
+         days.rec.lab.culture) == 5) { # If all five columns are empty
+      cols_chosen <- c(
         "Paralysis onset to notification",
         "Case notification to investigation",
         "Case investigation to stool 1 collection",
         "Stool 1 collection to stool 2 collection",
-        # "Last stool collection sent to lab",
-        # "Last stool collection to received in lab",
-        # "Stool received lab to final culture results"
+        "Last stool collection sent to lab",
+        "Last stool collection to received in lab",
+        "Stool received lab to final culture results"
+      )
+    } else {
+      cols_chosen <- c(
+        "Paralysis onset to notification",
+        "Case notification to investigation",
+        "Case investigation to stool 1 collection",
+        "Stool 1 collection to stool 2 collection",
 
         "Collection to sent from field",
         "Sent from field to received nat level",
@@ -634,6 +652,24 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
         "Sent to lab to received at lab",
         "Received at lab to culture results"
       )
+    }
+  } else {
+    cols_chosen <- c(
+      "Paralysis onset to notification",
+      "Case notification to investigation",
+      "Case investigation to stool 1 collection",
+      "Stool 1 collection to stool 2 collection",
+      "Collection to sent from field",
+      "Sent from field to received nat level",
+      "Received nat level to sent to lab",
+      "Sent to lab to received at lab",
+      "Received at lab to culture results"
+    )
+  }
+
+  int.data <- int.data |>
+    dplyr::filter(
+      type %in% cols_chosen
     )
 
   # Remove columns containing only NA values
