@@ -1598,13 +1598,7 @@ run_sia_spatial_fail_plots_v2 <- function(aoi_list,
                                      "km;\nBefore SIA: Detection 0-",detection_pre_sia_date," days before SIA;\nAfter SIA: Detection ",day_min,"-",day_max," days after SIA;\nCovered by other SIA: Other SIA covered the district 0-60 days after detection." ))
 
     print(paste0("Writing map to: ", paste0(plot_folder, "/", x$sia.sub.activity.code, ".png")))
-    f.save.plot(plot_folder,
-                plot_name = x$sia.sub.activity.code,
-                p = map,
-                save_plot = F,
-                width = 9,
-                height = 9,
-                dpi = 300)
+    edav_io(io = "write", obj = map, file_loc = paste0(plot_folder, "/", x$sia.sub.activity.code, ".png"))
 
     print(paste0(x$sia.sub.activity.code, " map completed and saved!"))
 

@@ -181,7 +181,7 @@ edav_io <- function(
     }
 
     if ("gg" %in% class(obj)) {
-      temp <- tempfile()
+      temp <- tempdir()
       ggplot2::ggsave(filename = paste0(temp, "/", sub(".*\\/", "", file_loc)), plot = obj)
       AzureStor::storage_upload(container = azcontainer, dest = file_loc,
                                 src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
@@ -189,7 +189,7 @@ edav_io <- function(
     }
 
     if ("flextable" %in% class(obj)) {
-      temp <- tempfile()
+      temp <- tempdir()
       flextable::save_as_image(obj, path = paste0(temp, "/", sub(".*\\/", "", file_loc)))
       AzureStor::storage_upload(container = azcontainer, dest = file_loc,
                                 src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
