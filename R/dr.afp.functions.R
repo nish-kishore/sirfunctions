@@ -555,7 +555,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
                                              values_to = "value"
                          ) |>
                          dplyr::group_by(year, type, adm0guid, ctry) |>
-                         dplyr::summarize(medi = median(value, na.rm = T), freq = n())
+                         dplyr::summarize(medi = as.numeric(median(value, na.rm = T)), freq = n())
                      },
                      "prov" = {
                        int.data <- int.data |>
@@ -565,7 +565,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
                            values_to = "value"
                          ) %>%
                          dplyr::group_by(year, type, adm1guid, prov, ctry) %>%
-                         dplyr::summarize(medi = median(value, na.rm = T), freq = n())
+                         dplyr::summarize(medi = as.numeric(median(value, na.rm = T)), freq = n())
                      }
   )
 

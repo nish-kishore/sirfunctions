@@ -1031,7 +1031,7 @@ generate_lab_timeliness <-
       dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
       dplyr::group_by(year, get(geo)) |>
       dplyr::summarise(dplyr::across(dplyr::starts_with("days."),
-                                     \(x) median(x, na.rm = T))) |>
+                                     \(x) as.numeric(median(x, na.rm = T)))) |>
       tidyr::pivot_longer(cols = dplyr::starts_with("days."),
                           names_to = "type", values_to = "medi")
     lab_counts <- lab.data |>
