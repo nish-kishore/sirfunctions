@@ -394,12 +394,12 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   cli::cli_process_start("Filtering for cases with valid dates")
   lab.data2 <- lab.data %>%
     dplyr::filter((days.collect.lab >= 0 | is.na(days.collect.lab)) &
-                    (days.lab.culture >= 0 | is.na(days.lab.culture)) &
-                    (days.seq.ship >= 0 | is.na(days.seq.ship)) &
-                    (days.lab.seq >= 0 | is.na(days.lab.seq)) &
-                    (days.itd.seqres >= 0 | is.na(days.itd.seqres)) &
-                    (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
-                    (days.seq.rec.res >= 0 | is.na(days.seq.rec.res))) |>
+      (days.lab.culture >= 0 | is.na(days.lab.culture)) &
+      (days.seq.ship >= 0 | is.na(days.seq.ship)) &
+      (days.lab.seq >= 0 | is.na(days.lab.seq)) &
+      (days.itd.seqres >= 0 | is.na(days.itd.seqres)) &
+      (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
+      (days.seq.rec.res >= 0 | is.na(days.seq.rec.res))) |>
     dplyr::filter(
       year >= lubridate::year(start.date) & year <= lubridate::year(end.date),
       CaseOrContact == "1-Case"
@@ -409,8 +409,10 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   # remove time portion of any date time columns
   cli::cli_process_start("Converting date/date-time character columns to date columns")
   lab.data2 <- lab.data2 |>
-    dplyr::mutate(dplyr::across(dplyr::starts_with("Date"),
-                                \(x) lubridate::as_date(x)))
+    dplyr::mutate(dplyr::across(
+      dplyr::starts_with("Date"),
+      \(x) lubridate::as_date(x)
+    ))
   cli::cli_process_done()
 
   # Don't run additional cleaning steps if no data is present
@@ -559,7 +561,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
       days.sent.field.rec.nat = as.numeric(.data$DateStoolReceivedNatLevel - .data$DateStoolSentfromField),
       days.rec.nat.sent.lab = as.numeric(.data$DateStoolSentToLab - .data$DateStoolReceivedNatLevel),
       days.sent.lab.rec.lab = as.numeric(.data$DateStoolReceivedinLab - .data$DateStoolSentToLab),
-      days.rec.lab.culture =  as.numeric(.data$DateFinalCellCultureResults - .data$DateStoolReceivedinLab),
+      days.rec.lab.culture = as.numeric(.data$DateFinalCellCultureResults - .data$DateStoolReceivedinLab),
     )
 
   return(lab.data2)
@@ -598,7 +600,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   ) {
     lab.data <- lab.data |>
       dplyr::mutate(Name = dplyr::if_else(stringr::str_detect(.data$Name, "(?i)IVOIRE"),
-                                          "COTE D'IVOIRE", .data$Name
+        "COTE D'IVOIRE", .data$Name
       ))
   }
 
@@ -661,8 +663,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
           "DateRArmIsolate",
           "DateofSequencing",
           "DateNotificationtoHQ"
-        )), \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y"))
-        ))
+        )), \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y")))
+      )
     cli::cli_process_done()
 
 
@@ -745,12 +747,12 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     emro.lab.05 <- emro.lab.05 |>
       # filtering out negative time intervals
       dplyr::filter((days.collect.lab >= 0 | is.na(days.collect.lab)) &
-                      (days.lab.culture >= 0 | is.na(days.lab.culture)) &
-                      (days.seq.ship >= 0 | is.na(days.seq.ship)) &
-                      (days.lab.seq >= 0 | is.na(days.lab.seq)) &
-                      (days.itd.seqres >= 0 | is.na(days.itd.seqres)) &
-                      (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
-                      (days.seq.rec.res >= 0 | is.na(days.seq.rec.res)))
+        (days.lab.culture >= 0 | is.na(days.lab.culture)) &
+        (days.seq.ship >= 0 | is.na(days.seq.ship)) &
+        (days.lab.seq >= 0 | is.na(days.lab.seq)) &
+        (days.itd.seqres >= 0 | is.na(days.itd.seqres)) &
+        (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
+        (days.seq.rec.res >= 0 | is.na(days.seq.rec.res)))
     cli::cli_process_done()
 
     cli::cli_process_start("Filtering nonsensical dates")
@@ -803,8 +805,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
           "DateRArmIsolate",
           "DateofSequencing",
           "DateNotificationtoHQ"
-        )), \(x) as.Date.character(x, "%m/%d/%Y")
-        ))
+        )), \(x) as.Date.character(x, "%m/%d/%Y"))
+      )
     cli::cli_process_done()
     # This is a very quick clean and can be improved upon with futher steps such as:
     #  - eliminating nonsensical dates
@@ -876,12 +878,12 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     afro.lab.05 <- afro.lab.05 |>
       # filtering out negative time intervals
       dplyr::filter((days.collect.lab >= 0 | is.na(days.collect.lab)) &
-                      (days.lab.culture >= 0 | is.na(days.lab.culture)) &
-                      (days.seq.ship >= 0 | is.na(days.seq.ship)) &
-                      (days.lab.seq >= 0 | is.na(days.lab.seq)) &
-                      (days.itd.seqres >= 0 | is.na(days.itd.seqres)) &
-                      (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
-                      (days.seq.rec.res >= 0 | is.na(days.seq.rec.res)))
+        (days.lab.culture >= 0 | is.na(days.lab.culture)) &
+        (days.seq.ship >= 0 | is.na(days.seq.ship)) &
+        (days.lab.seq >= 0 | is.na(days.lab.seq)) &
+        (days.itd.seqres >= 0 | is.na(days.itd.seqres)) &
+        (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
+        (days.seq.rec.res >= 0 | is.na(days.seq.rec.res)))
     cli::cli_process_done()
     cli::cli_process_start("Filtering nonsensical dates")
     afro.lab.05 <- afro.lab.05 |>
@@ -946,8 +948,9 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
 
   lab.data <- lab.data |>
     dplyr::left_join(geo_lookup_table,
-                     multiple = "any",
-                     by = dplyr::join_by(epid_ctry, epid_prov, epid_dist, year))
+      multiple = "any",
+      by = dplyr::join_by(epid_ctry, epid_prov, epid_dist, year)
+    )
   lab.data <- lab.data |>
     dplyr::rename(ctry.code2 = "epid_ctry")
   lab.data <- lab.data |>
@@ -967,7 +970,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
       days.sent.field.rec.nat = NA,
       days.rec.nat.sent.lab = NA,
       days.sent.lab.rec.lab = NA,
-      days.rec.lab.culture =  NA,
+      days.rec.lab.culture = NA,
     )
 
   return(lab.data)
