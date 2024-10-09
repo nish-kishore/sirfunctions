@@ -1,3 +1,132 @@
+# Helper functions ----
+#' Calculate NPAFP by year and geographic level
+#' @description
+#' Helper function for calculating the NPAFP rate based on the geographic level.
+#' This function is used inside `f.npafp.rate.01()`.
+#'
+#' @param afp.data AFP linelist, either from `raw.data` or `ctry.data`.
+#' @param pop.data Population data
+#' @param year.data Summary table. Created from `generate_year_data()`.
+#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`
+#'
+#' @return A summary table including NPAFP rates and population data.
+npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
+
+  # static local vars
+  names.ctry <- c("adm0guid", "year", "ctry")
+  names.prov <- c(names.ctry, "adm1guid", "prov")
+  names.dist <- c(names.prov, "adm2guid", "dist")
+
+  geo <- switch(spatial_scale,
+                "ctry" = "adm0guid",
+                "prov" = "adm1guid",
+                "dist" = "adm2guid"
+  )
+
+  pop_cols <- switch(
+    spatial_scale,
+    "ctry" = names.ctry,
+    "prov" = names.prov,
+    "dist" = names.dist
+  )
+
+  int.data <- afp.data |>
+    dplyr::mutate(year = lubridate::year(date)) |>
+    dplyr::group_by(get(geo), .data$year) |>
+    dplyr::summarise(
+      n_npafp = sum(!is.na(.data$epid))
+    ) |>
+    dplyr::ungroup()
+
+  int.data <- switch(spatial_scale,
+                     "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
+                     "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
+                     "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
+  )
+
+  int.data <- dplyr::full_join(int.data, pop.data) |>
+    dplyr::left_join(year.data) |>
+    dplyr::mutate(npafp_rate = .data$n_npafp / .data$u15pop * 100000 / .data$weight) |>
+    dplyr::select(dplyr::all_of(c("year", "n_npafp", "u15pop",
+                                  "n_days", "days_in_year", "weight",
+                                  "earliest_date", "latest_date", "npafp_rate",
+                                  pop_cols))) |>
+    arrange(!!!dplyr::syms(spatial_scale), .data$year)
+
+  return(int.data)
+}
+
+#' Calculate the NPAFP rate on a rolling basis
+#' @description
+#' Calculates the NPAFP rate on a rolling basis, based on the start and end dates
+#' specified.
+#'
+#' @param afp.data AFP linelist, either from `raw.data` or `ctry.data`.
+#' @param year.pop.data Summary table containing year and pop data.
+#' @param start_date Start date to calculate the rolling interval for.
+#' @param end_date End date to calculate the rolling interval for.
+#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`
+#'
+#' @return A summary table including NPAFP rates and population data.
+npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial_scale) {
+  # static local vars
+  names.ctry <- c("adm0guid", "year", "ctry")
+  names.prov <- c(names.ctry, "adm1guid", "prov")
+  names.dist <- c(names.prov, "adm2guid", "dist")
+
+  geo <- switch(spatial_scale,
+                "ctry" = "adm0guid",
+                "prov" = "adm1guid",
+                "dist" = "adm2guid"
+  )
+
+  pop_cols <- switch(spatial_scale,
+                     "ctry" = names.ctry,
+                     "prov" = names.prov,
+                     "dist" = names.dist
+  )
+
+  # Calculate par
+  par.data <- year.pop.data |>
+    dplyr::group_by(get(geo)) |>
+    summarise(par = sum(.data$weight * .data$u15pop)) |>
+    ungroup()
+
+
+  # Count the number of NPAFP cases
+  int.data <- afp.data |>
+    dplyr::group_by(get(geo)) |>
+    dplyr::summarise(
+      n_npafp = sum(!is.na(.data$epid)),
+      earliest_date = min(.data$earliest_date),
+      latest_date = max(.data$latest_date)
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(days.at.risk = as.numeric(end_date - start_date + 1))
+
+  # Join to par data
+  int.data <- int.data |>
+    dplyr::left_join(par.data)
+
+  int.data <- switch(spatial_scale,
+                     "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
+                     "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
+                     "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
+  )
+
+  int.data <- int.data |>
+    dplyr::mutate(npafp_rate = .data$n_npafp / .data$par * 100000)
+
+  # Get population information
+  int.data <- int.data |>
+    dplyr::left_join(year.pop.data |>
+                       dplyr::select(dplyr::all_of(pop_cols), -year) |>
+                       dplyr::distinct())
+
+  return(int.data)
+}
+# Main function ----
+
 #' Calculate Non-Polio AFP Rate Function
 #'
 #' @name f.npafp.rate.01
@@ -27,25 +156,39 @@ f.npafp.rate.01 <- function(
     pending = T,
     rolling = F,
     sp_continuity_validation = T) {
-  # check if afp.data and pop.data has arguments
+
+  # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
   }
 
-  # file names
-  names.afp.ctry <- c("adm0guid", "date", "cdc.classification.all2")
-  names.afp.prov <- c(names.afp.ctry, "adm1guid")
-  names.afp.dist <- c(names.afp.prov, "adm2guid")
+  # Ensure that if using raw.data, required renamed columns are present. Borrowed from
+  # extract.country.data()
 
-  names.pop.ctry <- c("adm0guid", "year", "u15pop", "ctry")
-  names.pop.prov <- c(names.pop.ctry, "adm1guid", "prov")
-  names.pop.dist <- c(names.pop.prov, "adm2guid", "dist")
+  afp.data <- dplyr::rename_with(afp.data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+  pop.data <- dplyr::rename_with(pop.data, recode,
+                                 ADM0_NAME = "ctry",
+                                 ADM1_NAME = "prov",
+                                 ADM2_NAME = "dist",
+                                 ADM0_GUID = "adm0guid",
+                                 u15pop.prov = "u15pop"
+  )
 
-  # check that data inputs have the same country data
-  if (setdiff(sort(unique(afp.data$adm0guid)), sort(unique(pop.data$adm0guid))) |> length() > 0) {
-    stop("Please make sure that your `afp.data` and `admin.data` are subset for
-         the same countries")
-  }
+
+  # Local static vars
+  names.ctry <- c("adm0guid", "year", "ctry")
+  names.prov <- c(names.ctry, "adm1guid", "prov")
+  names.dist <- c(names.prov, "adm2guid", "dist")
 
   # Check data inputs
   # Analysis start and end date as defined by user (as a character)
@@ -53,8 +196,8 @@ f.npafp.rate.01 <- function(
     {
       start.date <- lubridate::as_date(start.date)
       end.date <- lubridate::as_date(end.date)
-      years <- lubridate::year(start.date):lubridate::year(end.date)
-      pop.years <- sort(unique(pop.data$year))
+      years <- lubridate::year(start.date):year(end.date)
+      ctry.years <- sort(unique(pop.data$year))
     },
     error = function(cond) {
       cond$message <- paste0(
@@ -65,101 +208,31 @@ f.npafp.rate.01 <- function(
     }
   )
 
-  # Check that pop data contains all the years necessary
-  if (sum(!years %in% pop.years) > 0) {
-    unfound.years <- years[!(years %in% pop.years)]
-    stop(paste0("There are no years of population data for: ", paste0(unfound.years, collapse = ", ")))
+  # Check that country data contains all the years necessary
+  if (sum(!years %in% ctry.years) > 0) {
+    unfound.years <- years[!(years %in% ctry.years)]
+    stop(paste0(
+      "There are no years of administrative level data for: ",
+      paste0(unfound.years, collapse = ", ")
+    ))
   }
 
-  # Check dates and return warning if afp data out of range
-
-  # Limit AFP data to the range described by the analysis start and end dates
-  # Also limit to only U15 population
-  afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180)
-
-  # check if spatial.data param in appropriate format
+  # Check if spatial.data param in appropriate format
   if (!spatial.scale %in% c("ctry", "prov", "dist")) {
     stop("'spatial.scale' can only be 'ctry', 'prov', or 'dist'")
   }
 
-  # Helper function to check for any missing variables and spatial scale validity
-  check_spatial_data <- function(spatial.scale, afp.names, pop.names) {
-    afp_missing <- setdiff(afp.names, names(afp.data))
-    pop_missing <- setdiff(pop.names, names(pop.data))
+  # Perform checks
+  check_missing_afp_var(afp.data, spatial.scale)
+  check_missing_pop_var(pop.data, spatial.scale)
+  check_spatial_scale(pop.data, spatial.scale)
 
-    if (length(afp_missing) > 0) {
-      stop(paste0("The following variables were not found in afp.data: ", paste0(afp_missing, collapse = ", ")))
-    }
+  # Get inconsistent GUIDs across temporal scale
+  incomplete.adm <- get_incomplete_adm(pop.data, spatial.scale, start.date, end.date)
 
-    if (length(pop_missing) > 0) {
-      stop(paste0("The following variables were not found in pop.data: ", paste0(pop_missing, collapse = ", ")))
-    }
-
-    # Check if pop data is of a larger spatial scale than the parameter chosen
-    if (spatial.scale == "ctry" && any(c("adm1guid", "adm2guid") %in% names(pop.data))) {
-      stop("Please check that the spatial scale of the pop data provided matches the 'spatial.scale' chosen.")
-    } else if (spatial.scale == "prov" && any(c("adm2guid") %in% names(pop.data))) {
-      stop("Please check that the spatial scale of the pop data provided matches the 'spatial.scale' chosen.")
-    }
-  }
-
-  # Check data set for missing required variables
-  switch(spatial.scale,
-    "ctry" = check_spatial_data("ctry", names.afp.ctry, names.pop.ctry),
-    "prov" = check_spatial_data("prov", names.afp.prov, names.pop.prov),
-    "dist" = check_spatial_data("dist", names.afp.dist, names.pop.dist)
-  )
-
-  # Check for invalid GUIDs and remove them if sp_continuity_validation = TRUE
-  incomplete.adm <- switch(spatial.scale,
-    "ctry" = {
-      pop.data |>
-        dplyr::group_by(adm0guid) |>
-        dplyr::summarize(freq = dplyr::n()) |>
-        dplyr::filter(freq < length(lubridate::year(start.date):lubridate::year(end.date))) |>
-        dplyr::pull(adm0guid)
-    },
-    "prov" = {
-      pop.data |>
-        dplyr::group_by(adm1guid) |>
-        dplyr::summarize(freq = dplyr::n()) |>
-        dplyr::filter(freq < length(lubridate::year(start.date):lubridate::year(end.date))) |>
-        dplyr::pull(adm1guid)
-    },
-    "dist" = {
-      pop.data |>
-        dplyr::group_by(adm2guid) |>
-        dplyr::summarize(freq = dplyr::n()) |>
-        dplyr::filter(freq < length(lubridate::year(start.date):lubridate::year(end.date))) |>
-        dplyr::pull(adm2guid)
-    }
-  )
-
+  # Filter data if spatial validation is true
   if (sp_continuity_validation) {
-    pop.data <- switch(spatial.scale,
-      "ctry" = {
-        pop.data |> dplyr::filter(!adm0guid %in% incomplete.adm)
-      },
-      "prov" = {
-        pop.data |> dplyr::filter(!adm1guid %in% incomplete.adm)
-      },
-      "dist" = {
-        pop.data |> dplyr::filter(!adm2guid %in% incomplete.adm)
-      }
-    )
-    afp.data <- switch(spatial.scale,
-      "ctry" = {
-        afp.data |> dplyr::filter(!adm0guid %in% incomplete.adm)
-      },
-      "prov" = {
-        afp.data |> dplyr::filter(!adm1guid %in% incomplete.adm)
-      },
-      "dist" = {
-        afp.data |> dplyr::filter(!adm2guid %in% incomplete.adm)
-      }
-    )
-
+    # Output warning message
     if (length(incomplete.adm) > 0) {
       readline(paste0(
         "The following GUIDS at the ", spatial.scale,
@@ -168,14 +241,13 @@ f.npafp.rate.01 <- function(
         "\n Please hit [ENTER] to continue"
       ))
     }
-  } else {
-    if (length(incomplete.adm) > 0) {
-      paste0(
-        "The following GUIDS at the ", spatial.scale,
-        " were not valid across the temporal scale:\n",
-        paste0(incomplete.adm, collapse = ", ")
-      )
-    }
+
+    guid_col_name <- paste0("adm", match(spatial.scale, c("ctry", "prov", "dist")) - 1, "guid")
+    pop.data <- pop.data |>
+      dplyr::filter(!(.data[[guid_col_name]] %in% incomplete.adm))
+
+    afp.data <- afp.data |>
+      dplyr::filter(!(.data[[guid_col_name]] %in% incomplete.adm))
   }
 
   # Warning message about non-overlapping dates
@@ -190,254 +262,54 @@ f.npafp.rate.01 <- function(
     ))
   }
 
-  # This function works in three stages:
-  # 1) subset afp (incorporating pending information) and population data for the time periods and regions of interest
-  # 2) calculate the year weights based on the start and end dates
-  # 3) Calculate the npafp rate based on spatial scale and "rolling" parameter
+  # Filter AFP and population data based on start and end dates
+  afp.data <- afp.data |>
+    dplyr::filter(dplyr::between(date, start.date, end.date))
 
-  # Filter population data to the years of the analysis date and to the
-  # country of interest
-  pop.data <- pop.data |>
-    dplyr::filter(year >= lubridate::year(start.date) &
-      year <= lubridate::year(end.date)) # Only years of analysis # Only country of analysis
+  # Only years of analysis
+  pop.data <- pop.data %>%
+    dplyr::filter(dplyr::between(
+      year,
+      lubridate::year(start.date),
+      lubridate::year(end.date)
+    ))
 
-  # check status of pending and filter data appropriately
+  # Filter AFP data based on pending param
   if (pending) {
-    npafp.data <- afp.data |>
-      dplyr::as_tibble() |>
-      dplyr::filter(
-        cdc.classification.all2 %in% c("NPAFP", "PENDING", "LAB PENDING")
-      ) |> # filter all AFP data such that only cases listed as NPAFP,
-
-      # PENDING, or LAB PENDING are counted
-      dplyr::select(epid, date, ctry, adm0guid, prov, adm1guid, dist, adm2guid)
-    # Keep only the listed variables (removes all others)
+    afp.data <- afp.data |>
+      dplyr::filter(cdc.classification.all2 %in% c("NPAFP", "PENDING", "LAB PENDING"))
   } else {
-    npafp.data <- afp.data |>
-      dplyr::as_tibble() |>
-      dplyr::filter(cdc.classification.all2 == "NPAFP") |> # filter all AFP data such
-      # that only cases listed as NPAFP are counted
-      dplyr::select(epid, date, ctry, adm0guid, prov, adm1guid, dist, adm2guid)
-    # Keep only the listed variables (removes all others)
+    afp.data <- afp.data |>
+      dplyr::filter(cdc.classification.all2 == "NPAFP")
   }
 
-  # calculate year weight table
-  # convert start and end date into year-wise chunks with year weights
-  year.data <- dplyr::tibble(
-    "year" = lubridate::year(start.date):lubridate::year(end.date) # Defines year as the amount of
-    # time between the start date and end date by calendar year (eg 2019:2020)
-  ) |>
-    dplyr::rowwise() |>
-    dplyr::mutate(
-      days_in_year = length(seq(lubridate::as_date(paste0(year, "-01-01")),
-        lubridate::as_date(paste0(year, "-12-31")),
-        by = "day"
-      )),
-      # Number of days in calendar year
-      earliest_date = ifelse(lubridate::year(start.date) == year, start.date,
-        lubridate::as_date(paste0(year, "-01-01"))
-      ),
-      # Create earliest date per calendar year - if it is the year of start
-      # date, then use the exact start date, otherwise use January 1
-      earliest_date = lubridate::as_date(earliest_date),
-      latest_date = ifelse(lubridate::year(end.date) == year,
-        end.date, lubridate::as_date(paste0(year, "-12-31"))
-      ),
-      # Create latest date per calendar year - if it is the year of end date,
-      # then use the exact end date, otherwise use December 31
-      latest_date = lubridate::as_date(latest_date),
-      n_days = as.integer(latest_date - earliest_date + 1), # Calculate number
-      # of days in calendar year between earliest and latest date of that
-      # calendar year
-      weight = n_days / days_in_year # Calculate weight adjustment for number
-      # of cases based on number of days in given calendar year
-    )
+  # Generate days in a year table
+  year.data <- generate_year_data(start.date, end.date)
 
-  # subset afp.data tibble into time chunks based on previous response
-  # along with geographic chunks
+  # Select only relevant columns
+  afp.data <- afp.data |>
+    dplyr::select(dplyr::any_of(c("epid", "date", "ctry", "adm0guid",
+                                  "prov", "adm1guid", "dist", "adm2guid"))) |>
+    dplyr::mutate(year = lubridate::year(date))
 
-  # algo npafp cases / pop * 100000 * time_weight
+  # Merge afp data with days in year
+  year.pop.data <- suppressMessages(dplyr::left_join(year.data, pop.data))
+  afp.data <- suppressMessages(dplyr::full_join(afp.data, year.pop.data))
 
-  # bind all together and return tibble
-
-
-  # For merging on country - Country name is used from the ctry.data set -
-  # this pulled from extract_ctry_info - merge is then subsequently by year
-  # alone.
-  if (spatial.scale == "ctry") { # Analysis at country level
-    int.data <- npafp.data |>
-      dplyr::mutate(year = lubridate::year(date)) |>
-      dplyr::group_by(adm0guid, year) |>
-      dplyr::group_split() |>
-      lapply(function(x) { # Create dataframe with unique country name,
-        # adm0guid, year, and number of NPAFP cases
-        dplyr::tibble(
-          "ctry" = unique(x$ctry),
-          "adm0guid" = unique(x$adm0guid),
-          "year" = unique(x$year),
-          "n_npafp" = nrow(x)
-        )
-      }) |>
-      dplyr::bind_rows()
-
-    int.data <- dplyr::full_join( # Merge AFP case data with population data by year
-      pop.data,
-      int.data |> dplyr::select(adm0guid, year, n_npafp),
-      by = c("year", "adm0guid")
-    ) |>
-      dplyr::full_join( # Merge AFP case and population data with calculated yearly
-        # weights
-        year.data,
-        by = c("year")
-      ) |>
-      tidyr::replace_na(list("n_npafp" = 0)) |> # Change all NAs to 0 for calculation
-      # Calculate NPAFP rate per 100,000 annualized by calendar year
-      dplyr::select(
-        year, ctry, n_npafp, u15pop, n_days, days_in_year,
-        weight, adm0guid, earliest_date, latest_date
-      ) |> # Select columns to keep for output
-      {
-        function(.) {
-          if (rolling) {
-            dplyr::mutate(., par = weight * u15pop) |>
-              dplyr::group_by(ctry, adm0guid) |>
-              dplyr::summarize(
-                n_npafp = sum(n_npafp, na.rm = T),
-                par = sum(par),
-                earliest_date = min(earliest_date),
-                latest_date = max(latest_date)
-              ) |>
-              dplyr::ungroup() |>
-              dplyr::mutate(
-                days_at_risk = as.numeric(latest_date - earliest_date),
-                npafp_rate = n_npafp / par * 100000
-              )
-          } else {
-            dplyr::mutate(., npafp_rate = n_npafp / u15pop * 100000 / weight)
-          }
-        }
-      }()
+  # Calculate NPAFP rate
+  int.data <- NULL
+  if (rolling) {
+    int.data <- suppressMessages(npafp_rolling(afp.data, year.pop.data, start.date, end.date, spatial.scale))
+  } else {
+    int.data <- suppressMessages(npafp_year(afp.data, pop.data, year.data, spatial.scale))
+    int.data <- int.data |>
+      dplyr::filter(!is.na(.data$year))
   }
 
-  # Province level calculation
-  if (spatial.scale == "prov") { # Analysis at province level
-    int.data <- npafp.data |>
-      dplyr::mutate(year = lubridate::year(date)) |>
-      dplyr::group_by(adm0guid, adm1guid, year) |>
-      dplyr::group_split() |>
-      lapply(function(x) { # Create dataframe with unique country name,
-        # adm0guid, province name, adm1guid, year, and number of NPAFP cases
-        dplyr::tibble(
-          "ctry" = unique(x$ctry),
-          "adm0guid" = unique(x$adm0guid),
-          "prov" = unique(x$prov),
-          "adm1guid" = unique(x$adm1guid),
-          "year" = unique(x$year),
-          "n_npafp" = nrow(x)
-        )
-      }) |>
-      dplyr::bind_rows()
+  numeric_cols <- c("n_npafp", "u15pop", "npafp_rate", "par")
+  int.data <- int.data |>
+    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols), \(x) tidyr::replace_na(x, 0))) |>
+    tidyr::drop_na(dplyr::any_of(spatial.scale))
 
-    int.data <- dplyr::full_join( # Merge AFP case data with population data by year
-      # and adm1guid
-      pop.data,
-      int.data |> dplyr::select(adm0guid, adm1guid, year, n_npafp),
-      by = c("adm0guid", "adm1guid", "year")
-    ) |>
-      tidyr::replace_na(list("n_npafp" = 0)) |> # Change all NAs to 0 for calculation
-      dplyr::full_join( # Merge AFP case and population data with calculated yearly
-        # weights
-        year.data,
-        by = c("year")
-      ) |>
-      # Calculate NPAFP rate per 100,000 annualized by calendar year
-      dplyr::select( # Select columns to keep for output
-        year, n_npafp, u15pop, n_days, days_in_year,
-        weight, adm0guid, adm1guid, ctry, prov, earliest_date, latest_date
-      ) |>
-      {
-        function(.) {
-          if (rolling) {
-            dplyr::mutate(., par = weight * u15pop) |>
-              dplyr::group_by(ctry, prov, adm0guid, adm1guid) |>
-              dplyr::summarize(
-                n_npafp = sum(n_npafp, na.rm = T),
-                par = sum(par),
-                earliest_date = min(earliest_date),
-                latest_date = max(latest_date)
-              ) |>
-              dplyr::ungroup() |>
-              dplyr::mutate(
-                days_at_risk = as.numeric(latest_date - earliest_date),
-                npafp_rate = n_npafp / par * 100000
-              )
-          } else {
-            dplyr::mutate(., npafp_rate = n_npafp / u15pop * 100000 / weight)
-          }
-        }
-      }()
-  }
-
-  # District level calculation
-  if (spatial.scale == "dist") { # Analysis at district level
-    int.data <- npafp.data |>
-      dplyr::mutate(year = lubridate::year(date)) |>
-      dplyr::group_by(adm0guid, adm1guid, adm2guid, year) |>
-      dplyr::group_split() |>
-      lapply(function(x) { # Create dataframe with unique country name,
-        # adm0guid, province name, adm1guid, district name, adm2guid, year,
-        # and number of NPAFP cases
-        dplyr::tibble(
-          "ctry" = unique(x$ctry),
-          "adm0guid" = unique(x$adm0guid),
-          "adm1guid" = unique(x$adm1guid),
-          "adm2guid" = unique(x$adm2guid),
-          "prov" = unique(x$prov),
-          "dist" = unique(x$dist),
-          "year" = unique(x$year),
-          "n_npafp" = nrow(x)
-        )
-      }) |>
-      dplyr::bind_rows()
-
-    int.data <- dplyr::full_join( # Merge AFP case data with population data by year
-      # and adm1guid and adm2guid
-      pop.data,
-      int.data |> dplyr::select(adm0guid, adm1guid, adm2guid, year, n_npafp),
-      by = c("adm0guid", "adm1guid", "adm2guid", "year")
-    ) |>
-      tidyr::replace_na(list("n_npafp" = 0)) |>
-      dplyr::full_join( # Merge AFP case and population data with calculated yearly
-        # weights
-        year.data,
-        by = c("year")
-      ) |>
-      dplyr::select(
-        year, ctry, prov, dist, n_npafp, u15pop, weight, n_days,
-        days_in_year, earliest_date, latest_date, adm0guid, adm1guid, adm2guid
-      ) |>
-      {
-        function(.) {
-          if (rolling) {
-            dplyr::mutate(., par = weight * u15pop) |>
-              dplyr::group_by(ctry, prov, dist, adm0guid, adm1guid, adm2guid) |>
-              dplyr::summarize(
-                n_npafp = sum(n_npafp, na.rm = T),
-                par = sum(par),
-                earliest_date = min(earliest_date),
-                latest_date = max(latest_date)
-              ) |>
-              dplyr::ungroup() |>
-              dplyr::mutate(
-                days_at_risk = as.numeric(latest_date - earliest_date),
-                npafp_rate = n_npafp / par * 100000
-              )
-          } else {
-            dplyr::mutate(., npafp_rate = n_npafp / u15pop * 100000 / weight)
-          }
-        }
-      }()
-  }
-
-  return(int.data) # Data frame to return from function
+  return(int.data)
 }
