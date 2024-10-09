@@ -42,9 +42,8 @@ f.npafp.rate.01 <- function(
   names.pop.dist <- c(names.pop.prov, "adm2guid", "dist")
 
   # check that data inputs have the same country data
-  if (setdiff(sort(unique(afp.data$adm0guid)), sort(unique(pop.data$adm0guid))) |> length() > 0) {
-    stop("Please make sure that your `afp.data` and `admin.data` are subset for
-         the same countries")
+  if (!sort(unique(pop.data$adm0guid)) == sort(unique(afp.data$adm0guid))) {
+    stop("Please make sure that your `afp.data` and `pop.data` are subset for the same countries")
   }
 
   # Check data inputs
