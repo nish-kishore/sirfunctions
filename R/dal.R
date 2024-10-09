@@ -1285,14 +1285,14 @@ duplicate_check <- function(.raw.data = raw.data) {
   }
 
   if (nrow(.raw.data$pos[duplicated(.raw.data$pos[, c(
-    "epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
+    "epid", "epid.in.polis", "pons.epid", "polis.case.id",
     "env.sample.id", "place.admin.0", "source", "datasource",
     "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup"
   )]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the Positives data, please check pos.dupe")
     .raw.data$pos.dupe <- .raw.data$pos |>
       dplyr::group_by(
-        .data$epid, .data$epid.in.polis, .data$pons.epid, .data$virus.id,
+        .data$epid, .data$epid.in.polis, .data$pons.epid,
         .data$polis.case.id, .data$env.sample.id, .data$place.admin.0,
         .data$source, .data$datasource, .data$virustype, .data$dateonset,
         .data$yronset, .data$ntchanges, .data$emergencegroup
