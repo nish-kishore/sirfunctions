@@ -1761,4 +1761,26 @@ compress_png <- function(img, pngquant_path = NULL, suffix = "") {
   system2(pngquant_path, args = c("--ext", paste0(suffix, ".png"), "--force", img))
 }
 
+#' Get the columns where records differ in a group. Useful for identifying where duplicates differ after
+#' performing a distinct() operation
+#'
+#' @param df data frame or tibble
+#' @param id_col `string` column used as a unique identifier for records
+#' @importFrom dplyr syms mutate everything across group_by summarise filter
+#' @importFrom tidyr pivot_longer
+#' @return tibble showing the columns where duplicates differ
+#' @export
+get_diff_cols <- function(df, id_col) {
+  col_with_differences <- df |>
+    dplyr::mutate(dplyr::across(dplyr::everything(), \(x) as.character(x))) |>
+    dplyr::group_by(!!!syms(id_col)) |>
+    dplyr::summarise(dplyr::across(dplyr::everything(), \(x) length(unique(x)) == 1)) |>
+    tidyr::pivot_longer(cols = -c(id_col), names_to = "column_name", values_to = "logical") |>
+    dplyr::filter(logical == FALSE) |>
+    dplyr::group_by(!!!dplyr::syms(id_col)) |>
+    dplyr::summarise(col_with_diff = paste(unique(.data$column_name), collapse = ", "))
+
+  return(col_with_differences)
+}
+
 
