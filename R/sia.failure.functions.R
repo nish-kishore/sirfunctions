@@ -2493,3 +2493,16 @@ create_dist_failures <- function(case.sia.02,
   }
 
 }
+
+
+#' @description
+#' a function to take output from create_case_sia_02 and parse df for breakthrough cases
+#' @import dplyr
+#' @param case.sia.02 tibble output df from create_case_sia_02
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+create_case_sia_03 <- function(case.sia.02,
+                               breakthrough_middle_date = load_parameters()$breakthrough_middle_date){
+  case.sia.02 %>%
+    dplyr::mutate(time.from.camp = Sys.Date() - sub.activity.start.date) |>
+    dplyr::filter(time.from.camp > breakthrough_middle_date)
+}
