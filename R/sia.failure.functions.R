@@ -2211,3 +2211,193 @@ surv_plot_func <- function(region,
   print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
 
 }
+
+
+#emergence plots function v2
+#' @description
+#' a function to create emergence plots
+#' @import dplyr
+#' @param case.sia.fig.01 tibble df that comes out of create_case_sia_figs function
+#' @param ctry str country to plot emergences for
+#' @param folder str folder location for emergence plots
+#' @param save.plot boolean T or F, save plots or not, default is F
+create_emergence_plots_v2 <- function(case.sia.fig.01,
+                                      ctry,
+                                      folder,
+                                      save.plot = F){
+
+  print(ctry)
+
+  # start.date <- as_date("2016-04-15")
+  end.date <- Sys.Date()
+
+  case.sia.fig.01.sias <- case.sia.fig.01 %>%
+    filter(typeb == "SIA") %>%
+    filter(place.admin.0 %in% ctry)
+
+
+  case.sia.fig.01.detections <- case.sia.fig.01 %>%
+    filter(typeb == "Detection") %>%
+    mutate(virus.emergence = ifelse(measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3"), paste0(measurement, ": ", emergencegroup), measurement)) %>%
+    filter(place.admin.0 %in% ctry)
+
+  detection.types <- case.sia.fig.01.detections %>%
+    select(measurement) %>%
+    distinct()
+
+  #grouping detections by breakthrough status, emergence group, province and mon/year
+  #for high detection countries
+  case.sia.fig.01.detections.01 <- case.sia.fig.01.detections %>%
+    mutate(mon.yr = floor_date(date, unit = "month")) %>%
+    group_by(mon.yr, place.admin.1, measurement, emergencegroup, typea) %>%
+    mutate(num_detect = n()) %>%
+    ungroup() %>%
+    select(place.admin.1, measurement, emergencegroup, mon.yr, typea, virus.emergence, num_detect) %>%
+    distinct()
+
+  min_date <- min(case.sia.fig.01.sias$date %>% min(),
+                  case.sia.fig.01.detections$date %>% min())
+
+  min_date <- min_date - 180
+
+  if(nrow(case.sia.fig.01.detections) >= 500){
+
+    if(nrow(detection.types) > 1){
+
+      plot.1 <- ggplot()+
+        geom_tile(data=case.sia.fig.01.sias,
+                  aes(x=date, y=place.admin.1, fill=typea, width=14))+
+        scale_x_date(breaks = "6 month", date_labels = "%m-%Y",
+                     limits = c(as_date(min_date), as_date(end.date)))+
+        ylab("Provinces")+
+        xlab(NULL)+
+        labs(title = ctry) +
+        scale_fill_manual(name="SIAs", values=color.sia.plots.2, limits=force) +
+        geom_point(data=case.sia.fig.01.detections.01 %>% filter(measurement == "cVDPV 1"),
+                   aes(x=mon.yr, y=place.admin.1, color=typea, shape=virus.emergence, size = num_detect))+
+        scale_size_binned_area(
+          limits = c(0, 50),
+          breaks = c(0, 15, 30, 50))+
+        scale_shape_manual(values = 1:length(unique(case.sia.fig.01.detections$virus.emergence))) +
+        scale_color_manual(name="Detections", values=color.sia.plots.3) +
+        theme_bw() +
+        theme(legend.position = "right",
+              panel.spacing = unit(0, "lines"),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.ticks.y = element_blank()) +
+        guides(fill=guide_legend(ncol=2), shape=guide_legend(ncol=2)) +
+        labs(shape = "Emergence Group")
+
+
+      plot.2 <- ggplot()+
+        geom_tile(data=case.sia.fig.01.sias,
+                  aes(x=date, y=place.admin.1, fill=typea, width=14))+
+        scale_x_date(breaks = "6 month", date_labels = "%m-%Y",
+                     limits = c(as_date(min_date), as_date(end.date)))+
+        ylab("Provinces")+
+        xlab(NULL)+
+        labs(title = ctry) +
+        scale_fill_manual(name="SIAs", values=color.sia.plots.2, limits=force) +
+        geom_point(data=case.sia.fig.01.detections.01 %>% filter(measurement == "cVDPV 2"),
+                   aes(x=mon.yr, y=place.admin.1, color=typea, shape=virus.emergence, size = num_detect))+
+        scale_size_binned_area(
+          limits = c(0, 50),
+          breaks = c(0, 15, 30, 50))+
+        scale_shape_manual(values = 1:length(unique(case.sia.fig.01.detections$virus.emergence))) +
+        scale_color_manual(name="Detections", values=color.sia.plots.3) +
+        theme_bw() +
+        theme(legend.position = "right",
+              panel.spacing = unit(0, "lines"),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.ticks.y = element_blank()) +
+        guides(fill=guide_legend(ncol=2), shape=guide_legend(ncol=2)) +
+        labs(shape = "Emergence Group")
+
+      plot <- plot.1 / plot.2
+
+    }else{
+
+      plot <- ggplot()+
+        geom_tile(data=case.sia.fig.01.sias,
+                  aes(x=date, y=place.admin.1, fill=typea, width=14))+
+        scale_x_date(breaks = "6 month", date_labels = "%m-%Y",
+                     limits = c(as_date(min_date), as_date(end.date)))+
+        ylab("Provinces")+
+        xlab(NULL)+
+        labs(title = ctry) +
+        scale_fill_manual(name="SIAs", values=color.sia.plots.2, limits=force) +
+        geom_point(data=case.sia.fig.01.detections.01,
+                   aes(x=mon.yr, y=place.admin.1, color=typea, shape=virus.emergence, size = num_detect))+
+        scale_size_binned_area(
+          limits = c(0, 50),
+          breaks = c(0, 15, 30, 50))+
+        scale_shape_manual(values = 1:length(unique(case.sia.fig.01.detections$virus.emergence))) +
+        scale_color_manual(name="Detections", values=color.sia.plots.3) +
+        theme_bw() +
+        theme(legend.position = "right",
+              panel.spacing = unit(0, "lines"),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.ticks.y = element_blank()) +
+        guides(fill=guide_legend(ncol=2), shape=guide_legend(ncol=2)) +
+        labs(shape = "Emergence Group")
+
+    }}else{
+
+      plot <- ggplot()+
+        geom_tile(data=case.sia.fig.01.sias,
+                  aes(x=date, y=place.admin.1, fill=typea, width=14))+
+        scale_x_date(breaks = "6 month", date_labels = "%m-%Y",
+                     limits = c(as_date(min_date), as_date(end.date)))+
+        ylab("Provinces")+
+        xlab(NULL)+
+        labs(title = ctry) +
+        scale_fill_manual(name="SIAs", values=color.sia.plots.2, limits=force) +
+        geom_point(data=case.sia.fig.01.detections,
+                   size=4, aes(x=date, y=place.admin.1, color=typea, shape=virus.emergence))+
+        scale_shape_manual(values = 1:length(unique(case.sia.fig.01.detections$virus.emergence))) +
+        scale_color_manual(name="Detections", values=color.sia.plots.3) +
+        theme_bw() +
+        theme(legend.position = "right",
+              panel.spacing = unit(0, "lines"),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.ticks.y = element_blank()) +
+        guides(fill=guide_legend(ncol=2), shape=guide_legend(ncol=2)) +
+        labs(shape = "Emergence Group")
+    }
+
+  if(save.plot){
+
+    if(nrow(case.sia.fig.01.detections) >= 500){
+
+      if(nrow(detection.types) > 1){
+
+        f.save.plot(
+          plot_folder = folder,
+          plot_name = ctry,
+          p = plot,
+          save_plot = T,
+          base_height = 15, base_width = 18, dpi = 300)
+
+      }else{
+
+        f.save.plot(
+          plot_folder = folder,
+          plot_name = ctry,
+          p = plot,
+          save_plot = T,
+          base_height = 10, base_width = 18, dpi = 300)
+
+      }}else{
+
+        f.save.plot(
+          plot_folder = folder,
+          plot_name = ctry,
+          p = plot,
+          save_plot = T,
+          base_height = 14, base_width = 18, dpi = 300
+        )
+
+      }}else{
+        plot
+      }
+}
