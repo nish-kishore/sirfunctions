@@ -2206,10 +2206,16 @@ surv_plot_func <- function(region,
                                bottom = ggpubr::text_grob(paste0("Failures defined as those ", breakthrough_min_date, " - ", breakthrough_max_date, " days from activity"),
                                                           color = "black", hjust = 1, x = 1, face = "italic", size = 10))
 
-  edav_io(io = "write", obj = p, file_loc = paste0(folder, "/", region, ".png"))
+  if(region == "AFRO"){
+    edav_io(io = "write", obj = p, file_loc = paste0(folder, "/", region, ".png"), width = 11, height = 20, bg = "white")
 
-  print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
+    print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
 
+  }else{
+    edav_io(io = "write", obj = p, file_loc = paste0(folder, "/", region, ".png"), width = 11, height = 8.5, bg = "white")
+
+    print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
+  }
 }
 
 

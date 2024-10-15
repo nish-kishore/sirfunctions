@@ -75,7 +75,8 @@ edav_io <- function(
     obj = NULL,
     azcontainer = suppressMessages(get_azure_storage_connection()),
     force_delete = F,
-    local_path = NULL) {
+    local_path = NULL,
+    ...) {
   if (!is.null(file_loc)) {
     if (is.null(default_dir)) {
       file_loc <- file_loc
@@ -182,7 +183,7 @@ edav_io <- function(
 
     if ("gg" %in% class(obj)) {
       temp <- tempdir()
-      ggplot2::ggsave(filename = paste0(temp, "/", sub(".*\\/", "", file_loc)), plot = obj)
+      ggplot2::ggsave(filename = paste0(temp, "/", sub(".*\\/", "", file_loc)), plot = obj, ...)
       AzureStor::storage_upload(container = azcontainer, dest = file_loc,
                                 src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
       unlink(temp)
