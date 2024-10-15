@@ -2399,7 +2399,7 @@ create_emergence_plots_v2 <- function(case.sia.fig.01,
 
 #' @description
 #' create district failures at different levels
-#' @import dplyr
+#' @import dplyr tidyr
 #' @param case.sia.02 tibble df that comes out of create_case_sia_02
 #' @param method str "overall" or "ctry", determines whether to use district or country level
 #' @param ctry.region.2 tibble df of country and region names
@@ -2414,81 +2414,81 @@ create_dist_failures <- function(case.sia.02,
                                  breakthrough_max_date = load_parameters()$breakthrough_max_date){
 
   if(method == "overall"){
-    dist.failure <- create_case_sia_03(case.sia.02) %>%
-      select(yr.sia, sia.sub.activity.code, place.admin.0, cluster, round.num,
-             vaccine.type, adm2guid, breakthrough.01, breakthrough.02)%>%
-      group_by(yr.sia, round.num, vaccine.type)%>%
-      mutate(num.camps = n(),
-             num.breakthrough.01 = sum(breakthrough.01),
-             num.breakthrough.02 = sum(breakthrough.02)) %>%
-      ungroup() %>%
-      select(yr.sia, round.num, vaccine.type, num.camps,
-             num.breakthrough.01, num.breakthrough.02) %>%
-      distinct() %>%
-      mutate(per.break01 = round(num.breakthrough.01/num.camps*100),
-             per.break02 = round(num.breakthrough.02/num.camps*100),
-             num.break01.v1 = paste(num.breakthrough.01, num.camps, sep="/"),
-             num.break02.v2 = paste(num.breakthrough.02, num.camps, sep="/"),
-             braket = "(",
-             per = "%)",
-             per.break01.v2 = paste(braket, per.break01, per, sep=""),
-             per.break02.v2 = paste(braket, per.break02, per, sep=""),
-             per.break01.v3 = paste(num.break01.v1, per.break01.v2, sep=" "),
-             per.break02.v3 = paste(num.break02.v2, per.break02.v2, sep=" "))%>%
-      select(yr.sia, round.num, vaccine.type, per.break01.v3, per.break02.v3)%>%
-      pivot_wider(names_from = vaccine.type,
-                  values_from = per.break01.v3:per.break02.v3)%>%
-      arrange(round.num, yr.sia)%>%
-      rename(Year = yr.sia, "SIA Round" = round.num,
-             !!(paste0("mOPV2 breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days")) := per.break01.v3_mOPV2,
-             !!(paste0("nOPV2 breakthrough ", breakthrough_min_date,"-",breakthrough_middle_date," days")) := per.break01.v3_nOPV2,
-             !!(paste0("tOPV breakthrough ",breakthrough_min_date,"-", breakthrough_middle_date," days")) := per.break01.v3_tOPV,
-             !!(paste0("bOPV breakthrough ",breakthrough_min_date,"-", breakthrough_middle_date," days")) := per.break01.v3_bOPV,
-             !!(paste0("mOPV2 breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days")) := per.break02.v3_mOPV2,
-             !!(paste0("nOPV2 breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days")) := per.break02.v3_nOPV2,
-             !!(paste0("tOPV breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days")) := per.break02.v3_tOPV,
-             !!(paste0("bOPV breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days")) := per.break02.v3_bOPV)
+    dist.failure <- create_case_sia_03(case.sia.02) |>
+      dplyr::select(yr.sia, sia.sub.activity.code, place.admin.0, cluster, round.num,
+                    vaccine.type, adm2guid, breakthrough.01, breakthrough.02) |>
+      dplyr::group_by(yr.sia, round.num, vaccine.type) |>
+      dplyr::mutate(num.camps = n(),
+                    num.breakthrough.01 = sum(breakthrough.01),
+                    num.breakthrough.02 = sum(breakthrough.02)) |>
+      dplyr::ungroup() |>
+      dplyr::select(yr.sia, round.num, vaccine.type, num.camps,
+                    num.breakthrough.01, num.breakthrough.02) |>
+      dplyr::distinct() |>
+      dplyr::mutate(per.break01 = round(num.breakthrough.01/num.camps*100),
+                    per.break02 = round(num.breakthrough.02/num.camps*100),
+                    num.break01.v1 = paste(num.breakthrough.01, num.camps, sep="/"),
+                    num.break02.v2 = paste(num.breakthrough.02, num.camps, sep="/"),
+                    braket = "(",
+                    per = "%)",
+                    per.break01.v2 = paste(braket, per.break01, per, sep=""),
+                    per.break02.v2 = paste(braket, per.break02, per, sep=""),
+                    per.break01.v3 = paste(num.break01.v1, per.break01.v2, sep=" "),
+                    per.break02.v3 = paste(num.break02.v2, per.break02.v2, sep=" ")) |>
+      dplyr::select(yr.sia, round.num, vaccine.type, per.break01.v3, per.break02.v3) |>
+      tidyr::pivot_wider(names_from = vaccine.type,
+                         values_from = per.break01.v3:per.break02.v3) |>
+      dplyr::arrange(round.num, yr.sia) |>
+      dplyr::rename(Year = yr.sia, "SIA Round" = round.num,
+                    !!(paste0("mOPV2 breakthrough ", breakthrough_min_date, "-", breakthrough_middle_date, " days")) := per.break01.v3_mOPV2,
+                    !!(paste0("nOPV2 breakthrough ", breakthrough_min_date, "-", breakthrough_middle_date, " days")) := per.break01.v3_nOPV2,
+                    !!(paste0("tOPV breakthrough ", breakthrough_min_date, "-", breakthrough_middle_date, " days")) := per.break01.v3_tOPV,
+                    !!(paste0("bOPV breakthrough ", breakthrough_min_date, "-", breakthrough_middle_date, " days")) := per.break01.v3_bOPV,
+                    !!(paste0("mOPV2 breakthrough ", breakthrough_middle_date+1, "-", breakthrough_max_date, " days")) := per.break02.v3_mOPV2,
+                    !!(paste0("nOPV2 breakthrough ", breakthrough_middle_date+1, "-", breakthrough_max_date, " days")) := per.break02.v3_nOPV2,
+                    !!(paste0("tOPV breakthrough ", breakthrough_middle_date+1, "-", breakthrough_max_date, " days")) := per.break02.v3_tOPV,
+                    !!(paste0("bOPV breakthrough ", breakthrough_middle_date+1, "-", breakthrough_max_date, " days")) := per.break02.v3_bOPV)
 
     return(dist.failure)
   }
 
   if(method == "ctry"){
-    dist.ctry.failure <- create_case_sia_03(case.sia.02) %>%
-      select(yr.sia, sia.sub.activity.code, place.admin.0, cluster, round.num,
-             vaccine.type, adm2guid, breakthrough.01, breakthrough.02) %>%
-      group_by(yr.sia, place.admin.0, round.num, vaccine.type) %>%
-      mutate(num.camps = n(),
-             num.breakthrough.01 = sum(breakthrough.01),
-             num.breakthrough.02 = sum(breakthrough.02)) %>%
-      ungroup() %>%
-      select(yr.sia, place.admin.0, round.num, vaccine.type,
-             num.camps, num.breakthrough.01, num.breakthrough.02) %>%
-      distinct() %>%
-      mutate(per.break01 = round(num.breakthrough.01/num.camps*100),
-             per.break02 = round(num.breakthrough.02/num.camps*100),
-             num.break01.v1 = paste(num.breakthrough.01, num.camps, sep="/"),
-             num.break02.v2 = paste(num.breakthrough.02, num.camps, sep="/"),
-             braket = "(",
-             per = "%)",
-             per.break01.v2 = paste(braket, per.break01, per, sep=""),
-             per.break02.v2 = paste(braket, per.break02, per, sep=""),
-             per.break01.v3 = paste(num.break01.v1, per.break01.v2, sep=" "),
-             per.break02.v3 = paste(num.break02.v2, per.break02.v2, sep=" ")) %>%
-      select(yr.sia, place.admin.0, round.num,
-             vaccine.type, per.break01.v3, per.break02.v3) %>%
-      pivot_wider(names_from = vaccine.type,
-                  values_from = per.break01.v3:per.break02.v3) %>%
-      arrange(place.admin.0, yr.sia, round.num,) %>%
-      rename(Year = yr.sia, Country = place.admin.0, "SIA Round" = round.num,
-             !!(paste0("mOPV2 breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days")) := per.break01.v3_mOPV2,
-             !!(paste0("nOPV2 breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days")) := per.break01.v3_nOPV2,
-             !!(paste0("tOPV breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days")) := per.break01.v3_tOPV,
-             !!(paste0("bOPV breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days")) := per.break01.v3_bOPV,
-             !!(paste0("mOPV2 breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days")) := per.break02.v3_mOPV2,
-             !!(paste0("nOPV2 breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days")) := per.break02.v3_nOPV2,
-             !!(paste0("tOPV breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days")) := per.break02.v3_tOPV,
-             !!(paste0("bOPV breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days")) := per.break02.v3_bOPV) %>%
-      left_join(., ctry.region.2, by=c("Country" = "ADM0_NAME"))
+    dist.ctry.failure <- create_case_sia_03(case.sia.02) |>
+      dplyr::select(yr.sia, sia.sub.activity.code, place.admin.0, cluster, round.num,
+                    vaccine.type, adm2guid, breakthrough.01, breakthrough.02) |>
+      dplyr::group_by(yr.sia, place.admin.0, round.num, vaccine.type) |>
+      dplyr::mutate(num.camps = n(),
+                    num.breakthrough.01 = sum(breakthrough.01),
+                    num.breakthrough.02 = sum(breakthrough.02)) |>
+      dplyr::ungroup() |>
+      dplyr::select(yr.sia, place.admin.0, round.num, vaccine.type,
+                    num.camps, num.breakthrough.01, num.breakthrough.02) |>
+      dplyr::distinct() |>
+      dplyr::mutate(per.break01 = round(num.breakthrough.01/num.camps*100),
+                    per.break02 = round(num.breakthrough.02/num.camps*100),
+                    num.break01.v1 = paste(num.breakthrough.01, num.camps, sep="/"),
+                    num.break02.v2 = paste(num.breakthrough.02, num.camps, sep="/"),
+                    braket = "(",
+                    per = "%)",
+                    per.break01.v2 = paste(braket, per.break01, per, sep=""),
+                    per.break02.v2 = paste(braket, per.break02, per, sep=""),
+                    per.break01.v3 = paste(num.break01.v1, per.break01.v2, sep=" "),
+                    per.break02.v3 = paste(num.break02.v2, per.break02.v2, sep=" ")) |>
+      dplyr::select(yr.sia, place.admin.0, round.num,
+                    vaccine.type, per.break01.v3, per.break02.v3) |>
+      tidyr::pivot_wider(names_from = vaccine.type,
+                         values_from = per.break01.v3:per.break02.v3) |>
+      dplyr::arrange(place.admin.0, yr.sia, round.num,) |>
+      dplyr::rename(Year = yr.sia, Country = place.admin.0, "SIA Round" = round.num,
+                    !!(paste0("mOPV2 breakthrough ", breakthrough_min_date, "-", breakthrough_middle_date, " days")) := per.break01.v3_mOPV2,
+                    !!(paste0("nOPV2 breakthrough ", breakthrough_min_date, "-", breakthrough_middle_date, " days")) := per.break01.v3_nOPV2,
+                    !!(paste0("tOPV breakthrough ", breakthrough_min_date, "-", breakthrough_middle_date, " days")) := per.break01.v3_tOPV,
+                    !!(paste0("bOPV breakthrough ", breakthrough_min_date, "-", breakthrough_middle_date, " days")) := per.break01.v3_bOPV,
+                    !!(paste0("mOPV2 breakthrough ", breakthrough_middle_date+1, "-", breakthrough_max_date, " days")) := per.break02.v3_mOPV2,
+                    !!(paste0("nOPV2 breakthrough ", breakthrough_middle_date+1, "-", breakthrough_max_date, " days")) := per.break02.v3_nOPV2,
+                    !!(paste0("tOPV breakthrough ", breakthrough_middle_date+1, "-", breakthrough_max_date, " days")) := per.break02.v3_tOPV,
+                    !!(paste0("bOPV breakthrough ", breakthrough_middle_date+1, "-", breakthrough_max_date, " days")) := per.break02.v3_bOPV) |>
+      dplyr::left_join(ctry.region.2, by = c("Country" = "ADM0_NAME"))
     return(dist.ctry.failure)
   }
 
