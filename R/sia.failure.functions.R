@@ -35,6 +35,7 @@ init_sia_impact <- function(folder_loc,
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/assets/donut_maps"))
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/outputs"))
     tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/outputs/emergences"))
+    tidypolis:::tidypolis_io(io = "create", file_path = paste0(folder_loc, "/data"))
   }
 
 }
