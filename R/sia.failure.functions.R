@@ -2222,7 +2222,7 @@ surv_plot_func <- function(region,
 #emergence plots function v2
 #' @description
 #' a function to create emergence plots
-#' @import dplyr lubridate ggplot2
+#' @import dplyr lubridate ggplot2 patchwork
 #' @param case.sia.fig.01 tibble df that comes out of create_case_sia_figs function
 #' @param ctry str country to plot emergences for
 #' @param folder str folder location for emergence plots
@@ -2320,6 +2320,7 @@ create_emergence_plots_v2 <- function(case.sia.fig.01,
         ggplot2::guides(fill = ggplot2::guide_legend(ncol = 2), shape = ggplot2::guide_legend(ncol = 2)) +
         ggplot2::labs(shape = "Emergence Group")
 
+      library(patchwork)
       plot <- plot.1 / plot.2
 
     }else{
@@ -2379,31 +2380,15 @@ create_emergence_plots_v2 <- function(case.sia.fig.01,
 
       if(nrow(detection.types) > 1){
 
-        f.save.plot(
-          plot_folder = folder,
-          plot_name = ctry,
-          p = plot,
-          save_plot = T,
-          base_height = 15, base_width = 18, dpi = 300)
+        edav_io(io = "write", obj = plot, file_loc = folder, height = 15, width = 18, dpi = 300)
 
       }else{
 
-        f.save.plot(
-          plot_folder = folder,
-          plot_name = ctry,
-          p = plot,
-          save_plot = T,
-          base_height = 10, base_width = 18, dpi = 300)
+        edav_io(io = "write", obj = plot, file_loc = folder, height = 10, width = 18, dpi = 300)
 
       }}else{
 
-        f.save.plot(
-          plot_folder = folder,
-          plot_name = ctry,
-          p = plot,
-          save_plot = T,
-          base_height = 14, base_width = 18, dpi = 300
-        )
+        edav_io(io = "write", obj = plot, file_loc = folder, height = 14, width = 18, dpi = 300)
 
       }}else{
         plot
