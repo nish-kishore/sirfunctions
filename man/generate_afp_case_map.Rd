@@ -5,7 +5,7 @@
 \title{Generate a map of AFP cases}
 \usage{
 generate_afp_case_map(
-  ctry.data,
+  afp.all,
   ctry.shape,
   prov.shape,
   start_date,
@@ -14,15 +14,15 @@ generate_afp_case_map(
 )
 }
 \arguments{
-\item{ctry.data}{RDS object containing polio country data}
+\item{afp.all}{AFP linelist containing point geometry}
 
-\item{ctry.shape}{recent country shapefile}
+\item{ctry.shape}{province shapefile in long format}
 
-\item{prov.shape}{recent province shapefile}
+\item{prov.shape}{province shapefile in long format}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{start date}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{end date}
 
 \item{output_path}{where to save the figure}
 }

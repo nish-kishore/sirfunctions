@@ -6,6 +6,7 @@
 \usage{
 generate_iss_map(
   iss.data,
+  ctry.shape,
   prov.shape,
   start_date,
   end_date,
@@ -15,11 +16,13 @@ generate_iss_map(
 \arguments{
 \item{iss.data}{tibble of ISS/eSurv data}
 
-\item{prov.shape}{shapefile containing province shapes}
+\item{ctry.shape}{country shapefile in long format}
+
+\item{prov.shape}{province shapefile in long format}
 
 \item{start_date}{start date of desk review}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{end date}
 
 \item{output_path}{where to save the figure}
 }
