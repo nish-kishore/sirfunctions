@@ -727,8 +727,9 @@ generate_iss_barplot <- function(iss.data = NULL,
 #' @importFrom sf st_crop
 #' @importFrom scales comma
 #'
-#' @param ctry.data RDS object
-#' @param prov.shape province of most recent shape file
+#' @param ctry.data RDS object containing country polio data
+#' @param ctry.shape country shape file in long format
+#' @param prov.shape province shape file in long format
 #' @param end_date end date of the desk review
 #' @param output_path where to save the figure
 #' @param caption_size size of the caption
@@ -736,16 +737,38 @@ generate_iss_barplot <- function(iss.data = NULL,
 #' @returns ggplot object
 #' @export
 generate_pop_map <- function(ctry.data,
+                             ctry.shape,
                              prov.shape,
                              end_date,
                              output_path = Sys.getenv("DR_FIGURE_PATH"),
                              caption_size = 11) {
-  prov.pop <- ctry.data$prov.pop %>%
-    dplyr::filter(year == lubridate::year(end_date))
+
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  # Only the most recent shape file
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = .data$active.year.01)
 
   # Merge with province
   shape.prov.pop <-
-    dplyr::left_join(prov.shape, prov.pop, by = c("GUID" = "adm1guid"))
+    dplyr::left_join(prov.shape, ctry.data$prov.pop, by = c("GUID" = "adm1guid", "year")) |>
+    dplyr::filter(year == lubridate::year(end_date))
 
   pop.map <- ggplot2::ggplot() +
     ggplot2::geom_sf(
@@ -826,17 +849,45 @@ generate_dist_pop_map <- function(ctry.data,
                                   end_date,
                                   output_path = Sys.getenv("DR_FIGURE_PATH"),
                                   caption_size = 11) {
-  prov.pop <- ctry.data$prov.pop %>%
-    dplyr::filter(year == lubridate::year(end_date))
 
-  dist.pop <- ctry.data$dist.pop %>%
-    dplyr::filter(year == lubridate::year(end_date))
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(dist.shape)) {
+    error_message <- paste0("dist.shape is not in long format. ",
+                            "Use: dist.shape <- load_clean_dist_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = .data$active.year.01)
+  dist.shape <- dist.shape |>
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = .data$active.year.01)
 
   shape.prov.pop <-
-    dplyr::left_join(prov.shape, prov.pop, by = c("GUID" = "adm1guid"))
+    dplyr::left_join(prov.shape, ctry.data$prov.pop, by = c("GUID" = "adm1guid", "year")) |>
+    dplyr::filter(year == lubridate::year(end_date))
 
   shape.dist.pop <-
-    dplyr::left_join(dist.shape, dist.pop, by = c("GUID" = "adm2guid"))
+    dplyr::left_join(dist.shape, ctry.data$dist.pop, by = c("GUID" = "adm2guid", "year")) |>
+    dplyr::filter(year == lubridate::year(end_date))
 
 
   pop.map.provn <- ggplot2::ggplot() +
@@ -894,27 +945,53 @@ generate_dist_pop_map <- function(ctry.data,
 
 #' Generate a map of AFP cases
 #' @import dplyr ggplot2 lubridate
-#' @param ctry.data RDS object containing polio country data
-#' @param ctry.shape recent country shapefile
-#' @param prov.shape  recent province shapefile
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
+#' @param afp.all AFP linelist containing point geometry
+#' @param ctry.shape province shapefile in long format
+#' @param prov.shape province shapefile in long format
+#' @param start_date start date
+#' @param end_date end date
 #' @param output_path where to save the figure
 #'
 #' @returns ggplot object
 #' @export
-generate_afp_case_map <- function(ctry.data,
+generate_afp_case_map <- function(afp.all,
                                   ctry.shape,
                                   prov.shape,
                                   start_date,
                                   end_date = lubridate::today(),
                                   output_path = Sys.getenv("DR_FIGURE_PATH")) {
-  afp.case.map.filter <- ctry.data$afp.all %>%
+
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+
+  afp.case.map.filter <- afp.all |>
     dplyr::filter(dplyr::between(as.Date(date.onset), start_date, end_date)) |>
     dplyr::mutate(year = as.factor(year))
 
   if (nrow(afp.case.map.filter) == 0) {
-    stop("No data available for the specified date range.")
+    cli::cli_abort("No data available for the specified date range.")
   }
 
   afp.case.map.filter <- afp.case.map.filter |>
@@ -942,6 +1019,7 @@ generate_afp_case_map <- function(ctry.data,
       ggplot2::aes(color = cdc.classification.all2),
       size = 1
     ) +
+    ggplot2::facet_wrap(~year, ncol = 4) +
     ggplot2::scale_color_manual(
       values = sirfunctions::f.color.schemes("para.case"),
       name = "Case type",
@@ -961,11 +1039,6 @@ generate_afp_case_map <- function(ctry.data,
       axis.ticks = ggplot2::element_blank()
     )
 
-  if (nrow(afp.case.map.filter) != 0) {
-    afp.case.map <- afp.case.map +
-      ggplot2::facet_wrap(~year, ncol = 4)
-  }
-
   ggplot2::ggsave(
     "afp.case.map.png",
     plot = afp.case.map,
@@ -980,11 +1053,11 @@ generate_afp_case_map <- function(ctry.data,
 #' Map of NPAFP rate by province
 #' @import dplyr ggplot2 lubridate sf
 #'
-#' @param prov.extract province NPAFP rate
-#' @param ctry.shape recent country shape
-#' @param prov.shape recent province shape
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
+#' @param prov.extract province NPAFP rate table
+#' @param ctry.shape country shape in long format
+#' @param prov.shape province shape in long format
+#' @param start_date start date
+#' @param end_date end date
 #' @param output_path where to save the figure
 #' @param caption_size size of the caption
 #'
@@ -997,6 +1070,32 @@ generate_npafp_maps <- function(prov.extract,
                                 end_date,
                                 output_path = Sys.getenv("DR_FIGURE_PATH"),
                                 caption_size = 2) {
+
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+
   provnpafp <- prov.extract |>
     filter(!is.na(prov))
 
@@ -1039,8 +1138,11 @@ generate_npafp_maps <- function(prov.extract,
   # For those with no cases --> separate out districts with u15pop >100K and <100K
 
   prov.pop.case.npafp <-
-    dplyr::full_join(prov.shape, prov.cut, by = c("GUID" = "adm1guid")) %>%
-    dplyr::filter(year <= lubridate::year(end_date) & year >= lubridate::year(start_date))
+    dplyr::left_join(prov.shape, prov.cut,
+                     by = c("GUID" = "adm1guid", "year" = "year")) |>
+    dplyr::filter(dplyr::between(year,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date)))
 
   # Labels for provinces meeting NPAFP rate
   # How many provinces meet >2 NPAFP?
@@ -1138,12 +1240,12 @@ generate_npafp_maps <- function(prov.extract,
 #' Generate map of NPAFP rates by district
 #' @import dplyr ggplot2 sf lubridate
 #'
-#' @param dist.extract NPAFP rates by district
-#' @param ctry.shape recent country shapefile
-#' @param prov.shape recent province shapefile
-#' @param dist.shape recent district shapefile
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
+#' @param dist.extract NPAFP rates by district table.
+#' @param ctry.shape country shapefile in long format
+#' @param prov.shape province shapefile in long format
+#' @param dist.shape district shapefile in long format
+#' @param start_date start date
+#' @param end_date end date
 #' @param output_path where to save the figure
 #' @param caption_size size of the caption
 #'
@@ -1157,6 +1259,44 @@ generate_npafp_maps_dist <- function(dist.extract,
                                      end_date,
                                      output_path = Sys.getenv("DR_FIGURE_PATH"),
                                      caption_size = 2) {
+
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(dist.shape)) {
+    error_message <- paste0("dist.shape is not in long format. ",
+                            "Use: dist.shape <- load_clean_dist_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+  dist.shape <- dist.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+
   distnpafp <- dist.extract |>
     filter(!is.na(dist))
 
@@ -1179,8 +1319,10 @@ generate_npafp_maps_dist <- function(dist.extract,
         npafp_rate == 0 & u15pop == 0 ~ "Missing Pop",
         T ~ cats
       )
-    ) %>%
-    dplyr::filter(year >= lubridate::year(start_date) & year <= lubridate::year(end_date))
+    ) |>
+    dplyr::filter(dplyr::between(year,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date)))
 
 
   dist.cut$cats <- factor(
@@ -1199,7 +1341,7 @@ generate_npafp_maps_dist <- function(dist.extract,
   dist.cut <- dplyr::ungroup(dist.cut)
 
   dist.pop.case.npafp <-
-    dplyr::left_join(dist.shape, dist.cut, by = c("GUID" = "adm2guid"))
+    dplyr::left_join(dist.shape, dist.cut, by = c("GUID" = "adm2guid", "year" = "year"))
 
   # How many districts meet >2 NPAFP?
   dist.2npafp <- distnpafp %>%
@@ -1242,7 +1384,6 @@ generate_npafp_maps_dist <- function(dist.extract,
       fill = "lightgrey",
       size = .5
     ) +
-    # ggplot2::geom_sf(data = ctry.data$dist, color = "black", fill = "lightgrey", size = .5) +
     ggplot2::geom_sf(
       data = dist.pop.case.npafp,
       color = "black",
@@ -1301,8 +1442,8 @@ generate_npafp_maps_dist <- function(dist.extract,
 #'
 #' @param ctry.data RDS file for polio data of a country
 #' @param pstool stool adequacy at province level
-#' @param ctry.shape recent country shapefile
-#' @param prov.shape recent province shapefile
+#' @param ctry.shape country shapefile in long format
+#' @param prov.shape province shapefile in long format
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @param output_path where to save the figure
@@ -1318,8 +1459,34 @@ generate_stool_ad_maps <- function(ctry.data,
                                    end_date,
                                    output_path = Sys.getenv("DR_FIGURE_PATH"),
                                    caption_size = 3) {
-  allafp <- ctry.data$afp.all.2 %>%
-    dplyr::filter(date >= start_date & date <= end_date) %>%
+
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+
+  allafp <- ctry.data$afp.all.2 |>
+    dplyr::filter(dplyr::between(date, start_date, end_date)) |>
     dplyr::reframe(
       dplyr::group_by(
         ctry.data$afp.all.2,
@@ -1328,11 +1495,11 @@ generate_stool_ad_maps <- function(ctry.data,
         .data$year
       ),
       freq = dplyr::n()
-    ) %>%
+    ) |>
     dplyr::filter(.data$cdc.classification.all2 != "NOT-AFP")
 
   allprov <- ctry.data$prov.pop[, c("adm1guid", "year", "prov")] %>%
-    dplyr::filter(year >= lubridate::year(start_date) & year <= lubridate::year(end_date))
+    dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)))
 
   all.prov.afp <- dplyr::left_join(allprov, allafp) %>%
     dplyr::group_by(.data$year, .data$adm1guid, .data$prov) %>%
@@ -1388,7 +1555,7 @@ generate_stool_ad_maps <- function(ctry.data,
     )
 
   stool.map.p <-
-    dplyr::left_join(prov.shape, stoolad.p, by = c("GUID" = "adm1guid"))
+    dplyr::left_join(prov.shape, stoolad.p, by = c("GUID" = "adm1guid", "year" = "year"))
 
   # Get coordinates for maps that are plotted
   ctcoord <- as.data.frame(sf::st_coordinates(ctry.shape))
@@ -1462,12 +1629,12 @@ generate_stool_ad_maps <- function(ctry.data,
 #' @import dplyr ggplot2 sf lubridate
 #'
 #' @param ctry.data RDS file of polio data for a country
-#' @param dstool district stool adequacy
-#' @param ctry.shape recent country shapefile
-#' @param dist.shape recent district shapefile
-#' @param prov.shape recent province shapefile
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
+#' @param dstool district stool adequacy table
+#' @param ctry.shape country shapefile in long format
+#' @param dist.shape district shapefile in long format
+#' @param prov.shape province shapefile in long format
+#' @param start_date start date
+#' @param end_date end date
 #' @param output_path where to save the figure
 #' @param caption_size size of the caption
 #'
@@ -1482,6 +1649,46 @@ generate_stool_ad_maps_dist <- function(ctry.data,
                                         end_date,
                                         output_path = Sys.getenv("DR_FIGURE_PATH"),
                                         caption_size = 3) {
+
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(dist.shape)) {
+    error_message <- paste0("dist.shape is not in long format. ",
+                            "Use: dist.shape <- load_clean_dist_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+  dist.shape <- dist.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+
+
+
   # Get coordinates for maps that are plotted
   ctcoord <- as.data.frame(sf::st_coordinates(ctry.shape))
   # Put text at 10% below the minimum X and Y coordinates for each map
@@ -1559,7 +1766,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
     )
 
   stool.map.d <-
-    dplyr::left_join(dist.shape, stoolad.d, by = c("GUID" = "adm2guid"))
+    dplyr::left_join(dist.shape, stoolad.d, by = c("GUID" = "adm2guid", "year" = "year"))
 
   stool.ad.maps.dist <- ggplot2::ggplot() +
     ggplot2::geom_sf(
@@ -1640,10 +1847,10 @@ generate_stool_ad_maps_dist <- function(ctry.data,
 #' @importFrom sf sf_use_s2 st_centroid
 #' @importFrom tidyr complete pivot_longer
 #' @param ctry.data RDS file containing polio data for a country
-#' @param ctry.shape recent country shapefile
-#' @param prov.shape recent province shapefile
-#' @param start_date start date of desk review
-#' @param end_date end dtae of desk review
+#' @param ctry.shape country shapefile in long format
+#' @param prov.shape province shapefile in long format
+#' @param start_date start date
+#' @param end_date end date
 #' @param mark_x whether to put a mark on where AFP cases are less than 5
 #' @param pt_size size of the marks
 #' @param output_path where to save the figure
@@ -1658,6 +1865,32 @@ generate_timeliness_maps <- function(ctry.data,
                                      mark_x = T,
                                      pt_size = 4,
                                      output_path = Sys.getenv("DR_FIGURE_PATH")) {
+
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+
   long.timely <- ctry.data$afp.all.2 %>%
     dplyr::select(
       "epid",
@@ -1713,7 +1946,7 @@ generate_timeliness_maps <- function(ctry.data,
   long.timely$prop <- forcats::fct_na_value_to_level(long.timely$prop, "Missing") # missing date data
 
   time.map <-
-    dplyr::left_join(prov.shape, long.timely, by = c("GUID" = "adm1guid"))
+    dplyr::left_join(prov.shape, long.timely, by = c("GUID" = "adm1guid", "year" = "year"))
   time.map <-
     dplyr::full_join(time.map, all.case, by = c("GUID" = "adm1guid", "year" = "year"))
 
@@ -2075,8 +2308,8 @@ generate_timeliness_maps <- function(ctry.data,
 #' @import dplyr ggplot2 ggrepel
 #' @param es.data ES data for a country
 #' @param es.data.long ES data summary and in long format
-#' @param ctry.shape recent country shapefile
-#' @param prov.shape recent province shapefile
+#' @param ctry.shape country shapefile in long format
+#' @param prov.shape province shapefile in long format
 #' @param es_start_date ES start date
 #' @param es_end_date ES end date
 #' @param output_path where to save the figure
@@ -2090,13 +2323,36 @@ generate_es_det_map <- function(es.data,
                                 es_start_date = (end_date - lubridate::years(1)),
                                 es_end_date = end_date,
                                 output_path = Sys.getenv("DR_FIGURE_PATH")) {
+
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  # For this map, use the most recent shapefile
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = .data$active.year.01)
+
   es.data <- es.data |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
   es.data.long <- es.data.long |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
-  det.rate <- dplyr::summarize(
+  det.rate <- dplyr::summarise(
     dplyr::group_by(es.data.long, site.name),
     det.rate = 100 * sum(as.numeric(ev.detect), na.rm = TRUE) / dplyr::n(),
     samp.num = dplyr::n()
@@ -2201,13 +2457,15 @@ generate_es_det_map <- function(es.data,
 #' @import dplyr sf ggplot2 lubridate
 #' @param iss.data tibble of ISS/eSurv data
 #' @param start_date start date of desk review
-#' @param prov.shape shapefile containing province shapes
+#' @param ctry.shape country shapefile in long format
+#' @param prov.shape province shapefile in long format
 #' @param output_path where to save the figure
-#' @param end_date end date of desk review
+#' @param end_date end date
 #'
 #' @return a ggplot map
 #' @export
 generate_iss_map <- function(iss.data,
+                             ctry.shape,
                              prov.shape,
                              start_date,
                              end_date,
@@ -2215,6 +2473,33 @@ generate_iss_map <- function(iss.data,
   if (is.null(iss.data)) {
     return(message("No ISS data attached."))
   }
+
+  if (!"active.year.01" %in% names(ctry.shape)) {
+    error_message <- paste0("ctry.shape is not in long format. ",
+                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the country shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(prov.shape)) {
+    error_message <- paste0("prov.shape is not in long format. ",
+                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+                            " to download the province shapefile in long format.")
+    cli::cli_abort(error_message)
+  }
+
+  ctry.shape <- ctry.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+  prov.shape <- prov.shape |>
+    dplyr::filter(dplyr::between(active.year.01,
+                                 lubridate::year(start_date),
+                                 lubridate::year(end_date))) |>
+    dplyr::mutate(year = .data$active.year.01)
+
+
 
   if (!"_gps_ending_longitude" %in% names(iss.data)) {
     iss.data <- iss.data |>
@@ -2234,14 +2519,25 @@ generate_iss_map <- function(iss.data,
       dplyr::between(`_gps_ending_latitude`, bbox$ymin, bbox$ymax)
     )
 
-  pryr <- dplyr::count(iss.data, .data$priority_level, .data$year) %>%
+  pryr <- dplyr::count(iss.data, .data$priority_level, .data$year) |>
     dplyr::filter(priority_level == "High")
+
+  ctry.shape <- dplyr::left_join(ctry.shape, pryr) |>
+    dplyr::mutate(labs = paste0(year, "\n(n = ", n, ")"))
+  prov.shape <- dplyr::left_join(prov.shape, pryr) |>
+    dplyr::mutate(labs = paste0(year, "\n(n = ", n, ")"))
 
   iss.data2 <- dplyr::full_join(iss.data, pryr)
 
-  iss.data2$labs <- paste0(iss.data$year, "\n(n = ", iss.data2$n, ")")
+  iss.data2$labs <- paste0(iss.data2$year, "\n(n = ", iss.data2$n, ")")
 
   iss.data.map <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
+      data = ctry.shape,
+      color = "black",
+      fill = NA,
+      size = .5
+    ) +
     ggplot2::geom_sf(
       data = prov.shape,
       color = "black",
@@ -2250,9 +2546,9 @@ generate_iss_map <- function(iss.data,
     ) +
     ggplot2::geom_point(
       data = iss.data2 |>
-        dplyr::filter(
-          year <= lubridate::year(end_date) &
-            year >= lubridate::year(start_date) &
+        dplyr::filter(dplyr::between(year,
+                                     lubridate::year(start_date),
+                                     lubridate::year(end_date)),
             priority_level == "High"
         ),
       ggplot2::aes(
