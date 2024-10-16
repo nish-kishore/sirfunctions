@@ -19,9 +19,9 @@ generate_es_det_map(
 
 \item{es.data.long}{ES data summary and in long format}
 
-\item{ctry.shape}{recent country shapefile}
+\item{ctry.shape}{country shapefile in long format}
 
-\item{prov.shape}{recent province shapefile}
+\item{prov.shape}{province shapefile in long format}
 
 \item{es_start_date}{ES start date}
 

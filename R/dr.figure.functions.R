@@ -759,10 +759,10 @@ generate_pop_map <- function(ctry.data,
 
   # Only the most recent shape file
   ctry.shape <- ctry.shape |>
-    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
     dplyr::mutate(year = .data$active.year.01)
 
   # Merge with province
@@ -872,13 +872,13 @@ generate_dist_pop_map <- function(ctry.data,
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
     dplyr::mutate(year = .data$active.year.01)
   dist.shape <- dist.shape |>
-    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
     dplyr::mutate(year = .data$active.year.01)
 
   shape.prov.pop <-
@@ -976,12 +976,12 @@ generate_afp_case_map <- function(afp.all,
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
@@ -1086,12 +1086,12 @@ generate_npafp_maps <- function(prov.extract,
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
@@ -1282,17 +1282,17 @@ generate_npafp_maps_dist <- function(dist.extract,
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
   dist.shape <- dist.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
@@ -1475,12 +1475,12 @@ generate_stool_ad_maps <- function(ctry.data,
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
@@ -1672,17 +1672,17 @@ generate_stool_ad_maps_dist <- function(ctry.data,
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
   dist.shape <- dist.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
@@ -1881,12 +1881,12 @@ generate_timeliness_maps <- function(ctry.data,
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
@@ -2340,10 +2340,10 @@ generate_es_det_map <- function(es.data,
 
   # For this map, use the most recent shapefile
   ctry.shape <- ctry.shape |>
-    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
     dplyr::mutate(year = .data$active.year.01)
 
   es.data <- es.data |>
@@ -2489,12 +2489,12 @@ generate_iss_map <- function(iss.data,
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(active.year.01,
+    dplyr::filter(dplyr::between(.data$active.year.01,
                                  lubridate::year(start_date),
                                  lubridate::year(end_date))) |>
     dplyr::mutate(year = .data$active.year.01)

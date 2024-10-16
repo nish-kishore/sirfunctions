@@ -20,9 +20,9 @@ generate_stool_ad_maps(
 
 \item{pstool}{stool adequacy at province level}
 
-\item{ctry.shape}{recent country shapefile}
+\item{ctry.shape}{country shapefile in long format}
 
-\item{prov.shape}{recent province shapefile}
+\item{prov.shape}{province shapefile in long format}
 
 \item{start_date}{start date of desk review}
 
