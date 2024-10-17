@@ -2742,3 +2742,44 @@ f.maps.sia <- function(.x,
 
 
 }
+
+
+
+#' @description
+#' a function to build geompoint figures
+#' @import ggplot2
+#' @param .x str a province and country string
+#' @param case.sia.fig.01.sias tibble df of SIAs from create_case_sia_figs
+#' @param case.sia.fig.01.detections tibble df of detections from create_case_sia_figs
+#' @param start.date date starting date of analysis
+#' @param end.date date end date of analysis
+#' @param start_year int starting year of SIAs, used to restrict to recent SIAs
+f.geompoint.case <- function(.x,
+                             case.sia.fig.01.sias,
+                             case.sia.fig.01.detections,
+                             start.date,
+                             end.date,
+                             start_year = load_parameters()$recent_sia_start_year) {
+
+  ggplot()+
+    geom_tile(data=case.sia.fig.01.sias%>%filter(geo.list==.x & yr.sia >= !!start_year)%>% mutate(place.admin.2 = stringi::stri_trans_general(place.admin.2, id="Latin-ASCII")),
+              aes(x=date, y=place.admin.2, fill=typea, width=14))+
+    scale_x_date(breaks = "3 month", date_labels = "%m-%Y",
+                 limits = c(as_date(start.date), as_date(end.date)))+
+    ylab("Districts")+
+    xlab(NULL)+
+    labs(title = "Recent SIA with breakthrough transmission",
+         subtitle = .x) +
+    scale_fill_manual(name="SIAs", values=color.sia.plots.2, limits=force) +
+    geom_point(data=case.sia.fig.01.detections%>%filter(geo.list==.x & yr.sia>=start_year)%>% mutate(place.admin.2 = stringi::stri_trans_general(place.admin.2, id="Latin-ASCII")),
+               size=3, aes(x=date, y=place.admin.2, color=typea, shape=emergencegroup))+
+    scale_color_manual(name="Detections", values=color.sia.plots.3) +
+    theme_bw() +
+    theme(legend.position = "right",
+          panel.spacing = unit(0, "lines"),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.ticks.y = element_blank()) +
+    labs(shape = "Emergence Group")
+
+
+}
