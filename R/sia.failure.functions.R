@@ -2664,32 +2664,31 @@ create_latest_cases_to_map <- function(case.sia.02,
 
   #First this is the list of SIAs we will be mapping (only those in the table of recent failures)
 
-  sia.to.map <- case.sia.02 %>%
-    filter(sia.sub.activity.code %in% recent.sia.failure.01$SIA)
+  sia.to.map <- case.sia.02 |>
+    dplyr::filter(sia.sub.activity.code %in% recent.sia.failure.01$SIA)
 
 
   #Making data frame of cases to map with breakthrough defined
-  latest.cases.to.map <- cvdpv.wild.cases %>%
-    filter(adm2guid %in% sia.to.map$adm2guid) %>%
-    full_join(., sia.to.map %>%
-                select(sia.sub.activity.code, sub.activity.start.date, adm2guid),
-              by=c("adm2guid")) %>%
-    filter(!is.na(dateonset)) %>%
-    mutate(timetocase = Sys.Date()-dateonset) %>%
-    filter(timetocase <= 730) %>%
-    mutate(geo.list = paste(place.admin.1, place.admin.0, sep=", ")) %>%
-    mutate(location.break = ifelse(geo.list %in% (create_case_sia_figs(case.sia.02, case.sia, cvdpv.wild.cases, method = "fig2", breakthrough_min_date, breakthrough_middle_date, breakthrough_max_date) %>%
-                                                    pull()), 1, 0)) %>%
-    mutate(timefromsia = dateonset-sub.activity.start.date,
-           breakthrough.01case = case_when(timefromsia >= breakthrough_min_date &
-                                             timefromsia <= breakthrough_middle_date &
-                                             location.break == 1~ paste0("Breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
-                                           timefromsia > breakthrough_middle_date &
-                                             timefromsia <= breakthrough_max_date &
-                                             location.break == 1 ~ paste0("Breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
-                                           timefromsia < breakthrough_min_date |
-                                             timefromsia > breakthrough_max_date |
-                                             location.break == 0 ~ "Not breakthrough"))
+  latest.cases.to.map <- cvdpv.wild.cases |>
+    dplyr::filter(adm2guid %in% sia.to.map$adm2guid) |>
+    dplyr::full_join(sia.to.map |> dplyr::select(sia.sub.activity.code, sub.activity.start.date, adm2guid),
+              by=c("adm2guid")) |>
+    dplyr::filter(!is.na(dateonset)) |>
+    dplyr::mutate(timetocase = Sys.Date()-dateonset) |>
+    dplyr::filter(timetocase <= 730) |>
+    dplyr::mutate(geo.list = paste(place.admin.1, place.admin.0, sep=", ")) |>
+    dplyr::mutate(location.break = ifelse(geo.list %in% (create_case_sia_figs(case.sia.02, case.sia, cvdpv.wild.cases, method = "fig2", breakthrough_min_date, breakthrough_middle_date, breakthrough_max_date) |>
+                                                    dplyr::pull()), 1, 0)) |>
+    dplyr::mutate(timefromsia = dateonset-sub.activity.start.date,
+                  breakthrough.01case = dplyr::case_when(timefromsia >= breakthrough_min_date &
+                                                           timefromsia <= breakthrough_middle_date &
+                                                           location.break == 1~ paste0("Breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+                                                         timefromsia > breakthrough_middle_date &
+                                                           timefromsia <= breakthrough_max_date &
+                                                           location.break == 1 ~ paste0("Breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+                                                         timefromsia < breakthrough_min_date |
+                                                           timefromsia > breakthrough_max_date |
+                                                           location.break == 0 ~ "Not breakthrough"))
   return(latest.cases.to.map)
 
 }
