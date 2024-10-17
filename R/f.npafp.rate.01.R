@@ -264,7 +264,7 @@ f.npafp.rate.01 <- function(
 
   # Filter AFP and population data based on start and end dates
   afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date))
+    dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180)
 
   # Only years of analysis
   pop.data <- pop.data %>%
