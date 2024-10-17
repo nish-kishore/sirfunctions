@@ -2692,3 +2692,52 @@ create_latest_cases_to_map <- function(case.sia.02,
   return(latest.cases.to.map)
 
 }
+
+
+#' @description
+#' a function to build maps
+#' @import dplyr ggplot2
+#' @param .x str a country name
+#' @param sia.to.map.01 tibble df of sias with breakthrough to map
+#' @param long.global.prov.01 sf object of global province shapes
+#' @param long.global.ctry.01 sf object of global country shapes
+#' @param latest.cases.to.map tibble df of newest cases
+#' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+#' @param breakthrough_max_date int maximum number of days a case could be considered breakthrough
+f.maps.sia <- function(.x,
+                       sia.to.map.01,
+                       long.global.prov.01,
+                       long.global.ctry.01,
+                       latest.cases.to.map,
+                       breakthrough_min_date = load_parameters()$breakthrough_min_date,
+                       breakthrough_middle_date = load_parameters()$breakthrough_middle_date,
+                       breakthrough_max_date = load_parameters()$breakthrough_max_date) {
+
+  ggplot() +
+    geom_sf(data = sia.to.map.01 %>% filter(ADM0_NAME == .x),
+            aes(fill = sia.sub.activity.code)) +
+    geom_sf(data = long.global.prov.01 %>%
+              filter(ADM0_NAME==.x & active.year.01==2021), fill = NA, color = "black")+
+    scale_fill_brewer(type="qual", name="SIA")+
+    geom_sf(data=long.global.ctry.01 %>% filter(ADM0_NAME==.x & active.year.01==2021),
+            fill = NA, color = "black")+
+    geom_point(data =latest.cases.to.map %>% filter(place.admin.0==.x & breakthrough.01case=="Not breakthrough"),
+               aes(x=as.numeric(longitude), y=as.numeric(latitude), color= breakthrough.01case),
+               size = 3, alpha=0.6) +
+    geom_point(data =latest.cases.to.map%>%filter(place.admin.0==.x &
+                                                    (breakthrough.01case==paste0("Breakthrough ", breakthrough_min_date,"-", breakthrough_middle_date," days") |
+                                                       breakthrough.01case==paste0("Breakthrough ", breakthrough_middle_date+1,"-", breakthrough_max_date," days"))),
+               aes(x=as.numeric(longitude), y=as.numeric(latitude), color= breakthrough.01case),
+               size = 3, alpha=0.6) +
+    scale_color_manual(name="Detections", values=color.sia.plots.3) +
+    theme(legend.position = "bottom")+
+    # labs(title = "Recent SIA failure(s)",
+    #      subtitle = .x)+
+    plotlooks01 +
+    #facet_wrap(~emerge1) +
+    labs(caption = paste0("'Not Breakthrough' detections range from ",latest.cases.to.map %>% filter(place.admin.0==.x & breakthrough.01case=="Not breakthrough") %>% pull(dateonset) %>% {paste0(min(.), " to ", max(.))}))
+
+
+
+}
