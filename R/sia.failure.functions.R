@@ -2714,29 +2714,30 @@ f.maps.sia <- function(.x,
                        breakthrough_middle_date = load_parameters()$breakthrough_middle_date,
                        breakthrough_max_date = load_parameters()$breakthrough_max_date) {
 
-  ggplot() +
-    geom_sf(data = sia.to.map.01 %>% filter(ADM0_NAME == .x),
-            aes(fill = sia.sub.activity.code)) +
-    geom_sf(data = long.global.prov.01 %>%
-              filter(ADM0_NAME==.x & active.year.01==2021), fill = NA, color = "black")+
-    scale_fill_brewer(type="qual", name="SIA")+
-    geom_sf(data=long.global.ctry.01 %>% filter(ADM0_NAME==.x & active.year.01==2021),
-            fill = NA, color = "black")+
-    geom_point(data =latest.cases.to.map %>% filter(place.admin.0==.x & breakthrough.01case=="Not breakthrough"),
-               aes(x=as.numeric(longitude), y=as.numeric(latitude), color= breakthrough.01case),
-               size = 3, alpha=0.6) +
-    geom_point(data =latest.cases.to.map%>%filter(place.admin.0==.x &
-                                                    (breakthrough.01case==paste0("Breakthrough ", breakthrough_min_date,"-", breakthrough_middle_date," days") |
-                                                       breakthrough.01case==paste0("Breakthrough ", breakthrough_middle_date+1,"-", breakthrough_max_date," days"))),
-               aes(x=as.numeric(longitude), y=as.numeric(latitude), color= breakthrough.01case),
-               size = 3, alpha=0.6) +
-    scale_color_manual(name="Detections", values=color.sia.plots.3) +
-    theme(legend.position = "bottom")+
+  ggplot2::ggplot() +
+    ggplot2::geom_sf(data = sia.to.map.01 |> dplyr::filter(ADM0_NAME == .x),
+                     aes(fill = sia.sub.activity.code)) +
+    ggplot2::geom_sf(data = long.global.prov.01 |>
+              dplyr::filter(ADM0_NAME == .x & active.year.01 == 2021), fill = NA, color = "black") +
+    ggplot2::scale_fill_brewer(type = "qual", name = "SIA") +
+    ggplot2::geom_sf(data = long.global.ctry.01 |> dplyr::filter(ADM0_NAME == .x & active.year.01 == 2021),
+                     fill = NA, color = "black") +
+    ggplot2::geom_point(data = latest.cases.to.map |> dplyr::filter(place.admin.0 == .x & breakthrough.01case == "Not breakthrough"),
+                        aes(x = as.numeric(longitude), y = as.numeric(latitude), color = breakthrough.01case),
+                        size = 3, alpha = 0.6) +
+    ggplot2::geom_point(data = latest.cases.to.map |> dplyr::filter(place.admin.0 == .x &
+                                                                      (breakthrough.01case == paste0("Breakthrough ", breakthrough_min_date, "-", breakthrough_middle_date, " days") |
+                                                                         breakthrough.01case == paste0("Breakthrough ", breakthrough_middle_date+1, "-", breakthrough_max_date, " days"))),
+                        aes(x = as.numeric(longitude), y = as.numeric(latitude), color = breakthrough.01case),
+                        size = 3, alpha = 0.6) +
+    ggplot2::scale_color_manual(name = "Detections", values = color.sia.plots.3) +
+    ggplot2::theme(legend.position = "bottom") +
     # labs(title = "Recent SIA failure(s)",
     #      subtitle = .x)+
     plotlooks01 +
     #facet_wrap(~emerge1) +
-    labs(caption = paste0("'Not Breakthrough' detections range from ",latest.cases.to.map %>% filter(place.admin.0==.x & breakthrough.01case=="Not breakthrough") %>% pull(dateonset) %>% {paste0(min(.), " to ", max(.))}))
+    ggplot2::labs(caption = paste0("'Not Breakthrough' detections range from ", latest.cases.to.map |>
+                                     dplyr::filter(place.admin.0 == .x & breakthrough.01case == "Not breakthrough") |> dplyr::pull(dateonset) %>% {paste0(min(.), " to ", max(.))}))
 
 
 
