@@ -7,6 +7,9 @@
 #'
 #' @return a tibble with year data
 generate_year_data <- function(start_date, end_date) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
   year.data <- dplyr::tibble(
     "year" = lubridate::year(start_date):lubridate::year(end_date) # Defines year as the amount of
     # time between the start date and end date by calendar year (eg 2019:2020)
@@ -33,6 +36,7 @@ generate_year_data <- function(start_date, end_date) {
       n_days = as.integer(latest_date - earliest_date + 1), # Calculate number
       # of days in calendar year between earliest and latest date of that
       # calendar year
+      weight = n_days /days_in_year
     )
 
   return(year.data)
