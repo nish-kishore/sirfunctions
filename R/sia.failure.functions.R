@@ -2644,3 +2644,52 @@ create_sia_failure <- function(case.sia.02,
     return(sia.failure.ctry.yr)
   }
 }
+
+
+#' @description
+#' a function to create a dataframe of cases to map with breakthrough defined
+#' @import dplyr
+#' @param case.sia.02 tibble df that comes out of create_case_sia_02
+#' @param cvdpv.wild.cases tibble df of all cvdpv and wild polio cases in time frame
+#' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+#' @param breakthrough_max_date int maximum number of days a case could be considered breakthrough
+create_latest_cases_to_map <- function(case.sia.02,
+                                       cvdpv.wild.cases,
+                                       breakthrough_min_date=load_parameters()$breakthrough_min_date,
+                                       breakthrough_middle_date = load_parameters()$breakthrough_middle_date,
+                                       breakthrough_max_date = load_parameters()$breakthrough_max_date){
+
+  #Making maps of recent SIA failures this code will map all SIAs in the table: recent.sia.failure.01
+
+  #First this is the list of SIAs we will be mapping (only those in the table of recent failures)
+
+  sia.to.map <- case.sia.02 %>%
+    filter(sia.sub.activity.code %in% recent.sia.failure.01$SIA)
+
+
+  #Making data frame of cases to map with breakthrough defined
+  latest.cases.to.map <- cvdpv.wild.cases %>%
+    filter(adm2guid %in% sia.to.map$adm2guid) %>%
+    full_join(., sia.to.map %>%
+                select(sia.sub.activity.code, sub.activity.start.date, adm2guid),
+              by=c("adm2guid")) %>%
+    filter(!is.na(dateonset)) %>%
+    mutate(timetocase = Sys.Date()-dateonset) %>%
+    filter(timetocase <= 730) %>%
+    mutate(geo.list = paste(place.admin.1, place.admin.0, sep=", ")) %>%
+    mutate(location.break = ifelse(geo.list %in% (create_case_sia_figs(case.sia.02, case.sia, cvdpv.wild.cases, method = "fig2", breakthrough_min_date, breakthrough_middle_date, breakthrough_max_date) %>%
+                                                    pull()), 1, 0)) %>%
+    mutate(timefromsia = dateonset-sub.activity.start.date,
+           breakthrough.01case = case_when(timefromsia >= breakthrough_min_date &
+                                             timefromsia <= breakthrough_middle_date &
+                                             location.break == 1~ paste0("Breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+                                           timefromsia > breakthrough_middle_date &
+                                             timefromsia <= breakthrough_max_date &
+                                             location.break == 1 ~ paste0("Breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+                                           timefromsia < breakthrough_min_date |
+                                             timefromsia > breakthrough_max_date |
+                                             location.break == 0 ~ "Not breakthrough"))
+  return(latest.cases.to.map)
+
+}
