@@ -1599,7 +1599,16 @@ run_sia_spatial_fail_plots_v2 <- function(aoi_list,
                                      "km;\nBefore SIA: Detection 0-",detection_pre_sia_date," days before SIA;\nAfter SIA: Detection ",day_min,"-",day_max," days after SIA;\nCovered by other SIA: Other SIA covered the district 0-60 days after detection." ))
 
     print(paste0("Writing map to: ", paste0(plot_folder, "/", x$sia.sub.activity.code, ".png")))
-    edav_io(io = "write", obj = map, file_loc = paste0(plot_folder, "/", x$sia.sub.activity.code, ".png"))
+
+    if(Sys.getenv("POLIS_EDAV_FLAG")){
+
+      edav_io(io = "write", obj = map, file_loc = paste0(plot_folder, "/", x$sia.sub.activity.code, ".png"))
+
+    }else{
+
+      ggplot2::ggsave(filename = paste0(plot_folder, "/", x$sia.sub.activity.code, ".png"), plot = map)
+
+    }
 
     print(paste0(x$sia.sub.activity.code, " map completed and saved!"))
 
@@ -2208,14 +2217,28 @@ surv_plot_func <- function(region,
                                                           color = "black", hjust = 1, x = 1, face = "italic", size = 10))
 
   if(region == "AFRO"){
-    edav_io(io = "write", obj = p, file_loc = paste0(folder, "/", region, ".png"), width = 11, height = 20, bg = "white")
 
-    print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
+    if(Sys.getenv("POLIS_EDAV_FLAG")) {
+      edav_io(io = "write", obj = p, file_loc = paste0(folder, "/", region, ".png"), width = 11, height = 20, bg = "white")
+
+      print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
+    }else{
+      ggplot2::ggsave(filename = paste0(folder, "/", region, ".png"), plot = p, width = 11, height = 20, bg = "white")
+
+      print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
+    }
 
   }else{
-    edav_io(io = "write", obj = p, file_loc = paste0(folder, "/", region, ".png"), width = 11, height = 8.5, bg = "white")
+    if(Sys.getenv("POLIS_EDAV_FLAG")){
+      edav_io(io = "write", obj = p, file_loc = paste0(folder, "/", region, ".png"), width = 11, height = 8.5, bg = "white")
 
-    print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
+      print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
+    }else{
+      ggplot2::ggsave(filename = paste0(folder, "/", region, ".png"), plot = p, width = 11, height = 8.5, bg = "white")
+
+      print(paste0("Saved plot to ", paste0(folder, "/", region, ".png")))
+    }
+
   }
 }
 
@@ -2381,15 +2404,27 @@ create_emergence_plots_v2 <- function(case.sia.fig.01,
 
       if(nrow(detection.types) > 1){
 
-        edav_io(io = "write", obj = plot, file_loc = folder, height = 15, width = 18, dpi = 300)
+        if(Sys.getenv("POLIS_EDAV_FLAG")){
+          edav_io(io = "write", obj = plot, file_loc = folder, height = 15, width = 18, dpi = 300)
+        }else{
+          ggplot2::ggsave(filename = folder, plot = plot, height = 15, width = 18, dpi = 300)
+        }
 
       }else{
 
-        edav_io(io = "write", obj = plot, file_loc = folder, height = 10, width = 18, dpi = 300)
+        if(Sys.getenv("POLIS_EDAV_FLAG")){
+          edav_io(io = "write", obj = plot, file_loc = folder, height = 10, width = 18, dpi = 300)
+        }else{
+          ggplot2::ggsave(filename = folder, plot = plot, height = 10, width = 18, dpi = 300)
+        }
 
       }}else{
 
-        edav_io(io = "write", obj = plot, file_loc = folder, height = 14, width = 18, dpi = 300)
+        if(Sys.getenv("POLIS_EDAV_FLAG")){
+          edav_io(io = "write", obj = plot, file_loc = folder, height = 14, width = 18, dpi = 300)
+        }else{
+          ggplot2::ggsave(filename = folder, plot = plot, height = 14, width = 18, dpi = 300)
+        }
 
       }}else{
         plot
