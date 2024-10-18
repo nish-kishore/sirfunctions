@@ -12,7 +12,8 @@ load_clean_dist_sp(
   end.year = lubridate::year(Sys.Date()),
   st.year = 2000,
   data.only = F,
-  type = NULL
+  type = NULL,
+  version = "standard"
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ load_clean_dist_sp(
 \item{data.only}{boolean: default F, if true, returns a rectangular tibble instead of a shape file}
 
 \item{type}{str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group}
+
+\item{version}{str: "standard" or "dev", default is "standard", specifies whether to return standard shapefiles or new shapefiles still under evaluation/development}
 }
 \value{
 tibble or sf dataframe

@@ -10,17 +10,19 @@ edav_io(
   file_loc = NULL,
   obj = NULL,
   azcontainer = suppressMessages(get_azure_storage_connection()),
-  force_delete = F
+  force_delete = F,
+  local_path = NULL
 )
 }
 \arguments{
-\item{io}{str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list".
+\item{io}{str: "read", "write", "delete", "exists.dir", "exists.file", "create", "list", or "upload".
 "read" - read a file from EDAV, must be an rds, csv, or rda;
 "write" - write a file from EDAV, must be an rds, csv or rda;
 "exists.dir" - returns a boolean after checking to see if a folder exists;
 "exists.file" - returns a boolean after checking to see if a file exists;
 "create" - creates a folder and all preceding folders
-"list" - returns a tibble with all objects in a folder}
+"list" - returns a tibble with all objects in a folder
+"upload" - moves a file of any type to EDAV}
 
 \item{default_dir}{str: "GID/PEB/SIR" - the default directory for all SIR data in EDAV, can be set to NULL
 if you provide the full directory path in \code{file_loc}}
@@ -33,6 +35,8 @@ the information in \code{default_dir} if you set that parameter to NULL.}
 \item{azcontainer}{azure container object returned from \code{get_azure_storage_connection()}}
 
 \item{force_delete}{boolean: use delete io without verification in the command line}
+
+\item{local_path}{str: local file pathway to upload a file to edav, default is NULL, only required when using 'upload' option}
 }
 \value{
 output dependent on "io"
