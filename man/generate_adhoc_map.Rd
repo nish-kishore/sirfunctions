@@ -60,6 +60,9 @@ Options: "ALL": All regions, "YES": Recent Detections - <13 months}
 
 \item{dpi}{dpi of the map}
 }
+\value{
+ggplot object
+}
 \description{
 Create adhoc maps for emergences
 }
