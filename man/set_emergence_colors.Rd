@@ -4,12 +4,16 @@
 \alias{set_emergence_colors}
 \title{Set the emergence colors}
 \usage{
-set_emergence_colors(raw.data, country)
+set_emergence_colors(raw.data, country, start_date, end_date)
 }
 \arguments{
 \item{raw.data}{Global polio data output of sirfunctions::get_all_polio_data()}
 
 \item{country}{A string or a list of strings containing the countries of interest}
+
+\item{start_date}{Start date of the time span to look for emergences}
+
+\item{end_date}{End date of the time span to look for emergences}
 }
 \value{
 a named list containing the mapping of emergence and corresponding colors

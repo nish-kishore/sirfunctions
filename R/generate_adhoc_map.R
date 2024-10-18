@@ -406,11 +406,14 @@ load_sharepoint_env <- function(raw.data) {
 #' @importFrom tidyr drop_na
 #' @param raw.data Global polio data output of sirfunctions::get_all_polio_data()
 #' @param country A string or a list of strings containing the countries of interest
+#' @param start_date Start date of the time span to look for emergences
+#' @param end_date  End date of the time span to look for emergences
 #'
 #' @return a named list containing the mapping of emergence and corresponding colors
 #' @export
-set_emergence_colors <- function(raw.data, country) {
-  download_date <- lubridate::as_date(raw.data$metadata$download_time)
+set_emergence_colors <- function(raw.data, country, start_date, end_date) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
   country <- stringr::str_to_upper(country)
 
   # Check input validity
@@ -430,8 +433,8 @@ set_emergence_colors <- function(raw.data, country) {
       .data$measurement == "WILD 1" ~ viruscluster,
       TRUE ~ emergencegroup
     )) |>
-    dplyr::filter(dateonset >= (download_date %m-% months(13, F)) &
-      .data$source %in% c("AFP", "ENV") &
+    dplyr::filter(.data$dateonset >= start_date,
+      .data$source %in% c("AFP", "ENV"),
       .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")) |>
     dplyr::distinct(.data$emg_grp2) |>
     dplyr::arrange(.data$emg_grp2) |>
@@ -609,7 +612,6 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   download_date <- lubridate::as_date(raw.data$metadata$download_time)
   run_date <- lubridate::today()
   map_ref <- sirfunctions::edav_io(io = "read", file_loc = "Data/orpg/mapref.table.rds")
-  emg_cols <- set_emergence_colors(raw.data, country)
   surv_options <- paste(surv, collapse = ", ")
   clean_maps <- c("COM", "STP", "CAV", "SEY")
 
@@ -645,10 +647,13 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   }
 
   if (is.null(start_date)) {
-    start_date <- lubridate::floor_date((end_date %m-% months(13)), "month")
+    start_date <- lubridate::floor_date((end_date %m-% months(13, F)), "month")
   } else {
     start_date <- lubridate::as_date(start_date)
   }
+
+  # Getting emergence colors
+  emg_cols <- set_emergence_colors(raw.data, country, start_date, end_date)
 
   # Load Sharepoint environment
   if (output == "sharepoint") {
