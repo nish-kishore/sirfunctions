@@ -2864,6 +2864,90 @@ f.dist.ctry.failure.tab <- function(k,
     flextable::fontsize(size = 10, part = "all") |>
     flextable::align(align = "center", part = "all") |>
     flextable::align(j = 1:2, align = "left", part = "all") |>
-    flextable::valign(j = 1, valign = "middle", part = "body") |>
+    flextable::valign(j = 1, valign = "middle", part = "body") %>%
     return()
 }
+
+
+
+#' @description
+#' a function to create a flextable summarizing SIA failure at country level
+#' @param k str WHO region: AFRO, EMRO, etc.
+#' @param sia.failure.ctry.yr.2 tibble df summarizing SIA failures at country level
+#' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+#' @param breakthrough_max_date int maximum number of days a case could be considered breakthrough
+f.sia.failure.ctry.yr <- function(k,
+                                  sia.failure.ctry.yr.2,
+                                  breakthrough_min_date = load_parameters()$breakthrough_min_date,
+                                  breakthrough_middle_date = load_parameters()$breakthrough_middle_date,
+                                  breakthrough_max_date = load_parameters()$breakthrough_max_date) {
+  col_keys_vec <- c("Country", "Round", "Year",
+                    paste0("bOPV breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+                    paste0("mOPV2 breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+                    paste0("nOPV2 breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+                    paste0("tOPV breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+                    paste0("bOPV breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+                    paste0("mOPV2 breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+                    paste0("nOPV2 breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+                    paste0("tOPV breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"))
+  names1 <- c("Country",
+              "Round",
+              "Year",
+              paste0("bOPV breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+              paste0("mOPV2 breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+              paste0("nOPV2 breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+              paste0("tOPV breakthrough ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+              paste0("bOPV breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+              paste0("mOPV2 breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+              paste0("nOPV2 breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+              paste0("tOPV breakthrough ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"))
+  names2 <- c("",
+              "",
+              "",
+              paste0("Detections ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+              paste0("Detections ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+              paste0("Detections ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+              paste0("Detections ",breakthrough_min_date,"-",breakthrough_middle_date," days"),
+              paste0("Detections ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+              paste0("Detections ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+              paste0("Detections ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"),
+              paste0("Detections ",breakthrough_middle_date+1,"-",breakthrough_max_date," days"))
+
+  set_header_df(x=flextable(sia.failure.ctry.yr.2 %>%
+                              filter(WHO_REGION%in%k), col_keys=col_keys_vec),
+                mapping=data.frame(key=names1, values=names2, stringsAsFactors = FALSE), key="key") %>%
+    bg(j = 4:11,
+       bg = function(x){
+         out <- rep("transparent", length(x))
+         out[parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) < 5 &
+               parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) > 0 ] <- "#fcbba1"
+         out[parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) >= 5 &
+               parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) <= 10 ] <- "#fb6a4a"
+         out[parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) >10 ] <- "#ef3b2c"
+
+         out
+       }) %>%
+
+    set_header_labels("Detections 21-180 days" = 4:7, "Detections 181-365 days"= 8:11) %>%
+    merge_at(i = 1, j = 4:7, part = "header") %>%
+    merge_at(i = 1, j = 8:11, part = "header") %>%
+    add_header_row(
+      values = c("Country", "Round", "Year", "bOPV", "mOPV2", "nOPV2", "tOPV", "bOPV", "mOPV2", "nOPV2", "tOPV"), top=F) %>%
+    bold(bold = TRUE, part = "header") %>%
+    width(j = 4:11, width=1.2) %>%
+    width(j = 2:3, width=0.8) %>%
+    width(j = 1, width=2.2) %>%
+    merge_v(j = ~Country) %>%
+    # merge_v(j = c("Country", "v.dummy"), target = c("Country", "Round")) %>%
+    theme_vanilla %>%
+    add_footer(Year = paste0("Results are restricted to SIAs with >=",breakthrough_middle_date," days of observation time")) %>%
+    merge_at(j = 1:7, part = "footer") %>%
+    fontsize(size = 10, part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::align(j = 1:2, align = "left", part = "all") %>%
+    valign(j = 1, valign = "middle", part = "body") %>%
+    return()
+
+}
+
