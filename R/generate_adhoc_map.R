@@ -406,14 +406,26 @@ load_sharepoint_env <- function(raw.data) {
 #' @importFrom tidyr drop_na
 #' @param raw.data Global polio data output of sirfunctions::get_all_polio_data()
 #' @param country A string or a list of strings containing the countries of interest
-#' @param start_date Start date of the time span to look for emergences
-#' @param end_date  End date of the time span to look for emergences
+#' @param start_date Start date of the time span to look for emergences. Defaults to 13 months from the end date.
+#' @param end_date  End date of the time span to look for emergences Defaults to download date of raw data.
 #'
 #' @return a named list containing the mapping of emergence and corresponding colors
 #' @export
-set_emergence_colors <- function(raw.data, country, start_date, end_date) {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
+set_emergence_colors <- function(raw.data, country, start_date=NULL, end_date=NULL) {
+
+  # Default start and end dates
+  if (is.null(end_date)) {
+    end_date <- lubridate::as_date(raw.data$metadata$download_time)
+  } else {
+    end_date <- lubridate::as_date(end_date)
+  }
+
+  if (is.null(start_date)) {
+    start_date <- lubridate::floor_date((end_date %m-% months(13, F)), "month")
+  } else {
+    start_date <- lubridate::as_date(start_date)
+  }
+
   country <- stringr::str_to_upper(country)
 
   # Check input validity
