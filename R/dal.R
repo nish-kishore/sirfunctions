@@ -703,6 +703,11 @@ get_all_polio_data <- function(
     )
     cli::cli_process_done()
 
+    cli::cli_process_start("13) Loading SIA Clusters and Calculating Rounds")
+    sia.clusters <- edav_io(io = "list", file_loc = paste0(folder, "sia_cluster_cache"),
+                            default_dir = NULL) |>
+      dplyr::filter(grepl("data_cluster_cache", name))
+
     cli::cli_process_start("13) Creating Metadata object")
 
     polis.cache <- edav_io(
