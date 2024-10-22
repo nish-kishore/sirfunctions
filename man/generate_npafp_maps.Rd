@@ -15,15 +15,15 @@ generate_npafp_maps(
 )
 }
 \arguments{
-\item{prov.extract}{province NPAFP rate}
+\item{prov.extract}{province NPAFP rate table}
 
-\item{ctry.shape}{recent country shape}
+\item{ctry.shape}{country shape in long format}
 
-\item{prov.shape}{recent province shape}
+\item{prov.shape}{province shape in long format}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{start date}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{end date}
 
 \item{output_path}{where to save the figure}
 

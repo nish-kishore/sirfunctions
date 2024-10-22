@@ -6,6 +6,7 @@
 \usage{
 generate_pop_map(
   ctry.data,
+  ctry.shape,
   prov.shape,
   end_date,
   output_path = Sys.getenv("DR_FIGURE_PATH"),
@@ -13,9 +14,11 @@ generate_pop_map(
 )
 }
 \arguments{
-\item{ctry.data}{RDS object}
+\item{ctry.data}{RDS object containing country polio data}
 
-\item{prov.shape}{province of most recent shape file}
+\item{ctry.shape}{country shape file in long format}
+
+\item{prov.shape}{province shape file in long format}
 
 \item{end_date}{end date of the desk review}
 
