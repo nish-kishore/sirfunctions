@@ -708,6 +708,20 @@ get_all_polio_data <- function(
                             default_dir = NULL) |>
       dplyr::filter(grepl("data_cluster_cache", name))
 
+
+    raw.data$sia.rounds <- bind_rows(
+      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
+      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
+      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
+      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
+      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
+      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
+      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
+      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
+      )
+
+    cli::cli_process_done()
+
     cli::cli_process_start("14) Creating Metadata object")
 
     polis.cache <- edav_io(
