@@ -703,7 +703,32 @@ get_all_polio_data <- function(
     )
     cli::cli_process_done()
 
-    cli::cli_process_start("13) Creating Metadata object")
+    cli::cli_process_start("13) Loading SIA Clusters and Calculating Rounds")
+    sia.clusters <- edav_io(io = "list", file_loc = paste0(folder, "sia_cluster_cache"),
+                            default_dir = NULL) |>
+      dplyr::filter(grepl("data_cluster_cache", name)) |>
+      dplyr::pull(name)
+
+    sia.cluster.data <- list()
+
+    for(i in 1:length(sia.clusters)){
+      sia.cluster.data[[length(sia.cluster.data) + 1]] <- edav_io(io = "read", file_loc = sia.clusters[i], default_dir = NULL)
+    }
+
+    raw.data$sia.rounds <- do.call(rbind.data.frame, sia.cluster.data) |>
+      dplyr::arrange(adm2guid, sub.activity.start.date) |>
+      dplyr::group_by(adm2guid, vaccine.type, cluster) |>
+      dplyr::mutate(round.num = row_number()) |>
+      dplyr::ungroup() |>
+      dplyr::group_by(adm2guid) |>
+      dplyr::mutate(max.round = max(sub.activity.start.date)) |>
+      dplyr::ungroup() |>
+      dplyr::mutate(last.camp = ifelse(max.round == sub.activity.start.date, 1, 0))
+    rm(sia.clusters, sia.cluster.data)
+
+    cli::cli_process_done()
+
+    cli::cli_process_start("14) Creating Metadata object")
 
     polis.cache <- edav_io(
       io = "read",
@@ -767,13 +792,13 @@ get_all_polio_data <- function(
 
     cli::cli_process_done()
 
-    cli::cli_process_start("14) Clearing out unused memory")
+    cli::cli_process_start("15) Clearing out unused memory")
     gc()
     cli::cli_process_done()
   }
 
   if(create.cache){
-    cli::cli_process_start("15) Caching processed data")
+    cli::cli_process_start("16) Caching processed data")
 
     out <- split_concat_raw_data(action = "split", split.years = c(2000, 2016, 2019), raw.data.all = raw.data)
 
