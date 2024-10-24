@@ -715,6 +715,8 @@ get_all_polio_data <- function(
       sia.cluster.data[[length(sia.cluster.data) + 1]] <- edav_io(io = "read", file_loc = sia.clusters[i], default_dir = NULL)
     }
 
+    raw.data$sia.rounds <- do.call(rbind.data.frame, sia.cluster.data)
+    rm(sia.clusters, sia.cluster.data)
 
     cli::cli_process_done()
 
