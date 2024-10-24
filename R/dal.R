@@ -715,7 +715,15 @@ get_all_polio_data <- function(
       sia.cluster.data[[length(sia.cluster.data) + 1]] <- edav_io(io = "read", file_loc = sia.clusters[i], default_dir = NULL)
     }
 
-    raw.data$sia.rounds <- do.call(rbind.data.frame, sia.cluster.data)
+    raw.data$sia.rounds <- do.call(rbind.data.frame, sia.cluster.data) |>
+      dplyr::arrange(adm2guid, sub.activity.start.date) |>
+      dplyr::group_by(adm2guid, vaccine.type, cluster) |>
+      dplyr::mutate(round.num = row_number()) |>
+      dplyr::ungroup() |>
+      dplyr::group_by(adm2guid) |>
+      dplyr::mutate(max.round = max(sub.activity.start.date)) |>
+      dplyr::ungroup() |>
+      dplyr::mutate(last.camp = ifelse(max.round == sub.activity.start.date, 1, 0))
     rm(sia.clusters, sia.cluster.data)
 
     cli::cli_process_done()
