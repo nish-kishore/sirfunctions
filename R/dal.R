@@ -706,19 +706,15 @@ get_all_polio_data <- function(
     cli::cli_process_start("13) Loading SIA Clusters and Calculating Rounds")
     sia.clusters <- edav_io(io = "list", file_loc = paste0(folder, "sia_cluster_cache"),
                             default_dir = NULL) |>
-      dplyr::filter(grepl("data_cluster_cache", name))
+      dplyr::filter(grepl("data_cluster_cache", name)) |>
+      dplyr::pull(name)
 
+    sia.cluster.data <- list()
 
-    raw.data$sia.rounds <- bind_rows(
-      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
-      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
-      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
-      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
-      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
-      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
-      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
-      edav_io(io = "read", file_loc = dplyr::filter(sia.clusters, grepl()), default_dir = NULL),
-      )
+    for(i in 1:length(sia.clusters)){
+      sia.cluster.data[[length(sia.cluster.data) + 1]] <- edav_io(io = "read", file_loc = sia.clusters[i], default_dir = NULL)
+    }
+
 
     cli::cli_process_done()
 
