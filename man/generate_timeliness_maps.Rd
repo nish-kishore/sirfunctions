@@ -18,13 +18,13 @@ generate_timeliness_maps(
 \arguments{
 \item{ctry.data}{RDS file containing polio data for a country}
 
-\item{ctry.shape}{recent country shapefile}
+\item{ctry.shape}{country shapefile in long format}
 
-\item{prov.shape}{recent province shapefile}
+\item{prov.shape}{province shapefile in long format}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{start date}
 
-\item{end_date}{end dtae of desk review}
+\item{end_date}{end date}
 
 \item{mark_x}{whether to put a mark on where AFP cases are less than 5}
 

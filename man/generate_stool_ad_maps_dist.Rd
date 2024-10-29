@@ -19,17 +19,17 @@ generate_stool_ad_maps_dist(
 \arguments{
 \item{ctry.data}{RDS file of polio data for a country}
 
-\item{dstool}{district stool adequacy}
+\item{dstool}{district stool adequacy table}
 
-\item{ctry.shape}{recent country shapefile}
+\item{ctry.shape}{country shapefile in long format}
 
-\item{prov.shape}{recent province shapefile}
+\item{prov.shape}{province shapefile in long format}
 
-\item{dist.shape}{recent district shapefile}
+\item{dist.shape}{district shapefile in long format}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{start date}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{end date}
 
 \item{output_path}{where to save the figure}
 
