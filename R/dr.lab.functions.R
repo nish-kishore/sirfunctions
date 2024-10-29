@@ -397,7 +397,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   lab.data2 <- lab.data2 |>
     dplyr::mutate(dplyr::across(
       dplyr::starts_with("Date"),
-      \(x) lubridate::as_date(x)
+      \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y"))
     ))
   cli::cli_process_done()
 
@@ -539,23 +539,19 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
     dplyr::left_join(prov_lookup_table) |>
     dplyr::left_join(prov_lookup_table, by = dplyr::join_by(epid_prov, year)) |>
     dplyr::mutate(
-      prov.x = dplyr::if_else(is.na(.data$prov.x) & !is.na(.data$prov.y), .data$prov.y, .data$prov.x),
-      adm1guid.x = dplyr::if_else(is.na(.data$adm1guid.x) & !is.na(.data$adm1guid.y), .data$adm1guid.y, .data$adm1guid.y)
+      prov = dplyr::coalesce(.data$prov.x, .data$prov.y),
+      adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)
     ) |>
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(dist_lookup_table, by = dplyr::join_by(epid_dist, year)) |>
     dplyr::mutate(
-      dist.x = dplyr::if_else(is.na(.data$dist.x) & !is.na(.data$dist.y), .data$dist.y, .data$dist.x),
-      adm2guid.x = dplyr::if_else(is.na(.data$adm2guid.x) & !is.na(.data$adm2guid.y), .data$adm2guid.y, .data$adm2guid.y)
+      dist = dplyr::coalesce(.data$dist.x, .data$dist.y),
+      adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)
     ) |>
     dplyr::rename(
-      adm0guid = "adm0guid.x",
-      adm1guid = "adm1guid.x",
-      adm2guid = "adm2guid.x",
-      prov = "prov.x",
-      dist = "dist.x"
+      adm0guid = "adm0guid.x"
     ) |>
-    dplyr::select(-dplyr::ends_with(".y"))
+    dplyr::select(-dplyr::ends_with(".y"), -dplyr::ends_with(".x"))
 
   # check for correctness
   check <- test |>
