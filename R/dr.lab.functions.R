@@ -486,11 +486,40 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   prov_lookup_table <- geo_lookup_table |>
     dplyr::select("epid_prov", "prov", "adm0guid", "adm1guid", "year") |>
-    dplyr::distinct()
+    dplyr::distinct() |>
+    tidyr::drop_na("prov")
+
+  # Check look up table for potential duplicated rows
+  prov_lookup_row_dups <- prov_lookup_table |>
+    dplyr::mutate(epid_comb = str_c(epid_prov, year, sep = "-")) |>
+    dplyr::group_by(epid_comb, epid_prov, year) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::filter(n > 1) |>
+    ungroup()
+
+  # Remove duplicates from the look up table
+  prov_lookup_row_dups <- prov_lookup_row_dups |>
+    dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
+  prov_lookup_table <- anti_join(prov_lookup_table, prov_lookup_row_dups)
+
 
   dist_lookup_table <- geo_lookup_table |>
     dplyr::select("epid_dist", "dist", "adm2guid", "year") |>
-    dplyr::distinct()
+    dplyr::distinct() |>
+    tidyr::drop_na("dist")
+
+  # Check look up table for potential duplicated rows
+  dist_lookup_row_dups <- dist_lookup_table |>
+    dplyr::mutate(epid_comb = str_c(epid_dist, year, sep = "-")) |>
+    dplyr::group_by(epid_comb, epid_dist, year) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::filter(n > 1) |>
+    ungroup()
+
+  # Remove duplicates from the look up table
+  dist_lookup_row_dups <- dist_lookup_row_dups |>
+    dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
+  dist_lookup_table <- anti_join(dist_lookup_table, dist_lookup_row_dups)
 
   # geomatching algorithm
   lab.data2 <- lab.data2 |>
@@ -536,6 +565,10 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   mismatch_prov <- dplyr::anti_join(check, prov_lookup_table)
 
   lab.data2 <- test
+
+  # Message for values without any province or district information
+  cli::cli_alert_warning(paste0("Remaining records with missing province: ", sum(is.na(lab.data$Province))))
+  cli::cli_alert_warning(paste0("Remaining records with missing district: ", sum(is.na(lab.data$District))))
 
   cli::cli_process_done()
 
@@ -782,8 +815,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
           "DateRArmIsolate",
           "DateofSequencing",
           "DateNotificationtoHQ"
-        )), \(x) as.Date.character(x, "%m/%d/%Y"))
-      )
+        )), \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y"))
+      ))
     cli::cli_process_done()
     # This is a very quick clean and can be improved upon with futher steps such as:
     #  - eliminating nonsensical dates
@@ -898,49 +931,92 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     )
 
   cli::cli_process_start("Imputing missing province and district data from AFP linelist")
+  # Match province and district by EPID number -
+  lab.data$prov <- NA
+  lab.data$dist <- NA
+  lab.data$adm1guid <- NA
+  lab.data$adm2guid <- NA
+
+  # !!! changed place.admin.1 = prov and place.admin.2 = dist from original code
+  # reason is that those were renamed at the top of the script
+  lab.data$prov <- ctry.data$afp.all.2$prov[match(lab.data$EPID, ctry.data$afp.all.2$epid)]
+  lab.data$dist <- ctry.data$afp.all.2$dist[match(lab.data$EPID, ctry.data$afp.all.2$epid)]
+
+  lab.data$adm1guid <- ctry.data$afp.all.2$adm1guid[match(lab.data$EPID, ctry.data$afp.all.2$epid)]
+  lab.data$adm2guid <- ctry.data$afp.all.2$adm2guid[match(lab.data$EPID, ctry.data$afp.all.2$epid)]
+
+  # Additional cleaning steps
+  #---- Additional data cleaning steps
   geo_lookup_table <- ctry.data$afp.all.2 |>
     dplyr::select("epid", dplyr::matches("guid"), dplyr::contains("$adm"), "ctry", "prov", "dist", "year") |>
     tidyr::separate_wider_delim(
-      cols = "epid",
-      delim = delim,
+      cols = "epid", delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
         "epid_04", "epid_05"
       ),
-      too_many = "debug",
+      too_many = "merge",
       too_few = "align_start"
     ) |>
-    dplyr::select(
-      "epid_ctry",
-      "epid_prov",
-      "epid_dist",
-      "ctry",
-      "prov",
-      "dist",
-      dplyr::matches("adm[0-3]guid"),
-      "year"
-    ) |>
-    dplyr::arrange(year) |>
+    dplyr::select(dplyr::contains("epid"), "ctry", "prov", "dist", dplyr::matches("adm[0-3]guid"), "year") |>
     dplyr::distinct()
 
+  prov_lookup_table <- geo_lookup_table |>
+    dplyr::select("epid_prov", "prov", "adm0guid", "adm1guid", "year") |>
+    dplyr::distinct() |>
+    tidyr::drop_na("prov")
+
   # Check look up table for potential duplicated rows
-  lookup_row_dups <- geo_lookup_table |>
-    dplyr::mutate(epid_comb = str_c(epid_ctry, epid_prov, epid_dist, year, sep = "-")) |>
-    dplyr::group_by(epid_comb, epid_ctry, epid_prov, epid_dist, year) |>
+  prov_lookup_row_dups <- prov_lookup_table |>
+    dplyr::mutate(epid_comb = str_c(epid_prov, year, sep = "-")) |>
+    dplyr::group_by(epid_comb, epid_prov, year) |>
     dplyr::summarise(n = n()) |>
     dplyr::filter(n > 1) |>
     ungroup()
 
   # Remove duplicates from the look up table
-  lookup_row_dups <- lookup_row_dups |>
+  prov_lookup_row_dups <- prov_lookup_row_dups |>
     dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
-  geo_lookup_table <- anti_join(geo_lookup_table, lookup_row_dups)
+  prov_lookup_table <- anti_join(prov_lookup_table, prov_lookup_row_dups)
 
+
+  dist_lookup_table <- geo_lookup_table |>
+    dplyr::select("epid_dist", "dist", "adm2guid", "year") |>
+    dplyr::distinct() |>
+    tidyr::drop_na("dist")
+
+  # Check look up table for potential duplicated rows
+  dist_lookup_row_dups <- dist_lookup_table |>
+    dplyr::mutate(epid_comb = str_c(epid_dist, year, sep = "-")) |>
+    dplyr::group_by(epid_comb, epid_dist, year) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::filter(n > 1) |>
+    ungroup()
+
+  # Remove duplicates from the look up table
+  dist_lookup_row_dups <- dist_lookup_row_dups |>
+    dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
+  dist_lookup_table <- anti_join(dist_lookup_table, dist_lookup_row_dups)
+
+  # Geomatching algorithm
   lab.data <- lab.data |>
-    dplyr::left_join(geo_lookup_table,
-      multiple = "any",
-      by = dplyr::join_by(epid_ctry, epid_prov, epid_dist, year)
-    )
+    dplyr::left_join(prov_lookup_table) |>
+    dplyr::left_join(prov_lookup_table, by = dplyr::join_by(epid_prov, year)) |>
+    dplyr::mutate(
+      prov = dplyr::coalesce(.data$prov.x, .data$prov.y),
+      adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)
+    ) |>
+    dplyr::left_join(dist_lookup_table) |>
+    dplyr::left_join(dist_lookup_table, by = dplyr::join_by(epid_dist, year)) |>
+    dplyr::mutate(
+      dist = dplyr::coalesce(.data$dist.x, .data$dist.y),
+      adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)
+    ) |>
+    dplyr::rename(
+      adm0guid = "adm0guid.x",
+    ) |>
+    dplyr::select(-dplyr::ends_with(".y"), -dplyr::ends_with(".x"))
+
   lab.data <- lab.data |>
     dplyr::rename(ctry.code2 = "epid_ctry")
   lab.data <- lab.data |>
@@ -954,8 +1030,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   cli::cli_process_done()
 
   # Message for values without any province or district information
-  cli::cli_alert_warning(paste0("Records with missing province remaining: ", sum(is.na(lab.data$Province))))
-  cli::cli_alert_warning(paste0("Records with missing district remaining: ", sum(is.na(lab.data$District))))
+  cli::cli_alert_warning(paste0("Remaining records with missing province: ", sum(is.na(lab.data$Province))))
+  cli::cli_alert_warning(paste0("Remaining records with missing district: ", sum(is.na(lab.data$District))))
 
   # adding additional subintervals (these aren't present in regional lab data, so are created as dummy variables)
   lab.data <- lab.data |>
