@@ -363,20 +363,6 @@ lab_data_errors_who <- function(ctry.data, start.date, end.date,
 #' @return a tibble containing clean lab data
 #' @export
 clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
-  if (is.null(ctry.data$lab.data)) {
-    message("Lab data not attached to country data.")
-    return(NULL)
-  }
-
-  if ("prov" %in% names(ctry.data$lab.data)) {
-    cli::cli_alert_warning("Lab data already cleaned.")
-    return(ctry.data$lab.data)
-  }
-
-  if (nrow(ctry.data$lab.data) == 0) {
-    message("There are no entries for lab data.")
-    return(NULL)
-  }
 
   cli::cli_process_start("Filtering country-specific lab data")
 
@@ -583,15 +569,6 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 #' @export
 
 clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-", lab_locs_path = NULL) {
-  # Check if the lab data is attached
-  if (is.null(ctry.data$lab.data)) {
-    stop("Lab data not attached to ctry.data. Please attach and try again.")
-  }
-
-  if ("country" %in% names(ctry.data$lab.data)) {
-    cli::cli_alert_warning("Lab data already cleaned.")
-    return(ctry.data$lab.data)
-  }
 
   lab.data <- ctry.data$lab.data
 
@@ -946,6 +923,19 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     dplyr::arrange(year) |>
     dplyr::distinct()
 
+  # Check look up table for potential duplicated rows
+  lookup_row_dups <- geo_lookup_table |>
+    dplyr::mutate(epid_comb = str_c(epid_ctry, epid_prov, epid_dist, year, sep = "-")) |>
+    dplyr::group_by(epid_comb, epid_ctry, epid_prov, epid_dist, year) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::filter(n > 1) |>
+    ungroup()
+
+  # Remove duplicates from the look up table
+  lookup_row_dups <- lookup_row_dups |>
+    dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
+  geo_lookup_table <- anti_join(geo_lookup_table, lookup_row_dups)
+
   lab.data <- lab.data |>
     dplyr::left_join(geo_lookup_table,
       multiple = "any",
@@ -962,6 +952,10 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   lab.data <- lab.data |>
     dplyr::rename(DateOfOnset = "CaseDate")
   cli::cli_process_done()
+
+  # Message for values without any province or district information
+  cli::cli_alert_warning(paste0("Records with missing province remaining: ", sum(is.na(lab.data$Province))))
+  cli::cli_alert_warning(paste0("Records with missing district remaining: ", sum(is.na(lab.data$District))))
 
   # adding additional subintervals (these aren't present in regional lab data, so are created as dummy variables)
   lab.data <- lab.data |>
@@ -1000,9 +994,24 @@ clean_lab_data <- function(ctry.data, start.date = start_date, end.date = end_da
   # Determine the type of cleaning to do
   lab.data.cols <- names(ctry.data$lab.data)
 
-  if ("ctry.code2" %in% lab.data.cols) {
+  if ("MasterKey" %in% lab.data.cols) {
+    if ("prov" %in% names(ctry.data$lab.data)) {
+      cli::cli_alert_warning("Lab data already cleaned.")
+      return(ctry.data$lab.data)
+    }
+
+    if (nrow(ctry.data$lab.data) == 0) {
+      message("There are no entries for lab data.")
+      return(NULL)
+    }
+
     lab.data <- clean_lab_data_who(ctry.data, start.date, end.date, delim)
+
   } else {
+    if ("Province" %in% names(ctry.data$lab.data)) {
+      cli::cli_alert_warning("Lab data already cleaned.")
+      return(ctry.data$lab.data)
+    }
     lab.data <- clean_lab_data_regional(ctry.data, start.date, end.date, delim, lab_locs_path)
   }
 
