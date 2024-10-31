@@ -718,12 +718,15 @@ get_all_polio_data <- function(
     raw.data$sia.rounds <- do.call(rbind.data.frame, sia.cluster.data) |>
       dplyr::arrange(adm2guid, sub.activity.start.date) |>
       dplyr::group_by(adm2guid, vaccine.type, cluster) |>
-      dplyr::mutate(round.num = row_number()) |>
+      dplyr::mutate(cdc.round.num = row_number()) |>
       dplyr::ungroup() |>
       dplyr::group_by(adm2guid) |>
-      dplyr::mutate(max.round = max(sub.activity.start.date)) |>
+      dplyr::mutate(cdc.max.round = max(sub.activity.start.date)) |>
       dplyr::ungroup() |>
-      dplyr::mutate(last.camp = ifelse(max.round == sub.activity.start.date, 1, 0))
+      dplyr::mutate(cdc.last.camp = ifelse(cdc.max.round == sub.activity.start.date, 1, 0)) |>
+      dplyr::select(sia.code, sia.sub.activity.code, sub.activity.start.date, vaccine.type,
+                    place.admin.0, place.admin.1, place.admin.2, adm0guid, adm1guid, adm2guid,
+                    cluster, cluster_method, cdc.round.num, cdc.max.round, cdc.last.camp)
     rm(sia.clusters, sia.cluster.data)
 
     cli::cli_process_done()
