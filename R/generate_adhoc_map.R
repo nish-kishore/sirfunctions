@@ -404,18 +404,49 @@ load_sharepoint_env <- function(raw.data) {
 #' Set the emergence colors
 #' @importFrom dplyr filter arrange case_when distinct mutate
 #' @importFrom tidyr drop_na
-#' @param raw.data global polio data output of sirfunctions::get_all_polio_data()
-#' @param download_date date global polio data was downloaded
+#' @param raw.data Global polio data output of sirfunctions::get_all_polio_data()
+#' @param country A string or a list of strings containing the countries of interest
+#' @param start_date Start date of the time span to look for emergences. Defaults to 13 months from the end date.
+#' @param end_date  End date of the time span to look for emergences Defaults to download date of raw data.
 #'
 #' @return a named list containing the mapping of emergence and corresponding colors
-set_emergence_colors <- function(raw.data, download_date) {
+#' @export
+set_emergence_colors <- function(raw.data, country, start_date=NULL, end_date=NULL) {
+
+  # Default start and end dates
+  if (is.null(end_date)) {
+    end_date <- lubridate::as_date(raw.data$metadata$download_time)
+  } else {
+    end_date <- lubridate::as_date(end_date)
+  }
+
+  if (is.null(start_date)) {
+    start_date <- lubridate::floor_date((end_date %m-% months(13, F)), "month")
+  } else {
+    start_date <- lubridate::as_date(start_date)
+  }
+
+  country <- stringr::str_to_upper(country)
+
+  # Check input validity
+  if (length(setdiff(country, unique(raw.data$global.ctry$ADM0_NAME))) > 0) {
+    diff <- setdiff(country, unique(raw.data$global.ctry$ADM0_NAME))
+    cli::cli_alert_warning("Invalid country names:")
+    for (i in diff) {
+      print(i)
+    }
+    cli::cli_alert_warning("Please check and try again")
+    return(NULL)
+  }
+
   emg <- raw.data$pos |>
+    dplyr::filter(place.admin.0 %in% country) |>
     dplyr::mutate(emg_grp2 = dplyr::case_when(
       .data$measurement == "WILD 1" ~ viruscluster,
       TRUE ~ emergencegroup
     )) |>
-    dplyr::filter(dateonset >= (download_date %m-% months(13)) &
-      .data$source %in% c("AFP", "ENV") &
+    dplyr::filter(.data$dateonset >= start_date,
+      .data$source %in% c("AFP", "ENV"),
       .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")) |>
     dplyr::distinct(.data$emg_grp2) |>
     dplyr::arrange(.data$emg_grp2) |>
@@ -476,6 +507,8 @@ set_emergence_colors <- function(raw.data, download_date) {
     ))
   }
 
+  emg_cols <- subset(emg_cols, (names(emg_cols) %in% emg$emg_grp2))
+
   return(emg_cols)
 }
 # Main Function ----
@@ -505,6 +538,7 @@ set_emergence_colors <- function(raw.data, download_date) {
 #' @param width width of the map
 #' @param scale scale of the map
 #' @param dpi dpi of the map
+#' @return ggplot object
 #'
 #' @export
 generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
@@ -512,9 +546,14 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
                       surv = c("AFP", "ES", "OTHER"), labels = "YES",
                       owner = "CDC-GID-PEB",
                       new_detect_expand = F,
-                      start_date = NULL, end_date = NULL, output = NULL,
+                      start_date = NULL,
+                      end_date = NULL,
+                      output = NULL,
                       image_size = NULL,
-                      height = 6.2, width = 4.5, scale = 1.25, dpi = 300) {
+                      height = 6.2,
+                      width = 4.5,
+                      scale = 1.25,
+                      dpi = 300) {
 
   if (!requireNamespace("ggspatial", quietly = TRUE)) {
     stop('Package "ggspatial" must be installed to use this function.',
@@ -585,7 +624,6 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   download_date <- lubridate::as_date(raw.data$metadata$download_time)
   run_date <- lubridate::today()
   map_ref <- sirfunctions::edav_io(io = "read", file_loc = "Data/orpg/mapref.table.rds")
-  emg_cols <- set_emergence_colors(raw.data, download_date)
   surv_options <- paste(surv, collapse = ", ")
   clean_maps <- c("COM", "STP", "CAV", "SEY")
 
@@ -621,10 +659,13 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   }
 
   if (is.null(start_date)) {
-    start_date <- lubridate::floor_date((end_date %m-% months(13)), "month")
+    start_date <- lubridate::floor_date((end_date %m-% months(13, F)), "month")
   } else {
     start_date <- lubridate::as_date(start_date)
   }
+
+  # Getting emergence colors
+  emg_cols <- set_emergence_colors(raw.data, country, start_date, end_date)
 
   # Load Sharepoint environment
   if (output == "sharepoint") {
@@ -776,6 +817,7 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   }
 
   cli::cli_alert_success("Beep Beep - maps are ready")
+  return(g1a)
 }
 
 # Example ----
