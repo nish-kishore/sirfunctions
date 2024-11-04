@@ -15,32 +15,48 @@ edav_io(
 )
 }
 \arguments{
-\item{io}{str: "read", "write", "delete", "exists.dir", "exists.file", "create", "list", or "upload".
-"read" - read a file from EDAV, must be an rds, csv, or rda;
-"write" - write a file from EDAV, must be an rds, csv or rda;
-"exists.dir" - returns a boolean after checking to see if a folder exists;
-"exists.file" - returns a boolean after checking to see if a file exists;
-"create" - creates a folder and all preceding folders
-"list" - returns a tibble with all objects in a folder
-"upload" - moves a file of any type to EDAV}
+\item{io}{\code{str} The type of operation to perform in EDAV.
+\itemize{
+\item \code{"read"} Read a file from EDAV, must be an rds, csv, or rda.
+\item \code{"write"} Write a file from EDAV, must be an rds, csv or rda.
+\item \code{"exists.dir"} Returns a boolean after checking to see if a folder exists.
+\item \code{"exists.file"}Returns a boolean after checking to see if a file exists.
+\item \code{"create"} Creates a folder and all preceding folders.
+\item \code{"list"} Returns a tibble with all objects in a folder.
+\item \code{"upload"} Moves a file of any type to EDAV.
+}}
 
-\item{default_dir}{str: "GID/PEB/SIR" - the default directory for all SIR data in EDAV, can be set to NULL
-if you provide the full directory path in \code{file_loc}}
+\item{default_dir}{\code{str} The default directory in EDAV. \code{"GID/PEB/SIR"} is the default directory
+for all SIR data in EDAV. Can be set to \code{NULL} if you provide the full directory path in \code{file_loc}.}
 
-\item{file_loc}{str: location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
-the information in \code{default_dir} if you set that parameter to NULL.}
+\item{file_loc}{\code{str} Location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
+the information in \code{default_dir} if you set that parameter to \code{NULL}.}
 
-\item{obj}{default NULL object to be saved, needed for "write"}
+\item{obj}{\code{robj} Object to be saved, needed for \code{"write"}. Defaults to \code{NULL}.}
 
-\item{azcontainer}{azure container object returned from \code{get_azure_storage_connection()}}
+\item{azcontainer}{Azure container object returned from \code{get_azure_storage_connection()}.}
 
-\item{force_delete}{boolean: use delete io without verification in the command line}
+\item{force_delete}{\code{bool} Use delete io without verification in the command line.}
 
-\item{local_path}{str: local file pathway to upload a file to edav, default is NULL, only required when using 'upload' option}
+\item{local_path}{\code{str} Local file pathway to upload a file to EDAV. Default is \code{NULL}.
+This parameter is only required when passing \code{"upload"} in the \code{io} parameter.}
 }
 \value{
-output dependent on "io"
+Output dependent on "io".
 }
 \description{
-Helper function read and write key data to EDAV
+The function serves as the primary way to interact with the EDAV system from R. It can
+read, write, create folders, check whether a file or a folder exists, upload files, and list
+all files in a folder.
+}
+\examples{
+\dontrun{
+df <- edav_io("read", file_loc = "df1.csv") # read file from EDAV
+edav_io("write", file_loc = "Data/test", obj = df) # saves df to the test folder in EDAV
+edav_io("exists.dir", "Data/nonexistentfolder") # returns FALSE
+edav_io("exists.file", file_loc = "Data/test/df1.csv") # returns TRUE
+edav_io("create", "Data/nonexistentfolder") # creates a folder called nonexistentfolder
+edav_io("list") # list all files from the default directory
+edav_io("upload", file_loc = "Data/test", local_path = "C:/Users/ABC1/Desktop/df2.csv")
+}
 }

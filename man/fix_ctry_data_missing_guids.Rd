@@ -2,23 +2,35 @@
 % Please edit documentation in R/dal.R
 \name{fix_ctry_data_missing_guids}
 \alias{fix_ctry_data_missing_guids}
-\title{Function to fix unknown GUIDs in the AFP linelist by obtaining GUIDs found in the pop files}
+\title{Fix unknown GUIDs in the AFP linelist}
 \usage{
 fix_ctry_data_missing_guids(afp.data, pop.data, guid_list, spatial_scale)
 }
 \arguments{
-\item{afp.data}{AFP linelist (afp.all.2)}
+\item{afp.data}{\code{tibble} AFP linelist (afp.all.2).}
 
-\item{pop.data}{population file (prov.pop or dist.pop)}
+\item{pop.data}{\code{tibble} Population file (prov.pop or dist.pop).}
 
-\item{guid_list}{list of unknown GUIDs from the AFP linelist.
-This is the output of check_afp_guid_ctry_data().}
+\item{guid_list}{\verb{str list} Unknown GUIDs from the AFP linelist.
+This is the output of \code{check_afp_guid_ctry_data()}.}
 
-\item{spatial_scale}{"prov" or "dist"}
+\item{spatial_scale}{\code{str} The spatial scale to impute data. Either \code{"prov"} or \code{"dist"}.}
 }
 \value{
-AFP data with corrected GUIDs based on the population files.
+\code{tibble} AFP data with corrected GUIDs based on the population files.
 }
 \description{
-Function to fix unknown GUIDs in the AFP linelist by obtaining GUIDs found in the pop files
+Fix unknown GUIDs in the AFP linelist by obtaining GUIDs found in the pop files. It attempts to replace
+the unknown GUIDs from the AFP linelist by using geographic info for a specific year that coincides with the case date
+and uses the GUIDs contained in the current spatial data instead.
+}
+\examples{
+raw.data <- get_all_polio_data()
+ctry.data <- extract_country_data("algeria")
+error.list <- check_afp_guid_ctry_data(ctry.data)
+ctry.data$afp.all.2 <- fix_ctry_data_missing_guids(ctry.data$afp.all.2,
+                                                   ctry.data$dist.pop,
+                                                   error.list$dist_mismatches_pop,
+                                                   "dist")
+
 }
