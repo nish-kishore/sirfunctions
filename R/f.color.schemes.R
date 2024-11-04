@@ -1,9 +1,23 @@
 #' Utility function for colors
-#' @description Utility function to return SIR colors
-#' @param type str: type of colors we can return. Accepted values include:
-#' 'epicurve', 'para.case', 'afp.prov', 'afp.dist', 'pot.comp', 'silence',
-#' 'silence.v2', 'cases', 'es', 'mapval', 'timeliness.col.vars'
-#' @returns list: color sets
+#'
+#' Utility function to return SIR color schemes used in various graphs and visualizations.
+#'
+#' @param type `str` Type of colors we can return. Accepted values include:
+#' -`"epicurve"` Mapped to different `cdc.classification.all2` values.
+#' - `"para.case"` A subset of `"epicurve"` representing paralytic cases.
+#' - `"afp.prov"` Mapped for case counts at the province level.
+#' - `"afp.dist"` Mapped for case counts at the province level.
+#' - `"pot.comp"` Colors for categories of compatibles and potentially compatibles.
+#' - `"silence"` Colors to use to map silent populations.
+#' - `"silence.v2"` Colors to use to map silent populations.
+#' - `"cases"` Values to map case type.
+#' - `"es"` Values used in ES data.
+#' - `"mapval"` Values used for creating maps with percentages.
+#' - `"timeliness.col.vars"` Mapping intervals  used for lab timeliness intervals graphs.
+#' @returns Named `list` with color sets.
+#' @examples
+#' color_list <- f.color.schemes("epicurve")
+#'
 #' @export
 
 f.color.schemes <- function(type) {

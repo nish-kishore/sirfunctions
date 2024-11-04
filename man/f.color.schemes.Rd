@@ -7,13 +7,28 @@
 f.color.schemes(type)
 }
 \arguments{
-\item{type}{str: type of colors we can return. Accepted values include:
-'epicurve', 'para.case', 'afp.prov', 'afp.dist', 'pot.comp', 'silence',
-'silence.v2', 'cases', 'es', 'mapval', 'timeliness.col.vars'}
+\item{type}{\code{str} Type of colors we can return. Accepted values include:
+-\code{"epicurve"} Mapped to different \code{cdc.classification.all2} values.
+\itemize{
+\item \code{"para.case"} A subset of \code{"epicurve"} representing paralytic cases.
+\item \code{"afp.prov"} Mapped for case counts at the province level.
+\item \code{"afp.dist"} Mapped for case counts at the province level.
+\item \code{"pot.comp"} Colors for categories of compatibles and potentially compatibles.
+\item \code{"silence"} Colors to use to map silent populations.
+\item \code{"silence.v2"} Colors to use to map silent populations.
+\item \code{"cases"} Values to map case type.
+\item \code{"es"} Values used in ES data.
+\item \code{"mapval"} Values used for creating maps with percentages.
+\item \code{"timeliness.col.vars"} Mapping intervals  used for lab timeliness intervals graphs.
+}}
 }
 \value{
-list: color sets
+Named \code{list} with color sets.
 }
 \description{
-Utility function to return SIR colors
+Utility function to return SIR color schemes used in various graphs and visualizations.
+}
+\examples{
+color_list <- f.color.schemes("epicurve")
+
 }
