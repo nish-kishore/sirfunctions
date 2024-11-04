@@ -1,17 +1,21 @@
 #' Calculate EV detection rate function
 #'
-#' @name f.ev.rate.01
-#' @description Function to calculate the EV detection rate in sites from POLIS
+#' Function to calculate the EV detection rate in sites from POLIS.
 #' @importFrom dplyr case_when distinct group_by left_join mutate n select summarize ungroup as_tibble
 #' @importFrom lubridate as_date
 #' @importFrom scales label_percent
-#' @param es.data tibble: ES data which includes site name (site.name),
+#' @param es.data `tibble` ES data which includes site name (site.name),
 #' country (ADM0_NAME),
 #' date of collection (collect.date), and a binary ev detection variable (ev.detect)
-#' that indicates absence/presence (0, 1) of enterovius in an ES sample
-#' @param start.date chr: "YYYY-MM-DD"
-#' @param end.date chr: "YYYY-MM-DD"
-#' @returns tibble: long format including site specific ev detection rate
+#' that indicates absence/presence (0, 1) of enterovius in an ES sample.
+#' @param start.date `chr` Date in the format of `"YYYY-MM-DD"`.
+#' @param end.date `chr` Date in the format of `"YYYY-MM-DD"`.
+#' @returns `tibble` Long format dataframe including site specific EV detection rates.
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = F)
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ev_rates <- f.ev.rate.01(ctry.data$es, "2021-01-01", "2023-12-31")
+#'
 #' @export
 f.ev.rate.01 <- function(
     es.data,

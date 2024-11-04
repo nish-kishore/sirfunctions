@@ -7,18 +7,24 @@
 f.ev.rate.01(es.data, start.date, end.date)
 }
 \arguments{
-\item{es.data}{tibble: ES data which includes site name (site.name),
+\item{es.data}{\code{tibble} ES data which includes site name (site.name),
 country (ADM0_NAME),
 date of collection (collect.date), and a binary ev detection variable (ev.detect)
-that indicates absence/presence (0, 1) of enterovius in an ES sample}
+that indicates absence/presence (0, 1) of enterovius in an ES sample.}
 
-\item{start.date}{chr: "YYYY-MM-DD"}
+\item{start.date}{\code{chr} Date in the format of "YYYY-MM-DD".}
 
-\item{end.date}{chr: "YYYY-MM-DD"}
+\item{end.date}{\code{chr} Date in the format of "YYYY-MM-DD".}
 }
 \value{
-tibble: long format including site specific ev detection rate
+\code{tibble} Long format dataframe including site specific EV detection rates.
 }
 \description{
-Function to calculate the EV detection rate in sites from POLIS
+Function to calculate the EV detection rate in sites from POLIS.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = F)
+ctry.data <- extract_country_data("algeria", raw.data)
+ev_rates <- f.ev.rate.01(ctry.data$es, "2021-01-01", "2023-12-31")
+
 }
