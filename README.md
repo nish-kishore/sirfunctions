@@ -98,6 +98,7 @@ brief descriptions.
 8) `fix_ctry_data_missing_guids`: fixes unknown GUIDS in the AFP linelist by
    obtaining GUIDs found in the pop files based on province and district names for specific years.
 10) `compress_png`: compress PNG files. _Note: requires installation of the pngquant software._
+11) `get_diff_cols`: get the columns where records differ in a group. Useful for identifying where duplicates differ.
 
 ## Release Schedule
 
