@@ -127,25 +127,29 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 }
 # Main function ----
 
-#' Calculate Non-Polio AFP Rate Function
+#' Calculate non-polio AFP rate
 #'
-#' @name f.npafp.rate.01
-#' @description Calculate the NPAFP rate from POLIS data
+#' Calculate the NPAFP rate from POLIS data. Can either pass `raw.data` to calculate NPAFP rates
+#' on the global dataset, or a `ctry.data` dataset.
 #' @import dplyr
 #' @import lubridate
 #' @import tidyr
-#' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
-#' formated as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2 which includes
-#' c("NPAFP", "PENDING", "LAB PENDING")
-#' @param pop.data tibble: Under 15 population data by a given spatial scale including
-#' "year", "adm(0,1,2)guid, "u15pop", and "(ctry/prov/dist)" as appropriate
-#' @param start.date chr: "YYYY-MM-DD"
-#' @param end.date chr: "YYYY-MM-DD"
-#' @param spatial.scale chr: "prov" or "dist" or "ctry"
-#' @param pending boolean: default TRUE
-#' @param rolling boolean: default FALSE
-#' @param sp_continuity_validation boolean: default TRUE
-#' @returns tibble
+#' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
+#' formatted as `adm(0,1,2)guid`, onset date as `date` and `cdc.classification.all2` which includes
+#' `"NPAFP", "PENDING", "LAB PENDING"`.
+#' @param pop.data `tibble` Under 15 population data by a given spatial scale including
+#' `year`, `adm(0,1,2)guid`, `u15pop`, and `ctry/prov/dist` as appropriate.
+#' @param start.date `chr` Start date with the format "YYYY-MM-DD".
+#' @param end.date `chr` Start date with the format "YYYY-MM-DD".
+#' @param spatial.scale `chr` Spatial scale for analysis.
+#' - `"prov"` Province level
+#' - `"dist"` District level
+#' - `"ctry"` Country level
+#' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
+#' @param rolling `bool` Should the analysis be performed on a rolling bases? Default `FALSE`.
+#' @param sp_continuity_validation Should we filter places that are not present
+#' for the entirety of the analysis dates? Default `TRUE`.
+#' @returns `tibble` A table containing NPAFP rates as well as additional information relevant to each location analyzed.
 #' @export
 f.npafp.rate.01 <- function(
     afp.data,

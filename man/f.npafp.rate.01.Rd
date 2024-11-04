@@ -2,7 +2,7 @@
 % Please edit documentation in R/f.npafp.rate.01.R
 \name{f.npafp.rate.01}
 \alias{f.npafp.rate.01}
-\title{Calculate Non-Polio AFP Rate Function}
+\title{Calculate non-polio AFP rate}
 \usage{
 f.npafp.rate.01(
   afp.data,
@@ -16,28 +16,35 @@ f.npafp.rate.01(
 )
 }
 \arguments{
-\item{afp.data}{tibble: AFP data which includes GUID at a given spatial scale
-formated as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2 which includes
-c("NPAFP", "PENDING", "LAB PENDING")}
+\item{afp.data}{\code{tibble} AFP data which includes GUID at a given spatial scale
+formatted as \verb{adm(0,1,2)guid}, onset date as \code{date} and \code{cdc.classification.all2} which includes
+\verb{"NPAFP", "PENDING", "LAB PENDING"}.}
 
-\item{pop.data}{tibble: Under 15 population data by a given spatial scale including
-"year", "adm(0,1,2)guid, "u15pop", and "(ctry/prov/dist)" as appropriate}
+\item{pop.data}{\code{tibble} Under 15 population data by a given spatial scale including
+\code{year}, \verb{adm(0,1,2)guid}, \code{u15pop}, and \code{ctry/prov/dist} as appropriate.}
 
-\item{start.date}{chr: "YYYY-MM-DD"}
+\item{start.date}{\code{chr} Start date with the format "YYYY-MM-DD".}
 
-\item{end.date}{chr: "YYYY-MM-DD"}
+\item{end.date}{\code{chr} Start date with the format "YYYY-MM-DD".}
 
-\item{spatial.scale}{chr: "prov" or "dist" or "ctry"}
+\item{spatial.scale}{\code{chr} Spatial scale for analysis.
+\itemize{
+\item \code{"prov"} Province level
+\item \code{"dist"} District level
+\item \code{"ctry"} Country level
+}}
 
-\item{pending}{boolean: default TRUE}
+\item{pending}{\code{bool} Should cases classified as \code{PENDING} or \verb{LAB PENDING} be included in calculations? Default \code{TRUE}.}
 
-\item{rolling}{boolean: default FALSE}
+\item{rolling}{\code{bool} Should the analysis be performed on a rolling bases? Default \code{FALSE}.}
 
-\item{sp_continuity_validation}{boolean: default TRUE}
+\item{sp_continuity_validation}{Should we filter places that are not present
+for the entirety of the analysis dates? Default \code{TRUE}.}
 }
 \value{
-tibble
+\code{tibble} A table containing NPAFP rates as well as additional information relevant to each location analyzed.
 }
 \description{
-Calculate the NPAFP rate from POLIS data
+Calculate the NPAFP rate from POLIS data. Can either pass \code{raw.data} to calculate NPAFP rates
+on the global dataset, or a \code{ctry.data} dataset.
 }

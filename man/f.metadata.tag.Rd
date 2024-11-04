@@ -9,7 +9,7 @@ f.metadata.tag(object, raw_data = NULL, time_tag = NULL)
 \arguments{
 \item{object}{\code{ggplot} or \code{flextable} The figure or table to add metadata to.}
 
-\item{raw_data}{\verb{named list} outputs of \code{get_all_polio_data()} or \code{extract_country_data()}.}
+\item{raw_data}{\code{list} outputs of \code{get_all_polio_data()} or \code{extract_country_data()}.}
 
 \item{time_tag}{\code{str} A date and time string. Defaults to \code{raw.data$metadata$download_time}.}
 }
