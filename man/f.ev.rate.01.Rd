@@ -12,9 +12,9 @@ country (ADM0_NAME),
 date of collection (collect.date), and a binary ev detection variable (ev.detect)
 that indicates absence/presence (0, 1) of enterovius in an ES sample.}
 
-\item{start.date}{\code{chr} Date in the format of "YYYY-MM-DD".}
+\item{start.date}{\code{chr} Date in the format of \code{"YYYY-MM-DD"}.}
 
-\item{end.date}{\code{chr} Date in the format of "YYYY-MM-DD".}
+\item{end.date}{\code{chr} Date in the format of \code{"YYYY-MM-DD"}.}
 }
 \value{
 \code{tibble} Long format dataframe including site specific EV detection rates.
