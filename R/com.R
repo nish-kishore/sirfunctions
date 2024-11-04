@@ -2,16 +2,21 @@
 
 #' Send a message on Microsoft Teams
 #'
-#' @description
-#' Helper function to send message to validated MS Teams interface
+#'Helper function to send message to validated MS Teams interface.
 #' @import Microsoft365R
 #' @import AzureAuth
-#' @param msg str: message to be sent
-#' @param team_id str: Team id, defaults to "CGH-GID-PEB-SIR"
-#' @param channel str: channel where message should be sent
-#' @param attach str: local path of files to be attached in message
-#' @param type str: "text" or "html"
-#' @returns Success or error message
+#' @param msg `str` Message to be sent.
+#' @param team_id `str` Teams ID. Defaults to `"CGH-GID-PEB-SIR"`.
+#' @param channel `str` Channel where message should be sent.
+#' @param attach `str` Local path of files to be attached in message.
+#' @param type `str` Type of message to be sent. Either `"text"` or `"html"`.
+#' @returns Status message whether the operation was a success or an error message.
+#' @examples
+#' \dontrun{
+#' message <- "this is a test"
+#' send_teams_message(message)
+#' }
+#'
 #' @export
 send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL, type = "text"){
 
@@ -27,15 +32,22 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 
 #' Upload file to Sharepoint
 #'
-#' @description
 #' Helper function to upload file to MS SharePoint
 #' @import Microsoft365R
 #' @import AzureAuth
-#' @param file_to_upload str: local path of files to be uploaded
-#' @param sharepoint_file_loc str: location in SharePoint to upload file
-#' @param site str: SharePoint site location, defaults to "CGH-GID-PEB" or the site URL: "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"
-#' @param drive str: SharePoint drive to upload data to
-#' @returns Success or error message
+#' @param file_to_upload `str` Local path of files to be uploaded.
+#' @param sharepoint_file_loc `str` Location in SharePoint to upload file.
+#' @param site `str` SharePoint site location. Defaults to `"CGH-GID-PEB"`
+#' or the site URL: `"https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"`.
+#' @param drive `str` SharePoint drive to upload data to.
+#' @returns Status message whether the operation was a success or an error message.
+#' @examples
+#' \dontrun{
+#' file_path <- "C:/Users/ABC1/df1.csv"
+#' sp_path <- "test_folder"
+#' upload_to_sharepoint(file_path, sp_path)
+#' }
+#'
 #' @export
 upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283", drive = "Documents"){
 
@@ -78,13 +90,20 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 
 #' Send email through Outlook
 #'
-#' @description
-#' Helper function to send an email through Outlook from R
-#' @param title str: Subject of message to be sent
-#' @param body str: long string of body of message to be sent
-#' @param recipient str: semicolon separated list of recipients
-#' @param attachment str: path to local document to be attached to email, defaults to NULL
-#' @returns Success or error message
+#' Function to send an email through Outlook from R.
+#' @param title `str` Subject of message to be sent.
+#' @param body `str` Long string of body of message to be sent.
+#' @param recipient `str` A semicolon separated list of recipients.
+#' @param attachment `str` Path to local document to be attached to email. Defaults to `NULL`.
+#' @returns Status message whether the operation was a success or an error message.
+#' @examples
+#' \dontrun{
+#' title_message <- "Test"
+#' body_message <- "this is a test"
+#' recipient_list <- c("ab123@email.com")
+#' send_outlook_email(title_message, body_message, recipient_list)
+#' }
+#'
 #' @export
 send_outlook_email <- function(title, body, recipient, attachment = NULL){
 
