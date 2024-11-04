@@ -2,17 +2,25 @@
 % Please edit documentation in R/f.plot.looks.R
 \name{f.plot.looks}
 \alias{f.plot.looks}
-\title{Function to return specific plot looks}
+\title{Set plot looks}
 \usage{
 f.plot.looks(type)
 }
 \arguments{
-\item{type}{String describing a value to be returned. Accepted values include:
-'02', 'epicurve', 'geomtile', 'gpln_type1', 'gpln_type2'}
+\item{type}{\code{string} Type of graph format. Accepted values include:
+\verb{"02", "epicurve", "geomtile", "gpln_type1", "gpln_type2"}}
 }
 \value{
-ggplot theme for addition into plot
+\verb{ggplot2 theme obj} A theme object that can be added into an existing plot.
 }
 \description{
-Function to collate and return plot looks
+The function serves to collate and return plot looks. Depending on the parameter,
+specific values in a \code{ggplot2} theme object will be returned.
+}
+\examples{
+epicurve_looks <- f.plot.looks("epicurve")
+df <- datasets::iris
+p1 <- ggplot2::ggplot() + ggplot2::geom_col(data = df, ggplot2::aes(x = Sepal.Length, y = Sepal.Width))
+p2 <- p1 + epicurve_looks
+
 }
