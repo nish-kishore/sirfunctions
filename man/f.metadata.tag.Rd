@@ -7,15 +7,25 @@
 f.metadata.tag(object, raw_data = NULL, time_tag = NULL)
 }
 \arguments{
-\item{object}{ggplot or flextable object: the figure or table to add metadata to}
+\item{object}{\code{ggplot} or \code{flextable} The figure or table to add metadata to.}
 
-\item{raw_data}{Rds object: polio raw data or country data}
+\item{raw_data}{\verb{named list} outputs of \code{get_all_polio_data()} or \code{extract_country_data()}.}
 
-\item{time_tag}{str: a date and time string, defaults to raw.data$metadata$download_time}
+\item{time_tag}{\code{str} A date and time string. Defaults to \code{raw.data$metadata$download_time}.}
 }
 \value{
-a \code{ggplot} or \code{flextable} object with metadata added
+A \code{ggplot} or \code{flextable} object with metadata added.
 }
 \description{
-add metadata tags to figures and tables
+Add metadata tags to figures and tables. These include the download date of the dataset.
+The function will return an error if both \code{raw_data} and \code{time_tag} parameters are \code{NULL}.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+df <- datasets::iris
+p1 <- ggplot2::ggplot() + ggplot2::geom_col(data = df, ggplot2::aes(x = Sepal.Length, y = Sepal.Width))
+p2 <- f.metadata.tag(p1, raw.data) # use raw.data download time
+p3 <- f.metadata.tag(p1, time_tag = "2021-01-01") # use custom time tag
+
+
 }
