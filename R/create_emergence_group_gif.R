@@ -1,5 +1,5 @@
 #' Generate Emergence Group Movement Gifs
-#' @description
+#'
 #' Generate the figures and stitch together a GIF to evaluate emergence group
 #' movement over time, generally aggregated as cumulative per month
 #' @importFrom cli cli_alert cli_alert_info cli_h1 cli_process_done cli_process_start
@@ -9,15 +9,32 @@
 #' @importFrom lubridate as_date floor_date month year
 #' @importFrom sf st_bbox
 #' @importFrom tidyr expand_grid
-#' @param emergence_group str: designation of the emergence group to review
-#' @param pos tibble: positives data set
-#' @param dist sf: shapefile of all districts
-#' @param ctry sf: shapefile of all countries
-#' @param include_env boolean: To include environmental detections in analysis
-#' @param cumulative boolean: To display cases as cumulative
-#' @param out_gif str: location where gif should be saved
+#' @param emergence_group `str` Designation of the emergence group to review.
+#' @param pos `tibble` Positives data set.
+#' @param dist `sf` Shapefile of all districts.
+#' @param ctry `sf` Shapefile of all countries.
+#' @param include_env `bool` To include environmental detections in analysis. Defaults to `TRUE`.
+#' @param cumulative `bool` To display cases as cumulative. Defaults to `TRUE`.
+#' @param out_gif `str` Location where gif should be saved.
 #'
-#' @returns GIF written out to a location
+#' @returns GIF written out to location of `out_gif`.
+#' @examples
+#' \dontrun{
+#'
+#' data <- get_all_polio_data(size = "medium")
+#' pos <- data$pos
+#' emergence_group <- "NIE-JIS-1"
+#' dist <- data$global.dist
+#' ctry <- data$global.ctry
+#' include_env <- T
+#' cumulative <- F
+#' out_gif <- getwd()
+#'
+#' create_emergence_group_gif(emergence_group, pos, dist, ctry, include_env,
+#'                            cumulative, out_gif)
+#' }
+#'
+#' @export
 create_emergence_group_gif <- function(
     emergence_group,
     pos,
@@ -28,14 +45,6 @@ create_emergence_group_gif <- function(
     out_gif
 ){
 
-  # data <- sirfunctions::get_all_polio_data(size = "medium")
-  # pos <- data$pos
-  # emergence_group <- "NIE-JIS-1"
-  # dist <- data$global.dist
-  # ctry <- data$global.ctry
-  # include_env <- T
-  # cumulative <- F
-  # out_gif <- "C:/Users/ynm2/OneDrive - CDC/NIE_JIS_1.gif"
   if (!requireNamespace("magick", quietly = TRUE)) {
     stop('Package "magick" must be installed to use this function.',
          .call = FALSE)
