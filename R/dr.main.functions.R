@@ -709,14 +709,33 @@ upload_dr_to_github <-
 
 #' Freeze desk review data to the desk review folder in EDAV
 #'
-#' @param rds_obj Rds object loaded in R
-#' @param file_name name given to the Rds object, do not append .rds
-#' @param country country as a string
-#' @param year year as an integer
+#' Data from the desk review can be stored in EDAV so there's an exact copy of the
+#' dataset used in the desk review. This ensures that even after years,
+#' the desk reviews can be ran exactly as it was.
+#' @param rds_obj `Robj` Object loaded in R. This would be `ctry.data`, for example.
+#' @param file_name `str` Name given to the Rds object, do not append `.rds`. This is
+#' what gets stored in EDAV.
+#' @param country `str` Country as a string.
+#' @param year `int` It is recommended to set this to the year
+#' when the desk review was ran.
 #'
 #' @return A status message
+#' @examples
+#' \dontrun{
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- init_dr("algeria")
+#' freeze_dr_data(ctry.data, "algeria_ctry_data")
+#' }
+#'
 #' @export
-freeze_dr_data <- function(rds_obj, country, year, file_name) {
+#' @seealso [init_dr()]
+freeze_dr_data <- function(rds_obj,
+                           file_name,
+                           country = Sys.getenv("DR_COUNTRY"),
+                           year = as.numeric(format(Sys.Date(), "%Y"))
+                           ) {
+  country <- stringr::str_to_lower(country)
+
   sirfunctions::edav_io(
     io = "write",
     default_dir = NULL,
