@@ -43,7 +43,7 @@ this parameter is set to \code{TRUE}.}
 \description{
 Creates a table for timeliness by geographic unit including the
 number of timely stool samples for each interval and percent timeliness. Currently,
-the function will only work on \code{ctry.data} (output of \code{extract_country_data()}).
+the function will only work on \code{ctry.data} (output of \code{\link[=extract_country_data]{extract_country_data()}}).
 }
 \examples{
 raw.data <- get_all_polio_data()

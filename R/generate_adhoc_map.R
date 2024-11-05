@@ -514,32 +514,60 @@ set_emergence_colors <- function(raw.data, country, start_date=NULL, end_date=NU
 # Main Function ----
 
 #' Create adhoc maps for emergences
+#'
+#' Creates a map of recent emergences. The default will display outbreaks from the past 13 months.
+#'
 #' @importFrom dplyr filter arrange case_when left_join mutate
 #' @importFrom ggplot2 ggsave coord_sf
 #' @importFrom lubridate as_date days floor_date today
 #' @importFrom stringr regex str_detect str_to_lower str_to_upper str_trim
 #' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning
 #'
-#' @param raw.data global polio data
-#' @param country `str` or `list` country name or a list of country names
-#' @param start_date start date. If not specified, defaults to 13 months prior to the download date of raw.data
-#' @param end_date end date. If not specified, defaults to the download date of raw.data
-#' @param vdpv `bool` whether to include VPDV in maps. Default TRUE.
-#' @param new_detect `bool` whether to highlight new detections based on WHO HQ report date. Default TRUE.
-#' @param output either a path to a local folder to save the map to, "sharepoint", or none. Defaults to NULL.
-#' @param virus_type `str` virus type to include. Valid entries are "cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1". Can pass a list.
-#' @param surv surveillance options. AFP, ES, OTHER (Includes Case Contact, Community, Healthy Children Sampling).
-#' @param labels Include labels for regions with virus detections.
-#' Options: "ALL": All regions, "YES": Recent Detections - <13 months
-#' @param owner who produced the map. Defaults to "CDC-GID-PEB"
-#' @param new_detect_expand whether to expand the reporting window. Defaults to FALSE.
-#' @param image_size standard sizes of the map outputs. Options are: "full_slide", "soco_slide", "half_slide". Defaults to NULL.
-#' @param height height of the map
-#' @param width width of the map
-#' @param scale scale of the map
-#' @param dpi dpi of the map
-#' @return ggplot object
+#' @param raw.data `list` Global polio data. The output of [get_all_polio_data()].
+#' Make sure the spatial data is attached, otherwise, it will not work.
+#' @param country `str` or `list` Country name or a list of country names.
+#' @param start_date `str` Start date. If not specified, defaults to 13 months prior to the download date of raw.data.
+#' @param end_date `str` End date. If not specified, defaults to the download date of raw.data.
+#' @param vdpv `bool` Whether to include VPDV in maps. Default `TRUE`.
+#' @param new_detect `bool` Whether to highlight new detections based on WHO HQ report date. Default `TRUE`.
+#' @param output `str` Either a path to a local folder to save the map to, `"sharepoint"`, or `NULL`. Defaults to `NULL`.
+#' @param virus_type `str` or `list`. Virus type to include. Valid values are:
 #'
+#' `"cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1".`
+#'
+#' Can pass as a list.
+#' @param surv `str` or `list` Surveillance options. Valid values are:
+#'
+#' `"AFP", "ES", "OTHER"`
+#'
+#' `"OTHER"` includes Case Contact, Community, Healthy Children Sampling. Can pass as a list.
+#' @param labels `str` Include labels for regions with virus detections.
+#' Options:
+#' - `"ALL"`: All regions
+#' - `"YES"`: Recent Detections - <13 months
+#' @param owner `str` Who produced the map. Defaults to `"CDC-GID-PEB"`.
+#' @param new_detect_expand `bool` Whether to expand the reporting window. Defaults to `FALSE`.
+#' @param image_size `str` Standard sizes of the map outputs. Options are:
+#' - `"full_slide"`
+#' - `"soco_slide"`
+#' - `"half_slide"`
+#'
+#' Defaults to `NULL`.
+#' @param height `numeric` Height of the map. Defaults to `6.2`.
+#' @param width `numeric` Width of the map. Defaults to `4.5`.
+#' @param scale `numeric` Scale of the map. Defaults to `1.25`.
+#' @param dpi `numeric` DPI of the map. Defaults to `300`.
+#' @return `ggplot` A map of outbreaks.
+#' @examples
+#' \dontrun{
+#' raw.data <- get_all_polio_data()
+#' p1 <- generate_adhoc_map(raw.data, c("nigeria", "chad"))
+#' # Put colors in emergences that don't have a mapped color
+#' emg_cols <- set_emergence_colors(raw.data, c("nigeria", "chad"))
+#' emg_cols["NIE-BOS-1"] <- "yellow"
+#' emg_cols["NIE-YBS-1"] <- "green"
+#' p2 <- p1 + ggplot2::scale_color_manual(name = "Emergence Group", values = emg_cols)
+#' }
 #' @export
 generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
                                vdpv = T, new_detect = T,
