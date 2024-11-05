@@ -38,11 +38,27 @@ f.timely.detection.01 <- function(
     }
   )
 
+  if (!"date" %in% names(afp.data)) {
+    # borrowed from extract.country.data
+    afp.data <- dplyr::rename_with(afp.data, recode,
+                                   place.admin.0 = "ctry",
+                                   place.admin.1 = "prov",
+                                   place.admin.2 = "dist",
+                                   person.sex = "sex",
+                                   dateonset = "date",
+                                   yronset = "year",
+                                   datenotify = "date.notify",
+                                   dateinvest = "date.invest",
+                                   cdc.classification.all = "cdc.class"
+    )
+  }
+
   years <- lubridate::year(start.date):year(end.date)
 
   # Limit AFP data to the range described by the analysis start and end dates
   afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date))
+    dplyr::filter(between(.data$date, start.date, end.date)) |>
+    dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) lubridate::as_date(x)))
 
   # Warning message about non-overlapping dates
   if (start.date < lubridate::as_date(afp.data$date |> min(na.rm = T))) {
@@ -59,7 +75,9 @@ f.timely.detection.01 <- function(
 
   # Limit ES data to the range described by the analysis start and end dates
   es.data <- es.data |>
-    dplyr::filter(dplyr::between(collect.date, start.date, end.date))
+    dplyr::filter(between(.data$collect.date, start.date, end.date)) |>
+    dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) lubridate::as_date(x)),
+                  ctry = ADM0_NAME)
 
   # Warning message about non-overlapping dates
   if (start.date < lubridate::as_date(es.data$collect.date |> min(na.rm = T))) {
@@ -78,14 +96,14 @@ f.timely.detection.01 <- function(
     dplyr::as_tibble() |>
     dplyr::mutate(
       # Replaces all Missing as "BAD"
-      date.notification.to.hq = lubridate::dmy(date.notification.to.hq),
+      date.notification.to.hq = date.notification.to.hq,
       collecttonothq = as.numeric(date.notification.to.hq - collect.date)
     ) %>%
     dplyr::mutate(
-      date.final.combined.result = lubridate::dmy(date.final.combined.result),
-      date.final.results.reported = lubridate::dmy(date.final.results.reported),
-      date.final.culture.result = lubridate::dmy(date.final.culture.result),
-      date.f6.ref.itd = lubridate::dmy(date.f6.ref.itd),
+      date.final.combined.result = date.final.combined.result,
+      date.final.results.reported = date.final.results.reported,
+      date.final.culture.result = date.final.culture.result,
+      date.f6.ref.itd = date.f6.ref.itd,
       pv = ifelse(wpv == 1 | vdpv == 1, 1, 0),
       end.date = case_when(
         pv == 1 ~ coalesce(date.notification.to.hq, date.final.results.reported, date.final.combined.result),
@@ -106,7 +124,7 @@ f.timely.detection.01 <- function(
     dplyr::filter(!cdc.classification.all2 %in% c("COMPATIBLE", "NPAFP", "PENDING", "UNKNOWN", "VAPP", "LAB PENDING")) %>%
     dplyr::select(epid, ctry, year, cdc.classification.all2, date, datenotificationtohq) %>%
     dplyr::mutate(
-      datenotifytohq = lubridate::dmy(datenotificationtohq),
+      datenotifytohq = datenotificationtohq,
       ontonothq = as.numeric(datenotifytohq - date)
     ) %>%
     dplyr::select(epid, ctry, year, ontonothq)
@@ -173,7 +191,7 @@ f.timely.detection.01 <- function(
       ) %>%
       dplyr::ungroup()
 
-    afpes.detect.02 <- dplyr::left_join(afpes.detect.01, ctryseq.data, by = c("ctry" = "ctry")) %>%
+    afpes.detect.02 <- dplyr::left_join(afpes.detect.01, ctryseq.data, by = c("ctry" = "country")) %>%
       dplyr::select(who.region, ctry, year, afpes.pos.spec, seq.capacity, median_days)
 
     afpes.detect.03 <- afpes.detect.02 %>%
