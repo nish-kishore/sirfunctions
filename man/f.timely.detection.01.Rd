@@ -27,7 +27,7 @@ f.timely.detection.01(
 \item Date of notification to HQ (\code{date.notification.to.hq})
 }
 
-This table is the output of \code{get_lab_locs()}.}
+This table is the output of \code{\link[=get_lab_locs]{get_lab_locs()}}.}
 
 \item{start.date}{\code{str} Start date for evaluation with format "YYYY-MM-DD".}
 

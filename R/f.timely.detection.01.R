@@ -12,7 +12,7 @@
 #' - Onset date of AFP cases and collection date of ES samples
 #' - Date of notification to HQ (`date.notification.to.hq`)
 #'
-#' This table is the output of `get_lab_locs()`.
+#' This table is the output of [get_lab_locs()].
 #' @param start.date `str` Start date for evaluation with format "YYYY-MM-DD".
 #' @param end.date `str` End date for evaluation with format "YYYY-MM-DD".
 #' @param rolling `bool` Should timeliness be calculated in a rolling basis? Default `FALSE`.

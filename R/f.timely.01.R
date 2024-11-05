@@ -4,7 +4,7 @@
 #'
 #' Creates a table for timeliness by geographic unit including the
 #' number of timely stool samples for each interval and percent timeliness. Currently,
-#' the function will only work on `ctry.data` (output of `extract_country_data()`).
+#' the function will only work on `ctry.data` (output of [extract_country_data()]).
 #' @import dplyr
 #' @import lubridate
 #' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
