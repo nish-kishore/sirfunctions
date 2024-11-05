@@ -25,7 +25,9 @@ f.timely.detection.01(
 \item Classification of AFP cases & ES samples
 \item Onset date of AFP cases and collection date of ES samples
 \item Date of notification to HQ (\code{date.notification.to.hq})
-}}
+}
+
+This table is the output of \code{get_lab_locs()}.}
 
 \item{start.date}{\code{str} Start date for evaluation with format "YYYY-MM-DD".}
 
@@ -38,4 +40,14 @@ f.timely.detection.01(
 }
 \description{
 Calculates the overall timeliness of detection in AFP & ES POLIS data.
+}
+\examples{
+raw.data <- get_all_polio_data()
+ctry.data <- extract_country_data("algeria", raw.data)
+ctry.seq <- get_lab_locs()
+global.summary <- f.timely.detection.01(raw.data$afp, raw.data$es, ctry.seq,
+                                        "2021-01-01", "2023-12-31")
+ctry.summary <- f.timely.detection.01(ctry.data$afp.all.2, ctry.data$es, ctry.seq,
+                                      "2021-01-01", "2023-12-31")
+
 }

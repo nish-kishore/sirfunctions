@@ -11,10 +11,21 @@
 #' - Classification of AFP cases & ES samples
 #' - Onset date of AFP cases and collection date of ES samples
 #' - Date of notification to HQ (`date.notification.to.hq`)
+#'
+#' This table is the output of `get_lab_locs()`.
 #' @param start.date `str` Start date for evaluation with format "YYYY-MM-DD".
 #' @param end.date `str` End date for evaluation with format "YYYY-MM-DD".
 #' @param rolling `bool` Should timeliness be calculated in a rolling basis? Default `FALSE`.
 #' @returns `list` A list with two `tibble` with global and sub-global AFP / ES detection timeliness evaluation.
+#' @examples
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.seq <- get_lab_locs()
+#' global.summary <- f.timely.detection.01(raw.data$afp, raw.data$es, ctry.seq,
+#'                                         "2021-01-01", "2023-12-31")
+#' ctry.summary <- f.timely.detection.01(ctry.data$afp.all.2, ctry.data$es, ctry.seq,
+#'                                       "2021-01-01", "2023-12-31")
+#'
 #' @export
 
 f.timely.detection.01 <- function(
