@@ -38,20 +38,20 @@ f.timely.detection.01 <- function(
     }
   )
 
-  if (!"date" %in% names(afp.data)) {
-    # borrowed from extract.country.data
-    afp.data <- dplyr::rename_with(afp.data, recode,
-                                   place.admin.0 = "ctry",
-                                   place.admin.1 = "prov",
-                                   place.admin.2 = "dist",
-                                   person.sex = "sex",
-                                   dateonset = "date",
-                                   yronset = "year",
-                                   datenotify = "date.notify",
-                                   dateinvest = "date.invest",
-                                   cdc.classification.all = "cdc.class"
-    )
-  }
+
+  # borrowed from extract.country.data
+  afp.data <- dplyr::rename_with(afp.data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+
 
   years <- lubridate::year(start.date):year(end.date)
 
