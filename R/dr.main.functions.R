@@ -640,12 +640,25 @@ init_dr <-
     return(country_data)
   }
 
-#' Upload desk review script to the sg-desk-review Github repository
-#' @param file_path location of the file to upload to the sg-desk-review repo
-#' @param repo_path local path of the sg-desk-review repo
-#' @param message message to include in the commit
+#' Upload desk review script to the sg-desk-reviews GitHub repository
 #'
-#' @return Status message
+#' Upload the desk review template script to the [sg-desk-reviews](https://github.com/nish-kishore/sg-desk-reviews)
+#' repository, which houses the code for the desk reviews.
+#' This function can be used in a general sense to upload files to
+#' a github repository. Note that the function will only commit, and that the user must push themselves.
+#'
+#' @param file_path `str` Location of the file to upload to the sg-desk-reviews repo.
+#' @param repo_path `str` Local path of the sg-desk-review repo.
+#' @param message `str` Message to include in the commit.
+#'
+#' @return A status message.
+#' @examples
+#' \dontrun{
+#' dr_template_path <- "C:/Users/ABC1/Desktop/local_dr/algeria/2024/algeria_template.Rmd"
+#' repo_path <- "C:/Users/ABC1/Desktop/github/sg-desk-reviews"
+#' str_message <- "Added algeria to the SG folder"
+#' upload_dr_to_github(dr_template_path, repo_path, str_message)
+#' }
 #' @export
 upload_dr_to_github <-
   function(file_path, repo_path, message = "updating file") {
