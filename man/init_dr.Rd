@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.main.functions.R
 \name{init_dr}
 \alias{init_dr}
-\title{Set up the folders and load polio data}
+\title{Set up the folders and load polio data for the desk review}
 \usage{
 init_dr(
   country_name,
@@ -18,29 +18,44 @@ init_dr(
 )
 }
 \arguments{
-\item{country_name}{\code{str} name of the country}
+\item{country_name}{\code{str} Name of the country.}
 
-\item{start_date}{\code{str} start date of the desk review}
+\item{start_date}{\code{str} Start date of the desk review. If \code{NULL}, defaults to four years
+from when the function was ran on January 1st.}
 
-\item{end_date}{\code{str} end date of the desk review}
+\item{end_date}{\code{str} End date of the desk review. If \code{NULL}, defaults to six weeks from when
+the function is ran.}
 
-\item{local_dr_folder}{folder where the desk review code is located}
+\item{local_dr_folder}{\code{str} Folder where the desk review code is located.
+Defaults to the current working directory.}
 
-\item{sg_dr_folder}{folder where the local git repository is located}
+\item{sg_dr_folder}{\code{str} Folder where the local git repository is located. Defaults to \code{NULL}.}
 
-\item{lab_data_path}{location of the lab data}
+\item{lab_data_path}{\code{str} Location of the lab data. Defaults to \code{NULL}.}
 
-\item{iss_data_path}{location of the ISS data}
+\item{iss_data_path}{\code{str} Location of the ISS data. Defaults to \code{NULL}.}
 
-\item{attach_spatial_data}{boolean whether to include spatial data}
+\item{attach_spatial_data}{\code{bool} Whether to include spatial data. Defaults to \code{TRUE}.}
 
-\item{branch}{what branch to download the DR functions from GitHub}
+\item{branch}{\code{str} What branch to download the DR functions from GitHub.
+\code{"main"} is the default, which contains the official version of the package. Other branches,
+like \code{"dev"} may contain experimental features not yet available in the \verb{"main} branch.}
 
-\item{source}{whether to source local functions or use sirfunctions}
+\item{source}{\code{bool} Whether to source local functions or use sirfunctions. Defaults to \code{TRUE}.}
 }
 \value{
 \code{list} large list containing all dataframe for all polio data
 }
 \description{
-Set up the folders and load polio data
+Prepares the folders and files required for the desk review. The function primarily
+serves to organize the files used for the desk review and set standardized
+environmental variables (i.e., \code{\link[=Sys.getenv]{Sys.getenv()}}, where values for \code{x} related to
+the desk review is prefixed with \code{"DR"}) . The function only supports running one country at a time.
+}
+\examples{
+\dontrun{
+init_dr("algeria", source = F) # Sets up folder in the current working directory
+init_dr("algeria", branch = "dev") # Use functions from the dev branch
+}
+
 }

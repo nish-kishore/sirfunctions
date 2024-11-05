@@ -434,20 +434,36 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 }
 
 # "public" methods ----
-#' Set up the folders and load polio data
+#' Set up the folders and load polio data for the desk review
+#'
+#' Prepares the folders and files required for the desk review. The function primarily
+#' serves to organize the files used for the desk review and set standardized
+#' environmental variables (i.e., [Sys.getenv()], where values for `x` related to
+#' the desk review is prefixed with `"DR"`) . The function only supports running one country at a time.
 #' @import stringr lubridate
-#' @param country_name `str` name of the country
-#' @param start_date `str` start date of the desk review
-#' @param end_date `str` end date of the desk review
-#' @param local_dr_folder folder where the desk review code is located
-#' @param attach_spatial_data boolean whether to include spatial data
-#' @param sg_dr_folder folder where the local git repository is located
-#' @param lab_data_path location of the lab data
-#' @param iss_data_path location of the ISS data
-#' @param branch what branch to download the DR functions from GitHub
-#' @param source whether to source local functions or use sirfunctions
+#' @param country_name `str` Name of the country.
+#' @param start_date `str` Start date of the desk review. If `NULL`, defaults to four years
+#' from when the function was ran on January 1st.
+#' @param end_date `str` End date of the desk review. If `NULL`, defaults to six weeks from when
+#' the function is ran.
+#' @param local_dr_folder `str` Folder where the desk review code is located.
+#' Defaults to the current working directory.
+#' @param attach_spatial_data `bool` Whether to include spatial data. Defaults to `TRUE`.
+#' @param sg_dr_folder `str` Folder where the local git repository is located. Defaults to `NULL`.
+#' @param lab_data_path `str` Location of the lab data. Defaults to `NULL`.
+#' @param iss_data_path `str` Location of the ISS data. Defaults to `NULL`.
+#' @param branch `str` What branch to download the DR functions from GitHub.
+#' `"main"` is the default, which contains the official version of the package. Other branches,
+#' like `"dev"` may contain experimental features not yet available in the `"main` branch.
+#' @param source `bool` Whether to source local functions or use sirfunctions. Defaults to `TRUE`.
 #'
 #' @return `list` large list containing all dataframe for all polio data
+#' @examples
+#' \dontrun{
+#' init_dr("algeria", source = F) # Sets up folder in the current working directory
+#' init_dr("algeria", branch = "dev") # Use functions from the dev branch
+#' }
+#'
 #' @export
 init_dr <-
   function(country_name,
