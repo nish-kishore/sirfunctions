@@ -1,20 +1,20 @@
 #' Function to calculate timeliness of detection
 #'
-#' @name f.timely.detection.01
-#' @description Function to calculate the overall timeliness of detection in AFP & ES POLIS data
+#' Calculates the overall timeliness of detection in AFP & ES POLIS data.
 #' @import dplyr
 #' @import lubridate
-#' @param afp.data tibble: AFP data which includes classification of AFP cases with onset date and date of notification to HQ,
-#' @param es.data tibble: ES data which includes classification of samples with collection date and date of notification to HQ,
-#' @param ctryseq.data tibble: countries with sequencing capacity within or outside of the country,
-#' country (ADM0_NAME),
-#' classification of AFP cases & ES samples
-#' onset date of AFP cases and collection date of ES samples
-#' date of notification to HQ (date.notification.to.hq),
-#' @param start.date chr: "YYYY-MM-DD" - start date for evaluation
-#' @param end.date chr: "YYYY-MM-DD" - end date for evaluation
-#' @param rolling boolean: default FALSE
-#' @returns list of two tibbles with global and sub-global AFP / ES detection timeliness evaluation
+#' @param afp.data `tibble` AFP data which includes classification of AFP cases with onset date and date of notification to HQ.
+#' @param es.data `tibble` ES data which includes classification of samples with collection date and date of notification to HQ.
+#' @param ctryseq.data `tibble` A table consisting of the following columns for each country:
+#' - With sequencing capacity within or outside of the country
+#' - Country (`ADM0_NAME`)
+#' - Classification of AFP cases & ES samples
+#' - Onset date of AFP cases and collection date of ES samples
+#' - Date of notification to HQ (`date.notification.to.hq`)
+#' @param start.date `str` Start date for evaluation with format "YYYY-MM-DD".
+#' @param end.date `str` End date for evaluation with format "YYYY-MM-DD".
+#' @param rolling `bool` Should timeliness be calculated in a rolling basis? Default `FALSE`.
+#' @returns `list` A list with two `tibble` with global and sub-global AFP / ES detection timeliness evaluation.
 #' @export
 
 f.timely.detection.01 <- function(

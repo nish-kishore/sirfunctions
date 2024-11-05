@@ -1,22 +1,36 @@
-# Calculate timeliness of stool collection using only epi variables DRAFT - f.timely.01----
-#' Calculate timeliness of stool collection using only epi variables
+# Calculate timeliness of stool collection using only epi variables (DRAFT)
+
+#' Calculate stool collection timeliness using only AFP data (DRAFT)
 #'
-#' @name f.timely.01
-#' @description creates a table for timeliness by geographic unit including the
-#' number of timely stool samples for each interval and percent timely
+#' Creates a table for timeliness by geographic unit including the
+#' number of timely stool samples for each interval and percent timeliness. Currently,
+#' the function will only work on `ctry.data` (output of `extract_country_data()`).
 #' @import dplyr
 #' @import lubridate
-#' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
-#' formated as "adm(0,1,2)guid, onset date as "date"
-#' @param admin.data tibble: Full list of country administrative units by a given
-#' spatial scale including "year", "adm(0,1,2)guid, and "(ctry/prov/dist)"
-#' as appropriate
-#' @param start.date date: "YYYY-MM-DD"
-#' @param end.date date: "YYYY-MM-DD"
-#' @param spatial.scale chr: "prov" or "dist" or "ctry"
-#' @param intervals.manual boolean: Should user input their own timeliness interval
-#' requirements? Default is false
-#' @returns tibble
+#' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
+#' formated as `adm(0,1,2)guid`, onset date as `date`.
+#' @param admin.data `tibble` Full list of country administrative units by a given
+#' spatial scale including `year`, `adm(0,1,2)guid`, and `ctry/prov/dist`
+#' as appropriate.
+#' @param start.date `date` Start date of the analysis formatted as "YYYY-MM-DD".
+#' @param end.date `date` End date of the analysis formatted as "YYYY-MM-DD".
+#' @param spatial.scale `str` Spatial scale to group analysis by. Valid values are:
+#' -`"prov"` Province level
+#' - `"dist"` District level
+#' - `"ctry"` Country level
+#' @param intervals.manual `bool` Should user input their own timeliness interval
+#' requirements? Default is `FALSE`. This is only required if timeliness column such as
+#' `noti.7d.on`, `inv.2d.noti` are not already calculated. This draft function will currently fail if
+#' this parameter is set to `TRUE`.
+#' @returns `tibble` A summary table of timeliness of stool collection.
+#' @examples
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' stool.summary <- f.timely.01(ctry.data$afp.all.2, ctry.data$ctry.pop,
+#'                              lubridate::as_date("2021-01-01"),
+#'                              lubridate::as_date("2023-12-31"),
+#'                              "ctry")
+#'
 #' @export
 
 f.timely.01 <- function(

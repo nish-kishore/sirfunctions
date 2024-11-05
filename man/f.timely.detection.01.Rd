@@ -14,25 +14,28 @@ f.timely.detection.01(
 )
 }
 \arguments{
-\item{afp.data}{tibble: AFP data which includes classification of AFP cases with onset date and date of notification to HQ,}
+\item{afp.data}{\code{tibble} AFP data which includes classification of AFP cases with onset date and date of notification to HQ.}
 
-\item{es.data}{tibble: ES data which includes classification of samples with collection date and date of notification to HQ,}
+\item{es.data}{\code{tibble} ES data which includes classification of samples with collection date and date of notification to HQ.}
 
-\item{ctryseq.data}{tibble: countries with sequencing capacity within or outside of the country,
-country (ADM0_NAME),
-classification of AFP cases & ES samples
-onset date of AFP cases and collection date of ES samples
-date of notification to HQ (date.notification.to.hq),}
+\item{ctryseq.data}{\code{tibble} A table consisting of the following columns for each country:
+\itemize{
+\item With sequencing capacity within or outside of the country
+\item Country (\code{ADM0_NAME})
+\item Classification of AFP cases & ES samples
+\item Onset date of AFP cases and collection date of ES samples
+\item Date of notification to HQ (\code{date.notification.to.hq})
+}}
 
-\item{start.date}{chr: "YYYY-MM-DD" - start date for evaluation}
+\item{start.date}{\code{str} Start date for evaluation with format "YYYY-MM-DD".}
 
-\item{end.date}{chr: "YYYY-MM-DD" - end date for evaluation}
+\item{end.date}{\code{str} End date for evaluation with format "YYYY-MM-DD".}
 
-\item{rolling}{boolean: default FALSE}
+\item{rolling}{\code{bool} Should timeliness be calculated in a rolling basis? Default \code{FALSE}.}
 }
 \value{
-list of two tibbles with global and sub-global AFP / ES detection timeliness evaluation
+\code{list} A list with two \code{tibble} with global and sub-global AFP / ES detection timeliness evaluation.
 }
 \description{
-Function to calculate the overall timeliness of detection in AFP & ES POLIS data
+Calculates the overall timeliness of detection in AFP & ES POLIS data.
 }
