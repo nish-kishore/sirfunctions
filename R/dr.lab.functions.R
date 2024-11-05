@@ -1,10 +1,19 @@
-#' Gets information related to testing labs
-#' @import cli dplyr
-#' @param path path the lab location file
+#' Table of information regarding testing labs in each country
 #'
-#' @return tibble containing the test lab locations
+#' Imports information on testing labs for each country, either from a CSV file
+#' or downloaded from EDAV. If no argument is passed, the function will download
+#' the table from EDAV.
+#'
+#' @import cli dplyr
+#' @param path `str` Path to the lab location file. Defaults to `NULL`.
+#'
+#' @return `tibble` A table containing the test lab location information.
+#' @examples
+#' ctry.seq <- get_lab_locs()
+#'
+#' @export
 
-get_lab_locs <- function(path) {
+get_lab_locs <- function(path=NULL) {
   lab.locs <- NULL
   if (is.null(path)) {
     tryCatch(
