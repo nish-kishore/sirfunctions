@@ -1,12 +1,20 @@
 #' Read ISS/eSURV data
-#' @import stringr
-#' @param iss_path path to the excel or csv file
-#' @param sheet_name optional name of the ISS data
 #'
-#' @return a tibble containing ISS/eSURV data
-#' @export
+#' The function is written to assist in load the ISS data from a path specified
+#' by the user during [init_dr()]. This function is not meant to be exported.
+#' @import stringr
+#' @param iss_path `str` Path to the excel or csv file.
+#' @param sheet_name `str` Optional name of the ISS data. This is mainly used if
+#' the path is to an Excel file and that Excel file has multiple tabs.
+#'
+#' @return `tibble` ISS/eSURV data loaded into a tibble.
+#' @examples
+#' \dontrun{
+#' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
+#' iss_data <- load_iss_data(iss_path)
+#' }
 load_iss_data <- function(iss_path, sheet_name = NULL) {
-  
+
   if (!requireNamespace("readxl", quietly = TRUE)) {
     stop('Package "readxl" must be installed to use this function.',
          .call = FALSE)
@@ -21,21 +29,39 @@ load_iss_data <- function(iss_path, sheet_name = NULL) {
 }
 
 #' Perform common cleaning tasks for ISS/eSURV data
+#'
+#' ISS/eSURV data often needs to be cleaned and standardized before analysis. Because
+#' these datasets may vary from country to country, reviewing the data first and its columns
+#' is the first step. In general, there are eight required columns. These are the parameters
+#' with a suffix `_col`. Modify the passed arguments as necessary so the function can
+#' successfully run. Priority levels are set to automatically detect high, medium, low, and not a focal site.
+#' Ensure that priority level column categories have these specification:
+#'  - `High`: begins with "h".
+#'  - `Medium`: begins with "m".
+#'  - `Low`: begins with "l".
+#'  - `Not Focal Site`: begins with "n" or "x".
 #' @import cli dplyr stringr
 #' @importFrom zoo as.yearmon
-#' @param ctry.data ctry.data containing iss.data
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
-#' @param priority_col column representing priority level as a string
-#' @param start_time_col column representing start time as a string
-#' @param unreported_cases_col column representing unreported cases as a string
-#' @param prov_col column representing province as a string
-#' @param dist_col column representing district as a string
-#' @param hf_col column representing the health facility name as a string
-#' @param today_col column representing when info was recorded
-#' @param date_of_visit_col column representing date of visit
+#' @param ctry.data `list` The output of [init_dr()], with ISS data attached.
+#' @param start_date `str` Start date of desk review.
+#' @param end_date `str` End date of desk review.
+#' @param priority_col `str` Column representing priority level.
+#' @param start_time_col `str` Column representing start time.
+#' @param unreported_cases_col `str` Column representing unreported cases.
+#' @param prov_col `str` Column representing province.
+#' @param dist_col `str` Column representing district.
+#' @param hf_col `str` Column representing the health facility name.
+#' @param today_col `str` Column representing when info was recorded.
+#' @param date_of_visit_col `str` Column representing date of visit.
 #'
-#' @return a tibble of cleaned ISS data
+#' @return `tibble` Cleaned eSurv/ISS data.
+#' @examples
+#' \dontrun{
+#' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
+#' ctry.data <- init_dr("somalia", iss_data_path = iss_path)
+#' ctry.data$iss.data <- clean_iss_data(ctry.data)
+#' }
+#'
 #' @export
 clean_iss_data <- function(ctry.data, start_date, end_date,
                            priority_col = "priority_level",
@@ -130,13 +156,24 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
   return(iss.02)
 }
 
-#' Checks for errors in the ISS data.
-#' Currently reports the number of missing priority levels.
-#' @import cli dplyr readr
-#' @param ctry.data ctry.data with ISS/eSurv data attached
-#' @param error_path path to error folder
+#' Checks for errors in the ISS data
 #'
-#' @return error message
+#' Currently, the function reports the number of missing priority levels.
+#' @import cli dplyr readr
+#' @param ctry.data `list` The product of [init_dr()] with ISS/eSurv data attached.
+#' @param error_path `str` Path to error folder. The function defaults to a global environment
+#' variable called `DR_ERROR_PATH`, as it is assumed ISS data error checking is done as part of
+#' the desk review template. The setting of desk review environmental variables is automatically
+#' handled by [init_dr()]. Otherwise, users should manually specify the error folder.
+#'
+#' @return Status messages on the checks completed and results.
+#' @examples
+#' \dontrun{
+#' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
+#' ctry.data <- init_dr("somalia", iss_data_path = iss_path)
+#' iss_data_errors(ctry.data)
+#' }
+#'
 #' @export
 iss_data_errors <- function(ctry.data, error_path = Sys.getenv("DR_ERROR_PATH")) {
   # Check if ISS data is attached

@@ -2,20 +2,29 @@
 % Please edit documentation in R/dr.iss.functions.R
 \name{iss_data_errors}
 \alias{iss_data_errors}
-\title{Checks for errors in the ISS data.
-Currently reports the number of missing priority levels.}
+\title{Checks for errors in the ISS data}
 \usage{
 iss_data_errors(ctry.data, error_path = Sys.getenv("DR_ERROR_PATH"))
 }
 \arguments{
-\item{ctry.data}{ctry.data with ISS/eSurv data attached}
+\item{ctry.data}{\code{list} The product of \code{\link[=init_dr]{init_dr()}} with ISS/eSurv data attached.}
 
-\item{error_path}{path to error folder}
+\item{error_path}{\code{str} Path to error folder. The function defaults to a global environment
+variable called \code{DR_ERROR_PATH}, as it is assumed ISS data error checking is done as part of
+the desk review template. The setting of desk review environmental variables is automatically
+handled by \code{\link[=init_dr]{init_dr()}}. Otherwise, users should manually specify the error folder.}
 }
 \value{
-error message
+Status messages on the checks completed and results.
 }
 \description{
-Checks for errors in the ISS data.
-Currently reports the number of missing priority levels.
+Currently, the function reports the number of missing priority levels.
+}
+\examples{
+\dontrun{
+iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
+ctry.data <- init_dr("somalia", iss_data_path = iss_path)
+iss_data_errors(ctry.data)
+}
+
 }
