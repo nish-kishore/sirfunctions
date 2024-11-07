@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.excel.export.functions.R
 \name{create_afp_export}
 \alias{create_afp_export}
-\title{Exports AFP linelist with adequacy.final2 column}
+\title{Export the AFP linelist}
 \usage{
 create_afp_export(
   stool.data,
@@ -11,12 +11,28 @@ create_afp_export(
 )
 }
 \arguments{
-\item{stool.data}{afp data with final adequacy columns}
+\item{stool.data}{\code{tibble} AFP data with final adequacy columns.
+This is the output of \code{\link[=generate_stool_data]{generate_stool_data()}}.}
 
-\item{country}{name of the country}
+\item{country}{\code{str} Name of the country.}
 
-\item{excel_output_path}{output path of the Excel file}
+\item{excel_output_path}{\code{str} Output path of the Excel file.}
+}
+\value{
+None.
 }
 \description{
-Exports AFP linelist with adequacy.final2 column
+Export the AFP linelist with \code{adequacy.final2} column. The \code{adequacy.final2}
+column describes the status of a stool sample, such as if a
+stool sample is adequate or inadequate. Specifically, it is
+created from \code{\link[=generate_stool_data]{generate_stool_data()}} which takes parameters on how to deal with missing or
+inadequate stool samples.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate", "2021-01-01", "2023-12-31")
+create_afp_export(stool.data)
+}
+
 }

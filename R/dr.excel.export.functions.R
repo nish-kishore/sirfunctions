@@ -1,8 +1,23 @@
-#' Exports AFP linelist with adequacy.final2 column
+#' Export the AFP linelist
+#'
+#' Export the AFP linelist with `adequacy.final2` column. The `adequacy.final2`
+#' column describes the status of a stool sample, such as if a
+#' stool sample is adequate or inadequate. Specifically, it is
+#' created from [generate_stool_data()] which takes parameters on how to deal with missing or
+#' inadequate stool samples.
+#'
 #' @import dplyr writexl
-#' @param stool.data afp data with final adequacy columns
-#' @param country name of the country
-#' @param excel_output_path output path of the Excel file
+#' @param stool.data `tibble` AFP data with final adequacy columns.
+#' This is the output of [generate_stool_data()].
+#' @param country `str` Name of the country.
+#' @param excel_output_path `str` Output path of the Excel file.
+#' @returns None.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate", "2021-01-01", "2023-12-31")
+#' create_afp_export(stool.data)
+#' }
 #'
 #' @export
 create_afp_export <- function(stool.data, country = Sys.getenv("DR_COUNTRY"), excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
@@ -59,12 +74,25 @@ create_afp_export <- function(stool.data, country = Sys.getenv("DR_COUNTRY"), ex
   )
 }
 
-#' Exports stool adequacy data
+#' Export stool adequacy data
+#'
+#' The function combines the stool adequacy summary tables from [f.stool.ad.01()]
+#' and exports to an Excel file, with each geographic level on its own tab.
+#'
 #' @import writexl
-#' @param cstool stool adequacy at country level
-#' @param pstool stool adequacy at province level
-#' @param dstool stool adequacy at district level
-#' @param excel_output_path output path
+#' @param cstool `tibble` Stool adequacy at country level.
+#' @param pstool `tibble` Stool adequacy at province level.
+#' @param dstool `tibble` Stool adequacy at district level.
+#' @param excel_output_path `str` Output path.
+#' @returns None.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' cstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$ctry.pop, "2021-01-01", "2023-01-01", "ctry")
+#' pstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$prov.pop, "2021-01-01", "2023-01-01", "prov")
+#' dstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$dist.pop, "2021-01-01", "2023-01-01", "dist")
+#' create_stool_adequacy_export(cstool, pstool, dstool)
+#' }
 #'
 #' @export
 create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
@@ -79,15 +107,27 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
   ))
 }
 
-#' Exports NPAFP indicator data
+#' Exports NPAFP indicator data summary tables
+#'
+#' The function combines the NPAFP rate summary tables from [f.npafp.rate.01()]
+#' and exports to an Excel file, with each geographic level on its own tab.
 #' @import writexl
-#' @param ctry.case.ind country NPAFP indicator
-#' @param prov.case.ind province NPAFP indicator
-#' @param dis.case.ind district NPAFP indicator
-#' @param excel_output_path output path
+#' @param ctry.case.ind `tibble` Country NPAFP indicator summary table.
+#' @param prov.case.ind `tibble` Province NPAFP indicator summary table.
+#' @param dist.case.ind `tibble` District NPAFP indicator summary table.
+#' @param excel_output_path `str Output path of the Excel file.
+#' @returns None.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' ctry.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$ctry.pop, "2021-01-01", "2023-01-01", "ctry")
+#' prov.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$prov.pop, "2021-01-01", "2023-01-01", "prov")
+#' dist.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$dist.pop, "2021-01-01", "2023-01-01", "dist")
+#' create_npafp_export(ctry.case.ind, prov.case.ind, dist.case.ind)
+#' }
 #'
 #' @export
-create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+create_npafp_export <- function(ctry.case.ind, prov.case.ind, dist.case.ind, excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
   sheets <- list(
     "country_npafp" = ctry.case.ind,
     "province_npafp" = prov.case.ind,
@@ -101,10 +141,20 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dis.case.ind, exce
 }
 
 #' Exports file for checking population roll-ups
+#'
+#' Export the population roll-ups and determine differences between each population counts.
+#'
 #' @import dplyr writexl tidyr
-#' @param ctry.data RDS file containing polio data for a country
-#' @param country name of the country
-#' @param excel_output_path output path
+#' @param ctry.data `list` A large list containing polio data for a country. This is the output of either
+#' [init_dr()] or [extract_country_data()].
+#' @param country `str` Name of the country.
+#' @param excel_output_path `str` Output path of the Excel file.
+#' @returns Nothing.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' create_pop_check_export(ctry.data)
+#' }
 #'
 #' @export
 create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"),
@@ -137,11 +187,21 @@ create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"
   ))
 }
 
-#' Exports output for 60-day follow ups
+#' Export 60-day follow up table
+#'
+#' Exports the output of [generate_60_day_table_data] into an Excel file.
 #' @import dplyr readr
-#' @param cases.need60day table for 60 day follow up
-#' @param country name of the country
-#' @param excel_output_path output path
+#' @param cases.need60day `tibble` Summary table for 60 day follow up.
+#' @param country `str` Name of the country.
+#' @param excel_output_path `str` Output path of the Excel file.
+#' @returns Nothing.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate", "2021-01-01", "2023-12-31")
+#' cases.need60day <- generate_60_day_table_data(stool.data, start_date, end_date)
+#' create_60_day_export(cases.need60day)
+#' }
 #'
 #' @export
 create_60_day_export <- function(cases.need60day, country = Sys.getenv("DR_COUNTRY"), excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
@@ -167,11 +227,23 @@ create_60_day_export <- function(cases.need60day, country = Sys.getenv("DR_COUNT
     ))
 }
 
-#' Export potentially compatible and compatible summaries
+#' Export potentially compatible and compatible summary table
+#'
+#' Exports the output of [generate_potentially_compatibles_cluster()] as an Excel file.
 #' @import writexl
-#' @param pot.c.clust potentially compatible cluster summary
-#' @param country name of the country
-#' @param excel_output_path output path
+#' @param pot.c.clust `tibble` Potentially compatible cluster summary. The output of
+#' [generate_potentially_compatibles_cluster()].
+#' @param country `str` Name of the country.
+#' @param excel_output_path `str` Output path of where to store the Excel file.
+#' @returns Nothing.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate", "2021-01-01", "2023-12-31")
+#' cases.need60day <- generate_60_day_table_data(stool.data, start_date, end_date)
+#' pot.c.clust <- generate_potentially_compatibles_cluster(cases.need60day)
+#' create_pot_comp_clust_export(pot.c.clust)
+#' }
 #'
 #' @export
 create_pot_comp_clust_export <- function(pot.c.clust, country = Sys.getenv("DR_COUNTRY"), excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
