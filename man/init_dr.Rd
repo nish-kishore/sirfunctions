@@ -44,7 +44,7 @@ like \code{"dev"} may contain experimental features not yet available in the \ve
 \item{source}{\code{bool} Whether to source local functions or use sirfunctions. Defaults to \code{TRUE}.}
 }
 \value{
-\code{list} large list containing all dataframe for all polio data
+\code{list} A list containing all dataframe for all polio data.
 }
 \description{
 Prepares the folders and files required for the desk review. The function primarily
@@ -54,8 +54,8 @@ the desk review is prefixed with \code{"DR"}) . The function only supports runni
 }
 \examples{
 \dontrun{
-init_dr("algeria", source = F) # Sets up folder in the current working directory
-init_dr("algeria", branch = "dev") # Use functions from the dev branch
+ctry.data <- init_dr("algeria", source = F) # Sets up folder in the current working directory
+ctry.data <- init_dr("algeria", branch = "dev") # Use functions from the dev branch
 }
 
 }

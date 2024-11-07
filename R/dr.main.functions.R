@@ -457,11 +457,11 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 #' like `"dev"` may contain experimental features not yet available in the `"main` branch.
 #' @param source `bool` Whether to source local functions or use sirfunctions. Defaults to `TRUE`.
 #'
-#' @return `list` large list containing all dataframe for all polio data
+#' @return `list` A list containing all dataframe for all polio data.
 #' @examples
 #' \dontrun{
-#' init_dr("algeria", source = F) # Sets up folder in the current working directory
-#' init_dr("algeria", branch = "dev") # Use functions from the dev branch
+#' ctry.data <- init_dr("algeria", source = F) # Sets up folder in the current working directory
+#' ctry.data <- init_dr("algeria", branch = "dev") # Use functions from the dev branch
 #' }
 #'
 #' @export
