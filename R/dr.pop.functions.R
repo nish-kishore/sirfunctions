@@ -3,7 +3,7 @@
 #' @param pop.data population data
 #' @param spatial.scale "ctry", "prov", or "dist"
 #'
-#' @return tibble with missing population data
+#' @returns tibble with missing population data
 check_missing_pop <- function(pop.data, spatial.scale) {
   valid.spatial.scales <- c("ctry", "prov", "dist")
 
@@ -41,7 +41,7 @@ check_missing_pop <- function(pop.data, spatial.scale) {
 #' @import dplyr cli
 #' @param ctry.data country data to check for
 #'
-#' @return tibble containing differences in population data
+#' @returns tibble containing differences in population data
 check_pop_rollout <- function(ctry.data) {
   # compare difference in country vs. prov vs. dist roll up
   prov_pop <- dplyr::summarize(dplyr::group_by(ctry.data$prov.pop, year),
@@ -100,7 +100,7 @@ check_pop_rollout <- function(ctry.data) {
 #' @param pop.data population data
 #' @param spatial.scale spatial scale of the data
 #'
-#' @return list containing invalid GUIDs
+#' @returns list containing invalid GUIDs
 spatial_validation <- function(pop.data, spatial.scale) {
   valid.spatial.scales <- c("ctry", "prov", "dist")
 
@@ -165,12 +165,33 @@ spatial_validation <- function(pop.data, spatial.scale) {
   return(incomplete.adm)
 }
 
-#' Get the most recent shapefile at a given spatial scale
-#' @import dplyr
-#' @param ctry.data RDS file containing country data
-#' @param spatial.scale either "ctry", "prov", "dist"
+#' Get a long version of shapefile at a given spatial scale
 #'
-#' @return sf object of the most recent shapefile
+#' This function was used primarily as a way to build maps in the desk review.
+#'  However, the map generation functions in the desk review will now use the long
+#'  formatted shapefile as of `sirfunctions v1.2`.
+#'  This function will be changed in the next version.
+#'
+#' [load_clean_ctry_sp()], [load_clean_prov_sp()], [load_clean_dist_sp()] with
+#' `type = long` are the longform shapefiles.
+#'
+#' @import dplyr
+#' @param ctry.data `list` List containing country data. Either the result of
+#' [extract_country_data()] or [init_dr()].
+#' @param spatial.scale `str` Either `"ctry", "prov", "dist"`.
+#'
+#' @returns `sf` Data frame including the most recent shapefile.
+#' @examples
+#' \dontrun{
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.shape <- set_shapefiles(ctry.data, "ctry")
+#'
+#' # Using init_dr()
+#' ctry.data <- init_dr("algeria")
+#' ctry.shape <- set_shapefiles(ctry.data, "ctry")
+#' }
+#'
 #' @export
 set_shapefiles <- function(ctry.data, spatial.scale) {
   valid.spatial.scales <- c("ctry", "prov", "dist")
