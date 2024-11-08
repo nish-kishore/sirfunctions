@@ -2,16 +2,27 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{clean_ctry_data}
 \alias{clean_ctry_data}
-\title{Cleans and adds additional columns used in the desk reviews}
+\title{Cleans and adds additional age and dosage number columns to the AFP linelist}
 \usage{
 clean_ctry_data(ctry.data)
 }
 \arguments{
-\item{ctry.data}{country data RDS object}
+\item{ctry.data}{\code{list} Large list containing polio country data. This is the output of
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 }
 \value{
-cleaned country data RDS object
+\code{list} Cleaned country data list.
 }
 \description{
-Cleans and adds additional columns used in the desk reviews
+The function does additional cleaning of the \code{ctry.data} list. It fills in
+missing districts, convert character date columns to a date data type, calculates
+age group, add columns for the number of doses per case, and cleans the environmental
+surveillance data.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+ctry.data <- clean_ctry_data(ctry.data)
+}
+
 }

@@ -2,20 +2,30 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{generate_afp_by_month}
 \alias{generate_afp_by_month}
-\title{Generate AFP case counts by month}
+\title{Generate \code{mon.year} column in the AFP linelist.}
 \usage{
 generate_afp_by_month(afp.data, start_date, end_date)
 }
 \arguments{
-\item{afp.data}{tibble containing AFP data (afp.all.2)}
+\item{afp.data}{\code{tibble} Country AFP data (\code{ctry.data$afp.all.2}).}
 
-\item{start_date}{start date of the desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of the desk review}
+\item{end_date}{\code{str} End date of analysis.}
 }
 \value{
-tibble containing summary of AFP data
+\code{tibble} AFP case count with .
 }
 \description{
-Generate AFP case counts by month
+Generates the \code{mon.year} column in the AFP linelist. This column is used in
+subsequent functions summarizing AFP case counts by geography and year. This function
+will most likely be moved to \code{clean_ctry_data()}.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = F)
+ctry.data <- extract_country_data("algeria", raw.data)
+afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
+}
+\seealso{
+\link{generate_afp_by_month_summary}
 }

@@ -13,19 +13,37 @@ generate_int_data(
 )
 }
 \arguments{
-\item{ctry.data}{RDS object containing polio country data}
+\item{ctry.data}{\code{list} Large list containing polio country data. This is the output of
+\code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
 
-\item{start_date}{start date of the desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of the desk review}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{spatial.scale}{Scale to summarize to. Either "ctry" or "prov". "dist" not available currently.}
+\item{spatial.scale}{\code{str} Scale to summarize to. Valid values are: \verb{"ctry" or "prov"}. \code{"dist"} not available currently.}
 
-\item{lab.data}{tibble of lab data}
+\item{lab.data}{\code{tibble} Lab data, if available. This paramater will calculate timeliness intervals in the lab. Otherwise,
+only the field component will be presented.}
 }
 \value{
-tibble summarizing median days for different intervals
+\code{tibble} A table summarizing median days for different timeliness intervals.
 }
 \description{
-Generate a summary table for sample timeliness intervals
+The summary table will output timeliness intervals of samples from collection to
+lab testing. Lab timeliness will only be calculated if the lab data is attached. Otherwise,
+by default, the function will return only the timeliness intervals up to when the samples were
+sent to lab.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = F)
+ctry.data <- extract_country_data("algeria", raw.data)
+int.data <- generate_int_data(ctry.data, "2021-01-01", "2023-12-31", "ctry") # lab data not attached
+\dontrun{
+# If lab data is available. Assume ctry.data is loaded.
+lab_path <- "C:/Users/ABC1/Desktop/algeria_lab.csv"
+lab.data <- readr::read_csv(lab_path)
+int.data <- generate_int_data(ctry.data, "2021-01-01", "2023-12-31", "ctry", lab.data)
+}
+
+
 }

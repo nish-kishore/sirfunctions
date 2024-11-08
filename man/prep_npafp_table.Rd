@@ -2,24 +2,33 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{prep_npafp_table}
 \alias{prep_npafp_table}
-\title{Create the indicator tables in desk reviews}
+\title{NPAFP indicator tables with additional columns}
 \usage{
-prep_npafp_table(npafp.output, afp.all.2, start_date, end_date, spatial.scale)
+prep_npafp_table(npafp.output, afp.data, start_date, end_date, spatial.scale)
 }
 \arguments{
-\item{npafp.output}{output of running f.npafp.rate.01}
+\item{npafp.output}{\code{tibble} Output of running \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}}.}
 
-\item{afp.all.2}{AFP linelist}
+\item{afp.data}{\code{tibble} AFP linelist. Either \code{raw.data$afp} or \code{ctry.data$afp.all.2}.}
 
-\item{start_date}{start date of the desk review}
+\item{start_date}{\code{str} Start date of the desk review.}
 
-\item{end_date}{end date of the desk review}
+\item{end_date}{\code{str} End date of the desk review.}
 
-\item{spatial.scale}{spatial scale to analyze. Valid values are "ctry", "prov", "dist"}
+\item{spatial.scale}{\code{str} Spatial scale to analyze. Valid values are \verb{"ctry", "prov", "dist"}.}
 }
 \value{
-table to be used in summary tables for NPAFP rates
+\code{tibble} NPAFP rate table with additional columns related to case counts.
 }
 \description{
-Create the indicator tables in desk reviews
+The function adds additional information to the NPAFP table. In particular,
+the number of AFP cases based on the geographic grouping selected. It also
+adds a column for the number of WPV, VDPV1-3 cases. However, in a future release,
+these columns might be incorporated within the \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}} function.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = F)
+ctry.ind <- f.npafp.rate.01(raw.data$afp, raw.data$ctry.pop,"2021-01-01", "2023-12-31","ctry", sp_continuity_validation = FALSE)
+ctry.ind <- prep_npafp_table(ctry.ind, raw.data$afp, "2021-01-01", "2023-12-31", "ctry")
+
 }

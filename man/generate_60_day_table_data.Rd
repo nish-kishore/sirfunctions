@@ -7,15 +7,23 @@
 generate_60_day_table_data(stool.data, start_date, end_date)
 }
 \arguments{
-\item{stool.data}{AFP data with stool adequacy columns}
+\item{stool.data}{\code{tibble} AFP data with stool adequacy columns. This is the output of
+\code{\link[=generate_stool_data]{generate_stool_data()}}.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{\code{str} End date of analysis.}
 }
 \value{
-a summary table for those requiring 60 day follow up
+\code{tibble} A summary table for those requiring 60 day follow up.
 }
 \description{
-Generate summary table for those requiring 60 day follow up
+The 60-day table highlights cases that need 60 day follow up.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = F)
+ctry.data <- extract_country_data("algeria", raw.data)
+stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate", "2021-01-01", "2023-12-31")
+table60.days <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
+
 }

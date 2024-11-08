@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{generate_afp_by_month_summary}
 \alias{generate_afp_by_month_summary}
-\title{Generate summary from the afp.by.month summary tibble}
+\title{Generate AFP case count summary}
 \usage{
 generate_afp_by_month_summary(
   afp.by.month,
@@ -13,19 +13,27 @@ generate_afp_by_month_summary(
 )
 }
 \arguments{
-\item{afp.by.month}{summary table of AFP cases}
+\item{afp.by.month}{\code{tibble} Output of \code{\link[=generate_afp_by_month]{generate_afp_by_month()}}.}
 
-\item{ctry.data}{RDS file containing country data}
+\item{ctry.data}{\code{list} Large list containing polio country data. Either the output of
+\code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
 
-\item{start_date}{start date of analysis}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of analysis}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{by}{either "prov", "dist", or "year"}
+\item{by}{\code{str} How to group the data by. Either \code{"prov"}, \code{"dist"}, or \code{"year"}.}
 }
 \value{
-tibble summary table of AFP cases by month
+\code{tibble} Summary table of AFP cases by month and another grouping variable.
 }
 \description{
-Generate summary from the afp.by.month summary tibble
+Summarize AFP case counts by month and another grouping variable.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = F)
+ctry.data <- extract_country_data("algeria", raw.data)
+afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
+afp.by.month.prov <- generate_afp_by_month_summary(afp.by.month, ctry.data, start_date, end_date, "prov")
+
 }

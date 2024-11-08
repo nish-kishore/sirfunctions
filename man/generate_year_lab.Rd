@@ -2,20 +2,30 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{generate_year_lab}
 \alias{generate_year_lab}
-\title{Generate a summary of samples sent to lab by year}
+\title{Generate a summary of AFP samples by year}
 \usage{
 generate_year_lab(ctry.data, start_date, end_date)
 }
 \arguments{
-\item{ctry.data}{Rds file containing country polio data}
+\item{ctry.data}{\code{list} Large list containing country polio data. This is the output
+of \code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
 
-\item{start_date}{start date of the desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of the desk review}
+\item{end_date}{\code{str} End date of analysis.}
 }
 \value{
-a tibble containing summary of samples sent to lab by year and province
+\code{tibble} A table containing summary of AFP cases by year and country.
 }
 \description{
-Generate a summary of samples sent to lab by year
+Generates a summary table of the number of AFP cases per country and year.
+This function is used primarily with \code{\link[=generate_ctry_timeliness_graph]{generate_ctry_timeliness_graph()}} as a
+label of the y-axis.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = F)
+ctry.data <- extract_country_data("algeria")
+ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+
+
 }
