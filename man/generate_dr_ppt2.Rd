@@ -2,9 +2,7 @@
 % Please edit documentation in R/dr.powerpoint.functions.R
 \name{generate_dr_ppt2}
 \alias{generate_dr_ppt2}
-\title{Generate the desk review slide deck from the figures folder
-Generating the PowerPoint from the figures folder is generally faster and allows
-figures to remain consistent. Tables remain as PowerPoint tables.}
+\title{Generate the desk review slide deck from the figures folder}
 \usage{
 generate_dr_ppt2(
   ctry.data,
@@ -13,6 +11,7 @@ generate_dr_ppt2(
   surv.ind.tab,
   inad.tab.flex,
   tab.60d,
+  pop.tab,
   es.table,
   ppt_template_path = NULL,
   fig.path = Sys.getenv("DR_FIGURE_PATH"),
@@ -21,33 +20,45 @@ generate_dr_ppt2(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file containing polio data for a country}
+\item{ctry.data}{\code{list} Country polio data. Either the output of \code{\link[=extract_country_data]{extract_country_data()}} or
+\code{\link[=init_dr]{init_dr()}}.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of desk review.}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{\code{str} End date of desk review.}
 
-\item{surv.ind.tab}{surveillance indicator table}
+\item{surv.ind.tab}{\code{flextable} Surveillance indicator table}
 
-\item{inad.tab.flex}{inadequacy table}
+\item{inad.tab.flex}{\code{flextable} Inadequates table.}
 
-\item{tab.60d}{60 day follow up table}
+\item{tab.60d}{\code{flextable} 60 day follow up table.}
 
-\item{es.table}{ES table}
+\item{pop.tab}{\code{flextable} Population table.}
 
-\item{ppt_template_path}{path to the PowerPoint template}
+\item{es.table}{\code{flextable} ES table.}
 
-\item{fig.path}{file path to the figures folder}
+\item{ppt_template_path}{\code{str} Path to the PowerPoint template.}
 
-\item{country}{name of the country}
+\item{fig.path}{\code{str} File path to the figures folder.}
 
-\item{ppt_output_path}{path where the powerpoint should be outputted}
+\item{country}{\code{str} Name of the country.}
+
+\item{ppt_output_path}{\code{str} Path where the PowerPoint should be outputted.}
 }
 \value{
-does not return anything
+None.
 }
 \description{
-Generate the desk review slide deck from the figures folder
 Generating the PowerPoint from the figures folder is generally faster and allows
 figures to remain consistent. Tables remain as PowerPoint tables.
+}
+\examples{
+\dontrun{
+# Assume all figures and tables are assigned to the appropriate variable.
+ppt_template <- "C:/Users/ABC1/Desktop/deskreview_template.pptx"
+generate_dr_ppt2(ctry.data, start_date, end_date,
+surv.ind.tab, inad.tab.flex, tab.60d, es.table,
+ppt_template_path = ppt_template)
+}
+
 }

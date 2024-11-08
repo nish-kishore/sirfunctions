@@ -15,6 +15,7 @@ generate_dr_ppt(
   afp.epi.curve,
   surv.ind.tab,
   afp.dets.prov.year,
+  pop.tab,
   npafp.map,
   npafp.map.dist,
   stool.ad.maps,
@@ -34,61 +35,83 @@ generate_dr_ppt(
 )
 }
 \arguments{
-\item{ppt_template_path}{path to the PowerPoint template}
+\item{ppt_template_path}{\code{str} Sath to the PowerPoint template.}
 
-\item{ctry.data}{RDS file containing polio data for a country}
+\item{ctry.data}{\code{list} List containing polio data for a country. Either the output of
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of desk review.}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{\code{str} End date of desk review.}
 
-\item{pop.map}{country pop map}
+\item{pop.map}{\code{ggplot} Country pop map.}
 
-\item{pop.map.prov}{prov pop map}
+\item{pop.map.prov}{\code{ggplot} Prov pop map.}
 
-\item{afp.case.map}{map of afp cases}
+\item{afp.case.map}{\code{ggplot} Map of afp cases.}
 
-\item{afp.epi.curve}{afp epicurv}
+\item{afp.epi.curve}{\code{ggplot} AFP epicurve.}
 
-\item{surv.ind.tab}{surveillance indicator table}
+\item{surv.ind.tab}{\code{flextable} Surveillance indicator table.}
 
-\item{afp.dets.prov.year}{afp dets for province}
+\item{afp.dets.prov.year}{\code{ggplot} AFP detections for province.}
 
-\item{npafp.map}{npafp map for country level}
+\item{pop.tab}{\code{flextable} Table of population.}
 
-\item{npafp.map.dist}{npafp map for district level}
+\item{npafp.map}{\code{ggplot} NPAFP map for country level.}
 
-\item{stool.ad.maps}{stool adequacy maps at province}
+\item{npafp.map.dist}{\code{ggplot} NPAFP map for district level.}
 
-\item{stool.ad.maps.dist}{stool adequact maps at district}
+\item{stool.ad.maps}{\code{ggplot} Stool adequacy maps at province.}
 
-\item{inad.tab.flex}{inadequacy table}
+\item{stool.ad.maps.dist}{\code{ggplot} Stool adequacy maps at district.}
 
-\item{tab.60d}{60 day follow up table}
+\item{inad.tab.flex}{\code{flextable} Inadequate table.}
 
-\item{case.num.dose.g}{figure containing immunization rates per year}
+\item{tab.60d}{\code{flextable} 60 day follow up table.}
 
-\item{timely_nation}{timeliness at country level}
+\item{case.num.dose.g}{\code{ggplot} Immunization rates per year.}
 
-\item{timely_prov}{timeliness at province level}
+\item{timely_nation}{\code{ggplot} Timeliness at country level.}
 
-\item{mapt_all}{map with all indicators}
+\item{timely_prov}{\code{ggplot} Timeliness at province level.}
 
-\item{es.site.det}{ES site viral detection}
+\item{mapt_all}{\code{ggplot} Map with all indicators.}
 
-\item{es.det.map}{ES site detection maps}
+\item{es.site.det}{\code{ggplot} ES site viral detection.}
 
-\item{es.timely}{ES timeliness}
+\item{es.det.map}{\code{ggplot} ES site detection maps.}
 
-\item{es.table}{ES table}
+\item{es.timely}{\code{ggplot} ES timeliness.}
 
-\item{country}{name of the country}
+\item{es.table}{\code{flextable} ES table.}
 
-\item{ppt_output_path}{path where the powerpoint should be outputted}
+\item{country}{\code{str} Name of the country.}
+
+\item{ppt_output_path}{\code{str} Path where the PowerPoint should be outputted.}
 }
 \value{
-does not return anything
+None.
 }
 \description{
-Generate the desk review slide deck
+The original function to build the desk review PowerPoint. This function has been
+superseded by \code{\link[=generate_dr_ppt2]{generate_dr_ppt2()}}. The function outputs images to the PowerPoint
+directly from objects, unlike \code{generate_dr_ppt2()} which uses images saved in a folder.
+}
+\examples{
+\dontrun{
+# Assume all figures and tables are assigned to the appropriate variable.
+template_path <- "C:/Users/ABC1/Desktop/deskreview_template.pptx"
+generate_dr_ppt(template_path, ctry.data, start_date, end_date, pop.map,
+pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
+surv.ind.tab, afp.dets.prov.year, pop.tab, npafp.map,
+npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
+inad.tab.flex, tab.60d, case.num.dose.g,
+timely_nation, timely_prov,
+mapt_all, es.site.det, es.det.map, es.timely,
+es.table
+)
+
+}
+
 }
