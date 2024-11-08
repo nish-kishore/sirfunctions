@@ -19,7 +19,7 @@ generate_stool_data(
 
 \item{end_date}{\code{str} End date of the analysis.}
 
-\item{missing}{\code{chr} How to treat missing data. Valid values are: \verb{"good", "bad", "remove"}. Defaults to \code{"good"}.
+\item{missing}{\code{str} How to treat missing data. Valid values are: \verb{"good", "bad", "remove"}. Defaults to \code{"good"}.
 When calculating the \code{adequacy.final} column:
 \itemize{
 \item \code{"good"} uses \code{adequacy.03}
@@ -27,16 +27,22 @@ When calculating the \code{adequacy.final} column:
 \item \code{"exclude"} uses \code{adequacy.02}
 }}
 
-\item{bad.data}{\code{chr} How to  treat bad data. Valid values are:\verb{"remove", "inadequate"}. Defaults to \code{"inadequate"}.
+\item{bad.data}{\code{str} How to  treat bad data. Valid values are:\verb{"remove", "inadequate"}. Defaults to \code{"inadequate"}.
 \code{"inadequate"} treats samples with bad data as inadequate.}
 }
 \value{
-a tibble containing stool adequacy columns
+\code{tibble} AFP linelist with stool adequacy columns.
 }
 \description{
-The function adds the adequacy final column called \code{adequacy.final} into the AFP linelist. The function borrows
+The function adds the adequacy final column called \code{adequacy.final} and \code{adequacy.final2} into the AFP linelist. The function borrows
 in part from \code{\link[=f.stool.ad.01]{f.stool.ad.01()}}, so that the adequacy final column generated can match with how the stool adequacy
-function treats bad or missing data and classify the adequacy final column.
+function treats bad or missing data and classify the adequacy final column. \code{adequacy.final} contains the original
+classification of the sample and \code{adequacy.final2} contains the final classification according to how missing and bad
+data are treated.
+}
+\details{
+Unlike the stool adequacy function, this will not filter out \code{NOT-AFP} cases, as it is expected for other functions
+that use the output of this function to do the filtering. For example, \code{\link[=generate_60_day_table_data]{generate_60_day_table_data()}}.
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = F)

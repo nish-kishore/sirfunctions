@@ -51,7 +51,6 @@ generate_year_data <- function(start_date, end_date) {
 generate_ad_final_col <- function(afp.data) {
   stool.data <- afp.data |>
     dplyr::as_tibble() |>
-    dplyr::filter(cdc.classification.all2 != "NOT-AFP") |>
     dplyr::mutate(adequacy.final = dplyr::case_when( # Conditions for Bad Data
       bad.stool1 == "data entry error" |
         bad.stool1 == "date before onset" |
@@ -327,18 +326,18 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #' which includes "NOT-AFP".
 #' @param admin.data `tibble` Full list of country administrative units by a given
 #' spatial scale including `year`, `adm(0,1,2)guid`, and `ctry/prov/dist` (as appropriate).
-#' @param start.date `chr` Starting date for analysis formatted as "YYYY-MM-DD".
-#' @param end.date `chr` Ending date for analysis as "YYYY-MM-DD".
-#' @param spatial.scale `chr` Geographic level to group analysis on.
+#' @param start.date `str` Starting date for analysis formatted as "YYYY-MM-DD".
+#' @param end.date `str` Ending date for analysis as "YYYY-MM-DD".
+#' @param spatial.scale `str` Geographic level to group analysis on.
 #' - `"prov"` Province level.
 #' - `"dist"` District level.
 #' - `"ctry"` Country level.
-#' @param missing `chr` How to treat missing data. Valid values are: `"good", "bad", "remove"`. Defaults to `"good"`.
+#' @param missing `str` How to treat missing data. Valid values are: `"good", "bad", "remove"`. Defaults to `"good"`.
 #' When calculating the `adequacy.final` column:
 #' - `"good"` uses `adequacy.03`
 #' - `"bad"` uses `adequacy.01`
 #' - `"exclude"` uses `adequacy.02`
-#' @param bad.data `chr` How to  treat bad data. Valid values are:`"remove", "inadequate"`. Defaults to `"inadequate"`.
+#' @param bad.data `str` How to  treat bad data. Valid values are:`"remove", "inadequate"`. Defaults to `"inadequate"`.
 #' `"inadequate"` treats samples with bad data as inadequate.
 #' @param rolling `bool` Should data be analyzed on a rolling bases? Defaults to `FALSE`.
 #' @param sp_continuity_validation `bool` Should GUIDs not present in all years of the dataset be excluded? Default `TRUE`.
@@ -489,7 +488,8 @@ f.stool.ad.01 <- function(
 
   # Filter AFP and population data based on start and end dates
   afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date))
+    dplyr::filter(dplyr::between(date, start.date, end.date),
+                  cdc.classification.all2 != "NOT-AFP")
   # Only years of analysis
   admin.data <- admin.data %>%
     dplyr::filter(dplyr::between(year,

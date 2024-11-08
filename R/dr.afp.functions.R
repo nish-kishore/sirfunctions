@@ -8,7 +8,7 @@
 #' @param afp.data tibble containing AFP data
 #' @param spatial.scale what geographic level to check for. Valid values are "ctry","prov", "dist".
 #'
-#' @return tibble containing records with missing geographic data
+#' @returns tibble containing records with missing geographic data
 check_missing_geo <- function(afp.data, spatial.scale) {
   if (!spatial.scale %in% c("ctry", "dist", "prov")) {
     stop("Please enter a valid spatial scale.")
@@ -34,7 +34,7 @@ check_missing_geo <- function(afp.data, spatial.scale) {
 #'
 #' @param afp.data tibble of AFP data
 #' @import cli dplyr
-#' @return tibble of AFP data with filled district data
+#' @returns tibble of AFP data with filled district data
 impute_dist_afp <- function(afp.data) {
   cli::cli_process_start("Filling in missing district data in the AFP linelist")
   missing <- afp.data |>
@@ -150,7 +150,7 @@ impute_dist_afp <- function(afp.data) {
 #'
 #' @param afp.data tibble: AFP data
 #' @import cli dplyr
-#' @return AFP linelist with converted date columns and additional timeliness cols
+#' @returns AFP linelist with converted date columns and additional timeliness cols
 col_to_datecol <- function(afp.data) {
   cli::cli_process_start("Converting date columns from character to dates")
   afp.data <- afp.data |>
@@ -174,7 +174,7 @@ col_to_datecol <- function(afp.data) {
 #'
 #' @param afp.data AFP linelist (specifically, afp.all.2)
 #' @import cli dplyr
-#' @return tibble with AFP data with columns for number of doses and dose category
+#' @returns tibble with AFP data with columns for number of doses and dose category
 add_zero_dose_col <- function(afp.data) {
   cli::cli_process_start("Cleaning and adding columns for zero-dose children data")
   afp.data <- afp.data %>%
@@ -250,7 +250,7 @@ add_zero_dose_col <- function(afp.data) {
 #' @import cli dplyr
 #' @param age.months column containing age in months
 #'
-#' @return a column containing age group categories
+#' @returns a column containing age group categories
 #'
 add_age_group <- function(age.months) {
   cli::cli_process_start("Adding age_group column")
@@ -274,7 +274,7 @@ add_age_group <- function(age.months) {
 #' @param npafp.output tibble output after running f.npafp.rate.01 at the district
 #' level
 #'
-#' @return tibble of output with province names for those without district names
+#' @returns tibble of output with province names for those without district names
 add_prov_npafp_table <- function(npafp.output) {
   prov_na <- npafp.output |> dplyr::filter(is.na(prov))
   prov_no_na <- npafp.output |> dplyr::filter(!is.na(prov))
@@ -296,7 +296,7 @@ add_prov_npafp_table <- function(npafp.output) {
 #' @param start_date `str` Start date of analysis.
 #' @param end_date  `str` End date of analysis.
 #'
-#' @return `tibble` AFP case count with .
+#' @returns `tibble` AFP case count with .
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = F)
 #' ctry.data <- extract_country_data("algeria", raw.data)
@@ -341,7 +341,7 @@ generate_afp_by_month <- function(afp.data, start_date, end_date) {
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
 #' @param by `str` How to group the data by. Either `"prov"`, `"dist"`, or `"year"`.
-#' @return `tibble` Summary table of AFP cases by month and another grouping variable.
+#' @returns `tibble` Summary table of AFP cases by month and another grouping variable.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = F)
 #' ctry.data <- extract_country_data("algeria", raw.data)
@@ -463,7 +463,7 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
 #' @param start_date `str` Start date of the desk review.
 #' @param end_date `str` End date of the desk review.
 #'
-#' @return `tibble` NPAFP rate table with additional columns related to case counts.
+#' @returns `tibble` NPAFP rate table with additional columns related to case counts.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = F)
 #' ctry.ind <- f.npafp.rate.01(raw.data$afp, raw.data$ctry.pop,"2021-01-01", "2023-12-31","ctry", sp_continuity_validation = FALSE)
@@ -570,7 +570,7 @@ prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spati
 #' @param spatial.scale `str` Scale to summarize to. Valid values are: `"ctry" or "prov"`. `"dist"` not available currently.
 #' @param lab.data `tibble` Lab data, if available. This paramater will calculate timeliness intervals in the lab. Otherwise,
 #' only the field component will be presented.
-#' @return `tibble` A table summarizing median days for different timeliness intervals.
+#' @returns `tibble` A table summarizing median days for different timeliness intervals.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = F)
 #' ctry.data <- extract_country_data("algeria", raw.data)
@@ -775,7 +775,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 #' [generate_stool_data()].
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
-#' @return `tibble` A summary table for those requiring 60 day follow up.
+#' @returns `tibble` A summary table for those requiring 60 day follow up.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = F)
 #' ctry.data <- extract_country_data("algeria", raw.data)
@@ -938,7 +938,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #' of [init_dr()] or [extract_country_data()].
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
-#' @return `tibble` A table containing summary of AFP cases by year and country.
+#' @returns `tibble` A table containing summary of AFP cases by year and country.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = F)
 #' ctry.data <- extract_country_data("algeria")
@@ -971,7 +971,7 @@ generate_year_lab <- function(ctry.data, start_date, end_date) {
 #' of [init_dr()] or [extract_country_data()].
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
-#' @return `tibble` A table containing summary of AFP cases by year and province.
+#' @returns `tibble` A table containing summary of AFP cases by year and province.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = F)
 #' ctry.data <- extract_country_data("algeria")
@@ -998,7 +998,7 @@ generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
 #' @param cases.need60day `tibble` Summary table of cases that need 60-day follow-up.
 #' This is the output of [generate_60_day_table_data()].
 #' @param create_cluster `bool` Add column for clusters? Default to `FALSE`.
-#' @return `tibble` A summary table of cases.
+#' @returns `tibble` A summary table of cases.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = F)
 #' ctry.data <- extract_country_data("algeria", raw.data)
@@ -1137,7 +1137,7 @@ ctry_data_errors <- function(ctry.data,
 #' @param ctry.data `list` Large list containing polio country data. This is the output of
 #' [extract_country_data()] or [init_dr()].
 #'
-#' @return `list` Cleaned country data list.
+#' @returns `list` Cleaned country data list.
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
@@ -1165,23 +1165,28 @@ clean_ctry_data <- function(ctry.data) {
 
 #' Generate stool adequacy columns in the AFP dataset
 #'
-#' The function adds the adequacy final column called `adequacy.final` into the AFP linelist. The function borrows
+#' The function adds the adequacy final column called `adequacy.final` and `adequacy.final2` into the AFP linelist. The function borrows
 #' in part from [f.stool.ad.01()], so that the adequacy final column generated can match with how the stool adequacy
-#' function treats bad or missing data and classify the adequacy final column.
+#' function treats bad or missing data and classify the adequacy final column. `adequacy.final` contains the original
+#' classification of the sample and `adequacy.final2` contains the final classification according to how missing and bad
+#' data are treated.
+#'
+#' Unlike the stool adequacy function, this will not filter out `NOT-AFP` cases, as it is expected for other functions
+#' that use the output of this function to do the filtering. For example, [generate_60_day_table_data()].
 #'
 #' @import dplyr lubridate
 #'
 #' @param afp.data `tibble` AFP linelist. Either `ctry.data$afp.all.2`
 #' @param start_date `str` Start date of the analysis.
 #' @param end_date `str` End date of the analysis.
-#' @param missing `chr` How to treat missing data. Valid values are: `"good", "bad", "remove"`. Defaults to `"good"`.
+#' @param missing `str` How to treat missing data. Valid values are: `"good", "bad", "remove"`. Defaults to `"good"`.
 #' When calculating the `adequacy.final` column:
 #' - `"good"` uses `adequacy.03`
 #' - `"bad"` uses `adequacy.01`
 #' - `"exclude"` uses `adequacy.02`
-#' @param bad.data `chr` How to  treat bad data. Valid values are:`"remove", "inadequate"`. Defaults to `"inadequate"`.
+#' @param bad.data `str` How to  treat bad data. Valid values are:`"remove", "inadequate"`. Defaults to `"inadequate"`.
 #' `"inadequate"` treats samples with bad data as inadequate.
-#' @return a tibble containing stool adequacy columns
+#' @returns `tibble` AFP linelist with stool adequacy columns.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = F)
 #' stool.data <- generate_stool_data(raw.data$afp, "2021-01-01", "2023-12-31")

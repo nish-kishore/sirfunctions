@@ -24,18 +24,18 @@ which includes "NOT-AFP".}
 \item{admin.data}{\code{tibble} Full list of country administrative units by a given
 spatial scale including \code{year}, \verb{adm(0,1,2)guid}, and \code{ctry/prov/dist} (as appropriate).}
 
-\item{start.date}{\code{chr} Starting date for analysis formatted as "YYYY-MM-DD".}
+\item{start.date}{\code{str} Starting date for analysis formatted as "YYYY-MM-DD".}
 
-\item{end.date}{\code{chr} Ending date for analysis as "YYYY-MM-DD".}
+\item{end.date}{\code{str} Ending date for analysis as "YYYY-MM-DD".}
 
-\item{spatial.scale}{\code{chr} Geographic level to group analysis on.
+\item{spatial.scale}{\code{str} Geographic level to group analysis on.
 \itemize{
 \item \code{"prov"} Province level.
 \item \code{"dist"} District level.
 \item \code{"ctry"} Country level.
 }}
 
-\item{missing}{\code{chr} How to treat missing data. Valid values are: \verb{"good", "bad", "remove"}. Defaults to \code{"good"}.
+\item{missing}{\code{str} How to treat missing data. Valid values are: \verb{"good", "bad", "remove"}. Defaults to \code{"good"}.
 When calculating the \code{adequacy.final} column:
 \itemize{
 \item \code{"good"} uses \code{adequacy.03}
@@ -43,7 +43,7 @@ When calculating the \code{adequacy.final} column:
 \item \code{"exclude"} uses \code{adequacy.02}
 }}
 
-\item{bad.data}{\code{chr} How to  treat bad data. Valid values are:\verb{"remove", "inadequate"}. Defaults to \code{"inadequate"}.
+\item{bad.data}{\code{str} How to  treat bad data. Valid values are:\verb{"remove", "inadequate"}. Defaults to \code{"inadequate"}.
 \code{"inadequate"} treats samples with bad data as inadequate.}
 
 \item{rolling}{\code{bool} Should data be analyzed on a rolling bases? Defaults to \code{FALSE}.}
