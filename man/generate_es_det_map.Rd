@@ -2,36 +2,51 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_es_det_map}
 \alias{generate_es_det_map}
-\title{Generate ES detection map}
+\title{ES detection map}
 \usage{
 generate_es_det_map(
   es.data,
   es.data.long,
   ctry.shape,
   prov.shape,
-  es_start_date = (end_date - lubridate::years(1)),
+  es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
   es_end_date = end_date,
   output_path = Sys.getenv("DR_FIGURE_PATH")
 )
 }
 \arguments{
-\item{es.data}{ES data for a country}
+\item{es.data}{\code{tibble} ES data for a country. This is \code{ctry.data$es}, which is
+part of the outputs of \code{\link[=extract_country_data]{extract_country_data()}} and \code{\link[=init_dr]{init_dr()}}.}
 
-\item{es.data.long}{ES data summary and in long format}
+\item{es.data.long}{\code{tibble} ES data summary in long format. This is the output of
+\code{\link[=generate_es_data_long]{generate_es_data_long()}}.}
 
-\item{ctry.shape}{country shapefile in long format}
+\item{ctry.shape}{\code{sf} Country shapefile in long format.}
 
-\item{prov.shape}{province shapefile in long format}
+\item{prov.shape}{\code{sf} Province shapefile in long format.}
 
-\item{es_start_date}{ES start date}
+\item{es_start_date}{\code{str} Start date of analysis. Default is one year from the end date.}
 
-\item{es_end_date}{ES end date}
+\item{es_end_date}{\code{str} End date of analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path where to save the figure to.}
 }
 \value{
-ggplot map of ES detections
+\code{ggplot} Map of EV detection rates for the environmental surveillance sites.
 }
 \description{
-Generate ES detection map
+Generates a map showing the detection rate of each ES sites on a rolling period
+as defined by the start and end dates of the analysis.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+es.data.long <- generate_es_data_long(ctry.data$es)
+ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+generate_es_det_map(ctry.data$es, es.data.long, ctry.shape, prov.shape,
+                    es_end_date = "2023-01-01"
+                    )
+}
+
 }

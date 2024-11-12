@@ -7,7 +7,7 @@
 duplicate_check(.raw.data = raw.data)
 }
 \arguments{
-\item{.raw.data}{Named \code{list} output of \code{get_all_polio_data()}}
+\item{.raw.data}{Named \code{list} output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}}
 }
 \description{
 Checks for duplicate records in AFP, other, SIA, and Virus datasets.

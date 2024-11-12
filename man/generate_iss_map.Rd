@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_iss_map}
 \alias{generate_iss_map}
-\title{Generate ISS map}
+\title{Map of high priority health facilities}
 \usage{
 generate_iss_map(
   iss.data,
@@ -14,21 +14,35 @@ generate_iss_map(
 )
 }
 \arguments{
-\item{iss.data}{tibble of ISS/eSurv data}
+\item{iss.data}{\code{tibble} ISS/eSurv data. Ensure that the \code{iss.data} is part of \code{ctry.data} and
+has been cleaned by \code{\link[=clean_iss_data]{clean_iss_data()}}.}
 
-\item{ctry.shape}{country shapefile in long format}
+\item{ctry.shape}{\code{sf} Country shapefile in long format.}
 
-\item{prov.shape}{province shapefile in long format}
+\item{prov.shape}{\code{sf} Province shapefile in long format.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path where to save the figure to.}
 }
 \value{
-a ggplot map
+\code{ggplot} Map of where the high priority health facilities are across years.
 }
 \description{
-Generate ISS map
+Generates a map of high priority health facilities across years based on ISS/eSURV data.
+}
+\examples{
+\dontrun{
+iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
+ctry.data <- init_dr("algeria", iss_data_path = iss_path)
+ctry.data$iss.data <- clean_iss_data(ctry.data)
+ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+generate_iss_map(ctry.data$iss.data, ctry.shape, prov.shape,
+                 "2021-01-01", "2023-12-31"
+                 )
+}
+
 }

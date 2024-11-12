@@ -15,7 +15,7 @@ get_diff_cols(df, id_col)
 \code{tibble} A tibble showing the columns where duplicates differ.
 }
 \description{
-Get the columns where duplicates differ after performing a \code{distinct()} operation.
+Get the columns where duplicates differ after performing a \code{\link[dplyr:distinct]{dplyr::distinct()}} operation.
 In some instances, two records might exist with the same unique identifier. In datasets with lots of columns,
 it is difficult to figure out which columns these potential duplicates differ. The function outputs the columns
 where records with the same unique identifier differ.

@@ -834,7 +834,10 @@ generate_iss_barplot <- function(iss.data = NULL,
 }
 
 ## Maps ----
-#' Generate a map of population data
+#' Country map with province populations
+#'
+#' The map displays the U15 population for each province for a country.
+#'
 #' @importFrom dplyr filter left_join
 #' @importFrom ggplot2 aes element_blank element_text geom_sf ggplot ggsave ggtitle labs scale_fill_distiller scale_size_identity theme
 #' @importFrom ggrepel geom_label_repel
@@ -842,14 +845,23 @@ generate_iss_barplot <- function(iss.data = NULL,
 #' @importFrom sf st_crop
 #' @importFrom scales comma
 #'
-#' @param ctry.data RDS object containing country polio data
-#' @param ctry.shape country shape file in long format
-#' @param prov.shape province shape file in long format
-#' @param end_date end date of the desk review
-#' @param output_path where to save the figure
-#' @param caption_size size of the caption
+#' @param ctry.data `list` Large list containing country polio data. This is the
+#' output of [extract_country_data()] or [init_dr()].
+#' @param ctry.shape `sf` Country shape file in long format.
+#' @param prov.shape `sf` Province shape file in long format.
+#' @param end_date `str` End date of the analysis.
+#' @param output_path `str` Local path where to save the figure.
+#' @param caption_size `numeric` Size of the caption. Default is `11`.
 #'
-#' @returns ggplot object
+#' @returns `ggplot` A map of U15 province populations and population centers.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_pop_map(ctry.data, ctry.shape, prov.shape, "2023-12-31")
+#' }
+#' @seealso [load_clean_ctry_sp()], [load_clean_prov_sp()]
 #' @export
 generate_pop_map <- function(ctry.data,
                              ctry.shape,
@@ -857,6 +869,7 @@ generate_pop_map <- function(ctry.data,
                              end_date,
                              output_path = Sys.getenv("DR_FIGURE_PATH"),
                              caption_size = 11) {
+  end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0("ctry.shape is not in long format. ",
@@ -940,22 +953,36 @@ generate_pop_map <- function(ctry.data,
   return(pop.map)
 }
 
-#' Generate a map of population by district
+#' Map district U15 populations
+#'
+#' Generates a map of U15 district populations, with population centers and roads.
+#'
 #' @importFrom dplyr filter left_join
 #' @importFrom ggplot2 aes element_blank element_text geom_sf ggplot ggsave ggtitle labs scale_fill_distiller scale_size_identity theme
 #' @importFrom ggrepel geom_label_repel
 #' @importFrom lubridate year
 #' @importFrom scales comma
 #'
-#' @param ctry.data RDS file of polio country data
-#' @param ctry.shape recent shape file of country
-#' @param prov.shape recent shape file of province
-#' @param dist.shape recent shape file of district
-#' @param end_date end date of the desk review
-#' @param output_path where to save the figure
-#' @param caption_size size of the caption
+#' @param ctry.data `list` Large list of polio country data. This is the output of
+#' either [extract_country_data()] or [init_dr()].
+#' @param ctry.shape `sf` Shapefile of country in long format.
+#' @param prov.shape `sf` Shapefile of province in long format.
+#' @param dist.shape `sf` Shapefile of district in long format.
+#' @param end_date `str` End date of the analysis.
+#' @param output_path `str` Local path of where to save the figure.
+#' @param caption_size `numeric` Size of the caption. Default is `11`.
 #'
-#' @returns ggplot object
+#' @returns `ggplot` A map of district level populations and population centers.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_pop_map(ctry.data, ctry.shape, prov.shape, dist.shape, "2023-12-31")
+#' }
+#' @seealso [load_clean_ctry_sp()], [load_clean_prov_sp()], [load_clean_dist_sp()]
+#'
 #' @export
 generate_dist_pop_map <- function(ctry.data,
                                   ctry.shape,
@@ -964,6 +991,8 @@ generate_dist_pop_map <- function(ctry.data,
                                   end_date,
                                   output_path = Sys.getenv("DR_FIGURE_PATH"),
                                   caption_size = 11) {
+
+  end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0("ctry.shape is not in long format. ",
@@ -1058,16 +1087,29 @@ generate_dist_pop_map <- function(ctry.data,
   return(pop.map.provn)
 }
 
-#' Generate a map of AFP cases
-#' @import dplyr ggplot2 lubridate
-#' @param afp.all AFP linelist containing point geometry
-#' @param ctry.shape province shapefile in long format
-#' @param prov.shape province shapefile in long format
-#' @param start_date start date
-#' @param end_date end date
-#' @param output_path where to save the figure
+#' AFP case map
 #'
-#' @returns ggplot object
+#' Generates a map of AFP cases, excluding any with pending classification.
+#'
+#' @import dplyr ggplot2 lubridate
+#' @param afp.all `sf` AFP linelist containing point geometry. This is
+#' `ctry.data$afp.all`, which is an output of either [extract_country_data()] and
+#' [init_dr()].
+#' @param ctry.shape `sf` Country shapefile in long format.
+#' @param prov.shape `sf` Province shapefile in long format.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis. Default is today's date.
+#' @param output_path `str` Local path where to save the figure to.
+#'
+#' @returns `ggplot` Map of AFP cases.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_afp_case_map(ctry.data, ctry.shape, prov.shape, "2023-12-31")
+#' }
+#' @seealso [load_clean_ctry_sp()], [load_clean_prov_sp()]
 #' @export
 generate_afp_case_map <- function(afp.all,
                                   ctry.shape,
@@ -1075,6 +1117,9 @@ generate_afp_case_map <- function(afp.all,
                                   start_date,
                                   end_date = lubridate::today(),
                                   output_path = Sys.getenv("DR_FIGURE_PATH")) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0("ctry.shape is not in long format. ",
@@ -1165,18 +1210,39 @@ generate_afp_case_map <- function(afp.all,
   return(afp.case.map)
 }
 
-#' Map of NPAFP rate by province
+#' Maps of NPAFP rates by province and year
+#'
+#' Generates a map of NPAFP rates for each province per year.
+#'
 #' @import dplyr ggplot2 lubridate sf
 #'
-#' @param prov.extract province NPAFP rate table
-#' @param ctry.shape country shape in long format
-#' @param prov.shape province shape in long format
-#' @param start_date start date
-#' @param end_date end date
-#' @param output_path where to save the figure
-#' @param caption_size size of the caption
+#' @param prov.extract `tibble` Province NPAFP rate table. This is the output of
+#' [f.npafp.rate.01()] calculated at the province level.
+#' @param ctry.shape `sf` Country shape in long format.
+#' @param prov.shape `sf` Province shape in long format.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @param output_path `str` Local path where the figure is saved to.
+#' @param caption_size `numeric` Size of the caption. Default is `2`.
 #'
-#' @returns ggplot object
+#' @returns `ggplot` Map of NPAFP rates by province.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' prov.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
+#'                                 pop.data = ctry.data$prov.pop,
+#'                                 start.date = start_date,
+#'                                 end.date = end_date,
+#'                                 spatial.scale = "prov",
+#'                                 pending = T,
+#'                                 rolling = F,
+#'                                 sp_continuity_validation = F
+#'                                 )
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_npafp_maps(prov.extract, ctry.shape, prov.shape, "2021-01-01", "2023-12-31")
+#' }
+#' @seealso [load_clean_ctry_sp()], [load_clean_prov_sp()]
 #' @export
 generate_npafp_maps <- function(prov.extract,
                                 ctry.shape,
@@ -1352,19 +1418,41 @@ generate_npafp_maps <- function(prov.extract,
   return(npafp.maps)
 }
 
-#' Generate map of NPAFP rates by district
+#' Maps of NPAFP rates by district and year
+#'
+#' Generates maps of the NPAFP rates for each district per year.
+#'
 #' @import dplyr ggplot2 sf lubridate
 #'
-#' @param dist.extract NPAFP rates by district table.
-#' @param ctry.shape country shapefile in long format
-#' @param prov.shape province shapefile in long format
-#' @param dist.shape district shapefile in long format
-#' @param start_date start date
-#' @param end_date end date
-#' @param output_path where to save the figure
-#' @param caption_size size of the caption
+#' @param dist.extract `tibble` Province NPAFP rate table. This is the output of
+#' [f.npafp.rate.01()] calculated at the province level.
+#' @param ctry.shape `sf` Country shapefile in long format.
+#' @param prov.shape `sf` Province shapefile in long format.
+#' @param dist.shape `sf` District shapefile in long format.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @param output_path `str` Local path Where the figure is saved to.
+#' @param caption_size `numeric` Size of the caption. Default is `2`.
 #'
-#' @returns ggplot object
+#' @returns `ggplot` A map of districts with their NPAFP rates.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' dist.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
+#'                                 pop.data = ctry.data$prov.pop,
+#'                                 start.date = start_date,
+#'                                 end.date = end_date,
+#'                                 spatial.scale = "dist",
+#'                                 pending = T,
+#'                                 rolling = F,
+#'                                 sp_continuity_validation = F
+#'                                 )
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_npafp_maps_dist(dist.extract, ctry.shape, prov.shape, dist.shape, "2021-01-01", "2023-12-31")
+#' }
+#'
 #' @export
 generate_npafp_maps_dist <- function(dist.extract,
                                      ctry.shape,
@@ -1374,6 +1462,9 @@ generate_npafp_maps_dist <- function(dist.extract,
                                      end_date,
                                      output_path = Sys.getenv("DR_FIGURE_PATH"),
                                      caption_size = 2) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0("ctry.shape is not in long format. ",
@@ -1553,18 +1644,41 @@ generate_npafp_maps_dist <- function(dist.extract,
 
 
 #' Stool adequacy maps by province
+#'
+#' Generates maps that contain the stool adequacy rate for each province per year.
+#'
 #' @import dplyr ggplot2 sf lubridate
 #'
-#' @param ctry.data RDS file for polio data of a country
-#' @param pstool stool adequacy at province level
-#' @param ctry.shape country shapefile in long format
-#' @param prov.shape province shapefile in long format
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
-#' @param output_path where to save the figure
-#' @param caption_size size of the caption
+#' @param ctry.data `list` Large list containing polio data of a country. This is the output
+#' of either [extract_country_data()] or [init_dr()].
+#' @param pstool `tibble` Stool adequacy table at province level. This is the output of
+#' [f.stool.ad.01()] calculated at the province level.
+#' @param ctry.shape `sf` Country shapefile in long format.
+#' @param prov.shape `sf` Province shapefile in long format.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @param output_path `str` Where to save the figure to.
+#' @param caption_size `numeric` Size of the caption. Defaults to 3.
 #'
-#' @returns ggplot object
+#' @returns `ggplot` A map of stool adequacy rates for each province by year.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' pstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
+#'                         admin.data = ctry.data$prov.pop,
+#'                         start.date = start_date,
+#'                         end.date = end_date,
+#'                         spatial.scale = "prov",
+#'                         missing = "good",
+#'                         bad.data = "inadequate",
+#'                         rolling = F,
+#'                         sp_continuity_validation = F
+#'                        )
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_stool_ad_maps(ctry.data, pstool, ctry.shape, prov.shape, "2021-01-01", "2023-12-31")
+#' }
+#'
 #' @export
 generate_stool_ad_maps <- function(ctry.data,
                                    pstool,
@@ -1574,6 +1688,9 @@ generate_stool_ad_maps <- function(ctry.data,
                                    end_date,
                                    output_path = Sys.getenv("DR_FIGURE_PATH"),
                                    caption_size = 3) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0("ctry.shape is not in long format. ",
@@ -1740,20 +1857,47 @@ generate_stool_ad_maps <- function(ctry.data,
   return(stool.ad.maps)
 }
 
-#' Stool adequacy map by district
+#' Maps of stool adequacy by district and year
+#'
+#' Generates maps of stool adequacy map by district and year.
+#'
 #' @import dplyr ggplot2 sf lubridate
 #'
-#' @param ctry.data RDS file of polio data for a country
-#' @param dstool district stool adequacy table
-#' @param ctry.shape country shapefile in long format
-#' @param dist.shape district shapefile in long format
-#' @param prov.shape province shapefile in long format
-#' @param start_date start date
-#' @param end_date end date
-#' @param output_path where to save the figure
-#' @param caption_size size of the caption
+#' @param ctry.data `list` Large list containing polio data for a country. This is
+#' the output of [extract_country_data()] or [init_dr()].
+#' @param dstool `tibble` District stool adequacy table. This is the output of
+#' [f.stool.ad.01()] calculated at the district level.
+#' @param ctry.shape `sf` Country shapefile in long format.
+#' @param prov.shape `sf` Province shapefile in long format.
+#' @param dist.shape `sf` District shapefile in long format.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @param output_path `str` Local path where to save the figure to.
+#' @param caption_size `numeric` Size of the caption. Defaults to 3.
 #'
-#' @returns ggplot object
+#' @returns `ggplot` Maps of stool adequacy rates for each district by year.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' dstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
+#'                         admin.data = ctry.data$dist.pop,
+#'                         start.date = start_date,
+#'                         end.date = end_date,
+#'                         spatial.scale = "dist",
+#'                         missing = "good",
+#'                         bad.data = "inadequate",
+#'                         rolling = F,
+#'                         sp_continuity_validation = F
+#'                        )
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_stool_ad_maps_dist(ctry.data, dstool,
+#'                             ctry.shape, prov.shape, dist.shape,
+#'                             "2021-01-01", "2023-12-31"
+#'                             )
+#' }
+#'
 #' @export
 generate_stool_ad_maps_dist <- function(ctry.data,
                                         dstool,
@@ -1953,7 +2097,13 @@ generate_stool_ad_maps_dist <- function(ctry.data,
 
 
 
-#' Map containing timeliness of samples
+#' Maps evaluating timeliness of samples against timeliness targets.
+#'
+#' Generates a map at the provincial level summarizing the timeliness of samples
+#' across different timeliness targets. The figure is faceted by the type of
+#' timeliness target, with each facet containing the percentage of samples
+#' from each province that met the targets over the years.
+#'
 #' @importFrom cli cli_alert_success cli_alert_warning
 #' @importFrom forcats fct_na_value_to_level
 #' @importFrom ggplot2 aes element_blank element_text facet_wrap geom_sf ggplot ggsave ggtitle scale_fill_manual theme
@@ -1961,16 +2111,27 @@ generate_stool_ad_maps_dist <- function(ctry.data,
 #' @importFrom lubridate year
 #' @importFrom sf sf_use_s2 st_centroid
 #' @importFrom tidyr complete pivot_longer
-#' @param ctry.data RDS file containing polio data for a country
-#' @param ctry.shape country shapefile in long format
-#' @param prov.shape province shapefile in long format
-#' @param start_date start date
-#' @param end_date end date
-#' @param mark_x whether to put a mark on where AFP cases are less than 5
-#' @param pt_size size of the marks
-#' @param output_path where to save the figure
 #'
-#' @returns ggplot object
+#' @param ctry.data `list` Large list containing polio data for a country. This is the output
+#' of [extract_country_data()] or [init_dr()].
+#' @param ctry.shape `sf` Country shapefile in long format.
+#' @param prov.shape `sf` Province shapefile in long format.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @param mark_x `bool` Mark where there are less than 5 AFP cases? Defaults to `TRUE`.
+#' @param pt_size `numeric` Size of the marks.
+#' @param output_path `str` Local path where to save the figure to.
+#'
+#' @returns `ggplot` Faceted map of each province evaluated against timeliness targets
+#' across years.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_timeliness_maps(ctry.data, ctry.shape, prov.shape, "2021-01-01", "2023-12-31")
+#' }
+#'
 #' @export
 generate_timeliness_maps <- function(ctry.data,
                                      ctry.shape,
@@ -2419,25 +2580,45 @@ generate_timeliness_maps <- function(ctry.data,
 }
 
 
-#' Generate ES detection map
-#' @import dplyr ggplot2 ggrepel
-#' @param es.data ES data for a country
-#' @param es.data.long ES data summary and in long format
-#' @param ctry.shape country shapefile in long format
-#' @param prov.shape province shapefile in long format
-#' @param es_start_date ES start date
-#' @param es_end_date ES end date
-#' @param output_path where to save the figure
+#' ES detection map
 #'
-#' @return ggplot map of ES detections
+#' Generates a map showing the detection rate of each ES sites on a rolling period
+#' as defined by the start and end dates of the analysis.
+#'
+#' @import dplyr ggplot2 ggrepel
+#' @param es.data `tibble` ES data for a country. This is `ctry.data$es`, which is
+#' part of the outputs of [extract_country_data()] and [init_dr()].
+#' @param es.data.long `tibble` ES data summary in long format. This is the output of
+#' [generate_es_data_long()].
+#' @param ctry.shape `sf` Country shapefile in long format.
+#' @param prov.shape `sf` Province shapefile in long format.
+#' @param es_start_date `str` Start date of analysis. Default is one year from the end date.
+#' @param es_end_date `str` End date of analysis.
+#' @param output_path `str` Local path where to save the figure to.
+#'
+#' @return `ggplot` Map of EV detection rates for the environmental surveillance sites.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' es.data.long <- generate_es_data_long(ctry.data$es)
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_es_det_map(ctry.data$es, es.data.long, ctry.shape, prov.shape,
+#'                     es_end_date = "2023-01-01"
+#'                     )
+#' }
+#'
 #' @export
 generate_es_det_map <- function(es.data,
                                 es.data.long,
                                 ctry.shape,
                                 prov.shape,
-                                es_start_date = (end_date - lubridate::years(1)),
+                                es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
                                 es_end_date = end_date,
                                 output_path = Sys.getenv("DR_FIGURE_PATH")) {
+
+  es_start_date <- lubridate::as_date(es_start_date)
+  es_end_date <- lubridate::as_date(es_end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0("ctry.shape is not in long format. ",
@@ -2568,16 +2749,32 @@ generate_es_det_map <- function(es.data,
   return(es.det.map)
 }
 
-#' Generate ISS map
-#' @import dplyr sf ggplot2 lubridate
-#' @param iss.data tibble of ISS/eSurv data
-#' @param start_date start date of desk review
-#' @param ctry.shape country shapefile in long format
-#' @param prov.shape province shapefile in long format
-#' @param output_path where to save the figure
-#' @param end_date end date
+#' Map of high priority health facilities
 #'
-#' @return a ggplot map
+#' Generates a map of high priority health facilities across years based on ISS/eSURV data.
+#'
+#' @import dplyr sf ggplot2 lubridate
+#' @param iss.data `tibble` ISS/eSurv data. Ensure that the `iss.data` is part of `ctry.data` and
+#' has been cleaned by [clean_iss_data()].
+#' @param ctry.shape `sf` Country shapefile in long format.
+#' @param prov.shape `sf` Province shapefile in long format.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @param output_path `str` Local path where to save the figure to.
+#'
+#' @return `ggplot` Map of where the high priority health facilities are across years.
+#' @examples
+#' \dontrun{
+#' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
+#' ctry.data <- init_dr("algeria", iss_data_path = iss_path)
+#' ctry.data$iss.data <- clean_iss_data(ctry.data)
+#' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+#' generate_iss_map(ctry.data$iss.data, ctry.shape, prov.shape,
+#'                  "2021-01-01", "2023-12-31"
+#'                  )
+#' }
+#'
 #' @export
 generate_iss_map <- function(iss.data,
                              ctry.shape,
@@ -2585,6 +2782,10 @@ generate_iss_map <- function(iss.data,
                              start_date,
                              end_date,
                              output_path = Sys.getenv("DR_FIGURE_PATH")) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
   if (is.null(iss.data)) {
     return(message("No ISS data attached."))
   }

@@ -16,25 +16,46 @@ generate_stool_ad_maps(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file for polio data of a country}
+\item{ctry.data}{\code{list} Large list containing polio data of a country. This is the output
+of either \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{pstool}{stool adequacy at province level}
+\item{pstool}{\code{tibble} Stool adequacy table at province level. This is the output of
+\code{\link[=f.stool.ad.01]{f.stool.ad.01()}} calculated at the province level.}
 
-\item{ctry.shape}{country shapefile in long format}
+\item{ctry.shape}{\code{sf} Country shapefile in long format.}
 
-\item{prov.shape}{province shapefile in long format}
+\item{prov.shape}{\code{sf} Province shapefile in long format.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Where to save the figure to.}
 
-\item{caption_size}{size of the caption}
+\item{caption_size}{\code{numeric} Size of the caption. Defaults to 3.}
 }
 \value{
-ggplot object
+\code{ggplot} A map of stool adequacy rates for each province by year.
 }
 \description{
-Stool adequacy maps by province
+Generates maps that contain the stool adequacy rate for each province per year.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+pstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
+                        admin.data = ctry.data$prov.pop,
+                        start.date = start_date,
+                        end.date = end_date,
+                        spatial.scale = "prov",
+                        missing = "good",
+                        bad.data = "inadequate",
+                        rolling = F,
+                        sp_continuity_validation = F
+                       )
+ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+generate_stool_ad_maps(ctry.data, pstool, ctry.shape, prov.shape, "2021-01-01", "2023-12-31")
+}
+
 }

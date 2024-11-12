@@ -869,9 +869,9 @@ get_all_polio_data <- function(
 
 #' Extract country specific information from raw polio data
 #'
-#' @description Filters country specific data from the CDC generated `raw.data` object from `get_all_polio_data()`.
+#' @description Filters country specific data from the CDC generated `raw.data` object from [get_all_polio_data()].
 #' @import cli dplyr sf stringr
-#' @param .raw.data `list` Output of `get_all_polio_data()`.
+#' @param .raw.data `list` Output of [get_all_polio_data()].
 #' @param .country `str` Country name of interest. Case insensitive.
 #' @return Named `list` with country specific datasets.
 #' @examples
@@ -1285,7 +1285,7 @@ extract_country_data <- function(
 #' @description
 #' Checks for duplicate records in AFP, other, SIA, and Virus datasets.
 #' @import dplyr cli
-#' @param .raw.data Named `list` output of `get_all_polio_data()`
+#' @param .raw.data Named `list` output of [get_all_polio_data()]
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' raw.data <- duplicate_check(raw.data)
@@ -1935,7 +1935,7 @@ compress_png <- function(img, pngquant_path = NULL, suffix = "") {
 
 #' Get the columns where records differ in a group
 #'
-#' Get the columns where duplicates differ after performing a `distinct()` operation.
+#' Get the columns where duplicates differ after performing a [dplyr::distinct()] operation.
 #' In some instances, two records might exist with the same unique identifier. In datasets with lots of columns,
 #' it is difficult to figure out which columns these potential duplicates differ. The function outputs the columns
 #' where records with the same unique identifier differ.
