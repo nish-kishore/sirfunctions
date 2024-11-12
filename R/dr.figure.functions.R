@@ -335,7 +335,7 @@ generate_afp_prov_year <- function(afp.by.month.prov,
 #' detection types and the user must pass another list appended by that vaccine type.
 #' @param output_path `str` Local path to output the figure to.
 #'
-#' @return `ggplot` A dot plot of viral detections per ES sites and SIA campaigns.
+#' @returns `ggplot` A dot plot of viral detections per ES sites and SIA campaigns.
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
@@ -534,7 +534,7 @@ generate_es_site_det <- function(ctry.data,
 #' @param es_end_date `str` End date of analysis.
 #' @param output_path `str` Local path for where to save the figure to.
 #'
-#' @return `ggplot` A scatterplot for timeliness of ES samples.
+#' @returns `ggplot` A scatterplot for timeliness of ES samples.
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
@@ -644,7 +644,7 @@ generate_es_timely <- function(es.data,
 #' @param end_date `str` End date of analysis.
 #' @param output_path `str` Local path of where to save the figure to.
 #'
-#' @return `ggplot` A percent bar plot displaying immunization rates per year by immunization status.
+#' @returns `ggplot` A percent bar plot displaying immunization rates per year by immunization status.
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
@@ -728,7 +728,7 @@ generate_case_num_dose_g <- function(ctry.data,
 #' @param end_date `str` End date of the analysis.
 #' @param output_path `str` Local path where the figure is saved to.
 #'
-#' @return `ggplot` Bar plot of health clinic visits.
+#' @returns `ggplot` Bar plot of health clinic visits.
 #' @examples
 #' \dontrun{
 #' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
@@ -2596,7 +2596,7 @@ generate_timeliness_maps <- function(ctry.data,
 #' @param es_end_date `str` End date of analysis.
 #' @param output_path `str` Local path where to save the figure to.
 #'
-#' @return `ggplot` Map of EV detection rates for the environmental surveillance sites.
+#' @returns `ggplot` Map of EV detection rates for the environmental surveillance sites.
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
@@ -2762,7 +2762,7 @@ generate_es_det_map <- function(es.data,
 #' @param end_date `str` End date of analysis.
 #' @param output_path `str` Local path where to save the figure to.
 #'
-#' @return `ggplot` Map of where the high priority health facilities are across years.
+#' @returns `ggplot` Map of where the high priority health facilities are across years.
 #' @examples
 #' \dontrun{
 #' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
@@ -2892,25 +2892,75 @@ generate_iss_map <- function(iss.data,
   return(iss.data.map)
 }
 # Tables ----
-#' Generate surveillance indicator table
+#' Surveillance indicator table
+#'
+#' Generates the surveillance indicator table for each year. Outputs the number of
+#' AFP cases, national NPAFP rate and stool adequacy,percentage of population living in
+#' districts with greater than or equal to 100,000 U15 meeting both indicators.
+#'
 #' @importFrom flextable add_footer_row autofit bold colformat_double flextable set_header_labels theme_booktabs
 #' @importFrom dplyr across case_when group_by left_join mutate n summarize
 #' @importFrom lubridate year
 #' @importFrom stringr str_to_upper
 #' @importFrom tidyr replace_na
-#' @param ctry.data RDS file containing polio data of a country
-#' @param ctry.extract country NPAFP rate
-#' @param dis.extract district NPAFP rate
-#' @param cstool stool adequacy at country level
-#' @param dstool stool adequacy at a district level
-#' @param afp.case AFP cases
-#' @param country_name name of the country
+#' @param ctry.data `list` Large list containing polio data of a country.
+#' @param ctry.extract `tibble` Country NPAFP rate. Output of [f.npafp.rate.01()] calculated at the country level.
+#' @param dist.extract `tibble` District NPAFP rate. Output of [f.npafp.rate.01()] calculated at the district level.
+#' @param cstool `tibble` Country stool adequacy. Output of [f.stool.ad.01()] calculated at the country level.
+#' @param dstool `tibble` District stool adequacy. Output of [f.stool.ad.01()] calculated at the district level.
+#' @param afp.case `tibble` AFP case counts. Output of [generate_afp_by_month_summary()] with `by="year"`.
+#' @param country_name `str` Name of the country.
 #'
-#' @return a flex table object for timeliness indicators
+#' @returns `flextable` Table summarizing yearly trends in NPAFP and stool adequacy at the national level.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' ctry.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
+#'                                 pop.data = ctry.data$ctry.pop,
+#'                                 start.date = start_date,
+#'                                 end.date = end_date,
+#'                                 spatial.scale = "ctry",
+#'                                 pending = T,
+#'                                 rolling = F,
+#'                                 sp_continuity_validation = F
+#'                                 )
+#' dist.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
+#'                                 pop.data = ctry.data$ctry.pop,
+#'                                 start.date = start_date,
+#'                                 end.date = end_date,
+#'                                 spatial.scale = "dist",
+#'                                 pending = T,
+#'                                 rolling = F,
+#'                                 sp_continuity_validation = F
+#'                                 )
+#' cstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
+#'                         admin.data = ctry.data$ctry.pop,
+#'                         start.date = start_date,
+#'                         end.date = end_date,
+#'                         spatial.scale = "ctry",
+#'                         missing = "good",
+#'                         bad.data = "inadequate",
+#'                         rolling = F,
+#'                         sp_continuity_validation = F
+#'                        )
+#' dstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
+#'                         admin.data = ctry.data$dist.pop,
+#'                         start.date = start_date,
+#'                         end.date = end_date,
+#'                         spatial.scale = "dist",
+#'                         missing = "good",
+#'                         bad.data = "inadequate",
+#'                         rolling = F,
+#'                         sp_continuity_validation = F
+#'                        )
+#' afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
+#' afp.case <- generate_afp_by_month_summary(afp.by.month, ctry.data, start_date, end_date, "year")
+#' generate_surv_ind_tab(ctry.data, ctry.extract, dist.extract, cstool, dstool, afp.case)
+#' }
 #' @export
 generate_surv_ind_tab <- function(ctry.data,
                                   ctry.extract,
-                                  dis.extract,
+                                  dist.extract,
                                   cstool,
                                   dstool,
                                   afp.case,
@@ -2927,7 +2977,7 @@ generate_surv_ind_tab <- function(ctry.data,
          .call = FALSE)
   }
 
-  dist.ind.afp <- dplyr::left_join(dis.extract,
+  dist.ind.afp <- dplyr::left_join(dist.extract,
     dstool
   )
 
@@ -2953,7 +3003,7 @@ generate_surv_ind_tab <- function(ctry.data,
   temp.ind.tab <- dplyr::left_join(ctry.ind.afp, meet.ind, by = c("year"))
 
   ## Districts with population over 100K
-  dist.100k <- dis.extract %>%
+  dist.100k <- dist.extract %>%
     dplyr::filter(u15pop >= 100000)
 
   unique.dist.100k <- ctry.data$dist.pop %>%
@@ -3042,23 +3092,58 @@ generate_surv_ind_tab <- function(ctry.data,
   return(surv.ind.tab)
 }
 
-#' Generate table for population
+#' Summary table of indicators at the province level
+#'
+#' Generates a table summarizing both NPAFP and stool adequacy rates at the province level and by year.
+#'
 #' @importFrom dplyr across arrange full_join group_by mutate select
 #' @importFrom flextable add_header_row align bg bold color flextable fp_border_default hline set_header_df theme_booktabs vline
 #' @importFrom lubridate year
 #' @importFrom stringr str_replace
 #' @importFrom tidyr pivot_wider replace_na
-#' @param prov.case.ind  case indicator at province level
-#' @param pstool stool adequacy at porvince level
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
+#' @param prov.case.ind  `tibble` Case indicator at province level. Output of [prep_npafp_table()] at the province level.
+#' @param pstool `tibble` Stool adequacy at province level. Output of [f.stool.ad.01()] at the province level.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
 #'
-#' @return a flextable containing population indicators
+#' @returns `flextable` Summary table of province NPAFP and stool adequacy rates per year.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' start_date <- "2021-01-01"
+#' end_date <- "2023-12-31"
+#' prov.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
+#'                                 pop.data = ctry.data$prov.pop,
+#'                                 start.date = start_date,
+#'                                 end.date = end_date,
+#'                                 spatial.scale = "prov",
+#'                                 pending = T,
+#'                                 rolling = F,
+#'                                 sp_continuity_validation = F
+#'                                 )
+#' prov.case.ind <- prep_npafp_table(prov.extract, ctry.data$afp.all.2, start_date, end_date, "prov")
+#' pstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
+#'                         admin.data = ctry.data$prov.pop,
+#'                         start.date = start_date,
+#'                         end.date = end_date,
+#'                         spatial.scale = "prov",
+#'                         missing = "good",
+#'                         bad.data = "inadequate",
+#'                         rolling = F,
+#'                         sp_continuity_validation = F
+#'                        )
+#' generate_pop_tab(prov.case.ind, pstool, start_date, end_date)
+#' }
+#'
 #' @export
 generate_pop_tab <- function(prov.case.ind,
                              pstool,
                              start_date,
                              end_date) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
   sub.prov.case.ind <- prov.case.ind %>%
     dplyr::select(
       "year",
@@ -3242,24 +3327,50 @@ generate_pop_tab <- function(prov.case.ind,
   return(pop.tab)
 }
 
-#' Table containing stool adequacy at the country level
+#' Issues with stool adequacy at the country level
+#'
+#' Generates a summary table at the country level highlighting issues around stool adequacy.
+#'
 #' @importFrom dplyr across between case_when count group_by left_join mutate rename select summarize
 #' @importFrom flextable add_footer_row as_grouped_data autofit bold flextable set_header_labels theme_booktabs
 #' @importFrom lubridate year
 #' @importFrom tidyr replace_na
-#' @param ctry.data RDS file containing polio data for a country
-#' @param stool.data AFP data with stool adequacy columns
-#' @param cstool stool adequacy at the country level
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
+#' @param ctry.data `list` large list containing polio data for a country. This is the output of
+#' [extract_country_data()] or [init_dr()].
+#' @param stool.data `tibble` AFP data with stool adequacy columns. This is the output of [generate_stool_data()].
+#' @param cstool `tibble` Stool adequacy at the country level. This is the output of [f.stool.ad.01()].
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
 #'
-#' @return a flextable containing stool adequacy at the country level
+#' @returns `flextable` Summary table containing stool adequacy issues at the country level.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' start_date <- "2021-01-01"
+#' end_date <- "2023-12-31"
+#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
+#' cstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
+#'                         admin.data = ctry.data$ctry.pop,
+#'                         start.date = start_date,
+#'                         end.date = end_date,
+#'                         spatial.scale = "ctry",
+#'                         missing = "good",
+#'                         bad.data = "inadequate",
+#'                         rolling = F,
+#'                         sp_continuity_validation = F
+#'                        )
+#' generate_inad_tab(ctry.data, stool.data, cstool, start_date, end_date)
+#' }
+#'
 #' @export
 generate_inad_tab <- function(ctry.data,
                               stool.data,
                               cstool,
                               start_date,
                               end_date) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
 
   if (!requireNamespace("janitor", quietly = TRUE)) {
     stop('Package "janitor" must be installed to use this function.',
@@ -3375,12 +3486,25 @@ generate_inad_tab <- function(ctry.data,
 }
 
 
-#' Table used for those requiring 60 day follow up
+#' 60-day follow up table
+#'
+#' Generates a table summarizing the number of inadequate cases that need follow up.
+#'
 #' @importFrom dplyr arrange desc group_by mutate n select summarize
 #' @importFrom flextable align bold flextable fontsize set_header_labels theme_booktabs width
-#' @param cases.need60day summary table containing those that need 60 day follow-up
+#' @param cases.need60day `tibble` Summary table containing those that need 60 day follow-up.
+#'  Output of [generate_60_day_table_data()].
 #'
-#' @return a flextable with 60 day follow up data
+#' @returns `flextable` A summary of cases requiring 60-day followups per year.
+#' @examples
+#' \dontrun{
+#' raw.data <- get_all_polio_data(attach.spatial.data = F)
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate", "2021-01-01", "2023-12-31")
+#' cases.need60day <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
+#' generate_60_day_tab(cases.need60day)
+#' }
+#'
 #' @export
 generate_60_day_tab <- function(cases.need60day) {
   comp.by.year <- cases.need60day |>
@@ -3466,21 +3590,40 @@ generate_60_day_tab <- function(cases.need60day) {
 }
 
 
-#' ES table with indicators
+#' ES surveillance sites summary table
+#'
+#' Generates a summary table on the performance of surveillance sites over a rolling basis as
+#' indicated by the start and end dates. Includes information on the EV detection rate, number of
+#' samples collected, percentage of samples with good condition, and percentage of samples meeting the
+#' timeliness target of arriving to lab within 3 days.
+#'
 #' @importFrom cli cli_alert cli_alert_info
 #' @importFrom dplyr filter arrange between distinct group_by if_else left_join mutate n reframe summarize
 #' @importFrom flextable add_header_lines align bold colformat_double flextable fontsize set_header_labels theme_booktabs width
 #' @importFrom lubridate years
 #' @importFrom readr write_csv
-#' @param es.data ES data
-#' @param es_start_date ES start date
-#' @param es_end_date ES end date
+#' @param es.data `tibble` ES data. This is `ctry.data$es`, which is part of the output of either
+#' [extract_country_data()] or [init_dr()]. Ensure that the `ctry.data` object has been cleaned with
+#' [clean_ctry_data()] first. Otherwise, there will be an error.
+#' @param es_start_date `str` Start date of analysis. Defaults to a year before the end date.
+#' @param es_end_date `str` End date of analysis.
 #'
-#' @return flextable with ES indicators
+#' @returns `flextable` Summary table of ES surveillance site performance.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' ctry.data <- clean_ctry_data(ctry.data)
+#' generate_es_tab(ctry.data$es, es_end_date = "2023-12-31")
+#' }
+#'
 #' @export
 generate_es_tab <- function(es.data,
-                            es_start_date = (end_date - lubridate::years(1)),
+                            es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
                             es_end_date = end_date) {
+
+  es_start_date <- lubridate::as_date(es_start_date)
+  es_end_date <- lubridate::as_date(es_end_date)
+
   es.data <- es.data |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 

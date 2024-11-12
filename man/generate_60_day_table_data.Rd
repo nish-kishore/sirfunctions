@@ -18,7 +18,9 @@ generate_60_day_table_data(stool.data, start_date, end_date)
 \code{tibble} A summary table for those requiring 60 day follow up.
 }
 \description{
-The 60-day table highlights cases that need 60 day follow up.
+The 60-day table highlights the number of cases per year that need 60 day follow up. It
+summarizes the number of cases due for follow up, those with recorded follow ups, number missing
+follow ups,and compatible cases.
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = F)

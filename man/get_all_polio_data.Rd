@@ -20,7 +20,7 @@ get_all_polio_data(
 \item \code{"large"}: data from 2001-present
 }}
 
-\item{folder}{\code{str} Location of the CDC pre-processed endpoint, defaults to "GID/PEB/SIR/Data".}
+\item{folder}{\code{str} Location of the CDC pre-processed endpoint, defaults to \code{"GID/PEB/SIR/Data"}.}
 
 \item{force.new.run}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run recent data and cache.}
 

@@ -769,7 +769,10 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 
 #' Generate summary table for those requiring 60 day follow up
 #'
-#' The 60-day table highlights cases that need 60 day follow up.
+#' The 60-day table highlights the number of cases per year that need 60 day follow up. It
+#' summarizes the number of cases due for follow up, those with recorded follow ups, number missing
+#' follow ups,and compatible cases.
+#'
 #' @import dplyr lubridate
 #' @param stool.data `tibble` AFP data with stool adequacy columns. This is the output of
 #' [generate_stool_data()].

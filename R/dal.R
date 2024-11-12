@@ -68,7 +68,7 @@ get_azure_storage_connection <- function(
 #' @param file_loc `str` Location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
 #' the information in `default_dir` if you set that parameter to `NULL`.
 #' @param obj `robj` Object to be saved, needed for `"write"`. Defaults to `NULL`.
-#' @param azcontainer Azure container object returned from `get_azure_storage_connection()`.
+#' @param azcontainer Azure container object returned from [get_azure_storage_connection()].
 #' @param force_delete `bool` Use delete io without verification in the command line.
 #' @param local_path `str` Local file pathway to upload a file to EDAV. Default is `NULL`.
 #' This parameter is only required when passing `"upload"` in the `io` parameter.
@@ -248,7 +248,7 @@ edav_io <- function(
 #' Tests upload and download from EDAV by creating a temporary file
 #' of a given size and testing the time it takes to upload and download the file.
 #' @import dplyr readr cli
-#' @param azcontainer Azure storage container provided by `get_azure_storage_connection()`.
+#' @param azcontainer Azure storage container provided by [get_azure_storage_connection()].
 #' @param folder `str` Location of folder in the EDAV environment that you want to download
 #' and upload data from.
 #' @param test_size `int` byte size of a theoretical file to be uploaded or downloaded.
@@ -341,7 +341,7 @@ test_EDAV_connection <- function(
 #' - `"small"`: data from 2019-present
 #' - `"medium"`: data from 2016-present
 #' - `"large"`: data from 2001-present
-#' @param folder `str` Location of the CDC pre-processed endpoint, defaults to "GID/PEB/SIR/Data".
+#' @param folder `str` Location of the CDC pre-processed endpoint, defaults to `"GID/PEB/SIR/Data"`.
 #' @param force.new.run `bool` Default `FALSE`, if `TRUE` will run recent data and cache.
 #' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
 #' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.

@@ -34,7 +34,7 @@ the information in \code{default_dir} if you set that parameter to \code{NULL}.}
 
 \item{obj}{\code{robj} Object to be saved, needed for \code{"write"}. Defaults to \code{NULL}.}
 
-\item{azcontainer}{Azure container object returned from \code{get_azure_storage_connection()}.}
+\item{azcontainer}{Azure container object returned from \code{\link[=get_azure_storage_connection]{get_azure_storage_connection()}}.}
 
 \item{force_delete}{\code{bool} Use delete io without verification in the command line.}
 

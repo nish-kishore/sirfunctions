@@ -2,24 +2,45 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_inad_tab}
 \alias{generate_inad_tab}
-\title{Table containing stool adequacy at the country level}
+\title{Issues with stool adequacy at the country level}
 \usage{
 generate_inad_tab(ctry.data, stool.data, cstool, start_date, end_date)
 }
 \arguments{
-\item{ctry.data}{RDS file containing polio data for a country}
+\item{ctry.data}{\code{list} large list containing polio data for a country. This is the output of
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{stool.data}{AFP data with stool adequacy columns}
+\item{stool.data}{\code{tibble} AFP data with stool adequacy columns. This is the output of \code{\link[=generate_stool_data]{generate_stool_data()}}.}
 
-\item{cstool}{stool adequacy at the country level}
+\item{cstool}{\code{tibble} Stool adequacy at the country level. This is the output of \code{\link[=f.stool.ad.01]{f.stool.ad.01()}}.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{\code{str} End date of analysis.}
 }
 \value{
-a flextable containing stool adequacy at the country level
+\code{flextable} Summary table containing stool adequacy issues at the country level.
 }
 \description{
-Table containing stool adequacy at the country level
+Generates a summary table at the country level highlighting issues around stool adequacy.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+start_date <- "2021-01-01"
+end_date <- "2023-12-31"
+stool.data <- generate_stool_data(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
+cstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
+                        admin.data = ctry.data$ctry.pop,
+                        start.date = start_date,
+                        end.date = end_date,
+                        spatial.scale = "ctry",
+                        missing = "good",
+                        bad.data = "inadequate",
+                        rolling = F,
+                        sp_continuity_validation = F
+                       )
+generate_inad_tab(ctry.data, stool.data, cstool, start_date, end_date)
+}
+
 }
