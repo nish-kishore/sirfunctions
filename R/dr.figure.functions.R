@@ -630,6 +630,8 @@ generate_es_timely <- function(es.data,
 #' Immunization rates per year
 #'
 #' Generates a stacked percent bar plot displaying immunization rates per year for the country.
+#' Note that this function only graphs immunization rates for children aged 6-59 months that have
+#' the classification of NPAFP.
 #'
 #' @importFrom dplyr group_by filter between n summarize
 #' @importFrom ggplot2 aes geom_bar geom_text ggplot ggsave labs scale_fill_manual scale_y_continuous xlab ylab
@@ -668,21 +670,13 @@ generate_case_num_dose_g <- function(ctry.data,
 
   ### Create zero dose graphs
   # Cats - 0, 1-2, 3, 4+
-  dcat.yr.prov <- dplyr::summarize(
-    dplyr::group_by(
-      ctry.data$afp.all.2 |>
-        dplyr::filter(
-          date >= start_date &
-            date <= end_date,
-          cdc.classification.all2 == "NPAFP",
-          dplyr::between(age.months, 6, 59)
-        ),
-      dose.cat,
-      year,
-      prov
-    ),
-    freq = dplyr::n()
-  )
+  dcat.yr.prov <- ctry.data$afp.all.2 |>
+    dplyr::filter(dplyr::between(date, start_date, end_date),
+                  cdc.classification.all2 == "NPAFP",
+                  dplyr::between(age.months, 6, 59)
+    ) |>
+    dplyr::group_by(.data$dose.cat, .data$year, .data$prov) |>
+    dplyr::summarise(freq = dplyr::n())
 
   # case num by year and province by vaccination status
   case.num.dose.g <- ggplot2::ggplot() +
