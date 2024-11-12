@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_case_num_dose_g}
 \alias{generate_case_num_dose_g}
-\title{Generate zero-dose children barcharts}
+\title{Immunization rates per year}
 \usage{
 generate_case_num_dose_g(
   ctry.data,
@@ -12,17 +12,27 @@ generate_case_num_dose_g(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file containing polio data of country}
+\item{ctry.data}{\code{list} A large list containing polio data of country.
+This is the output of \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}. Note that \code{ctry_data} needs to be cleaned
+via \code{\link[=clean_ctry_data]{clean_ctry_data()}} prior to running the function.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path of where to save the figure to.}
 }
 \value{
-ggplot barplot
+\code{ggplot} A percent bar plot displaying immunization rates per year by immunization status.
 }
 \description{
-Generate zero-dose children barcharts
+Generates a stacked percent bar plot displaying immunization rates per year for the country.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+ctry.data <- clean_ctry_data(ctry.data)
+generate_case_num_dose_g(ctry.data, "2021-01-01", "2023-12-31")
+}
+
 }

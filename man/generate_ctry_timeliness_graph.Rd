@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_ctry_timeliness_graph}
 \alias{generate_ctry_timeliness_graph}
-\title{Timeliness bar graph at the country level}
+\title{Timeliness intervals of samples at the country level}
 \usage{
 generate_ctry_timeliness_graph(
   int.data,
@@ -11,15 +11,34 @@ generate_ctry_timeliness_graph(
 )
 }
 \arguments{
-\item{int.data}{summary table with timeliness intervals at the country level}
+\item{int.data}{\code{tibble} Summary table with timeliness intervals at the country level.}
 
-\item{afp.year.lab}{summary table of samples sent by year}
+\item{afp.year.lab}{\code{tibble} Summary table of samples sent by year.}
 
-\item{output_path}{path where to output the figure}
+\item{output_path}{\code{str} Path where to output the figure.}
 }
 \value{
-ggplot object
+\code{ggplot} Plot of timeliness intervals at the country level.
 }
 \description{
-Timeliness bar graph at the country level
+A stacked horizontal bar graph for timeliness intervals of samples at the country level.
+To get the full intervals from field to lab, the lab data needs to be attached. Otherwise,
+only the timeliness intervals from the field up to when it was sent to lab will be displayed.
+}
+\examples{
+\dontrun{
+# Attaching lab data
+lab_path <- "C:/Users/ABC1/Desktop/algeria_lab_data.csv"
+ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+lab.timeliness.ctry <- generate_lab_timeliness(ctry.data$lab.data, "ctry", start_date, end_date)
+int.data.ctry <- generate_int_data(ctry.data, start_date, end_date,
+                                   spatial.scale = "ctry",
+                                   lab.timeliness.ctry
+                                   )
+ afp.year.lab <- generate_year_lab(ctry.data, start_date, end_date)
+ generate_ctry_timeliness_graph(int.data.ctry, afp.year.lab)
+}
+}
+\seealso{
+\code{\link[=generate_int_data]{generate_int_data()}}, \code{\link[=generate_lab_timeliness]{generate_lab_timeliness()}}
 }

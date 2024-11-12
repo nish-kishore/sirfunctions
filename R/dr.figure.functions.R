@@ -1,13 +1,32 @@
 # Figures ----
 ## Plots ----
-#' Timeliness bar graph at the country level
+#' Timeliness intervals of samples at the country level
+#'
+#' A stacked horizontal bar graph for timeliness intervals of samples at the country level.
+#' To get the full intervals from field to lab, the lab data needs to be attached. Otherwise,
+#' only the timeliness intervals from the field up to when it was sent to lab will be displayed.
 #' @import ggplot2 forcats
 #'
-#' @param int.data summary table with timeliness intervals at the country level
-#' @param afp.year.lab summary table of samples sent by year
-#' @param output_path path where to output the figure
+#' @param int.data `tibble` Summary table with timeliness intervals at the country level.
+#' @param afp.year.lab `tibble` Summary table of samples sent by year.
+#' @param output_path `str` Path where to output the figure.
 #'
-#' @returns ggplot object
+#' @returns `ggplot` Plot of timeliness intervals at the country level.
+#'
+#' @examples
+#' \dontrun{
+#' # Attaching lab data
+#' lab_path <- "C:/Users/ABC1/Desktop/algeria_lab_data.csv"
+#' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+#' lab.timeliness.ctry <- generate_lab_timeliness(ctry.data$lab.data, "ctry", start_date, end_date)
+#' int.data.ctry <- generate_int_data(ctry.data, start_date, end_date,
+#'                                    spatial.scale = "ctry",
+#'                                    lab.timeliness.ctry
+#'                                    )
+#'  afp.year.lab <- generate_year_lab(ctry.data, start_date, end_date)
+#'  generate_ctry_timeliness_graph(int.data.ctry, afp.year.lab)
+#' }
+#' @seealso [generate_int_data()], [generate_lab_timeliness()]
 #' @export
 generate_ctry_timeliness_graph <- function(int.data,
                                            afp.year.lab,
@@ -65,13 +84,30 @@ generate_ctry_timeliness_graph <- function(int.data,
   return(timely_nation)
 }
 
-#' Timeliness interval bar graph at a province level
-#' @import ggplot2
-#' @param int.data summary table of median timeliness intervals at a province level
-#' @param afp.prov.year.lab labels for AFP dataset summarized by year
-#' @param output_path where to save the figure
+#' Timeliness intervals of samples at the province level
 #'
-#' @returns ggplot object
+#' A stacked horizontal bar graph for timeliness intervals of samples at the province level.
+#' To get the full intervals from field to lab, the lab data needs to be attached. Otherwise,
+#' only the timeliness intervals from the field up to when it was sent to lab will be displayed.
+#' @import ggplot2
+#' @param int.data `tibble` Summary table with timeliness intervals at the province level.
+#' @param afp.prov.year.lab `tibble` Summary table of samples sent by year and province.
+#' @param output_path `str` Path where to output the figure.
+#'
+#' @returns `ggplot` Plot of timeliness intervals at the country level.
+#' @examples
+#' \dontrun{
+#' # Attaching lab data
+#' lab_path <- "C:/Users/ABC1/Desktop/algeria_lab_data.csv"
+#' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+#' lab.timeliness.prov <- generate_lab_timeliness(ctry.data$lab.data, "prov", start_date, end_date)
+#' int.data.prov <- generate_int_data(ctry.data, start_date, end_date,
+#'                                    spatial.scale = "prov",
+#'                                    lab.timeliness.prov
+#'                                    )
+#  afp.prov.year.lab <- generate_prov_year_lab(ctry.data, start_date, end_date)
+#' generate_ctry_timeliness_graph(int.data.prov, afp.prov.year.lab)
+#' }
 #' @export
 generate_prov_timeliness_graph <- function(int.data,
                                            afp.prov.year.lab,
@@ -140,19 +176,32 @@ generate_prov_timeliness_graph <- function(int.data,
 }
 
 
-#' Generate epicurve of AFP cases by year
-#' @import dplyr ggplot2
-#' @param ctry.data RDS data countaining polio data for a country
-#' @param start_date start date of the desk review
-#' @param end_date end date of the desk review
-#' @param output_path where to save the figure
+#' Epicurve of AFP cases by year
 #'
-#' @returns ggplot object
+#' Generates an epicurve line graph of AFP cases by year.
+#'
+#' @import dplyr ggplot2
+#' @param ctry.data `list` Large list containing country polio data. This is the output of either
+#' [extract_country_data()] or [init_dr()].
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis. By default, it is up to the current date.
+#' @param output_path `str` Local path location to save the figure.
+#'
+#' @returns `ggplot` A line graph of AFP cases faceted by year.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' generate_afp_epicurve(ctry.data, start_date)
+#' }
+#'
 #' @export
 generate_afp_epicurve <- function(ctry.data,
                                   start_date,
                                   end_date = lubridate::today(),
                                   output_path = Sys.getenv("DR_FIGURE_PATH")) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
   afp.epi.date.filter <- ctry.data$afp.epi %>%
     dplyr::filter(dplyr::between(yronset, as.numeric(lubridate::year(start_date)), as.numeric(lubridate::year(end_date))),
                   .data$cdc.classification.all2 != "NOT-AFP")
@@ -195,18 +244,33 @@ generate_afp_epicurve <- function(ctry.data,
 
 
 #' AFP cases by province and year
-#' @import dplyr lubridate ggplot2 forcats
-#' @param afp.by.month.prov table summarizing afp cases by month and province
-#' @param start_date start date of the desk review
-#' @param end_date cutoff date of calculating the number of cases
-#' @param output_path where to save the figure
 #'
-#' @returns ggplot object
+#' Generates a tile plot for the number of AFP cases per month by province.
+#'
+#' @import dplyr lubridate ggplot2 forcats
+#' @param afp.by.month.prov `tibble` Table summarizing AFP cases by month and province. This is the output of
+#' [generate_afp_by_month_summary()].
+#' @param start_date `str` Start date of the analysis.
+#' @param end_date `str` End date of the analysis. By default, it displays the most recent date.
+#' @param output_path `str` Local path to output the figure.
+#'
+#' @returns `ggplot` A tile plot displaying the number of AFP cases by month and province.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, start_date, end_date)
+#' afp.by.month.prov <- generate_afp_by_month_summary(afp.by.month, ctry.data, start_date, end_date, "prov")
+#' generate_afp_prov_year(afp.by.month.prov, start_date, end_date)
+#' }
+#'
 #' @export
 generate_afp_prov_year <- function(afp.by.month.prov,
                                    start_date,
                                    end_date = lubridate::today(),
                                    output_path = Sys.getenv("DR_FIGURE_PATH")) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
   afp.month.prov.g <- afp.by.month.prov |>
     dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)), !is.na(prov))
 
@@ -247,33 +311,48 @@ generate_afp_prov_year <- function(afp.by.month.prov,
 
 
 
-
-
-
-
-#' Dot plot of virus detections in ES sites
+#' Virus detection in ES sites
+#'
+#' Generates a dot plot for viral detections across ES sites, with SIA dates
+#' overlaid.
+#'
 #' @importFrom cli cli_alert_warning
 #' @importFrom dplyr arrange between count distinct filter pull select
 #' @importFrom ggplot2 aes facet_grid geom_point geom_rect ggplot ggsave label_wrap_gen scale_color_manual scale_fill_manual scale_x_date theme_bw xlab ylab
 #' @importFrom lubridate year years
 #' @importFrom scales brewer_pal
-#' @param ctry.data RDS file of polio data for a country
-#' @param es.data.long AFP data with viral detection columns
-#' @param es_start_date start date of ES data
-#' @param es_end_date end date of ES data
-#' @param vaccine_types named list with vaccine types with color associations
-#' @param detection_types named list with detection types with color associations
-#' @param output_path where to save the figure
+#' @param ctry.data `list` Large list of polio data for a country. This is the output of either
+#' [extract_country_data()] or [init_dr()].
+#' @param es.data.long `tibble` AFP data with viral detection columns. This is the output of
+#' [generate_es_data_long()].
+#' @param es_start_date `str` Start date of analysis. By default, it is one year from the end date.
+#' @param es_end_date `str` End date of analysis.
+#' @param vaccine_types `list` A named list with colors assigned names corresponding to vaccine types. By
+#' default, it will use a prefilled list inside the function. However, the function will alert for missing
+#' vaccine types and the user must pass another list appended by that vaccine type.
+#' @param detection_types `list` A named list with colors assigned names corresponding to viral detection type.
+#' By default, it will use a prefilled list inside the function. However, the function will alert for missing
+#' detection types and the user must pass another list appended by that vaccine type.
+#' @param output_path `str` Local path to output the figure to.
 #'
-#' @return ggplot object dot plot
+#' @return `ggplot` A dot plot of viral detections per ES sites and SIA campaigns.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' es.data.long <- generate_es_data_long(ctry.data$es)
+#' generate_es_site_det(ctry.data, es.data.long)
+#' }
 #' @export
 generate_es_site_det <- function(ctry.data,
                                  es.data.long,
-                                 es_start_date = (end_date - lubridate::years(1)),
+                                 es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
                                  es_end_date = end_date,
                                  output_path = Sys.getenv("DR_FIGURE_PATH"),
                                  vaccine_types = NULL,
                                  detection_types = NULL) {
+  es_start_date <- lubridate::as_date(es_start_date)
+  es_end_date <- lubridate::as_date(es_end_date)
+
   es.data.long <- es.data.long |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
@@ -442,22 +521,34 @@ generate_es_site_det <- function(ctry.data,
   return(es.site.det)
 }
 
-#' Generate ES timeliness scatterplot
+#' ES timeliness scatterplot
+#'
+#' Generates a scatterplot of the time it takes for each environmental samples to arrive in lab.
+#'
 #' @importFrom dplyr between count filter rename
 #' @importFrom ggplot2 aes element_text geom_hline geom_point ggplot ggsave labs position_jitter scale_y_continuous theme theme_classic
 #' @importFrom lubridate years
 #' @importFrom scales number_format
-#' @param es.data ES data
-#' @param es_start_date start date of ES
-#' @param output_path where to save the figure
-#' @param es_end_date end date of ES
+#' @param es.data `tibble` ES data.
+#' @param es_start_date `str` Start date of analysis. By default, this is one year from the end date.
+#' @param es_end_date `str` End date of analysis.
+#' @param output_path `str` Local path for where to save the figure to.
 #'
-#' @return ggplot scatterplot for timeliness
+#' @return `ggplot` A scatterplot for timeliness of ES samples.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' generate_es_timely(ctry.data$es)
+#' }
+#'
 #' @export
 generate_es_timely <- function(es.data,
-                               es_start_date = (end_date - lubridate::years(1)),
+                               es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
                                es_end_date = end_date,
                                output_path = Sys.getenv("DR_FIGURE_PATH")) {
+  es_start_date <- lubridate::as_date(es_start_date)
+  es_end_date <- lubridate::as_date(es_end_date)
+
   es.data <- es.data |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
@@ -536,22 +627,37 @@ generate_es_timely <- function(es.data,
   return(es.timely)
 }
 
-#' Generate zero-dose children barcharts
+#' Immunization rates per year
+#'
+#' Generates a stacked percent bar plot displaying immunization rates per year for the country.
+#'
 #' @importFrom dplyr group_by filter between n summarize
 #' @importFrom ggplot2 aes geom_bar geom_text ggplot ggsave labs scale_fill_manual scale_y_continuous xlab ylab
 #' @importFrom ggpubr theme_pubr
 #' @importFrom scales percent
-#' @param ctry.data RDS file containing polio data of country
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
-#' @param output_path where to save the figure
+#' @param ctry.data `list` A large list containing polio data of country.
+#' This is the output of [extract_country_data()] or [init_dr()]. Note that `ctry_data` needs to be cleaned
+#' via [clean_ctry_data()] prior to running the function.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @param output_path `str` Local path of where to save the figure to.
 #'
-#' @return ggplot barplot
+#' @return `ggplot` A percent bar plot displaying immunization rates per year by immunization status.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria")
+#' ctry.data <- clean_ctry_data(ctry.data)
+#' generate_case_num_dose_g(ctry.data, "2021-01-01", "2023-12-31")
+#' }
+#'
 #' @export
 generate_case_num_dose_g <- function(ctry.data,
                                      start_date,
                                      end_date,
                                      output_path = Sys.getenv("DR_FIGURE_PATH")) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
   dose.num.cols <- c(
     "0" = "#C00000",
     "1-2" = "#FFC000",
@@ -617,19 +723,34 @@ generate_case_num_dose_g <- function(ctry.data,
 }
 
 
-#' Generate the ISS/eSURV barplot
-#' @import dplyr ggplot2
-#' @param iss.data tibble of ISS data
-#' @param start_date start date of the desk review
-#' @param end_date end date of the desk review
-#' @param output_path where to save the figure
+#' Visits to health clinics per year
 #'
-#' @return ggplot object of a barplot
+#' Generates a bar plot showing the number of visits to health clinics per year
+#' using the ISS/eSURV data.
+#'
+#' @import dplyr ggplot2
+#' @param iss.data `tibble` ISS/eSURV data that has been cleaned via [clean_iss_data()].
+#' @param start_date `str` Start date of the analysis.
+#' @param end_date `str` End date of the analysis.
+#' @param output_path `str` Local path where the figure is saved to.
+#'
+#' @return `ggplot` Bar plot of health clinic visits.
+#' @examples
+#' \dontrun{
+#' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
+#' ctry.data <- init_dr("algeria", iss_data_path = iss_path)
+#' ctry.data$iss.data <- clean_iss_data(ctry.data)
+#' generate_iss_barplot(ctry.data$iss.data)
+#' }
+#'
 #' @export
 generate_iss_barplot <- function(iss.data = NULL,
                                  start_date,
                                  end_date,
                                  output_path = Sys.getenv("DR_FIGURE_PATH")) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
   if (is.null(iss.data)) {
     return(message("No ISS data attached."))
   }
