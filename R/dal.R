@@ -1870,7 +1870,7 @@ check_afp_guid_ctry_data <- function(ctry.data) {
 #' @return `tibble` AFP data with corrected GUIDs based on the population files.
 #' @examples
 #' raw.data <- get_all_polio_data()
-#' ctry.data <- extract_country_data("algeria")
+#' ctry.data <- extract_country_data("algeria", raw.data)
 #' error.list <- check_afp_guid_ctry_data(ctry.data)
 #' ctry.data$afp.all.2 <- fix_ctry_data_missing_guids(ctry.data$afp.all.2,
 #'                                                    ctry.data$dist.pop,

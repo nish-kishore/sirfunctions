@@ -109,7 +109,7 @@ impute_site_coord <- function(ctry.data) {
 #' @return `tibble` Cleaned environmental surveillance data.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' ctry.data <- extract_country_data("algeria")
+#' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.data$es <- clean_es_data(ctry.data)
 #'
 #' @export
@@ -203,7 +203,7 @@ clean_es_data <- function(ctry.data) {
 #' @return `tibble` ES data with viral detection columns.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' ctry.data <- extract_country_data("algeria")
+#' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.data$es <- clean_es_data(ctry.data)
 #' es.data.long <- generate_es_data_long(ctry.data$es)
 #'

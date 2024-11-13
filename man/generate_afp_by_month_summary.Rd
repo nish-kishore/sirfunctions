@@ -37,7 +37,7 @@ afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2,
                                       "2021-01-01", "2023-12-31"
                                       )
 afp.by.month.prov <- generate_afp_by_month_summary(afp.by.month, ctry.data,
-                                                   start_date, end_date, "prov"
+                                                   "2021-01-01", "2023-12-31", "prov"
                                                    )
 
 }

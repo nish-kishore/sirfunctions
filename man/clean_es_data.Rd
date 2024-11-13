@@ -19,7 +19,7 @@ standardized columns used in the desk review.
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-ctry.data <- extract_country_data("algeria")
+ctry.data <- extract_country_data("algeria", raw.data)
 ctry.data$es <- clean_es_data(ctry.data)
 
 }

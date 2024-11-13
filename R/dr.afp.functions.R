@@ -157,7 +157,7 @@ impute_dist_afp <- function(afp.data) {
 col_to_datecol <- function(afp.data) {
   cli::cli_process_start("Converting date columns from character to dates")
   afp.data <- afp.data |>
-    dplyr::mutate(dplyr::across(dplyr::contains("date"), as.Date)) |>
+    dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) as.Date(x))) |>
     dplyr::mutate(daysstooltolab = dplyr::case_when(
       !is.na(datestool2) ~ as.numeric(difftime(stooltolabdate, datestool2), units = "days"),
       is.na(datestool2) ~ as.numeric(difftime(stooltolabdate, datestool1), units = "days")
@@ -327,7 +327,6 @@ generate_afp_by_month <- function(afp.data, start_date, end_date) {
                                  )
 
   summary <- afp.data |>
-    #tidyr::drop_na("date.onset") |>
     dplyr::filter(dplyr::between(date, start_date, end_date)) |>
     dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
 
@@ -353,7 +352,7 @@ generate_afp_by_month <- function(afp.data, start_date, end_date) {
 #'                                       "2021-01-01", "2023-12-31"
 #'                                       )
 #' afp.by.month.prov <- generate_afp_by_month_summary(afp.by.month, ctry.data,
-#'                                                    start_date, end_date, "prov"
+#'                                                    "2021-01-01", "2023-12-31", "prov"
 #'                                                    )
 #'
 #' @export
@@ -449,7 +448,7 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
     },
     "year" = {
       afp.by.month |>
-        dplyr::filter(dplyr::between(as.Date(date.onset), start_date, end_date)) |>
+        dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
         dplyr::group_by(year) |>
         dplyr::summarize(afp.case =dplyr::n())
     }
@@ -960,7 +959,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #' @returns `tibble` A table containing summary of AFP cases by year and country.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' ctry.data <- extract_country_data("algeria")
+#' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
 #'
 #'
@@ -970,7 +969,7 @@ generate_year_lab <- function(ctry.data, start_date, end_date) {
   end_date <- lubridate::as_date(end_date)
 
   afp.year.lab <- ctry.data$afp.all.2 |>
-    dplyr::filter(dplyr::between(date.onset, start_date, end_date),
+    dplyr::filter(dplyr::between(.data$date, start_date, end_date),
                   cdc.classification.all2 != "NOT-AFP") |>
     dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
     dplyr::mutate(labs = paste0(
@@ -993,13 +992,16 @@ generate_year_lab <- function(ctry.data, start_date, end_date) {
 #' @returns `tibble` A table containing summary of AFP cases by year and province.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' ctry.data <- extract_country_data("algeria")
+#' ctry.data <- extract_country_data("algeria", raw.data)
 #' prov.labels <- generate_prov_year_lab(ctry.data, "2021-01-01", "2023-12-31")
 #'
 #' @export
 generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
   afp.prov.year.lab <- ctry.data$afp.all.2 |>
-    dplyr::filter(dplyr::between(date.onset, start_date, end_date)) |>
+    dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
     dplyr::count(prov, adm1guid, year) |>
     dplyr::mutate(labs = paste0(
       year,
@@ -1021,8 +1023,8 @@ generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
-#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate",
-#'                                   "2021-01-01", "2023-12-31"
+#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "2021-01-01", "2023-12-31",
+#'                                   "good", "inadequate"
 #'                                   )
 #' table60.days <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
 #' pot.c.clust <- generate_potentially_compatibles_cluster(table60.days,
@@ -1031,8 +1033,6 @@ generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
 #'
 #' @export
 generate_potentially_compatibles_cluster <- function(cases.need60day, create_cluster = F) {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
   pot.c.clust <- cases.need60day |>
     dplyr::filter(pot.compatible == 1 | classification == "Compatible") |>
     dplyr::mutate(

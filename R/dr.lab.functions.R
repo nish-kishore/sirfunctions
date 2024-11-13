@@ -439,7 +439,7 @@ lab_data_errors_who <- function(ctry.data, start.date, end.date,
 #'
 #' # Not using the desk review pipeline
 #' raw.data <- get_all_polio_data()
-#' ctry.data <- extract_country_data("algeria")
+#' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.data$lab.data <- read_csv(lab_path)
 #' ctry.data$lab.data <- clean_lab_data_who(ctry.data, "2021-01-01", "2023-12-31")
 #' }
@@ -706,7 +706,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 #'
 #' # Not using the desk review pipeline
 #' raw.data <- get_all_polio_data()
-#' ctry.data <- extract_country_data("algeria")
+#' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.data$lab.data <- read_csv(lab_path)
 #' ctry.data$lab.data <- clean_lab_data_regional(ctry.data, "2021-01-01", "2023-12-31")
 #' }
@@ -1189,7 +1189,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
 #'
 #' # Not using the desk review pipeline
 #' raw.data <- get_all_polio_data()
-#' ctry.data <- extract_country_data("algeria")
+#' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.data$lab.data <- read_csv(lab_path)
 #' ctry.data$lab.data <- clean_lab_data(ctry.data, "2021-01-01", "2023-12-31")
 #' }
