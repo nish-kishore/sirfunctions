@@ -23,3 +23,4 @@ summary table containing stool adequacy on a rolling basis
 \description{
 Helper function to generate stool adequacy on a rolling basis
 }
+\keyword{internal}

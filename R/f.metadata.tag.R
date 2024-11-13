@@ -7,7 +7,7 @@
 #'
 #' @param object `ggplot` or `flextable` The figure or table to add metadata to.
 #' @param time_tag `str` A date and time string. Defaults to `raw.data$metadata$download_time`.
-#' @param raw_data `list` outputs of `get_all_polio_data()` or `extract_country_data()`.
+#' @param raw_data `list` outputs of [get_all_polio_data()] or [extract_country_data()].
 #' @returns A `ggplot` or `flextable` object with metadata added.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)

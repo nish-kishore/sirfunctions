@@ -15,3 +15,4 @@ tibble with AFP data with columns for number of doses and dose category
 \description{
 Add columns in the AFP data for number of doses and dose category
 }
+\keyword{internal}

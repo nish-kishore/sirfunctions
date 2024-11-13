@@ -13,6 +13,9 @@ compress_png(img, pngquant_path = NULL, suffix = "")
 
 \item{suffix}{\code{str} Optional parameter to add a suffix to the compressed image.}
 }
+\value{
+None. Will output compressed image to the local folder.
+}
 \description{
 Compress PNG files. The software pngquant is required to use this function.
 It attempts to reduce the file size of images without major loss in image quality. Files sizes can be reduced

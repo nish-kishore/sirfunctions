@@ -7,7 +7,9 @@
 #' @param es.data `tibble` ES data which includes site name (site.name),
 #' country (ADM0_NAME),
 #' date of collection (collect.date), and a binary ev detection variable (ev.detect)
-#' that indicates absence/presence (0, 1) of enterovius in an ES sample.
+#' that indicates absence/presence (0, 1) of enterovius in an ES sample. This is
+#' `ctry.data$es` of [extract_country_data()] or [init_dr()], or `raw.data$es` of
+#' [get_all_polio_data()].
 #' @param start.date `chr` Date in the format of `"YYYY-MM-DD"`.
 #' @param end.date `chr` Date in the format of `"YYYY-MM-DD"`.
 #' @returns `tibble` Long format dataframe including site specific EV detection rates.

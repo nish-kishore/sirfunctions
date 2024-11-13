@@ -14,20 +14,20 @@ split_concat_raw_data(
 )
 }
 \arguments{
-\item{action}{Can either be to \code{concat} or \code{split}}
+\item{action}{\code{str} Can either be to \code{"concat"} or \code{"split"}.}
 
-\item{split.years}{an array of years by which data should be split}
+\item{split.years}{\code{array} A numeric array of years by which data should be split.}
 
-\item{raw.data.all}{a list of data objects to be split}
+\item{raw.data.all}{\code{list} A list of data objects to be split.}
 
-\item{raw.data.post.2019}{a list of data objects to be concatenated}
+\item{raw.data.post.2019}{\code{list} A list of data objects to be concatenated.}
 
-\item{raw.data.2016.2019}{a list of data objects to be concatenated}
+\item{raw.data.2016.2019}{\code{list} A list of data objects to be concatenated.}
 
-\item{raw.data.2001.2016}{a list of data objects to be concatenated}
+\item{raw.data.2001.2016}{\code{list} A list of data objects to be concatenated.}
 }
 \value{
-list of lists or a single concatenated list
+\code{list} A list of lists or a single concatenated list.
 }
 \description{
 Split or concatenate raw.data by year

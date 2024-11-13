@@ -7,13 +7,21 @@
 load_lab_data(lab_data_path, sheet_name = NULL)
 }
 \arguments{
-\item{lab_data_path}{file path as a string to the lab data}
+\item{lab_data_path}{\code{str} File path as a string to the lab data.}
 
-\item{sheet_name}{name of the sheet to load}
+\item{sheet_name}{\code{str} Name of the sheet to load. This is optional in cases
+of an Excel sheet with multiple tabs.}
 }
 \value{
-a tibble containing lab data
+\code{tibble} Lab data loaded from the CSV or Excel file path.
 }
 \description{
-Function to load the raw lab data
+This a function to load lab data that are either CSVs or Excel files.
+}
+\examples{
+\dontrun{
+lab_data_path <- "C:/Users/ABC1/Desktop/lab_data.csv"
+lab.data <- load_lab_data(lab_data_path)
+}
+
 }

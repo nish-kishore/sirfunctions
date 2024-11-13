@@ -7,17 +7,19 @@
 set_zoom_level(g1, map_ref, country, m_base_ctry)
 }
 \arguments{
-\item{g1}{original ggplot map}
+\item{g1}{\code{ggplot} Original ggplot map.}
 
-\item{map_ref}{reference map}
+\item{map_ref}{\code{ggplot} Reference map.}
 
-\item{country}{country or countries to zoom into}
+\item{country}{\code{str} Country or countries to zoom into.}
 
-\item{m_base_ctry}{shapefile containing base map of country}
+\item{m_base_ctry}{\code{sf} Shapefile containing base map of country.}
 }
 \value{
-adjusted ggplot map with zoom
+\code{ggplot} Map with adjusted zoom level, if specified.
 }
 \description{
-Adjust the zoom level of the map
+This is an internal function changes the zoom level of the map depending on the
+user specification.
 }
+\keyword{internal}

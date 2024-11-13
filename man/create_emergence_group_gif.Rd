@@ -17,7 +17,8 @@ create_emergence_group_gif(
 \arguments{
 \item{emergence_group}{\code{str} Designation of the emergence group to review.}
 
-\item{pos}{\code{tibble} Positives data set.}
+\item{pos}{\code{tibble} Positives data set. This is \code{raw.data$pos}, which is part of the
+output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 
 \item{dist}{\code{sf} Shapefile of all districts.}
 

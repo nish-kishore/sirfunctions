@@ -7,17 +7,32 @@
 clean_lab_data_who(ctry.data, start.date, end.date, delim = "-")
 }
 \arguments{
-\item{ctry.data}{country data RDS object}
+\item{ctry.data}{\code{list} Large list of country polio data. Output of either
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}. Ensure that lab data is attached to \code{ctry.data}.}
 
-\item{start.date}{start date of the desk review}
+\item{start.date}{\code{str} Start date of analysis.}
 
-\item{end.date}{end date of the desk review}
+\item{end.date}{\code{str} End date of analysis.}
 
-\item{delim}{delimiter used in the EPIDs. Defaults to "-".}
+\item{delim}{\code{str} Delimiter used in the EPIDs. Defaults to \code{"-"}.}
 }
 \value{
-a tibble containing clean lab data
+\code{tibble} Cleaned lab data.
 }
 \description{
-Clean polio lab data from WHO
+Cleans the lab data from WHO. This is used in \code{\link[=clean_lab_data]{clean_lab_data()}}, but can be used on its own.
+}
+\examples{
+\dontrun{
+lab_path <- "C:/Users/XRG9/lab_data_who.csv"
+ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+ctry.data$lab.data <- clean_lab_data_who(ctry.data, "2021-01-01", "2023-12-31")
+
+# Not using the desk review pipeline
+raw.data <- get_all_polio_data()
+ctry.data <- extract_country_data("algeria")
+ctry.data$lab.data <- read_csv(lab_path)
+ctry.data$lab.data <- clean_lab_data_who(ctry.data, "2021-01-01", "2023-12-31")
+}
+
 }

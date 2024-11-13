@@ -14,3 +14,4 @@ set_dr_local_folders(path)
 Sets up local folders in the current working directory for desk review
 data_path is expected to be ~/country/year
 }
+\keyword{internal}

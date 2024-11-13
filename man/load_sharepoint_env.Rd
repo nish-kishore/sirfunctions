@@ -15,3 +15,4 @@ sharepoint path
 \description{
 Load the sharepoint environment
 }
+\keyword{internal}

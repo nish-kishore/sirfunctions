@@ -338,9 +338,9 @@ test_EDAV_connection <- function(
 #' creation of the "medium" and "large" static datasets as necessary.
 #' @import dplyr cli sf
 #' @param size `str` Size of data to download. Defaults to `"small"`.
-#' - `"small"`: data from 2019-present
-#' - `"medium"`: data from 2016-present
-#' - `"large"`: data from 2001-present
+#' - `"small"`: Data from 2019-present.
+#' - `"medium"`: Data from 2016-present.
+#' - `"large"`: Data from 2001-present.
 #' @param folder `str` Location of the CDC pre-processed endpoint, defaults to `"GID/PEB/SIR/Data"`.
 #' @param force.new.run `bool` Default `FALSE`, if `TRUE` will run recent data and cache.
 #' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
@@ -1388,7 +1388,7 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
-#' @returns A `tibble` or `sf` dataframe containing spatial data.
+#' @returns `tibble` or `sf` Dataframe containing spatial data.
 #' @examples
 #' dist <- load_clean_dist_sp(ctry_name = c("ALGERIA", "NIGERIA"), st.year = 2019)
 #' dist.long <- load_clean_dist_sp(ctry_name = "ALGERIA", st.year = 2019, type = "long")
@@ -1482,7 +1482,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
-#' @returns A `tibble` or `sf` dataframe containing spatial data.
+#' @returns `tibble` or `sf` Dataframe containing spatial data.
 #' @examples
 #' \dontrun{
 #' prov <- load_clean_prov_sp(ctry_name = c("ALGERIA", "NIGERIA"), st.year = 2019)
@@ -1568,7 +1568,7 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
-#' @returns A `tibble` or `sf` dataframe containing spatial data.
+#' @returns `tibble` or `sf` Dataframe containing spatial data.
 #' @examples
 #' ctry <- load_clean_ctry_sp(ctry_name = "ALGERIA")
 #' ctry.long <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
@@ -1630,9 +1630,9 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 
 #' Utility function to fix years
 #'
-#' @param df tibble: dataframe to be used for fixing years
-#' @param yrs numeric array: array of years to fix data
-#' @returns long tibble
+#' @param df `tibble` Dataframe to be used for fixing years.
+#' @param yrs `array` Numeric array of years to fix data.
+#' @returns `tibble` Long format table to fix years.
 f.yrs.01 <- function(df, yrs) {
   quo.yrs <- dplyr::enquo(yrs)
 
@@ -1647,13 +1647,13 @@ f.yrs.01 <- function(df, yrs) {
 
 #' Split or concatenate raw.data by year
 #'
-#' @param action Can either be to `concat` or `split`
-#' @param split.years an array of years by which data should be split
-#' @param raw.data.all a list of data objects to be split
-#' @param raw.data.post.2019 a list of data objects to be concatenated
-#' @param raw.data.2016.2019 a list of data objects to be concatenated
-#' @param raw.data.2001.2016 a list of data objects to be concatenated
-#' @returns list of lists or a single concatenated list
+#' @param action `str` Can either be to `"concat"` or `"split"`.
+#' @param split.years `array` A numeric array of years by which data should be split.
+#' @param raw.data.all `list` A list of data objects to be split.
+#' @param raw.data.post.2019 `list` A list of data objects to be concatenated.
+#' @param raw.data.2016.2019 `list` A list of data objects to be concatenated.
+#' @param raw.data.2001.2016 `list` A list of data objects to be concatenated.
+#' @returns `list` A list of lists or a single concatenated list.
 split_concat_raw_data <- function(
     action,
     split.years = NULL,
@@ -1778,10 +1778,11 @@ split_concat_raw_data <- function(
 #' of the spatial files. In these instances, typically, unknown GUIDs are part of the
 #' new geodatabase from WHO that get released in the next updated geodatabase. Therefore,
 #' this function should be used only if necessary. For example, in instances where mapping an AFP case into a
-#' a district is critical and the shapefile from `extract_country_data()` is not yet updated.
-#' @param ctry.data Named `list` output of `extract_country_data()`, with spatial data attached.
+#' a district is critical and the shapefile from [extract_country_data()] is not yet updated.
+#' @param ctry.data `list` Country polio data, with spatial data attached. Output of [extract_country_data()] or
+#' [init_dr()].
 #'
-#' @return A `list` containing errors in province and district GUIDs.
+#' @return `list` A list containing errors in province and district GUIDs.
 #' @examples
 #' raw.data <- get_all_polio_data() # must contain spatial data to run the function
 #' ctry.data <- extract_country_data("algeria", raw.data)
@@ -1863,7 +1864,7 @@ check_afp_guid_ctry_data <- function(ctry.data) {
 #' @param afp.data `tibble` AFP linelist (afp.all.2).
 #' @param pop.data `tibble` Population file (prov.pop or dist.pop).
 #' @param guid_list `str list` Unknown GUIDs from the AFP linelist.
-#' This is the output of `check_afp_guid_ctry_data()`.
+#' This is the output of [check_afp_guid_ctry_data()].
 #' @param spatial_scale `str` The spatial scale to impute data. Either `"prov"` or `"dist"`.
 #'
 #' @return `tibble` AFP data with corrected GUIDs based on the population files.
@@ -1906,6 +1907,7 @@ fix_ctry_data_missing_guids <- function(afp.data, pop.data, guid_list, spatial_s
 #' @param img `str` File path to the png file.
 #' @param pngquant_path `str` File path to pngquant executable file (pngquant.exe).
 #' @param suffix `str` Optional parameter to add a suffix to the compressed image.
+#' @returns None. Will output compressed image to the local folder.
 #' @examples
 #' \dontrun{
 #' img_path <- "C:/Users/ABC1/Desktop/pic1.png"

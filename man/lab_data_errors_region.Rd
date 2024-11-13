@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.lab.functions.R
 \name{lab_data_errors_region}
 \alias{lab_data_errors_region}
-\title{Check common errors in the regional lab data}
+\title{Check common errors in the regional lab data.}
 \usage{
 lab_data_errors_region(
   ctry.data,
@@ -12,14 +12,29 @@ lab_data_errors_region(
 )
 }
 \arguments{
-\item{ctry.data}{Rds file containing polio country data}
+\item{ctry.data}{\code{list} Large list containing polio country data. Output of either
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}. Note that lab data must be attached to\code{ctry.data} as
+\code{lab.data}.}
 
-\item{start.date}{start date of the desk review}
+\item{start.date}{\code{str} Start date of analysis.}
 
-\item{end.date}{end date of the desk review}
+\item{end.date}{\code{str} End date of analysis.}
 
-\item{error_path}{path to folder to save the error log}
+\item{error_path}{\code{str} Path to folder to save the error log.}
+}
+\value{
+None. It outputs an Excel file locally containing the error log.
 }
 \description{
-Check common errors in the regional lab data
+Error checking for regional lab data. This is a helper function meant to be used inside
+\code{\link[=lab_data_errors]{lab_data_errors()}}.
+}
+\examples{
+\dontrun{
+lab_path <- "C:/Users/XRG9/lab_data_region.csv"
+ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+lab_data_errors_region(ctry.data, "2021-01-01", "2023-12-31")
+}
+
+
 }

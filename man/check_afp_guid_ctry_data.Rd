@@ -7,17 +7,18 @@
 check_afp_guid_ctry_data(ctry.data)
 }
 \arguments{
-\item{ctry.data}{Named \code{list} output of \code{extract_country_data()}, with spatial data attached.}
+\item{ctry.data}{\code{list} Country polio data, with spatial data attached. Output of \code{\link[=extract_country_data]{extract_country_data()}} or
+\code{\link[=init_dr]{init_dr()}}.}
 }
 \value{
-A \code{list} containing errors in province and district GUIDs.
+\code{list} A list containing errors in province and district GUIDs.
 }
 \description{
 The function will run a check in the AFP linelist for GUIDs that are not part
 of the spatial files. In these instances, typically, unknown GUIDs are part of the
 new geodatabase from WHO that get released in the next updated geodatabase. Therefore,
 this function should be used only if necessary. For example, in instances where mapping an AFP case into a
-a district is critical and the shapefile from \code{extract_country_data()} is not yet updated.
+a district is critical and the shapefile from \code{\link[=extract_country_data]{extract_country_data()}} is not yet updated.
 }
 \examples{
 raw.data <- get_all_polio_data() # must contain spatial data to run the function

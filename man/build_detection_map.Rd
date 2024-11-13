@@ -2,7 +2,7 @@
 % Please edit documentation in R/generate_adhoc_map.R
 \name{build_detection_map}
 \alias{build_detection_map}
-\title{Build the detection map}
+\title{Build detection map}
 \usage{
 build_detection_map(
   m_base_region,
@@ -24,41 +24,43 @@ build_detection_map(
 )
 }
 \arguments{
-\item{m_base_region}{map base for region}
+\item{m_base_region}{\code{sf} Map base for region.}
 
-\item{m_base_prov}{map base for provinces}
+\item{m_base_prov}{\code{sf} Map base for provinces.}
 
-\item{data_p}{data for map creation}
+\item{data_p}{\code{tibble} Data for map creation.}
 
-\item{m_data_prov}{map data for provinces}
+\item{m_data_prov}{\code{tibble} Map data for provinces.}
 
-\item{new_detect}{whether to include new detections}
+\item{new_detect}{\code{bool} Whether to include new detections.}
 
-\item{virus_type}{virus type to display}
+\item{virus_type}{\code{str} or \code{list} Virus type to display.}
 
-\item{surv_options}{surveillance options}
+\item{surv_options}{\code{str} or \code{list} Surveillance options.}
 
-\item{start_date}{start date}
+\item{start_date}{\code{date} Start date.}
 
-\item{date_3a}{???}
+\item{date_3a}{\code{date} ???}
 
-\item{download_date}{date global polio data was downloaded}
+\item{download_date}{\code{date} Date global polio data was downloaded.}
 
-\item{emg_cols}{emergence colors}
+\item{emg_cols}{\code{list} Emergence colors.}
 
-\item{country}{country or countries of interest}
+\item{country}{\code{str} Country or countries of interest.}
 
-\item{labels}{whether to label provinces}
+\item{labels}{\code{bool} Whether to label provinces.}
 
-\item{clean_maps}{clean maps}
+\item{clean_maps}{\code{ggplot} Clean maps.}
 
-\item{data_r}{reported detections}
+\item{data_r}{\code{tibble} Reported detections.}
 
-\item{.owner}{entity that produced the map}
+\item{.owner}{\code{str} Entity that produced the map.}
 }
 \value{
-a ggplot map
+\code{ggplot} Map of recent detections.
 }
 \description{
-Build the detection map
+This is the key function that builds the detection map. This is internally
+referred to as \code{g1} within \code{\link[=generate_adhoc_map]{generate_adhoc_map()}}.
 }
+\keyword{internal}

@@ -7,6 +7,7 @@
 #' @importFrom cli cli_alert_warning
 #' @param afp.data tibble containing AFP data
 #' @param spatial.scale what geographic level to check for. Valid values are "ctry","prov", "dist".
+#' @keywords internal
 #'
 #' @returns tibble containing records with missing geographic data
 check_missing_geo <- function(afp.data, spatial.scale) {
@@ -33,6 +34,7 @@ check_missing_geo <- function(afp.data, spatial.scale) {
 #' Imputation algorithm to fill in missing district data from EPID
 #'
 #' @param afp.data tibble of AFP data
+#' @keywords internal
 #' @import cli dplyr
 #' @returns tibble of AFP data with filled district data
 impute_dist_afp <- function(afp.data) {
@@ -150,6 +152,7 @@ impute_dist_afp <- function(afp.data) {
 #'
 #' @param afp.data tibble: AFP data
 #' @import cli dplyr
+#' @keywords internal
 #' @returns AFP linelist with converted date columns and additional timeliness cols
 col_to_datecol <- function(afp.data) {
   cli::cli_process_start("Converting date columns from character to dates")
@@ -174,6 +177,7 @@ col_to_datecol <- function(afp.data) {
 #'
 #' @param afp.data AFP linelist (specifically, afp.all.2)
 #' @import cli dplyr
+#' @keywords internal
 #' @returns tibble with AFP data with columns for number of doses and dose category
 add_zero_dose_col <- function(afp.data) {
   cli::cli_process_start("Cleaning and adding columns for zero-dose children data")
@@ -249,7 +253,7 @@ add_zero_dose_col <- function(afp.data) {
 #' Create age group categories
 #' @import cli dplyr
 #' @param age.months column containing age in months
-#'
+#' @keywords internal
 #' @returns a column containing age group categories
 #'
 add_age_group <- function(age.months) {
@@ -273,7 +277,7 @@ add_age_group <- function(age.months) {
 #' @import dplyr
 #' @param npafp.output tibble output after running f.npafp.rate.01 at the district
 #' level
-#'
+#' @keywords internal
 #' @returns tibble of output with province names for those without district names
 add_prov_npafp_table <- function(npafp.output) {
   prov_na <- npafp.output |> dplyr::filter(is.na(prov))

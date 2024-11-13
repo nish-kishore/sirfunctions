@@ -7,17 +7,24 @@
 set_emergence_colors(raw.data, country, start_date = NULL, end_date = NULL)
 }
 \arguments{
-\item{raw.data}{Global polio data output of sirfunctions::get_all_polio_data()}
+\item{raw.data}{\code{list} Global polio data output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 
-\item{country}{A string or a list of strings containing the countries of interest}
+\item{country}{\code{str} or \code{list} Countries of interest.}
 
-\item{start_date}{Start date of the time span to look for emergences. Defaults to 13 months from the end date.}
+\item{start_date}{\code{str} Start date of the time span to look for emergences. Defaults to 13 months from the end date.}
 
-\item{end_date}{End date of the time span to look for emergences Defaults to download date of raw data.}
+\item{end_date}{\code{str} End date of the time span to look for emergences Defaults to download date of \code{raw.data}.}
 }
 \value{
-a named list containing the mapping of emergence and corresponding colors
+\code{list} A named list containing the mapping of emergence and corresponding colors.
 }
 \description{
 Set the emergence colors
+}
+\examples{
+\dontrun{
+raw.data <- get_all_polio_data(attach.spatial.data = F)
+emg.cols <- set_emergence_colors(raw.data, "algeria")
+}
+
 }

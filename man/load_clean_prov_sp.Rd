@@ -48,7 +48,7 @@ still under evaluation/development. Default is \code{"standard"}.
 }}
 }
 \value{
-A \code{tibble} or \code{sf} dataframe containing spatial data.
+\code{tibble} or \code{sf} Dataframe containing spatial data.
 }
 \description{
 Pulls province shapefiles directly from the geodatabase

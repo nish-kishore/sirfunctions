@@ -7,11 +7,15 @@
 get_region(country_name = Sys.getenv("DR_COUNTRY"))
 }
 \arguments{
-\item{country_name}{name of the country}
+\item{country_name}{\code{str} Name of the country.}
 }
 \value{
-string "EMRO" or "AFRO"
+\code{str} A string, either \code{"EMRO"} or \code{"AFRO"}.
 }
 \description{
-Determines whether lab data is EMRO or AFRO
+Outputs the name of the region which a country belongs to.
+}
+\examples{
+get_region("algeria")
+
 }

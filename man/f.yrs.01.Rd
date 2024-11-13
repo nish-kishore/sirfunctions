@@ -7,12 +7,12 @@
 f.yrs.01(df, yrs)
 }
 \arguments{
-\item{df}{tibble: dataframe to be used for fixing years}
+\item{df}{\code{tibble} Dataframe to be used for fixing years.}
 
-\item{yrs}{numeric array: array of years to fix data}
+\item{yrs}{\code{array} Numeric array of years to fix data.}
 }
 \value{
-long tibble
+\code{tibble} Long format table to fix years.
 }
 \description{
 Utility function to fix years

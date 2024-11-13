@@ -26,10 +26,10 @@ as appropriate.}
 \item{end.date}{\code{date} End date of the analysis formatted as "YYYY-MM-DD".}
 
 \item{spatial.scale}{\code{str} Spatial scale to group analysis by. Valid values are:
--\code{"prov"} Province level
+-\code{"prov"} Province level.
 \itemize{
-\item \code{"dist"} District level
-\item \code{"ctry"} Country level
+\item \code{"dist"} District level.
+\item \code{"ctry"} Country level.
 }}
 
 \item{intervals.manual}{\code{bool} Should user input their own timeliness interval

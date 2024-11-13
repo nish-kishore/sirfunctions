@@ -3,6 +3,7 @@
 #' Downloads the desk review template code
 #'
 #' @param output_path where to download the desk review template code
+#' @keywords internal
 #'
 copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
   dr_template_name <- "desk_review_template.Rmd"
@@ -26,6 +27,7 @@ copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
 #' @importFrom utils download.file
 #' @param branch which branch to use
 #' @param output_folder where the function scripts should be stored
+#' @keywords internal
 #'
 #' @export
 copy_dr_functions <- function(branch = "main", output_folder = Sys.getenv("DR_FUNC_PATH")) {
@@ -94,6 +96,7 @@ copy_dr_functions <- function(branch = "main", output_folder = Sys.getenv("DR_FU
 #' @param start_date start date of the desk review
 #' @param end_date  end date of the desk review
 #' @param country_name name of the country
+#' @keywords internal
 #'
 #' @return boolean whether to use cache or not
 #' @export
@@ -149,6 +152,8 @@ check_cache <- function(param_path, start_date, end_date, country_name = Sys.get
 #' data_path is expected to be ~/country/year
 #'
 #' @param path location of the local desk review folder
+#' @keywords internal
+#'
 set_dr_local_folders <- function(path) {
   # Check if required directories exist locally and create it if it does not
   if (!dir.exists(path)) {
@@ -193,6 +198,7 @@ set_dr_local_folders <- function(path) {
 #' Determine the size of data to pull
 #'
 #' @param year `int` start year of the desk review
+#' @keywords internal
 #'
 #' @return `str` size of the data
 set_data_size <- function(year) {
@@ -213,6 +219,7 @@ set_data_size <- function(year) {
 #' @param dr_data_path `str` path to save the data set to.
 #' Expected path is ./country/year/data
 #' @param attach_spatial_data whether to attach spatial data
+#' @keywords internal
 #'
 #' @return `list` large list containing polio data
 update_data <-
@@ -240,6 +247,7 @@ update_data <-
 #' Loads .Rds file
 #'
 #' @param data_dir_path `str` data path
+#' @keywords internal
 #'
 #' @return `list` large list containing the polio data
 load_data <- function(data_dir_path) {
@@ -272,6 +280,7 @@ load_data <- function(data_dir_path) {
 #' Creates a meta data file
 #' @import readr
 #' @param path location where the .txt file is located/should be created
+#' @keywords internal
 #'
 #' @return this function does not return anything
 create_metadata <- function(path) {
@@ -296,6 +305,7 @@ create_metadata <- function(path) {
 #' @param country_name `str` name of the country
 #' @param data_path path of the data folder used in the desk review
 #' @param attach_spatial_data whether to attach spatial data
+#' @keywords internal
 #'
 #' @return `list` large list containing polio data
 generate_data <-
@@ -354,6 +364,7 @@ generate_data <-
 #' @param country country name as a string
 #' @param year year as an integer
 #' @param local_dr_repo the local desk review repository
+#' @keywords internal
 #'
 #' @return A status message
 fetch_dr_data <- function(country, year, local_dr_repo) {

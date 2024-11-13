@@ -2,6 +2,7 @@
 #'
 #' @param pop.data population data
 #' @param spatial.scale "ctry", "prov", or "dist"
+#' @keywords internal
 #'
 #' @returns tibble with missing population data
 check_missing_pop <- function(pop.data, spatial.scale) {
@@ -40,6 +41,7 @@ check_missing_pop <- function(pop.data, spatial.scale) {
 #' district population data
 #' @import dplyr cli
 #' @param ctry.data country data to check for
+#' @keywords internal
 #'
 #' @returns tibble containing differences in population data
 check_pop_rollout <- function(ctry.data) {
@@ -99,6 +101,7 @@ check_pop_rollout <- function(ctry.data) {
 #' @import dplyr cli
 #' @param pop.data population data
 #' @param spatial.scale spatial scale of the data
+#' @keywords internal
 #'
 #' @returns list containing invalid GUIDs
 spatial_validation <- function(pop.data, spatial.scale) {

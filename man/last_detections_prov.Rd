@@ -9,13 +9,14 @@ last_detections_prov(data_p, .start_date, .end_date)
 \arguments{
 \item{data_p}{dataset containing epids with cases}
 
-\item{.start_date}{start date}
+\item{.start_date}{\code{date} Start date.}
 
-\item{.end_date}{end date}
+\item{.end_date}{\code{date} End date.}
 }
 \value{
-summary table identifying last detections at the province level
+\code{tibble} Summary table identifying last detections at the province level
 }
 \description{
 Identify last detections at the province level
 }
+\keyword{internal}

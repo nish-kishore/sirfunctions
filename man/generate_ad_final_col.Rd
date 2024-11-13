@@ -15,3 +15,4 @@ AFP dataset with the adequacy final column
 \description{
 Helper function to add the adequacy.final column
 }
+\keyword{internal}

@@ -12,7 +12,7 @@ fix_ctry_data_missing_guids(afp.data, pop.data, guid_list, spatial_scale)
 \item{pop.data}{\code{tibble} Population file (prov.pop or dist.pop).}
 
 \item{guid_list}{\verb{str list} Unknown GUIDs from the AFP linelist.
-This is the output of \code{check_afp_guid_ctry_data()}.}
+This is the output of \code{\link[=check_afp_guid_ctry_data]{check_afp_guid_ctry_data()}}.}
 
 \item{spatial_scale}{\code{str} The spatial scale to impute data. Either \code{"prov"} or \code{"dist"}.}
 }

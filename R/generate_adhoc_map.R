@@ -2,17 +2,23 @@
 # NOTE: These functions are not meant to be used outside of generate_adhoc_map()
 
 #' Adjust the zoom level of the map
+#'
+#' This is an internal function changes the zoom level of the map depending on the
+#' user specification.
+#'
 #' @importFrom cli cli_alert_info
 #' @importFrom ggplot2 coord_sf
 #' @importFrom stringr str_trim str_to_lower
 #' @importFrom dplyr filter
 #'
-#' @param g1 original ggplot map
-#' @param map_ref reference map
-#' @param m_base_ctry shapefile containing base map of country
-#' @param country country or countries to zoom into
+#' @param g1 `ggplot` Original ggplot map.
+#' @param map_ref `ggplot` Reference map.
+#' @param m_base_ctry `sf` Shapefile containing base map of country.
+#' @param country `str` Country or countries to zoom into.
+#' @keywords internal
 #'
-#' @return adjusted ggplot map with zoom
+#' @return `ggplot` Map with adjusted zoom level, if specified.
+#'
 set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
   # Set up map zoom level
   map_lvl <- map_ref |> dplyr::filter(place.admin.0 %in% country)
@@ -69,29 +75,33 @@ set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
 }
 
 
-#' Build the detection map
+#' Build detection map
 #'
-#' @param m_base_region map base for region
-#' @param m_base_prov  map base for provinces
-#' @param data_p data for map creation
-#' @param m_data_prov map data for provinces
-#' @param new_detect whether to include new detections
-#' @param virus_type virus type to display
-#' @param surv_options surveillance options
-#' @param start_date start date
-#' @param date_3a ???
-#' @param download_date date global polio data was downloaded
-#' @param emg_cols emergence colors
-#' @param country country or countries of interest
-#' @param labels whether to label provinces
-#' @param clean_maps clean maps
-#' @param data_r reported detections
-#' @param .owner entity that produced the map
+#' This is the key function that builds the detection map. This is internally
+#' referred to as `g1` within [generate_adhoc_map()].
+#'
+#' @param m_base_region `sf` Map base for region.
+#' @param m_base_prov  `sf` Map base for provinces.
+#' @param data_p `tibble` Data for map creation.
+#' @param m_data_prov `tibble` Map data for provinces.
+#' @param new_detect `bool` Whether to include new detections.
+#' @param virus_type `str` or `list` Virus type to display.
+#' @param surv_options `str` or `list` Surveillance options.
+#' @param start_date `date` Start date.
+#' @param date_3a `date` ???
+#' @param download_date `date` Date global polio data was downloaded.
+#' @param emg_cols `list` Emergence colors.
+#' @param country `str` Country or countries of interest.
+#' @param labels `bool` Whether to label provinces.
+#' @param clean_maps `ggplot` Clean maps.
+#' @param data_r `tibble` Reported detections.
+#' @param .owner `str` Entity that produced the map.
 #'
 #' @importFrom ggplot2 aes geom_sf ggplot alpha element_blank element_rect element_text geom_point geom_sf_text guide_legend guides labs scale_color_manual scale_fill_manual scale_shape_manual theme theme_bw unit
 #' @importFrom ggrepel geom_label_repel
 #' @importFrom dplyr filter
-#' @return  a ggplot map
+#' @keywords internal
+#' @return `ggplot` Map of recent detections.
 
 build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
                                 new_detect, virus_type, surv_options, start_date, date_3a,
@@ -230,12 +240,17 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
 }
 
 #' Identifying new detections
+#'
+#' The function adds new detections as specified by the user when they use
+#' [generate_adhoc_map()]. This function inherits arguments from the parent function.
+#'
 #' @importFrom dplyr filter if_else mutate
-#' @param data_p map data
-#' @param country country or a list of countries
-#' @param date_3a_a ???
-#' @param date_3a ???
-#' @param date_3b ???
+#' @param data_p `tibble` Map data.
+#' @param country `str` or `list` Country or a list of countries.
+#' @param date_3a_a `str` ???
+#' @param date_3a `str` ???
+#' @param date_3b `str` ???
+#' @keywords internal
 #'
 #' @return a dataset containing new detections
 add_new_detection <- function(data_p, country, date_3a, date_3a_a, date_3b) {
@@ -258,12 +273,14 @@ add_new_detection <- function(data_p, country, date_3a, date_3a_a, date_3b) {
 
 
 #' Identify last detections at the province level
+#'
 #' @importFrom dplyr arrange group_by summarise mutate case_when last
 #' @param data_p dataset containing epids with cases
-#' @param .start_date start date
-#' @param .end_date end date
+#' @param .start_date `date` Start date.
+#' @param .end_date `date` End date.
+#' @keywords internal
 #'
-#' @return summary table identifying last detections at the province level
+#' @return `tibble` Summary table identifying last detections at the province level
 last_detections_prov <- function(data_p, .start_date, .end_date) {
   data_prov <- data_p |>
     dplyr::arrange(place.admin.1, dateonset) |>
@@ -286,17 +303,23 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
 
 
 #' Pull the main map data to build the map
+#'
+#' This function primarily pulls the relevant information to build the map. Inherits
+#' areguments from [generate_adhoc_map()].
+#'
 #' @importFrom dplyr arrange between case_when distinct mutate filter
 #' @importFrom lubridate today
-#' @param raw.data global polio data output from sirfunctions::get_all_polio_data()
-#' @param .vdpv whether to include VDPV in maps
-#' @param country name of the country or countries
-#' @param virus_type virus type to map
-#' @param .start_date start date
-#' @param .end_date end date
-#' @param surv surveillance type
 #'
-#' @return dataset used to build the map
+#' @param raw.data `list` global polio data output from [get_all_polio_data()]
+#' @param .vdpv `bool` Whether to include VDPV in maps.
+#' @param country `str` or `list` Name of the country or countries.
+#' @param virus_type `str` or `list` Virus type to map.
+#' @param .start_date `date` Start date.
+#' @param .end_date `date` End date.
+#' @param surv `str` or `list` Surveillance type.
+#' @keywords internal
+#'
+#' @return `tibble` Filtered dataset used to build the map.
 pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_date, .end_date) {
   if (.vdpv == "YES") {
 
@@ -379,6 +402,7 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
 #' @importFrom Microsoft365R get_sharepoint_site
 #' @importFrom cli cli_alert
 #' @param raw.data global polio data output by sirfunctions::get_all_polio_data()
+#' @keywords internal
 #'
 #' @return sharepoint path
 load_sharepoint_env <- function(raw.data) {
@@ -401,15 +425,22 @@ load_sharepoint_env <- function(raw.data) {
   return(sp_newpath)
 }
 
+# Public Functions ----
 #' Set the emergence colors
 #' @importFrom dplyr filter arrange case_when distinct mutate
 #' @importFrom tidyr drop_na
-#' @param raw.data Global polio data output of sirfunctions::get_all_polio_data()
-#' @param country A string or a list of strings containing the countries of interest
-#' @param start_date Start date of the time span to look for emergences. Defaults to 13 months from the end date.
-#' @param end_date  End date of the time span to look for emergences Defaults to download date of raw data.
+#' @param raw.data `list` Global polio data output of [get_all_polio_data()].
+#' @param country `str` or `list` Countries of interest.
+#' @param start_date `str` Start date of the time span to look for emergences. Defaults to 13 months from the end date.
+#' @param end_date  `str` End date of the time span to look for emergences Defaults to download date of `raw.data`.
 #'
-#' @return a named list containing the mapping of emergence and corresponding colors
+#' @return `list` A named list containing the mapping of emergence and corresponding colors.
+#' @examples
+#' \dontrun{
+#' raw.data <- get_all_polio_data(attach.spatial.data = F)
+#' emg.cols <- set_emergence_colors(raw.data, "algeria")
+#' }
+#'
 #' @export
 set_emergence_colors <- function(raw.data, country, start_date=NULL, end_date=NULL) {
 
@@ -446,8 +477,8 @@ set_emergence_colors <- function(raw.data, country, start_date=NULL, end_date=NU
       TRUE ~ emergencegroup
     )) |>
     dplyr::filter(.data$dateonset >= start_date,
-      .data$source %in% c("AFP", "ENV"),
-      .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")) |>
+                  .data$source %in% c("AFP", "ENV"),
+                  .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")) |>
     dplyr::distinct(.data$emg_grp2) |>
     dplyr::arrange(.data$emg_grp2) |>
     tidyr::drop_na()
@@ -511,7 +542,7 @@ set_emergence_colors <- function(raw.data, country, start_date=NULL, end_date=NU
 
   return(emg_cols)
 }
-# Main Function ----
+
 
 #' Create adhoc maps for emergences
 #'

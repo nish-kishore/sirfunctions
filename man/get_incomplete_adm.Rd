@@ -21,3 +21,4 @@ a list of GUIDs not present in the time period
 \description{
 Helper function to filter GUIDs that are not consistent across temporal scale
 }
+\keyword{internal}

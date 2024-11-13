@@ -1,15 +1,18 @@
 # Helper functions ----
 #' Calculate NPAFP by year and geographic level
-#' @description
+#'
 #' Helper function for calculating the NPAFP rate based on the geographic level.
-#' This function is used inside `f.npafp.rate.01()`.
+#' This function is used inside [f.npafp.rate.01()].
 #'
-#' @param afp.data AFP linelist, either from `raw.data` or `ctry.data`.
-#' @param pop.data Population data
-#' @param year.data Summary table. Created from `generate_year_data()`.
-#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`
+#' @param afp.data `tibble` AFP linelist. Either from `raw.data$afp` of [get_all_polio_data()]
+#' or `ctry.data$afp.all.2` of [extract_country_data()].
+#' @param pop.data `tibble` Population data. Either from `raw.data${ctry/prov/dist}.pop` of [get_all_polio_data()]
+#' or `ctry.data${ctry/prov/dist}.pop` of [extract_country_data()].
+#' @param year.data `tibble` Summary table. Created from [generate_year_data()].
+#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`.
+#' @keywords internal
 #'
-#' @return A summary table including NPAFP rates and population data.
+#' @return `tibble` A summary table including NPAFP rates and population data.
 npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
 
   # static local vars
@@ -57,15 +60,18 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
 }
 
 #' Calculate the NPAFP rate on a rolling basis
-#' @description
+#'
 #' Calculates the NPAFP rate on a rolling basis, based on the start and end dates
 #' specified.
 #'
-#' @param afp.data AFP linelist, either from `raw.data` or `ctry.data`.
-#' @param year.pop.data Summary table containing year and pop data.
-#' @param start_date Start date to calculate the rolling interval for.
-#' @param end_date End date to calculate the rolling interval for.
-#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`
+#' @param afp.data `tibble` AFP linelist, Either from `raw.data$afp` of [get_all_polio_data()]
+#' or `ctry.data$afp.all.2` of [extract_country_data()].
+#' @param year.pop.data `tibble` Summary table containing year and pop data. This is created
+#' inside [f.npafp.rate.01()].
+#' @param start_date `str` Start date to calculate the rolling interval for.
+#' @param end_date `str` End date to calculate the rolling interval for.
+#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`.
+#' @keywords internal
 #'
 #' @return A summary table including NPAFP rates and population data.
 npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial_scale) {
@@ -73,6 +79,8 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
 
   geo <- switch(spatial_scale,
                 "ctry" = "adm0guid",
@@ -136,15 +144,17 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' @import tidyr
 #' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
 #' formatted as `adm(0,1,2)guid`, onset date as `date` and `cdc.classification.all2` which includes
-#' `"NPAFP", "PENDING", "LAB PENDING"`.
+#' `"NPAFP", "PENDING", "LAB PENDING"`. This is either `ctry.data$afp.all.2` of [extract_country_data()] or
+#' [init_dr()] or `raw.data$afp` of [get_all_polio_data()].
 #' @param pop.data `tibble` Under 15 population data by a given spatial scale including
-#' `year`, `adm(0,1,2)guid`, `u15pop`, and `ctry/prov/dist` as appropriate.
-#' @param start.date `chr` Start date with the format "YYYY-MM-DD".
-#' @param end.date `chr` Start date with the format "YYYY-MM-DD".
+#' `year`, `adm(0,1,2)guid`, `u15pop`, and `ctry/prov/dist` as appropriate. This is part of the output of
+#' [get_all_polio_data()] and [extract_country_data()].
+#' @param start.date `chr` Start date with the format `"YYYY-MM-DD"`.
+#' @param end.date `chr` Start date with the format `"YYYY-MM-DD"`.
 #' @param spatial.scale `chr` Spatial scale for analysis.
-#' - `"prov"` Province level
-#' - `"dist"` District level
-#' - `"ctry"` Country level
+#' - `"prov"` Province level.
+#' - `"dist"` District level.
+#' - `"ctry"` Country level.
 #' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @param rolling `bool` Should the analysis be performed on a rolling bases? Default `FALSE`.
 #' @param sp_continuity_validation Should we filter places that are not present

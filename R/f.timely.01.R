@@ -15,9 +15,9 @@
 #' @param start.date `date` Start date of the analysis formatted as "YYYY-MM-DD".
 #' @param end.date `date` End date of the analysis formatted as "YYYY-MM-DD".
 #' @param spatial.scale `str` Spatial scale to group analysis by. Valid values are:
-#' -`"prov"` Province level
-#' - `"dist"` District level
-#' - `"ctry"` Country level
+#' -`"prov"` Province level.
+#' - `"dist"` District level.
+#' - `"ctry"` Country level.
 #' @param intervals.manual `bool` Should user input their own timeliness interval
 #' requirements? Default is `FALSE`. This is only required if timeliness column such as
 #' `noti.7d.on`, `inv.2d.noti` are not already calculated. This draft function will currently fail if

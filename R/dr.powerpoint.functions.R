@@ -1,7 +1,9 @@
+# Private functions ----
 #' Generate PowerPoint assumptions
 #' @importFrom officer fp_text unordered_list
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
+#' @keywords internal
 #'
 #' @returns list of strings
 generate_pptx_assumptions <- function(start_date, end_date) {
@@ -35,7 +37,7 @@ generate_pptx_assumptions <- function(start_date, end_date) {
   return(assump)
 }
 
-
+# Public functions ----
 #' Get path of the PowerPoint template
 #'
 #' The desk review PowerPoint template is used to build the desk review slide deck.

@@ -15,9 +15,9 @@ get_all_polio_data(
 \arguments{
 \item{size}{\code{str} Size of data to download. Defaults to \code{"small"}.
 \itemize{
-\item \code{"small"}: data from 2019-present
-\item \code{"medium"}: data from 2016-present
-\item \code{"large"}: data from 2001-present
+\item \code{"small"}: Data from 2019-present.
+\item \code{"medium"}: Data from 2016-present.
+\item \code{"large"}: Data from 2001-present.
 }}
 
 \item{folder}{\code{str} Location of the CDC pre-processed endpoint, defaults to \code{"GID/PEB/SIR/Data"}.}

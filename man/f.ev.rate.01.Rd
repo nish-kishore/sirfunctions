@@ -10,7 +10,9 @@ f.ev.rate.01(es.data, start.date, end.date)
 \item{es.data}{\code{tibble} ES data which includes site name (site.name),
 country (ADM0_NAME),
 date of collection (collect.date), and a binary ev detection variable (ev.detect)
-that indicates absence/presence (0, 1) of enterovius in an ES sample.}
+that indicates absence/presence (0, 1) of enterovius in an ES sample. This is
+\code{ctry.data$es} of \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}, or \code{raw.data$es} of
+\code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 
 \item{start.date}{\code{chr} Date in the format of \code{"YYYY-MM-DD"}.}
 

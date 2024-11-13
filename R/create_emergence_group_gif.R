@@ -10,7 +10,8 @@
 #' @importFrom sf st_bbox
 #' @importFrom tidyr expand_grid
 #' @param emergence_group `str` Designation of the emergence group to review.
-#' @param pos `tibble` Positives data set.
+#' @param pos `tibble` Positives data set. This is `raw.data$pos`, which is part of the
+#' output of [get_all_polio_data()].
 #' @param dist `sf` Shapefile of all districts.
 #' @param ctry `sf` Shapefile of all countries.
 #' @param include_env `bool` To include environmental detections in analysis. Defaults to `TRUE`.

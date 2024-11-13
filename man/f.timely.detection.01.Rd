@@ -29,9 +29,9 @@ f.timely.detection.01(
 
 This table is the output of \code{\link[=get_lab_locs]{get_lab_locs()}}.}
 
-\item{start.date}{\code{str} Start date for evaluation with format "YYYY-MM-DD".}
+\item{start.date}{\code{str} Start date for evaluation with format \code{"YYYY-MM-DD"}.}
 
-\item{end.date}{\code{str} End date for evaluation with format "YYYY-MM-DD".}
+\item{end.date}{\code{str} End date for evaluation with format \code{"YYYY-MM-DD"}.}
 
 \item{rolling}{\code{bool} Should timeliness be calculated in a rolling basis? Default \code{FALSE}.}
 }

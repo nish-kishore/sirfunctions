@@ -7,15 +7,17 @@
 npafp_rolling(afp.data, year.pop.data, start_date, end_date, spatial_scale)
 }
 \arguments{
-\item{afp.data}{AFP linelist, either from \code{raw.data} or \code{ctry.data}.}
+\item{afp.data}{\code{tibble} AFP linelist, Either from \code{raw.data$afp} of \code{\link[=get_all_polio_data]{get_all_polio_data()}}
+or \code{ctry.data$afp.all.2} of \code{\link[=extract_country_data]{extract_country_data()}}.}
 
-\item{year.pop.data}{Summary table containing year and pop data.}
+\item{year.pop.data}{\code{tibble} Summary table containing year and pop data. This is created
+inside \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}}.}
 
-\item{start_date}{Start date to calculate the rolling interval for.}
+\item{start_date}{\code{str} Start date to calculate the rolling interval for.}
 
-\item{end_date}{End date to calculate the rolling interval for.}
+\item{end_date}{\code{str} End date to calculate the rolling interval for.}
 
-\item{spatial_scale}{Spatial scale. Valid arguments are: \verb{"ctry", "prov", "dist}}
+\item{spatial_scale}{Spatial scale. Valid arguments are: \verb{"ctry", "prov", "dist}.}
 }
 \value{
 A summary table including NPAFP rates and population data.
@@ -24,3 +26,4 @@ A summary table including NPAFP rates and population data.
 Calculates the NPAFP rate on a rolling basis, based on the start and end dates
 specified.
 }
+\keyword{internal}
