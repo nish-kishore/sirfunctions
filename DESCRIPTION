@@ -10,6 +10,7 @@ Authors@R: c(
            comment = c(ORCID = "0000-0003-4898-2659")),
     person("Nicholas", "Heaghney", , "uic3@cdc.gov", role = "aut")
   )
+URL: https://github.com/nish-kishore/sirfunctions
 Description: The sirfunctions package contains key functions used by the
     Surveillance, Innovation, and Research (SIR) team within the Polio
     Eradication Branch (PEB) at the Centers for Disease Control and
