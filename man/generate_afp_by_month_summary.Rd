@@ -31,9 +31,13 @@ generate_afp_by_month_summary(
 Summarize AFP case counts by month and another grouping variable.
 }
 \examples{
-raw.data <- get_all_polio_data(attach.spatial.data = F)
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
-afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
-afp.by.month.prov <- generate_afp_by_month_summary(afp.by.month, ctry.data, start_date, end_date, "prov")
+afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2,
+                                      "2021-01-01", "2023-12-31"
+                                      )
+afp.by.month.prov <- generate_afp_by_month_summary(afp.by.month, ctry.data,
+                                                   start_date, end_date, "prov"
+                                                   )
 
 }

@@ -31,7 +31,9 @@ inadequate stool samples.
 \examples{
 \dontrun{
 ctry.data <- init_dr("algeria")
-stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate", "2021-01-01", "2023-12-31")
+stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate",
+                                  "2021-01-01", "2023-12-31"
+                                  )
 create_afp_export(stool.data)
 }
 

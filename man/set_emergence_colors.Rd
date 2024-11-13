@@ -23,7 +23,7 @@ Set the emergence colors
 }
 \examples{
 \dontrun{
-raw.data <- get_all_polio_data(attach.spatial.data = F)
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 emg.cols <- set_emergence_colors(raw.data, "algeria")
 }
 

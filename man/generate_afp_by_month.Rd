@@ -22,7 +22,7 @@ subsequent functions summarizing AFP case counts by geography and year. This fun
 will most likely be moved to \code{clean_ctry_data()}.
 }
 \examples{
-raw.data <- get_all_polio_data(attach.spatial.data = F)
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
 afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
 }

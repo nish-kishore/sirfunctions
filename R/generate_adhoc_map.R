@@ -437,7 +437,7 @@ load_sharepoint_env <- function(raw.data) {
 #' @return `list` A named list containing the mapping of emergence and corresponding colors.
 #' @examples
 #' \dontrun{
-#' raw.data <- get_all_polio_data(attach.spatial.data = F)
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' emg.cols <- set_emergence_colors(raw.data, "algeria")
 #' }
 #'

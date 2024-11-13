@@ -27,8 +27,13 @@ adds a column for the number of WPV, VDPV1-3 cases. However, in a future release
 these columns might be incorporated within the \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}} function.
 }
 \examples{
-raw.data <- get_all_polio_data(attach.spatial.data = F)
-ctry.ind <- f.npafp.rate.01(raw.data$afp, raw.data$ctry.pop,"2021-01-01", "2023-12-31","ctry", sp_continuity_validation = FALSE)
-ctry.ind <- prep_npafp_table(ctry.ind, raw.data$afp, "2021-01-01", "2023-12-31", "ctry")
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+ctry.ind <- f.npafp.rate.01(raw.data$afp, raw.data$ctry.pop,
+                            "2021-01-01", "2023-12-31","ctry",
+                            sp_continuity_validation = FALSE
+                            )
+ctry.ind <- prep_npafp_table(ctry.ind, raw.data$afp,
+                             "2021-01-01", "2023-12-31", "ctry"
+                             )
 
 }

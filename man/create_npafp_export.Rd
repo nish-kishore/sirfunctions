@@ -30,9 +30,15 @@ and exports to an Excel file, with each geographic level on its own tab.
 \examples{
 \dontrun{
 ctry.data <- init_dr("algeria")
-ctry.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$ctry.pop, "2021-01-01", "2023-01-01", "ctry")
-prov.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$prov.pop, "2021-01-01", "2023-01-01", "prov")
-dist.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$dist.pop, "2021-01-01", "2023-01-01", "dist")
+ctry.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$ctry.pop,
+                                 "2021-01-01", "2023-01-01", "ctry"
+                                 )
+prov.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$prov.pop,
+                                 "2021-01-01", "2023-01-01", "prov"
+                                 )
+dist.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$dist.pop,
+                                 "2021-01-01", "2023-01-01", "dist"
+                                 )
 create_npafp_export(ctry.case.ind, prov.case.ind, dist.case.ind)
 }
 

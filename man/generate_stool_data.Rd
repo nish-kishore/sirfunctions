@@ -45,7 +45,7 @@ Unlike the stool adequacy function, this will not filter out \code{NOT-AFP} case
 that use the output of this function to do the filtering. For example, \code{\link[=generate_60_day_table_data]{generate_60_day_table_data()}}.
 }
 \examples{
-raw.data <- get_all_polio_data(attach.spatial.data = F)
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 stool.data <- generate_stool_data(raw.data$afp, "2021-01-01", "2023-12-31")
 
 }

@@ -18,7 +18,7 @@ environmental surveillance data. However, this function will probably be moved
 as part of the \code{\link[=clean_es_data]{clean_es_data()}} function in the future.
 }
 \examples{
-raw.data <- get_all_polio_data(attach.spatial.data = F)
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria")
 ctry.data$es <- clean_es_data(ctry.data)
 es.data.long <- generate_es_data_long(ctry.data$es)

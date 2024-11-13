@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.es.functions.R
 \name{clean_es_data}
 \alias{clean_es_data}
-\title{ES data cleaning}
+\title{Clean environmental surveillance data}
 \usage{
 clean_es_data(ctry.data)
 }
@@ -11,14 +11,14 @@ clean_es_data(ctry.data)
 of \code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
 }
 \value{
-\code{tibble} Cleaned ES data.
+\code{tibble} Cleaned environmental surveillance data.
 }
 \description{
 The cleaning step will attempt to impute missing site coordinates and create
 standardized columns used in the desk review.
 }
 \examples{
-raw.data <- get_all_polio_data(attach.spatial.data = F)
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria")
 ctry.data$es <- clean_es_data(ctry.data)
 

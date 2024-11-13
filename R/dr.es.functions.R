@@ -98,7 +98,7 @@ impute_site_coord <- function(ctry.data) {
   return(es.data)
 }
 
-#' ES data cleaning
+#' Clean environmental surveillance data
 #'
 #' The cleaning step will attempt to impute missing site coordinates and create
 #' standardized columns used in the desk review.
@@ -106,9 +106,9 @@ impute_site_coord <- function(ctry.data) {
 #' @import cli dplyr tidyr
 #' @param ctry.data `list` Polio data at the country level. This is either the output
 #' of [init_dr()] or [extract_country_data()].
-#' @return `tibble` Cleaned ES data.
+#' @return `tibble` Cleaned environmental surveillance data.
 #' @examples
-#' raw.data <- get_all_polio_data(attach.spatial.data = F)
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria")
 #' ctry.data$es <- clean_es_data(ctry.data)
 #'
@@ -202,7 +202,7 @@ clean_es_data <- function(ctry.data) {
 #'
 #' @return `tibble` ES data with viral detection columns.
 #' @examples
-#' raw.data <- get_all_polio_data(attach.spatial.data = F)
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria")
 #' ctry.data$es <- clean_es_data(ctry.data)
 #' es.data.long <- generate_es_data_long(ctry.data$es)

@@ -54,7 +54,9 @@ dist.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
 ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
 dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
-generate_npafp_maps_dist(dist.extract, ctry.shape, prov.shape, dist.shape, "2021-01-01", "2023-12-31")
+generate_npafp_maps_dist(dist.extract, ctry.shape, prov.shape, dist.shape,
+                         "2021-01-01", "2023-12-31"
+                         )
 }
 
 }

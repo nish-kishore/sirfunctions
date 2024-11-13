@@ -14,7 +14,7 @@
 #' @param end.date `chr` Date in the format of `"YYYY-MM-DD"`.
 #' @returns `tibble` Long format dataframe including site specific EV detection rates.
 #' @examples
-#' raw.data <- get_all_polio_data(attach.spatial.data = F)
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' ev_rates <- f.ev.rate.01(ctry.data$es, "2021-01-01", "2023-12-31")
 #'

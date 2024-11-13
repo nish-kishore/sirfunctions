@@ -23,9 +23,11 @@ summarizes the number of cases due for follow up, those with recorded follow ups
 follow ups,and compatible cases.
 }
 \examples{
-raw.data <- get_all_polio_data(attach.spatial.data = F)
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
-stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate", "2021-01-01", "2023-12-31")
+stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate",
+                                  "2021-01-01", "2023-12-31"
+                                  )
 table60.days <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
 
 }

@@ -30,9 +30,15 @@ and exports to an Excel file, with each geographic level on its own tab.
 \examples{
 \dontrun{
 ctry.data <- init_dr("algeria")
-cstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$ctry.pop, "2021-01-01", "2023-01-01", "ctry")
-pstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$prov.pop, "2021-01-01", "2023-01-01", "prov")
-dstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$dist.pop, "2021-01-01", "2023-01-01", "dist")
+cstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$ctry.pop,
+                        "2021-01-01", "2023-01-01", "ctry"
+                        )
+pstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$prov.pop,
+                        "2021-01-01", "2023-01-01", "prov"
+                        )
+dstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$dist.pop,
+                        "2021-01-01", "2023-01-01", "dist"
+                        )
 create_stool_adequacy_export(cstool, pstool, dstool)
 }
 
