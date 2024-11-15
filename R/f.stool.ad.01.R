@@ -44,11 +44,15 @@ generate_year_data <- function(start_date, end_date) {
 
 }
 
-#' Helper function to add the adequacy.final column
+#' Helper function to add the `adequacy.final` column
 #'
-#' @param afp.data AFP dataset
+#' The function is meant to be used for [f.stool.ad.01()]. This function will
+#' classify the adequacy of a stool sample based on timeliness and condition.
 #'
-#' @return AFP dataset with the adequacy final column
+#' @param afp.data `tibble` AFP dataset. Either `raw.data$afp` from
+#' [get_all_polio_data()] or `ctry.data$afp.all.2` from [extract_country_data()].
+#'
+#' @return `tibble` AFP dataset with `adequacy.final` column
 #' @examples
 #' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
