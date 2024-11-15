@@ -15,4 +15,10 @@ AFP dataset with the adequacy final column
 \description{
 Helper function to add the adequacy.final column
 }
-\keyword{internal}
+\examples{
+\dontrun{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+stool.data <- generate_ad_final_col(raw.data$afp)
+}
+
+}

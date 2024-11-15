@@ -47,9 +47,15 @@ generate_year_data <- function(start_date, end_date) {
 #' Helper function to add the adequacy.final column
 #'
 #' @param afp.data AFP dataset
-#' @keywords internal
 #'
 #' @return AFP dataset with the adequacy final column
+#' @examples
+#' \dontrun{
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' stool.data <- generate_ad_final_col(raw.data$afp)
+#' }
+#'
+#' @export
 generate_ad_final_col <- function(afp.data) {
   stool.data <- afp.data |>
     dplyr::as_tibble() |>
