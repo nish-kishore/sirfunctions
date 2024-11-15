@@ -13,7 +13,8 @@ generate_ctry_timeliness_graph(
 \arguments{
 \item{int.data}{\code{tibble} Summary table with timeliness intervals at the country level.}
 
-\item{afp.year.lab}{\code{tibble} Summary table of samples sent by year.}
+\item{afp.year.lab}{\code{tibble} Summary table of samples sent by year. Output of
+\code{\link[=generate_year_lab]{generate_year_lab()}}.}
 
 \item{output_path}{\code{str} Path where to output the figure.}
 }

@@ -22,8 +22,8 @@ generate_int_data(
 
 \item{spatial.scale}{\code{str} Scale to summarize to. Valid values are: \verb{"ctry" or "prov"}. \code{"dist"} not available currently.}
 
-\item{lab.data}{\code{tibble} Lab data, if available. This paramater will calculate timeliness intervals in the lab. Otherwise,
-only the field component will be presented.}
+\item{lab.data}{\code{tibble} Summarized lab data, if available. This parameter will calculate timeliness intervals in the lab. Otherwise,
+only the field component will be presented. This is the output of \code{\link[=generate_lab_timeliness]{generate_lab_timeliness()}}.}
 }
 \value{
 \code{tibble} A table summarizing median days for different timeliness intervals.

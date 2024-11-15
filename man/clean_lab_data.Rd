@@ -6,6 +6,7 @@
 \usage{
 clean_lab_data(
   ctry.data,
+  ctry_name = Sys.getenv("DR_COUNTRY"),
   start.date = start_date,
   end.date = end_date,
   delim = "-",

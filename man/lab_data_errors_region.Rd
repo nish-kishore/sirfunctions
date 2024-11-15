@@ -6,6 +6,7 @@
 \usage{
 lab_data_errors_region(
   ctry.data,
+  ctry_name = Sys.getenv("DR_COUNTRY"),
   start.date,
   end.date,
   error_path = Sys.getenv("DR_ERROR_PATH")
@@ -15,6 +16,8 @@ lab_data_errors_region(
 \item{ctry.data}{\code{list} Large list containing polio country data. Output of either
 \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}. Note that lab data must be attached to\code{ctry.data} as
 \code{lab.data}.}
+
+\item{ctry_name}{\code{str} Name of the country. Defaults to the desk review country.}
 
 \item{start.date}{\code{str} Start date of analysis.}
 

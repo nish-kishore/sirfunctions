@@ -580,8 +580,8 @@ prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spati
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
 #' @param spatial.scale `str` Scale to summarize to. Valid values are: `"ctry" or "prov"`. `"dist"` not available currently.
-#' @param lab.data `tibble` Lab data, if available. This paramater will calculate timeliness intervals in the lab. Otherwise,
-#' only the field component will be presented.
+#' @param lab.data `tibble` Summarized lab data, if available. This parameter will calculate timeliness intervals in the lab. Otherwise,
+#' only the field component will be presented. This is the output of [generate_lab_timeliness()].
 #' @returns `tibble` A table summarizing median days for different timeliness intervals.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
@@ -625,48 +625,49 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 
 
   int.data <- switch(spatial.scale,
-                     "ctry" = {
-                       int.data <- afp.data |>
-                         dplyr::mutate(year = lubridate::year(date)) |>
-                         dplyr::group_by(adm0guid, year) |>
-                         dplyr::select(any_of(select_criteria)) %>%
-                         dplyr::mutate(dplyr::across(
-                           dplyr::any_of(as_num_conversion),
-                           as.numeric
-                         ))
-                     },
-                     "prov" = {
-                       int.data <- afp.data |>
-                         dplyr::mutate(year = lubridate::year(date)) |>
-                         dplyr::group_by(adm1guid, year) |>
-                         dplyr::select(dplyr::any_of(select_criteria)) %>%
-                         dplyr::mutate(dplyr::across(
-                           dplyr::any_of(as_num_conversion),
-                           as.numeric
-                         ))
-                     }
+    "ctry" = {
+      int.data <- afp.data |>
+        dplyr::mutate(year = lubridate::year(date)) |>
+        dplyr::group_by(adm0guid, year) |>
+        dplyr::select(any_of(select_criteria)) |>
+        dplyr::mutate(dplyr::across(
+          dplyr::any_of(as_num_conversion), \(x) as.numeric(x))
+          )
+    },
+    "prov" = {
+      int.data <- afp.data |>
+        dplyr::mutate(year = lubridate::year(date)) |>
+        dplyr::group_by(adm1guid, year) |>
+        dplyr::select(dplyr::any_of(select_criteria)) |>
+        dplyr::mutate(dplyr::across(
+          dplyr::any_of(as_num_conversion), \(x) as.numeric(x))
+          )
+    }
   )
 
   int.data <- switch(spatial.scale,
-                     "ctry" = {
-                       int.data <- int.data |>
-                         tidyr::pivot_longer(!c("epid", "year", "adm0guid", "ctry"),
-                                             names_to = "type",
-                                             values_to = "value"
-                         ) |>
-                         dplyr::group_by(year, type, adm0guid, ctry) |>
-                         dplyr::summarize(medi = as.numeric(median(value, na.rm = T)), freq = n())
-                     },
-                     "prov" = {
-                       int.data <- int.data |>
-                         tidyr::pivot_longer(
-                           !c("epid", "year", "adm0guid", "adm1guid", "prov", "ctry"),
-                           names_to = "type",
-                           values_to = "value"
-                         ) %>%
-                         dplyr::group_by(year, type, adm1guid, prov, ctry) %>%
-                         dplyr::summarize(medi = as.numeric(median(value, na.rm = T)), freq = n())
-                     }
+    "ctry" = {
+      int.data <- int.data |>
+        tidyr::pivot_longer(!c("epid", "year", "adm0guid", "ctry"),
+          names_to = "type",
+          values_to = "value"
+        ) |>
+        dplyr::group_by(year, type, adm0guid, ctry) |>
+        dplyr::summarize(medi = median(value, na.rm = T),
+                         freq = sum(!is.na(value))
+                         )
+    },
+    "prov" = {
+      int.data <- int.data |>
+        tidyr::pivot_longer(
+          !c("epid", "year", "adm0guid", "adm1guid", "prov", "ctry"),
+          names_to = "type",
+          values_to = "value"
+        ) |>
+        dplyr::group_by(year, type, adm1guid, prov, ctry) |>
+        dplyr::summarize(medi = median(value, na.rm = T),
+                         freq = sum(!is.na(value)))
+    }
   )
 
   if (!is.null(lab.data)) {
@@ -679,98 +680,38 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
     int.data$ctry <- ctry.data$ctry.pop$ctry[match(int.data$adm0guid, ctry.data$ctry.pop$adm0guid)]
   }
 
-  levs <- NULL
-  if (is.null(lab.data)) {
-    levs <- c(
-      "ontonot" = "Paralysis onset to notification",
-      "nottoinvest" = "Case notification to investigation",
-      "investtostool1" = "Case investigation to stool 1 collection",
-      "stool1tostool2" = "Stool 1 collection to stool 2 collection",
-      "daysstooltolab" = "Last stool collection sent to lab",
-      "days.lab.culture" = "Stool received lab to final culture results",
-      "days.seq.ship" = "Isolate received for sequencing to sequence results available",
-      "days.lab.seq" = "Stool received in lab to sequence result",
-      "days.itd.seqres" = "Final rRT-PCR results to sequence result",
-      "days.itd.arriveseq" = "Final rRT-PCR results to isolate received for sequencing",
-      "days.seq.rec.res" = "Isolate received for sequencing to sequence result"
-    )
-  } else {
-    levs <- c(
-      "ontonot" = "Paralysis onset to notification",
-      "nottoinvest" = "Case notification to investigation",
-      "investtostool1" = "Case investigation to stool 1 collection",
-      "stool1tostool2" = "Stool 1 collection to stool 2 collection",
-      "days.collect.lab" = "Last stool collection to received in lab",
-      "days.coll.sent.field" = "Collection to sent from field",
-      "days.sent.field.rec.nat" = "Sent from field to received nat level",
-      "days.rec.nat.sent.lab" = "Received nat level to sent to lab",
-      "days.sent.lab.rec.lab" = "Sent to lab to received at lab",
-      "days.rec.lab.culture" = "Received at lab to culture results",
-      "days.lab.culture" = "Stool received lab to final culture results",
-      "days.seq.ship" = "Isolate received for sequencing to sequence results available",
-      "days.lab.seq" = "Stool received in lab to sequence result",
-      "days.itd.seqres" = "Final rRT-PCR results to sequence result",
-      "days.itd.arriveseq" = "Final rRT-PCR results to isolate received for sequencing",
-      "days.seq.rec.res" = "Isolate received for sequencing to sequence result"
-    )
-  }
+  levs <- c(
+    "ontonot" = "Paralysis onset to notification",
+    "nottoinvest" = "Case notification to investigation",
+    "investtostool1" = "Case investigation to stool 1 collection",
+    "stool1tostool2" = "Stool 1 collection to stool 2 collection",
+    "daysstooltolab" = "Last stool collection sent to lab",
 
-  int.data$type <- ordered(int.data$type, levels = names(levs), labels = levs)
+    "daysstooltolab" = "Last stool collection sent to lab",
 
-  # Need to choose between the type of graphs to produce depending on source of
-  # lab data
-  cols_chosen <- NULL
-  if (!is.null(lab.data)) {
-    days.coll.sent.field <- sum(is.na(ctry.data$lab.data$days.coll.sent.field)) == nrow(ctry.data$lab.data)
-    days.sent.field.rec.nat <- sum(is.na(ctry.data$lab.data$days.sent.field.rec.nat)) == nrow(ctry.data$lab.data)
-    days.rec.nat.sent.lab <- sum(is.na(ctry.data$lab.data$days.rec.nat.sent.lab)) == nrow(ctry.data$lab.data)
-    days.sent.lab.rec.lab <- sum(is.na(ctry.data$lab.data$days.sent.lab.rec.lab)) == nrow(ctry.data$lab.data)
-    days.rec.lab.culture <- sum(is.na(ctry.data$lab.data$days.rec.lab.culture)) == nrow(ctry.data$lab.data)
+    "days.collect.lab" = "Last stool collection to received in lab",
+    "days.coll.sent.field" = "Collection to sent from field",
+    "days.sent.field.rec.nat" = "Sent from field to received nat level",
+    "days.rec.nat.sent.lab" = "Received nat level to sent to lab",
+    "days.sent.lab.rec.lab" = "Sent to lab to received at lab",
+    "days.rec.lab.culture" = "Received at lab to culture results",
 
-    if ((days.coll.sent.field + days.sent.field.rec.nat +
-         days.rec.nat.sent.lab + days.sent.lab.rec.lab +
-         days.rec.lab.culture) == 5) { # If all five columns are empty
-      cols_chosen <- c(
-        "Paralysis onset to notification",
-        "Case notification to investigation",
-        "Case investigation to stool 1 collection",
-        "Stool 1 collection to stool 2 collection",
-        "Last stool collection sent to lab",
-        "Last stool collection to received in lab",
-        "Stool received lab to final culture results"
-      )
-    } else {
-      cols_chosen <- c(
-        "Paralysis onset to notification",
-        "Case notification to investigation",
-        "Case investigation to stool 1 collection",
-        "Stool 1 collection to stool 2 collection",
+    "days.lab.culture" = "Stool received lab to final culture results",
+    "days.seq.ship" = "Isolate received for sequencing to sequence results available",
+    "days.lab.seq" = "Stool received in lab to sequence result",
+    "days.itd.seqres" = "Final rRT-PCR results to sequence result",
+    "days.itd.arriveseq" = "Final rRT-PCR results to isolate received for sequencing",
+    "days.seq.rec.res" = "Isolate received for sequencing to sequence result"
 
-        "Collection to sent from field",
-        "Sent from field to received nat level",
-        "Received nat level to sent to lab",
-        "Sent to lab to received at lab",
-        "Received at lab to culture results"
-      )
-    }
-  } else {
-    cols_chosen <- c(
-      "Paralysis onset to notification",
-      "Case notification to investigation",
-      "Case investigation to stool 1 collection",
-      "Stool 1 collection to stool 2 collection",
-      "Collection to sent from field",
-      "Sent from field to received nat level",
-      "Received nat level to sent to lab",
-      "Sent to lab to received at lab",
-      "Received at lab to culture results"
-    )
-  }
+  )
 
   int.data <- int.data |>
-    dplyr::filter(
-      type %in% cols_chosen
-    )
+    dplyr::mutate(type = ordered(.data$type,
+                                 levels = names(levs),
+                                 labels = levs
+                                 )
+                  ) |>
+    dplyr::arrange(year)
 
   # Remove columns containing only NA values
   int.data <- int.data |>

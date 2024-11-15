@@ -13,7 +13,8 @@ generate_prov_timeliness_graph(
 \arguments{
 \item{int.data}{\code{tibble} Summary table with timeliness intervals at the province level.}
 
-\item{afp.prov.year.lab}{\code{tibble} Summary table of samples sent by year and province.}
+\item{afp.prov.year.lab}{\code{tibble} Summary table of samples sent by year and province.
+Output of \code{\link[=generate_prov_year_lab]{generate_prov_year_lab()}}.}
 
 \item{output_path}{\code{str} Path where to output the figure.}
 }
