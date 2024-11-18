@@ -1275,6 +1275,9 @@ generate_lab_timeliness <-
       "dist" = "adm2guid"
     )
 
+    start.date <- lubridate::as_date(start.date)
+    end.date <- lubridate::as_date(end.date)
+
     # Check if the lab data is attached
     if (is.null(lab.data)) {
       stop("Lab data not attached. Please attach and try again.")

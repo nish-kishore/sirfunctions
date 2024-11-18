@@ -14,7 +14,7 @@ generate_int_data(
 }
 \arguments{
 \item{ctry.data}{\code{list} Large list containing polio country data. This is the output of
-\code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
+\code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}. Make sure that \code{afp.all.2} has been cleaned.}
 
 \item{start_date}{\code{str} Start date of analysis.}
 
@@ -45,5 +45,7 @@ lab.data <- readr::read_csv(lab_path)
 int.data <- generate_int_data(ctry.data, "2021-01-01", "2023-12-31", "ctry", lab.data)
 }
 
-
+}
+\seealso{
+\code{\link[=clean_ctry_data]{clean_ctry_data()}}
 }

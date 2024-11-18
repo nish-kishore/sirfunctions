@@ -576,7 +576,7 @@ prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spati
 #'
 #' @import dplyr lubridate tidyr
 #' @param ctry.data `list` Large list containing polio country data. This is the output of
-#' [init_dr()] or [extract_country_data()].
+#' [init_dr()] or [extract_country_data()]. Make sure that `afp.all.2` has been cleaned.
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
 #' @param spatial.scale `str` Scale to summarize to. Valid values are: `"ctry" or "prov"`. `"dist"` not available currently.
@@ -594,9 +594,15 @@ prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spati
 #' int.data <- generate_int_data(ctry.data, "2021-01-01", "2023-12-31", "ctry", lab.data)
 #' }
 #'
-#'
+#' @seealso [clean_ctry_data()]
 #' @export
 generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, lab.data = NULL) {
+
+  if (!"daysstooltolab" %in% names(ctry.data$afp.all.2)) {
+    cli::cli_abort("'daysstooltolab' column is missing.
+                   Please run 'clean_ctry_data()' and try again.")
+  }
+
   stool_to_lab_name <- dplyr::if_else(is.null(lab.data), "daysstooltolab", "days.collect.lab")
 
   start_date <- lubridate::as_date(start_date)
@@ -680,32 +686,77 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
     int.data$ctry <- ctry.data$ctry.pop$ctry[match(int.data$adm0guid, ctry.data$ctry.pop$adm0guid)]
   }
 
+  # Filtering based on whether labs are attached
+  if(is.null(lab.data)) {
+    int.data <- int.data |>
+      dplyr::filter(type %in% c(
+        "ontonot",
+        "nottoinvest",
+        "investtostool1",
+        "stool1tostool2" ,
+        "daysstooltolab"
+        )
+      )
+  } else {
+    who.additional.cols <- c("days.coll.sent.field",
+                             "days.sent.field.rec.nat",
+                             "days.rec.nat.sent.lab",
+                             "days.sent.lab.rec.lab",
+                             "days.rec.lab.culture"
+                             )
+    int.data.filter <- int.data |>
+      dplyr::filter(type %in% who.additional.cols
+                    ) |>
+      dplyr::summarise(sum = sum(.data$medi)) |>
+      dplyr::pull()
+
+    if (is.na(int.data.filter)) {
+      int.data <- int.data |>
+        dplyr::filter(!type %in% who.additional.cols)
+    } else {
+      int.data <- int.data |>
+        dplyr::filter(!type %in% c(
+          "days.collect.lab",
+          "days.lab.culture"
+        )
+        )
+    }
+  }
+
   levs <- c(
+    # For no lab data attached or using regional lab data
     "ontonot" = "Paralysis onset to notification",
     "nottoinvest" = "Case notification to investigation",
     "investtostool1" = "Case investigation to stool 1 collection",
     "stool1tostool2" = "Stool 1 collection to stool 2 collection",
-    "daysstooltolab" = "Last stool collection sent to lab",
-
-    "daysstooltolab" = "Last stool collection sent to lab",
-
+    "daysstooltolab" = "Last stool collection sent to lab", #if no lab data
     "days.collect.lab" = "Last stool collection to received in lab",
+    "days.lab.culture" = "Stool received lab to final culture results",
+
+    # For WHO data
     "days.coll.sent.field" = "Collection to sent from field",
     "days.sent.field.rec.nat" = "Sent from field to received nat level",
     "days.rec.nat.sent.lab" = "Received nat level to sent to lab",
     "days.sent.lab.rec.lab" = "Sent to lab to received at lab",
     "days.rec.lab.culture" = "Received at lab to culture results",
 
-    "days.lab.culture" = "Stool received lab to final culture results",
+    # Extra intervals we don't use, filtered
     "days.seq.ship" = "Isolate received for sequencing to sequence results available",
     "days.lab.seq" = "Stool received in lab to sequence result",
     "days.itd.seqres" = "Final rRT-PCR results to sequence result",
     "days.itd.arriveseq" = "Final rRT-PCR results to isolate received for sequencing",
     "days.seq.rec.res" = "Isolate received for sequencing to sequence result"
-
   )
 
   int.data <- int.data |>
+    dplyr::filter(!type %in% c(
+      "days.seq.ship",
+      "days.lab.seq",
+      "days.itd.seqres",
+      "days.itd.arriveseq",
+      "days.seq.rec.res"
+      )
+      ) |>
     dplyr::mutate(type = ordered(.data$type,
                                  levels = names(levs),
                                  labels = levs
