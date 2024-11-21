@@ -363,20 +363,6 @@ lab_data_errors_who <- function(ctry.data, start.date, end.date,
 #' @return a tibble containing clean lab data
 #' @export
 clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
-  if (is.null(ctry.data$lab.data)) {
-    message("Lab data not attached to country data.")
-    return(NULL)
-  }
-
-  if ("prov" %in% names(ctry.data$lab.data)) {
-    cli::cli_alert_warning("Lab data already cleaned.")
-    return(ctry.data$lab.data)
-  }
-
-  if (nrow(ctry.data$lab.data) == 0) {
-    message("There are no entries for lab data.")
-    return(NULL)
-  }
 
   cli::cli_process_start("Filtering country-specific lab data")
 
@@ -409,8 +395,10 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   # remove time portion of any date time columns
   cli::cli_process_start("Converting date/date-time character columns to date columns")
   lab.data2 <- lab.data2 |>
-    dplyr::mutate(dplyr::across(dplyr::starts_with("Date"),
-                                \(x) lubridate::as_date(x)))
+    dplyr::mutate(dplyr::across(
+      dplyr::starts_with("Date"),
+      \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y"))
+    ))
   cli::cli_process_done()
 
   # Don't run additional cleaning steps if no data is present
@@ -498,11 +486,40 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
   prov_lookup_table <- geo_lookup_table |>
     dplyr::select("epid_prov", "prov", "adm0guid", "adm1guid", "year") |>
-    dplyr::distinct()
+    dplyr::distinct() |>
+    tidyr::drop_na("prov")
+
+  # Check look up table for potential duplicated rows
+  prov_lookup_row_dups <- prov_lookup_table |>
+    dplyr::mutate(epid_comb = str_c(epid_prov, year, sep = "-")) |>
+    dplyr::group_by(epid_comb, epid_prov, year) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::filter(n > 1) |>
+    ungroup()
+
+  # Remove duplicates from the look up table
+  prov_lookup_row_dups <- prov_lookup_row_dups |>
+    dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
+  prov_lookup_table <- anti_join(prov_lookup_table, prov_lookup_row_dups)
+
 
   dist_lookup_table <- geo_lookup_table |>
     dplyr::select("epid_dist", "dist", "adm2guid", "year") |>
-    dplyr::distinct()
+    dplyr::distinct() |>
+    tidyr::drop_na("dist")
+
+  # Check look up table for potential duplicated rows
+  dist_lookup_row_dups <- dist_lookup_table |>
+    dplyr::mutate(epid_comb = str_c(epid_dist, year, sep = "-")) |>
+    dplyr::group_by(epid_comb, epid_dist, year) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::filter(n > 1) |>
+    ungroup()
+
+  # Remove duplicates from the look up table
+  dist_lookup_row_dups <- dist_lookup_row_dups |>
+    dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
+  dist_lookup_table <- anti_join(dist_lookup_table, dist_lookup_row_dups)
 
   # geomatching algorithm
   lab.data2 <- lab.data2 |>
@@ -522,23 +539,19 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
     dplyr::left_join(prov_lookup_table) |>
     dplyr::left_join(prov_lookup_table, by = dplyr::join_by(epid_prov, year)) |>
     dplyr::mutate(
-      prov.x = dplyr::if_else(is.na(.data$prov.x) & !is.na(.data$prov.y), .data$prov.y, .data$prov.x),
-      adm1guid.x = dplyr::if_else(is.na(.data$adm1guid.x) & !is.na(.data$adm1guid.y), .data$adm1guid.y, .data$adm1guid.y)
+      prov = dplyr::coalesce(.data$prov.x, .data$prov.y),
+      adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)
     ) |>
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(dist_lookup_table, by = dplyr::join_by(epid_dist, year)) |>
     dplyr::mutate(
-      dist.x = dplyr::if_else(is.na(.data$dist.x) & !is.na(.data$dist.y), .data$dist.y, .data$dist.x),
-      adm2guid.x = dplyr::if_else(is.na(.data$adm2guid.x) & !is.na(.data$adm2guid.y), .data$adm2guid.y, .data$adm2guid.y)
+      dist = dplyr::coalesce(.data$dist.x, .data$dist.y),
+      adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)
     ) |>
     dplyr::rename(
-      adm0guid = "adm0guid.x",
-      adm1guid = "adm1guid.x",
-      adm2guid = "adm2guid.x",
-      prov = "prov.x",
-      dist = "dist.x"
+      adm0guid = "adm0guid.x"
     ) |>
-    dplyr::select(-dplyr::ends_with(".y"))
+    dplyr::select(-dplyr::ends_with(".y"), -dplyr::ends_with(".x"))
 
   # check for correctness
   check <- test |>
@@ -548,6 +561,10 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   mismatch_prov <- dplyr::anti_join(check, prov_lookup_table)
 
   lab.data2 <- test
+
+  # Message for values without any province or district information
+  cli::cli_alert_warning(paste0("Remaining records with missing province: ", sum(is.na(lab.data$Province))))
+  cli::cli_alert_warning(paste0("Remaining records with missing district: ", sum(is.na(lab.data$District))))
 
   cli::cli_process_done()
 
@@ -559,7 +576,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
       days.sent.field.rec.nat = as.numeric(.data$DateStoolReceivedNatLevel - .data$DateStoolSentfromField),
       days.rec.nat.sent.lab = as.numeric(.data$DateStoolSentToLab - .data$DateStoolReceivedNatLevel),
       days.sent.lab.rec.lab = as.numeric(.data$DateStoolReceivedinLab - .data$DateStoolSentToLab),
-      days.rec.lab.culture =  as.numeric(.data$DateFinalCellCultureResults - .data$DateStoolReceivedinLab),
+      days.rec.lab.culture = as.numeric(.data$DateFinalCellCultureResults - .data$DateStoolReceivedinLab),
     )
 
   return(lab.data2)
@@ -581,15 +598,6 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 #' @export
 
 clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-", lab_locs_path = NULL) {
-  # Check if the lab data is attached
-  if (is.null(ctry.data$lab.data)) {
-    stop("Lab data not attached to ctry.data. Please attach and try again.")
-  }
-
-  if ("country" %in% names(ctry.data$lab.data)) {
-    cli::cli_alert_warning("Lab data already cleaned.")
-    return(ctry.data$lab.data)
-  }
 
   lab.data <- ctry.data$lab.data
 
@@ -661,8 +669,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
           "DateRArmIsolate",
           "DateofSequencing",
           "DateNotificationtoHQ"
-        )), \(x) as.Date.character(x, "%m/%d/%Y")
-      ))
+        )), \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y")))
+      )
     cli::cli_process_done()
 
 
@@ -803,7 +811,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
           "DateRArmIsolate",
           "DateofSequencing",
           "DateNotificationtoHQ"
-        )), \(x) as.Date.character(x, "%m/%d/%Y")
+        )), \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y"))
       ))
     cli::cli_process_done()
     # This is a very quick clean and can be improved upon with futher steps such as:
@@ -919,30 +927,92 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     )
 
   cli::cli_process_start("Imputing missing province and district data from AFP linelist")
+  # Match province and district by EPID number -
+  lab.data$prov <- NA
+  lab.data$dist <- NA
+  lab.data$adm1guid <- NA
+  lab.data$adm2guid <- NA
+
+  # !!! changed place.admin.1 = prov and place.admin.2 = dist from original code
+  # reason is that those were renamed at the top of the script
+  lab.data$prov <- ctry.data$afp.all.2$prov[match(lab.data$EPID, ctry.data$afp.all.2$epid)]
+  lab.data$dist <- ctry.data$afp.all.2$dist[match(lab.data$EPID, ctry.data$afp.all.2$epid)]
+
+  lab.data$adm1guid <- ctry.data$afp.all.2$adm1guid[match(lab.data$EPID, ctry.data$afp.all.2$epid)]
+  lab.data$adm2guid <- ctry.data$afp.all.2$adm2guid[match(lab.data$EPID, ctry.data$afp.all.2$epid)]
+
+  # Additional cleaning steps
+  #---- Additional data cleaning steps
   geo_lookup_table <- ctry.data$afp.all.2 |>
     dplyr::select("epid", dplyr::matches("guid"), dplyr::contains("$adm"), "ctry", "prov", "dist", "year") |>
     tidyr::separate_wider_delim(
-      cols = "epid",
-      delim = delim,
+      cols = "epid", delim = delim,
       names = c(
         "epid_ctry", "epid_prov", "epid_dist",
         "epid_04", "epid_05"
       ),
-      too_many = "debug",
+      too_many = "merge",
       too_few = "align_start"
     ) |>
-    dplyr::select(
-      dplyr::contains("epid"),
-      "ctry",
-      "prov",
-      "dist",
-      dplyr::matches("adm[0-3]guid"),
-      "year"
-    ) |>
+    dplyr::select(dplyr::contains("epid"), "ctry", "prov", "dist", dplyr::matches("adm[0-3]guid"), "year") |>
     dplyr::distinct()
 
+  prov_lookup_table <- geo_lookup_table |>
+    dplyr::select("epid_prov", "prov", "adm0guid", "adm1guid", "year") |>
+    dplyr::distinct() |>
+    tidyr::drop_na("prov")
+
+  # Check look up table for potential duplicated rows
+  prov_lookup_row_dups <- prov_lookup_table |>
+    dplyr::mutate(epid_comb = str_c(epid_prov, year, sep = "-")) |>
+    dplyr::group_by(epid_comb, epid_prov, year) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::filter(n > 1) |>
+    ungroup()
+
+  # Remove duplicates from the look up table
+  prov_lookup_row_dups <- prov_lookup_row_dups |>
+    dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
+  prov_lookup_table <- anti_join(prov_lookup_table, prov_lookup_row_dups)
+
+
+  dist_lookup_table <- geo_lookup_table |>
+    dplyr::select("epid_dist", "dist", "adm2guid", "year") |>
+    dplyr::distinct() |>
+    tidyr::drop_na("dist")
+
+  # Check look up table for potential duplicated rows
+  dist_lookup_row_dups <- dist_lookup_table |>
+    dplyr::mutate(epid_comb = str_c(epid_dist, year, sep = "-")) |>
+    dplyr::group_by(epid_comb, epid_dist, year) |>
+    dplyr::summarise(n = n()) |>
+    dplyr::filter(n > 1) |>
+    ungroup()
+
+  # Remove duplicates from the look up table
+  dist_lookup_row_dups <- dist_lookup_row_dups |>
+    dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
+  dist_lookup_table <- anti_join(dist_lookup_table, dist_lookup_row_dups)
+
+  # Geomatching algorithm
   lab.data <- lab.data |>
-    dplyr::left_join(geo_lookup_table, by = dplyr::join_by(epid_ctry, epid_prov, epid_dist, year))
+    dplyr::left_join(prov_lookup_table) |>
+    dplyr::left_join(prov_lookup_table, by = dplyr::join_by(epid_prov, year)) |>
+    dplyr::mutate(
+      prov = dplyr::coalesce(.data$prov.x, .data$prov.y),
+      adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)
+    ) |>
+    dplyr::left_join(dist_lookup_table) |>
+    dplyr::left_join(dist_lookup_table, by = dplyr::join_by(epid_dist, year)) |>
+    dplyr::mutate(
+      dist = dplyr::coalesce(.data$dist.x, .data$dist.y),
+      adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)
+    ) |>
+    dplyr::rename(
+      adm0guid = "adm0guid.x",
+    ) |>
+    dplyr::select(-dplyr::ends_with(".y"), -dplyr::ends_with(".x"))
+
   lab.data <- lab.data |>
     dplyr::rename(ctry.code2 = "epid_ctry")
   lab.data <- lab.data |>
@@ -955,6 +1025,10 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     dplyr::rename(DateOfOnset = "CaseDate")
   cli::cli_process_done()
 
+  # Message for values without any province or district information
+  cli::cli_alert_warning(paste0("Remaining records with missing province: ", sum(is.na(lab.data$Province))))
+  cli::cli_alert_warning(paste0("Remaining records with missing district: ", sum(is.na(lab.data$District))))
+
   # adding additional subintervals (these aren't present in regional lab data, so are created as dummy variables)
   lab.data <- lab.data |>
     mutate(
@@ -962,7 +1036,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
       days.sent.field.rec.nat = NA,
       days.rec.nat.sent.lab = NA,
       days.sent.lab.rec.lab = NA,
-      days.rec.lab.culture =  NA,
+      days.rec.lab.culture = NA,
     )
 
   return(lab.data)
@@ -992,9 +1066,24 @@ clean_lab_data <- function(ctry.data, start.date = start_date, end.date = end_da
   # Determine the type of cleaning to do
   lab.data.cols <- names(ctry.data$lab.data)
 
-  if ("ctry.code2" %in% lab.data.cols) {
+  if ("MasterKey" %in% lab.data.cols) {
+    if ("prov" %in% names(ctry.data$lab.data)) {
+      cli::cli_alert_warning("Lab data already cleaned.")
+      return(ctry.data$lab.data)
+    }
+
+    if (nrow(ctry.data$lab.data) == 0) {
+      message("There are no entries for lab data.")
+      return(NULL)
+    }
+
     lab.data <- clean_lab_data_who(ctry.data, start.date, end.date, delim)
+
   } else {
+    if ("Province" %in% names(ctry.data$lab.data)) {
+      cli::cli_alert_warning("Lab data already cleaned.")
+      return(ctry.data$lab.data)
+    }
     lab.data <- clean_lab_data_regional(ctry.data, start.date, end.date, delim, lab_locs_path)
   }
 
@@ -1024,146 +1113,26 @@ generate_lab_timeliness <-
 
     # Check if the lab data is attached
     if (is.null(lab.data)) {
-      stop("Lab data not attached to ctry.data. Please attach and try again.")
+      stop("Lab data not attached. Please attach and try again.")
     }
 
-    lab1 <- lab.data |>
+    lab_medians <- lab.data |>
       dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
       dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.collect.lab, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.collect.lab") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab2 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
+      dplyr::summarise(dplyr::across(dplyr::starts_with("days."),
+                                     \(x) as.numeric(median(x, na.rm = T)))) |>
+      tidyr::pivot_longer(cols = dplyr::starts_with("days."),
+                          names_to = "type", values_to = "medi")
+    lab_counts <- lab.data |>
+      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
       dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.lab.culture, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.lab.culture") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
+      dplyr::summarise(dplyr::across(dplyr::starts_with("days."),
+                                     \(x) sum(!is.na(x)))) |>
+      tidyr::pivot_longer(cols = dplyr::starts_with("days."),
+                          names_to = "type", values_to = "freq")
 
+    lab <- dplyr::full_join(lab_counts, lab_medians)
 
-    lab3 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.seq.ship, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.seq.ship") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab4 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.lab.seq, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.lab.seq") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab5 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.itd.seqres, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.itd.seqres") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab6 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.itd.arriveseq, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.itd.arriveseq") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    lab7 <- lab.data |>
-      dplyr::filter(as.Date(DateOfOnset) >= start.date &
-        as.Date(DateOfOnset) <= end.date) |>
-      dplyr::group_by(year, get(geo)) |>
-      dplyr::summarize(
-        medi = median(days.seq.rec.res, na.rm = T),
-        freq = dplyr::n()
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(type = "days.seq.rec.res") |>
-      dplyr::mutate(medi = as.numeric(.data$medi))
-
-    # Additional sub-intervals that may be of interest
-    lab8 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.coll.sent.field, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.coll.sent.field") |>
-      mutate(medi = as.numeric(.data$medi))
-
-    lab9 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.sent.field.rec.nat, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.sent.field.rec.nat") |>
-      mutate(medi = as.numeric(.data$medi))
-
-    lab10 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.rec.nat.sent.lab, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.rec.nat.sent.lab") |>
-      mutate(medi = as.numeric(.data$medi))
-
-    lab11 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.sent.lab.rec.lab, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.sent.lab.rec.lab") |>
-      mutate(medi = as.numeric(medi))
-
-    lab12 <- lab.data |>
-      filter(as.Date(DateOfOnset) >= start.date &
-               as.Date(DateOfOnset) <= end.date) |>
-      group_by(year, get(geo)) |>
-      summarize(medi = median(days.rec.lab.culture, na.rm = T),
-                freq = n()) |>
-      ungroup() |>
-      mutate(type = "days.rec.lab.culture") |>
-      mutate(medi = as.numeric(.data$medi))
-
-    lab <- dplyr::bind_rows(lab1, lab2, lab3, lab4, lab5, lab6, lab7,
-                            lab8, lab9, lab10, lab11, lab12)
     lab <- lab |> dplyr::filter(!is.na(`get(geo)`))
 
     lab <- switch(spatial.scale,
