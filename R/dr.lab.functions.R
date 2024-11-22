@@ -13,7 +13,7 @@
 #'
 #' @export
 
-get_lab_locs <- function(path=NULL) {
+get_lab_locs <- function(path = NULL) {
   lab.locs <- NULL
   if (is.null(path)) {
     tryCatch(
@@ -109,10 +109,10 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
 #'
 #' @export
 load_lab_data <- function(lab_data_path, sheet_name = NULL) {
-
   if (!requireNamespace("readxl", quietly = TRUE)) {
     stop('Package "readxl" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
 
   if (stringr::str_ends(lab_data_path, ".csv")) {
@@ -187,7 +187,6 @@ lab_data_errors <- function(ctry.data, start.date = start_date, end.date = end_d
 #' lab_data_errors_region(ctry.data, "2021-01-01", "2023-12-31")
 #' }
 #'
-#'
 lab_data_errors_region <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTRY"), start.date, end.date,
                                    error_path = Sys.getenv("DR_ERROR_PATH")) {
   lab.data <- ctry.data$lab.data
@@ -223,8 +222,8 @@ lab_data_errors_region <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTRY
         "DateRArmIsolate",
         "DateofSequencing",
         "DateNotificationtoHQ"
-      )), \(x) as.Date.character(x, "%m/%d/%Y")
-    ))
+      )), \(x) as.Date.character(x, "%m/%d/%Y"))
+    )
 
   # Check for duplicates
   cli::cli_process_start("Checking for duplicate data")
@@ -450,7 +449,6 @@ lab_data_errors_who <- function(ctry.data, start.date, end.date,
 #'
 #' @export
 clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
-
   start.date <- lubridate::as_date(start.date)
   end.date <- lubridate::as_date(end.date)
 
@@ -597,7 +595,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   # Check look up table for potential duplicated rows
   prov_lookup_row_dups <- prov_lookup_table |>
     dplyr::mutate(epid_comb = str_c(epid_prov, year, sep = "-")) |>
-    dplyr::group_by(epid_comb, epid_prov, year) |>
+    dplyr::group_by(.data$epid_comb, .data$epid_prov, .data$year) |>
     dplyr::summarise(n = n()) |>
     dplyr::filter(n > 1) |>
     ungroup()
@@ -616,7 +614,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   # Check look up table for potential duplicated rows
   dist_lookup_row_dups <- dist_lookup_table |>
     dplyr::mutate(epid_comb = str_c(epid_dist, year, sep = "-")) |>
-    dplyr::group_by(epid_comb, epid_dist, year) |>
+    dplyr::group_by(.data$epid_comb, .data$epid_dist, .data$year) |>
     dplyr::summarise(n = n()) |>
     dplyr::filter(n > 1) |>
     ungroup()
@@ -720,8 +718,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 #' @export
 
 clean_lab_data_regional <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTRY"),
-                                    start.date, end.date, delim = "-", lab_locs_path = NULL
-                                    ) {
+                                    start.date, end.date, delim = "-", lab_locs_path = NULL) {
   start.date <- lubridate::as_date(start.date)
   end.date <- lubridate::as_date(end.date)
 
@@ -780,7 +777,10 @@ clean_lab_data_regional <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTR
         country = ifelse(.data$country == "MOR", "MOROCCO", .data$country),
         country = ifelse(.data$country == "OMA", "OMAN", .data$country),
         country = ifelse(.data$country == "PAK", "PAKISTAN", .data$country),
-        country = ifelse(.data$country == "PNA", "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM", .data$country),
+        country = ifelse(.data$country == "PNA",
+          "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM",
+          .data$country
+        ),
         country = ifelse(.data$country == "QAT", "QATAR", .data$country),
         country = ifelse(.data$country == "SAA", "SAUDI ARABIA", .data$country),
         country = ifelse(.data$country == "SOM", "SOMALIA", .data$country),
@@ -947,8 +947,8 @@ clean_lab_data_regional <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTR
           "DateRArmIsolate",
           "DateofSequencing",
           "DateNotificationtoHQ"
-        )), \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y"))
-      ))
+        )), \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y")))
+      )
     cli::cli_process_done()
     # This is a very quick clean and can be improved upon with futher steps such as:
     #  - eliminating nonsensical dates
@@ -1101,7 +1101,7 @@ clean_lab_data_regional <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTR
   # Check look up table for potential duplicated rows
   prov_lookup_row_dups <- prov_lookup_table |>
     dplyr::mutate(epid_comb = str_c(epid_prov, year, sep = "-")) |>
-    dplyr::group_by(epid_comb, epid_prov, year) |>
+    dplyr::group_by(.data$epid_comb, .data$epid_prov, .data$year) |>
     dplyr::summarise(n = n()) |>
     dplyr::filter(n > 1) |>
     ungroup()
@@ -1120,7 +1120,7 @@ clean_lab_data_regional <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTR
   # Check look up table for potential duplicated rows
   dist_lookup_row_dups <- dist_lookup_table |>
     dplyr::mutate(epid_comb = str_c(epid_dist, year, sep = "-")) |>
-    dplyr::group_by(epid_comb, epid_dist, year) |>
+    dplyr::group_by(.data$epid_comb, .data$epid_dist, .data$year) |>
     dplyr::summarise(n = n()) |>
     dplyr::filter(n > 1) |>
     ungroup()
@@ -1185,6 +1185,7 @@ clean_lab_data_regional <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTR
 #'
 #' @param ctry.data `list` Large list containing country polio data with lab data attached. Either from
 #' [extract_country_data()] or [init_dr()].
+#' @param ctry_name `str` Name of the country. Defaults to the desk review country.
 #' @param start.date `str` Start date of analysis.
 #' @param end.date `str` End date of analysis.
 #' @param delim `str` Delimiter for EPIDs. Default is `"-"`.
@@ -1230,7 +1231,6 @@ clean_lab_data <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTRY"),
     }
 
     lab.data <- clean_lab_data_who(ctry.data, start.date, end.date, delim)
-
   } else {
     if ("Province" %in% names(ctry.data$lab.data)) {
       cli::cli_alert_warning("Lab data already cleaned.")
@@ -1286,17 +1286,25 @@ generate_lab_timeliness <-
     lab_medians <- lab.data |>
       dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
       dplyr::group_by(year, get(geo)) |>
-      dplyr::summarise(dplyr::across(dplyr::starts_with("days."),
-                                     \(x) as.numeric(median(x, na.rm = T)))) |>
-      tidyr::pivot_longer(cols = dplyr::starts_with("days."),
-                          names_to = "type", values_to = "medi")
+      dplyr::summarise(dplyr::across(
+        dplyr::starts_with("days."),
+        \(x) as.numeric(median(x, na.rm = T))
+      )) |>
+      tidyr::pivot_longer(
+        cols = dplyr::starts_with("days."),
+        names_to = "type", values_to = "medi"
+      )
     lab_counts <- lab.data |>
       dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
       dplyr::group_by(year, get(geo)) |>
-      dplyr::summarise(dplyr::across(dplyr::starts_with("days."),
-                                     \(x) sum(!is.na(x)))) |>
-      tidyr::pivot_longer(cols = dplyr::starts_with("days."),
-                          names_to = "type", values_to = "freq")
+      dplyr::summarise(dplyr::across(
+        dplyr::starts_with("days."),
+        \(x) sum(!is.na(x))
+      )) |>
+      tidyr::pivot_longer(
+        cols = dplyr::starts_with("days."),
+        names_to = "type", values_to = "freq"
+      )
 
     lab <- dplyr::full_join(lab_counts, lab_medians)
 

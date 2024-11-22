@@ -46,23 +46,25 @@ Generates maps of stool adequacy map by district and year.
 \examples{
 \dontrun{
 ctry.data <- init_dr("algeria")
-dstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-                        admin.data = ctry.data$dist.pop,
-                        start.date = start_date,
-                        end.date = end_date,
-                        spatial.scale = "dist",
-                        missing = "good",
-                        bad.data = "inadequate",
-                        rolling = F,
-                        sp_continuity_validation = F
-                       )
+dstool <- f.stool.ad.01(
+  afp.data = ctry.data$afp.all.2,
+  admin.data = ctry.data$dist.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "dist",
+  missing = "good",
+  bad.data = "inadequate",
+  rolling = F,
+  sp_continuity_validation = F
+)
 ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
 dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
-generate_stool_ad_maps_dist(ctry.data, dstool,
-                            ctry.shape, prov.shape, dist.shape,
-                            "2021-01-01", "2023-12-31"
-                            )
+generate_stool_ad_maps_dist(
+  ctry.data, dstool,
+  ctry.shape, prov.shape, dist.shape,
+  "2021-01-01", "2023-12-31"
+)
 }
 
 }

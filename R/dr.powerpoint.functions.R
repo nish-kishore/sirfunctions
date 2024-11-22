@@ -109,16 +109,16 @@ get_ppt_template <- function(path = NULL) {
 #' \dontrun{
 #' # Assume all figures and tables are assigned to the appropriate variable.
 #' template_path <- "C:/Users/ABC1/Desktop/deskreview_template.pptx"
-#' generate_dr_ppt(template_path, ctry.data, start_date, end_date, pop.map,
-#' pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
-#' surv.ind.tab, afp.dets.prov.year, pop.tab, npafp.map,
-#' npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
-#' inad.tab.flex, tab.60d, case.num.dose.g,
-#' timely_nation, timely_prov,
-#' mapt_all, es.site.det, es.det.map, es.timely,
-#' es.table
+#' generate_dr_ppt(
+#'   template_path, ctry.data, start_date, end_date, pop.map,
+#'   pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
+#'   surv.ind.tab, afp.dets.prov.year, pop.tab, npafp.map,
+#'   npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
+#'   inad.tab.flex, tab.60d, case.num.dose.g,
+#'   timely_nation, timely_prov,
+#'   mapt_all, es.site.det, es.det.map, es.timely,
+#'   es.table
 #' )
-#'
 #' }
 #'
 #' @export
@@ -433,7 +433,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
+    paste0("Deskreview_", country, "_", format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }
 
@@ -465,8 +465,9 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
 #' # Assume all figures and tables are assigned to the appropriate variable.
 #' ppt_template <- "C:/Users/ABC1/Desktop/deskreview_template.pptx"
 #' generate_dr_ppt2(ctry.data, start_date, end_date,
-#' surv.ind.tab, inad.tab.flex, tab.60d, es.table,
-#' ppt_template_path = ppt_template)
+#'   surv.ind.tab, inad.tab.flex, tab.60d, es.table,
+#'   ppt_template_path = ppt_template
+#' )
 #' }
 #'
 #' @export
@@ -909,6 +910,6 @@ generate_dr_ppt2 <- function(ctry.data,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
+    paste0("Deskreview_", country, "_", format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }

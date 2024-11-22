@@ -46,9 +46,13 @@ Calculates the overall timeliness of detection in AFP & ES POLIS data.
 raw.data <- get_all_polio_data()
 ctry.data <- extract_country_data("algeria", raw.data)
 ctry.seq <- get_lab_locs()
-global.summary <- f.timely.detection.01(raw.data$afp, raw.data$es, ctry.seq,
-                                        "2021-01-01", "2023-12-31")
-ctry.summary <- f.timely.detection.01(ctry.data$afp.all.2, ctry.data$es, ctry.seq,
-                                      "2021-01-01", "2023-12-31")
+global.summary <- f.timely.detection.01(
+  raw.data$afp, raw.data$es, ctry.seq,
+  "2021-01-01", "2023-12-31"
+)
+ctry.summary <- f.timely.detection.01(
+  ctry.data$afp.all.2, ctry.data$es, ctry.seq,
+  "2021-01-01", "2023-12-31"
+)
 
 }

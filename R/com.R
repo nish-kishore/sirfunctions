@@ -2,7 +2,7 @@
 
 #' Send a message on Microsoft Teams
 #'
-#'Helper function to send message to validated MS Teams interface.
+#' Helper function to send message to validated MS Teams interface.
 #' @import Microsoft365R
 #' @import AzureAuth
 #' @param msg `str` Message to be sent.
@@ -18,16 +18,16 @@
 #' }
 #'
 #' @export
-send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL, type = "text"){
-
+send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL, type = "text") {
   team <- Microsoft365R::get_team(team_id)
 
   channel <- team$get_channel(channel)
 
-  channel$send_message(body = msg,
-                       attachments = attach,
-                       content_type = type)
-
+  channel$send_message(
+    body = msg,
+    attachments = attach,
+    content_type = type
+  )
 }
 
 #' Upload file to Sharepoint
@@ -49,16 +49,13 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #' }
 #'
 #' @export
-upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283", drive = "Documents"){
-
+upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283", drive = "Documents") {
   tokens <- AzureAuth::list_azure_tokens()
 
   token_hash_names <- tokens |> names()
 
-  if(length(token_hash_names) > 0){
-
-    token_list <- lapply(1:length(token_hash_names), function(x){
-
+  if (length(token_hash_names) > 0) {
+    token_list <- lapply(1:length(token_hash_names), function(x) {
       obj <- tokens[[token_hash_names[x]]]
 
       dplyr::tibble(
@@ -69,23 +66,19 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
     }) |>
       dplyr::bind_rows() |>
       dplyr::filter(grepl("Sites.ReadWrite.All", scope))
-
-  }else{
+  } else {
     token_list <- dplyr::tibble()
   }
 
-  if(nrow(token_list) == 0){
+  if (nrow(token_list) == 0) {
     site <- Microsoft365R::get_sharepoint_site(site_url = site)
-
-  }else{
+  } else {
     site <- Microsoft365R::get_sharepoint_site(site_url = site, token = tokens[[pull(token_list, token)]])
-
   }
 
   drv <- site$get_drive(drive)
 
   drv$upload_file(src = file_to_upload, dest = sharepoint_file_loc)
-
 }
 
 #' Send email through Outlook
@@ -105,11 +98,11 @@ upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "ht
 #' }
 #'
 #' @export
-send_outlook_email <- function(title, body, recipient, attachment = NULL){
-
+send_outlook_email <- function(title, body, recipient, attachment = NULL) {
   if (!requireNamespace("blastula", quietly = TRUE)) {
     stop('Package "blastula" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
 
   tokens <- AzureAuth::list_azure_tokens()
@@ -129,18 +122,18 @@ send_outlook_email <- function(title, body, recipient, attachment = NULL){
       dplyr::bind_rows() |>
       dplyr::filter(grepl("Mail.ReadWrite", scope))
   } else {
-    token_list = dplyr::tibble()
+    token_list <- dplyr::tibble()
   }
 
   if (nrow(token_list) == 0) {
-    cli::cli_alert_warning(paste0("Authenticating Azure connection. ",
-                                  "If local host refuses to connect, ",
-                                  "then unable to authenticate with Azure Active Directory and use this function."))
+    cli::cli_alert_warning(paste0(
+      "Authenticating Azure connection. ",
+      "If local host refuses to connect, ",
+      "then unable to authenticate with Azure Active Directory and use this function."
+    ))
     outl <- Microsoft365R::get_business_outlook()
-
   } else {
     outl <- Microsoft365R::get_business_outlook(token = tokens[[dplyr::pull(token_list, token)]])
-
   }
 
   bl_em <- blastula::compose_email(
@@ -155,6 +148,4 @@ send_outlook_email <- function(title, body, recipient, attachment = NULL){
   }
 
   em$send()
-
 }
-

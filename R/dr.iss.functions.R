@@ -14,10 +14,10 @@
 #' iss_data <- load_iss_data(iss_path)
 #' }
 load_iss_data <- function(iss_path, sheet_name = NULL) {
-
   if (!requireNamespace("readxl", quietly = TRUE)) {
     stop('Package "readxl" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
   if (stringr::str_ends(iss_path, ".csv")) {
     return(readr::read_csv(iss_path))

@@ -21,11 +21,11 @@
 #' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
 #' lab.timeliness.ctry <- generate_lab_timeliness(ctry.data$lab.data, "ctry", start_date, end_date)
 #' int.data.ctry <- generate_int_data(ctry.data, start_date, end_date,
-#'                                    spatial.scale = "ctry",
-#'                                    lab.timeliness.ctry
-#'                                    )
-#'  afp.year.lab <- generate_year_lab(ctry.data, start_date, end_date)
-#'  generate_ctry_timeliness_graph(int.data.ctry, afp.year.lab)
+#'   spatial.scale = "ctry",
+#'   lab.timeliness.ctry
+#' )
+#' afp.year.lab <- generate_year_lab(ctry.data, start_date, end_date)
+#' generate_ctry_timeliness_graph(int.data.ctry, afp.year.lab)
 #' }
 #' @seealso [generate_int_data()], [generate_lab_timeliness()]
 #' @export
@@ -34,7 +34,8 @@ generate_ctry_timeliness_graph <- function(int.data,
                                            output_path = Sys.getenv("DR_FIGURE_PATH")) {
   year.time <- dplyr::left_join(
     int.data,
-    afp.year.lab) |>
+    afp.year.lab
+  ) |>
     dplyr::filter(.data$medi >= 0 | !is.na(.data$medi))
 
   timely_nation <- ggplot2::ggplot() +
@@ -104,9 +105,9 @@ generate_ctry_timeliness_graph <- function(int.data,
 #' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
 #' lab.timeliness.prov <- generate_lab_timeliness(ctry.data$lab.data, "prov", start_date, end_date)
 #' int.data.prov <- generate_int_data(ctry.data, start_date, end_date,
-#'                                    spatial.scale = "prov",
-#'                                    lab.timeliness.prov
-#'                                    )
+#'   spatial.scale = "prov",
+#'   lab.timeliness.prov
+#' )
 #  afp.prov.year.lab <- generate_prov_year_lab(ctry.data, start_date, end_date)
 #' generate_ctry_timeliness_graph(int.data.prov, afp.prov.year.lab)
 #' }
@@ -205,8 +206,10 @@ generate_afp_epicurve <- function(ctry.data,
   end_date <- lubridate::as_date(end_date)
 
   afp.epi.date.filter <- ctry.data$afp.epi %>%
-    dplyr::filter(dplyr::between(yronset, as.numeric(lubridate::year(start_date)), as.numeric(lubridate::year(end_date))),
-                  .data$cdc.classification.all2 != "NOT-AFP")
+    dplyr::filter(
+      dplyr::between(yronset, as.numeric(lubridate::year(start_date)), as.numeric(lubridate::year(end_date))),
+      .data$cdc.classification.all2 != "NOT-AFP"
+    )
 
   case.num.labs <- dplyr::reframe(
     dplyr::group_by(afp.epi.date.filter, .data$yronset),
@@ -261,9 +264,10 @@ generate_afp_epicurve <- function(ctry.data,
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
 #' afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, start_date, end_date)
-#' afp.by.month.prov <- generate_afp_by_month_summary(afp.by.month, ctry.data,
-#'                                                    start_date, end_date, "prov"
-#'                                                    )
+#' afp.by.month.prov <- generate_afp_by_month_summary(
+#'   afp.by.month, ctry.data,
+#'   start_date, end_date, "prov"
+#' )
 #' generate_afp_prov_year(afp.by.month.prov, start_date, end_date)
 #' }
 #'
@@ -675,9 +679,10 @@ generate_case_num_dose_g <- function(ctry.data,
   ### Create zero dose graphs
   # Cats - 0, 1-2, 3, 4+
   dcat.yr.prov <- ctry.data$afp.all.2 |>
-    dplyr::filter(dplyr::between(date, start_date, end_date),
-                  cdc.classification.all2 == "NPAFP",
-                  dplyr::between(age.months, 6, 59)
+    dplyr::filter(
+      dplyr::between(date, start_date, end_date),
+      cdc.classification.all2 == "NPAFP",
+      dplyr::between(age.months, 6, 59)
     ) |>
     dplyr::group_by(.data$dose.cat, .data$year, .data$prov) |>
     dplyr::summarise(freq = dplyr::n())
@@ -876,16 +881,20 @@ generate_pop_map <- function(ctry.data,
   end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
@@ -930,8 +939,10 @@ generate_pop_map <- function(ctry.data,
       "Major Cities and Roads - Province Level Population - ",
       lubridate::year(end_date)
     )) +
-    ggplot2::labs(fill = "Under-15 pop",
-                  caption = "- Under 15 population is shown at the province level\n- Major roads are shown in black\n- Population centers are shown in blue") +
+    ggplot2::labs(
+      fill = "Under-15 pop",
+      caption = "- Under 15 population is shown at the province level\n- Major roads are shown in black\n- Population centers are shown in blue"
+    ) +
     sirfunctions::f.plot.looks("epicurve") +
     ggplot2::scale_size_identity() +
     ggplot2::theme(
@@ -995,27 +1006,32 @@ generate_dist_pop_map <- function(ctry.data,
                                   end_date,
                                   output_path = Sys.getenv("DR_FIGURE_PATH"),
                                   caption_size = 11) {
-
   end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(dist.shape)) {
-    error_message <- paste0("dist.shape is not in long format. ",
-                            "Use: dist.shape <- load_clean_dist_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "dist.shape is not in long format. ",
+      "Use: dist.shape <- load_clean_dist_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
@@ -1121,33 +1137,40 @@ generate_afp_case_map <- function(afp.all,
                                   start_date,
                                   end_date = lubridate::today(),
                                   output_path = Sys.getenv("DR_FIGURE_PATH")) {
-
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
 
   afp.case.map.filter <- afp.all |>
@@ -1233,15 +1256,16 @@ generate_afp_case_map <- function(afp.all,
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' prov.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
-#'                                 pop.data = ctry.data$prov.pop,
-#'                                 start.date = start_date,
-#'                                 end.date = end_date,
-#'                                 spatial.scale = "prov",
-#'                                 pending = T,
-#'                                 rolling = F,
-#'                                 sp_continuity_validation = F
-#'                                 )
+#' prov.extract <- f.npafp.rate.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   pop.data = ctry.data$prov.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "prov",
+#'   pending = T,
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
 #' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 #' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
 #' generate_npafp_maps(prov.extract, ctry.shape, prov.shape, "2021-01-01", "2023-12-31")
@@ -1255,30 +1279,37 @@ generate_npafp_maps <- function(prov.extract,
                                 end_date,
                                 output_path = Sys.getenv("DR_FIGURE_PATH"),
                                 caption_size = 2) {
-
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
 
   provnpafp <- prov.extract |>
@@ -1324,10 +1355,13 @@ generate_npafp_maps <- function(prov.extract,
 
   prov.pop.case.npafp <-
     dplyr::left_join(prov.shape, prov.cut,
-                     by = c("GUID" = "adm1guid", "year" = "year")) |>
-    dplyr::filter(dplyr::between(year,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date)))
+      by = c("GUID" = "adm1guid", "year" = "year")
+    ) |>
+    dplyr::filter(dplyr::between(
+      year,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    ))
 
   # Labels for provinces meeting NPAFP rate
   # How many provinces meet >2 NPAFP?
@@ -1442,21 +1476,23 @@ generate_npafp_maps <- function(prov.extract,
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' dist.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
-#'                                 pop.data = ctry.data$prov.pop,
-#'                                 start.date = start_date,
-#'                                 end.date = end_date,
-#'                                 spatial.scale = "dist",
-#'                                 pending = T,
-#'                                 rolling = F,
-#'                                 sp_continuity_validation = F
-#'                                 )
+#' dist.extract <- f.npafp.rate.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   pop.data = ctry.data$prov.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "dist",
+#'   pending = T,
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
 #' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 #' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
 #' dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
-#' generate_npafp_maps_dist(dist.extract, ctry.shape, prov.shape, dist.shape,
-#'                          "2021-01-01", "2023-12-31"
-#'                          )
+#' generate_npafp_maps_dist(
+#'   dist.extract, ctry.shape, prov.shape, dist.shape,
+#'   "2021-01-01", "2023-12-31"
+#' )
 #' }
 #'
 #' @export
@@ -1468,45 +1504,56 @@ generate_npafp_maps_dist <- function(dist.extract,
                                      end_date,
                                      output_path = Sys.getenv("DR_FIGURE_PATH"),
                                      caption_size = 2) {
-
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(dist.shape)) {
-    error_message <- paste0("dist.shape is not in long format. ",
-                            "Use: dist.shape <- load_clean_dist_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "dist.shape is not in long format. ",
+      "Use: dist.shape <- load_clean_dist_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
   dist.shape <- dist.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
 
   distnpafp <- dist.extract |>
@@ -1532,9 +1579,11 @@ generate_npafp_maps_dist <- function(dist.extract,
         T ~ cats
       )
     ) |>
-    dplyr::filter(dplyr::between(year,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date)))
+    dplyr::filter(dplyr::between(
+      year,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    ))
 
 
   dist.cut$cats <- factor(
@@ -1670,16 +1719,17 @@ generate_npafp_maps_dist <- function(dist.extract,
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' pstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-#'                         admin.data = ctry.data$prov.pop,
-#'                         start.date = start_date,
-#'                         end.date = end_date,
-#'                         spatial.scale = "prov",
-#'                         missing = "good",
-#'                         bad.data = "inadequate",
-#'                         rolling = F,
-#'                         sp_continuity_validation = F
-#'                        )
+#' pstool <- f.stool.ad.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   admin.data = ctry.data$prov.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "prov",
+#'   missing = "good",
+#'   bad.data = "inadequate",
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
 #' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 #' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
 #' generate_stool_ad_maps(ctry.data, pstool, ctry.shape, prov.shape, "2021-01-01", "2023-12-31")
@@ -1694,33 +1744,40 @@ generate_stool_ad_maps <- function(ctry.data,
                                    end_date,
                                    output_path = Sys.getenv("DR_FIGURE_PATH"),
                                    caption_size = 3) {
-
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
 
   allafp <- ctry.data$afp.all.2 |>
@@ -1885,23 +1942,25 @@ generate_stool_ad_maps <- function(ctry.data,
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' dstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-#'                         admin.data = ctry.data$dist.pop,
-#'                         start.date = start_date,
-#'                         end.date = end_date,
-#'                         spatial.scale = "dist",
-#'                         missing = "good",
-#'                         bad.data = "inadequate",
-#'                         rolling = F,
-#'                         sp_continuity_validation = F
-#'                        )
+#' dstool <- f.stool.ad.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   admin.data = ctry.data$dist.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "dist",
+#'   missing = "good",
+#'   bad.data = "inadequate",
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
 #' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 #' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
 #' dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
-#' generate_stool_ad_maps_dist(ctry.data, dstool,
-#'                             ctry.shape, prov.shape, dist.shape,
-#'                             "2021-01-01", "2023-12-31"
-#'                             )
+#' generate_stool_ad_maps_dist(
+#'   ctry.data, dstool,
+#'   ctry.shape, prov.shape, dist.shape,
+#'   "2021-01-01", "2023-12-31"
+#' )
 #' }
 #'
 #' @export
@@ -1914,42 +1973,53 @@ generate_stool_ad_maps_dist <- function(ctry.data,
                                         end_date,
                                         output_path = Sys.getenv("DR_FIGURE_PATH"),
                                         caption_size = 3) {
-
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(dist.shape)) {
-    error_message <- paste0("dist.shape is not in long format. ",
-                            "Use: dist.shape <- load_clean_dist_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "dist.shape is not in long format. ",
+      "Use: dist.shape <- load_clean_dist_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
   dist.shape <- dist.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
 
 
@@ -2147,30 +2217,37 @@ generate_timeliness_maps <- function(ctry.data,
                                      mark_x = T,
                                      pt_size = 4,
                                      output_path = Sys.getenv("DR_FIGURE_PATH")) {
-
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
 
   long.timely <- ctry.data$afp.all.2 %>%
@@ -2610,8 +2687,8 @@ generate_timeliness_maps <- function(ctry.data,
 #' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 #' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
 #' generate_es_det_map(ctry.data$es, es.data.long, ctry.shape, prov.shape,
-#'                     es_end_date = "2023-01-01"
-#'                     )
+#'   es_end_date = "2023-01-01"
+#' )
 #' }
 #'
 #' @export
@@ -2622,21 +2699,24 @@ generate_es_det_map <- function(es.data,
                                 es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
                                 es_end_date = end_date,
                                 output_path = Sys.getenv("DR_FIGURE_PATH")) {
-
   es_start_date <- lubridate::as_date(es_start_date)
   es_end_date <- lubridate::as_date(es_end_date)
 
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
@@ -2776,9 +2856,10 @@ generate_es_det_map <- function(es.data,
 #' ctry.data$iss.data <- clean_iss_data(ctry.data)
 #' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 #' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
-#' generate_iss_map(ctry.data$iss.data, ctry.shape, prov.shape,
-#'                  "2021-01-01", "2023-12-31"
-#'                  )
+#' generate_iss_map(
+#'   ctry.data$iss.data, ctry.shape, prov.shape,
+#'   "2021-01-01", "2023-12-31"
+#' )
 #' }
 #'
 #' @export
@@ -2788,7 +2869,6 @@ generate_iss_map <- function(iss.data,
                              start_date,
                              end_date,
                              output_path = Sys.getenv("DR_FIGURE_PATH")) {
-
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
@@ -2797,28 +2877,36 @@ generate_iss_map <- function(iss.data,
   }
 
   if (!"active.year.01" %in% names(ctry.shape)) {
-    error_message <- paste0("ctry.shape is not in long format. ",
-                            "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the country shapefile in long format.")
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   if (!"active.year.01" %in% names(prov.shape)) {
-    error_message <- paste0("prov.shape is not in long format. ",
-                            "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-                            " to download the province shapefile in long format.")
+    error_message <- paste0(
+      "prov.shape is not in long format. ",
+      "Use: prov.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the province shapefile in long format."
+    )
     cli::cli_abort(error_message)
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(dplyr::between(.data$active.year.01,
-                                 lubridate::year(start_date),
-                                 lubridate::year(end_date))) |>
+    dplyr::filter(dplyr::between(
+      .data$active.year.01,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )) |>
     dplyr::mutate(year = .data$active.year.01)
 
 
@@ -2868,10 +2956,13 @@ generate_iss_map <- function(iss.data,
     ) +
     ggplot2::geom_point(
       data = iss.data2 |>
-        dplyr::filter(dplyr::between(year,
-                                     lubridate::year(start_date),
-                                     lubridate::year(end_date)),
-            priority_level == "High"
+        dplyr::filter(
+          dplyr::between(
+            year,
+            lubridate::year(start_date),
+            lubridate::year(end_date)
+          ),
+          priority_level == "High"
         ),
       ggplot2::aes(
         x = as.numeric(`_gps_ending_longitude`),
@@ -2921,44 +3012,48 @@ generate_iss_map <- function(iss.data,
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' ctry.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
-#'                                 pop.data = ctry.data$ctry.pop,
-#'                                 start.date = start_date,
-#'                                 end.date = end_date,
-#'                                 spatial.scale = "ctry",
-#'                                 pending = T,
-#'                                 rolling = F,
-#'                                 sp_continuity_validation = F
-#'                                 )
-#' dist.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
-#'                                 pop.data = ctry.data$ctry.pop,
-#'                                 start.date = start_date,
-#'                                 end.date = end_date,
-#'                                 spatial.scale = "dist",
-#'                                 pending = T,
-#'                                 rolling = F,
-#'                                 sp_continuity_validation = F
-#'                                 )
-#' cstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-#'                         admin.data = ctry.data$ctry.pop,
-#'                         start.date = start_date,
-#'                         end.date = end_date,
-#'                         spatial.scale = "ctry",
-#'                         missing = "good",
-#'                         bad.data = "inadequate",
-#'                         rolling = F,
-#'                         sp_continuity_validation = F
-#'                        )
-#' dstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-#'                         admin.data = ctry.data$dist.pop,
-#'                         start.date = start_date,
-#'                         end.date = end_date,
-#'                         spatial.scale = "dist",
-#'                         missing = "good",
-#'                         bad.data = "inadequate",
-#'                         rolling = F,
-#'                         sp_continuity_validation = F
-#'                        )
+#' ctry.extract <- f.npafp.rate.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   pop.data = ctry.data$ctry.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "ctry",
+#'   pending = T,
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
+#' dist.extract <- f.npafp.rate.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   pop.data = ctry.data$ctry.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "dist",
+#'   pending = T,
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
+#' cstool <- f.stool.ad.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   admin.data = ctry.data$ctry.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "ctry",
+#'   missing = "good",
+#'   bad.data = "inadequate",
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
+#' dstool <- f.stool.ad.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   admin.data = ctry.data$dist.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "dist",
+#'   missing = "good",
+#'   bad.data = "inadequate",
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
 #' afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
 #' afp.case <- generate_afp_by_month_summary(afp.by.month, ctry.data, start_date, end_date, "year")
 #' generate_surv_ind_tab(ctry.data, ctry.extract, dist.extract, cstool, dstool, afp.case)
@@ -2971,19 +3066,20 @@ generate_surv_ind_tab <- function(ctry.data,
                                   dstool,
                                   afp.case,
                                   country_name = Sys.getenv("DR_COUNTRY")) {
-
-
   if (!requireNamespace("janitor", quietly = TRUE)) {
     stop('Package "janitor" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
 
   if (!requireNamespace("tibble", quietly = TRUE)) {
     stop('Package "tibble" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
 
-  dist.ind.afp <- dplyr::left_join(dist.extract,
+  dist.ind.afp <- dplyr::left_join(
+    dist.extract,
     dstool
   )
 
@@ -3118,26 +3214,28 @@ generate_surv_ind_tab <- function(ctry.data,
 #' ctry.data <- init_dr("algeria")
 #' start_date <- "2021-01-01"
 #' end_date <- "2023-12-31"
-#' prov.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
-#'                                 pop.data = ctry.data$prov.pop,
-#'                                 start.date = start_date,
-#'                                 end.date = end_date,
-#'                                 spatial.scale = "prov",
-#'                                 pending = T,
-#'                                 rolling = F,
-#'                                 sp_continuity_validation = F
-#'                                 )
+#' prov.extract <- f.npafp.rate.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   pop.data = ctry.data$prov.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "prov",
+#'   pending = T,
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
 #' prov.case.ind <- prep_npafp_table(prov.extract, ctry.data$afp.all.2, start_date, end_date, "prov")
-#' pstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-#'                         admin.data = ctry.data$prov.pop,
-#'                         start.date = start_date,
-#'                         end.date = end_date,
-#'                         spatial.scale = "prov",
-#'                         missing = "good",
-#'                         bad.data = "inadequate",
-#'                         rolling = F,
-#'                         sp_continuity_validation = F
-#'                        )
+#' pstool <- f.stool.ad.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   admin.data = ctry.data$prov.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "prov",
+#'   missing = "good",
+#'   bad.data = "inadequate",
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
 #' generate_pop_tab(prov.case.ind, pstool, start_date, end_date)
 #' }
 #'
@@ -3146,7 +3244,6 @@ generate_pop_tab <- function(prov.case.ind,
                              pstool,
                              start_date,
                              end_date) {
-
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
@@ -3343,7 +3440,6 @@ generate_pop_tab <- function(prov.case.ind,
 #' @importFrom tidyr replace_na
 #' @param ctry.data `list` large list containing polio data for a country. This is the output of
 #' [extract_country_data()] or [init_dr()].
-#' @param stool.data `tibble` AFP data with stool adequacy columns. This is the output of [generate_stool_data()].
 #' @param cstool `tibble` Stool adequacy at the country level. This is the output of [f.stool.ad.01()].
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
@@ -3355,60 +3451,75 @@ generate_pop_tab <- function(prov.case.ind,
 #' start_date <- "2021-01-01"
 #' end_date <- "2023-12-31"
 #' stool.data <- generate_stool_data(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
-#' cstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-#'                         admin.data = ctry.data$ctry.pop,
-#'                         start.date = start_date,
-#'                         end.date = end_date,
-#'                         spatial.scale = "ctry",
-#'                         missing = "good",
-#'                         bad.data = "inadequate",
-#'                         rolling = F,
-#'                         sp_continuity_validation = F
-#'                        )
+#' cstool <- f.stool.ad.01(
+#'   afp.data = ctry.data$afp.all.2,
+#'   admin.data = ctry.data$ctry.pop,
+#'   start.date = start_date,
+#'   end.date = end_date,
+#'   spatial.scale = "ctry",
+#'   missing = "good",
+#'   bad.data = "inadequate",
+#'   rolling = F,
+#'   sp_continuity_validation = F
+#' )
 #' generate_inad_tab(ctry.data, stool.data, cstool, start_date, end_date)
 #' }
 #'
 #' @export
 generate_inad_tab <- function(ctry.data,
-                              stool.data,
                               cstool,
                               start_date,
                               end_date) {
-
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   if (!requireNamespace("janitor", quietly = TRUE)) {
     stop('Package "janitor" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
 
   if (!requireNamespace("tibble", quietly = TRUE)) {
     stop('Package "tibble" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
 
   # All AFP cases
   afps.all <- ctry.data$afp.all.2 %>%
-    dplyr::filter(dplyr::between(date, start_date, end_date),
-                  cdc.classification.all2 != "NOT-AFP") |>
+    dplyr::filter(
+      dplyr::between(date, start_date, end_date),
+      cdc.classification.all2 != "NOT-AFP"
+    ) |>
     dplyr::group_by(year) |>
-    dplyr::summarise(good.cond.1 = sum((.data$ontostool1 <= 14 & (.data$stool.1.condition == "Good" | is.na(.data$stool.1.condition))) |
-                                         ( .data$ontostool2 <= 14 & (.data$stool.2.condition == "Good" | is.na(.data$stool.2.condition))),
-                                       na.rm = T),
-                     good.cond.2 = sum(.data$stool1missing == 0 &
-                                         .data$stool2missing == 0 &
-                                         .data$ontostool1 <= 21 &
-                                         .data$ontostool2 <= 21 &
-                                         (.data$stool.1.condition == "Good" | is.na(.data$stool.1.condition)) &
-                                         (.data$stool.2.condition == "Good" | is.na(.data$stool.2.condition)), na.rm = T),
-                     afp.cases = n()) |>
-    dplyr::mutate(good.cond.1per = round(.data$good.cond.1 / .data$afp.cases * 100, 0),
-                  good.cond.2per = round(.data$good.cond.2 / .data$afp.cases * 100, 0)) |>
-    dplyr::mutate(good.cond.1per = paste0(.data$good.cond.1per,
-                                          "% (", .data$good.cond.1, "/", .data$afp.cases, " cases)"),
-                  good.cond.2per = paste0(.data$good.cond.2per,
-                                          "% (", .data$good.cond.2, "/", .data$afp.cases, " cases)"))
+    dplyr::summarise(
+      good.cond.1 = sum(
+        (.data$ontostool1 <= 14 & (.data$stool.1.condition == "Good" | is.na(.data$stool.1.condition))) |
+          (.data$ontostool2 <= 14 & (.data$stool.2.condition == "Good" | is.na(.data$stool.2.condition))),
+        na.rm = T
+      ),
+      good.cond.2 = sum(.data$stool1missing == 0 &
+        .data$stool2missing == 0 &
+        .data$ontostool1 <= 21 &
+        .data$ontostool2 <= 21 &
+        (.data$stool.1.condition == "Good" | is.na(.data$stool.1.condition)) &
+        (.data$stool.2.condition == "Good" | is.na(.data$stool.2.condition)), na.rm = T),
+      afp.cases = n()
+    ) |>
+    dplyr::mutate(
+      good.cond.1per = round(.data$good.cond.1 / .data$afp.cases * 100, 0),
+      good.cond.2per = round(.data$good.cond.2 / .data$afp.cases * 100, 0)
+    ) |>
+    dplyr::mutate(
+      good.cond.1per = paste0(
+        .data$good.cond.1per,
+        "% (", .data$good.cond.1, "/", .data$afp.cases, " cases)"
+      ),
+      good.cond.2per = paste0(
+        .data$good.cond.2per,
+        "% (", .data$good.cond.2, "/", .data$afp.cases, " cases)"
+      )
+    )
 
   # Join with cstool
   allinadstool <- dplyr::left_join(cstool, afps.all) |>
@@ -3416,22 +3527,30 @@ generate_inad_tab <- function(ctry.data,
 
   # Create additional columns
   allinadstool <- allinadstool |>
-    dplyr::mutate(timelyper = round(.data$late.collection / .data$num.inadequate * 100, 0),
-                  missingper = round(.data$one.or.no.stool / .data$num.inadequate * 100, 0),
-                  poorper = round(.data$bad.condition / .data$num.inadequate * 100, 0),
-                  badper = round(.data$bad.data / .data$num.inadequate * 100, 0)) |>
-    dplyr::mutate(timelyper = paste0(.data$late.collection, " (", .data$timelyper, "%)"),
-                  missingper = paste0(.data$one.or.no.stool, " (", .data$missingper, "%)"),
-                  poorper = paste0(.data$bad.condition, " (", .data$poorper, "%)"),
-                  badper = paste0(.data$bad.data, " (", .data$badper, "%)"))
+    dplyr::mutate(
+      timelyper = round(.data$late.collection / .data$num.inadequate * 100, 0),
+      missingper = round(.data$one.or.no.stool / .data$num.inadequate * 100, 0),
+      poorper = round(.data$bad.condition / .data$num.inadequate * 100, 0),
+      badper = round(.data$bad.data / .data$num.inadequate * 100, 0)
+    ) |>
+    dplyr::mutate(
+      timelyper = paste0(.data$late.collection, " (", .data$timelyper, "%)"),
+      missingper = paste0(.data$one.or.no.stool, " (", .data$missingper, "%)"),
+      poorper = paste0(.data$bad.condition, " (", .data$poorper, "%)"),
+      badper = paste0(.data$bad.data, " (", .data$badper, "%)")
+    )
 
   inad.tab <- allinadstool |>
-    dplyr::select(-dplyr::any_of(c("days_in_year", "days.at.risk",
-                                   "adm0guid", "earliest_date", "latest_date",
-                                   "datasource", "ctry", "u15pop"))) |>
+    dplyr::select(-dplyr::any_of(c(
+      "days_in_year", "days.at.risk",
+      "adm0guid", "earliest_date", "latest_date",
+      "datasource", "ctry", "u15pop"
+    ))) |>
     dplyr::mutate(dplyr::across(dplyr::everything(), \(x) as.character(x))) |>
-    tidyr::pivot_longer(cols = c("afp.cases":"badper"),
-                        names_to = "type") |>
+    tidyr::pivot_longer(
+      cols = c("afp.cases":"badper"),
+      names_to = "type"
+    ) |>
     tidyr::pivot_wider(names_from = "year", values_from = "value") |>
     dplyr::filter(
       type %in% c(
@@ -3506,12 +3625,14 @@ generate_inad_tab <- function(ctry.data,
 #' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
-#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate",
-#'                                   "2021-01-01", "2023-12-31"
-#'                                   )
-#' cases.need60day <- generate_60_day_table_data(stool.data,
-#'                                   "2021-01-01", "2023-12-31"
-#'                                   )
+#' stool.data <- generate_stool_data(
+#'   ctry.data$afp.all.2, "good", "inadequate",
+#'   "2021-01-01", "2023-12-31"
+#' )
+#' cases.need60day <- generate_60_day_table_data(
+#'   stool.data,
+#'   "2021-01-01", "2023-12-31"
+#' )
 #' generate_60_day_tab(cases.need60day)
 #' }
 #'
@@ -3534,12 +3655,14 @@ generate_60_day_tab <- function(cases.need60day) {
       per.comp = round(.data$compatible / .data$inadequate * 100),
       per.pot.comp = round(.data$pot.compatible / .data$inadequate * 100),
       per.got60.2 = paste0(.data$got60day, "/", .data$inadequate.need.60day, " (", .data$per.got60, "%)"),
-      per.ontime60day.2 = paste0(.data$ontime60day,  "/", .data$inadequate.need.60day, " (", .data$per.ontime60day, "%)"),
+      per.ontime60day.2 = paste0(.data$ontime60day, "/", .data$inadequate.need.60day, " (", .data$per.ontime60day, "%)"),
       per.comp.2 = .data$compatible,
       per.pot.comp.2 = .data$pot.compatible,
-      per.missing.fu.date = paste0(.data$missing.fu.date, "/", .data$inadequate.need.60day, " (",
-                                   round(.data$missing.fu.date / .data$inadequate.need.60day * 100),
-                                   "%)")
+      per.missing.fu.date = paste0(
+        .data$missing.fu.date, "/", .data$inadequate.need.60day, " (",
+        round(.data$missing.fu.date / .data$inadequate.need.60day * 100),
+        "%)"
+      )
     ) |>
     dplyr::select(
       "year",
@@ -3588,11 +3711,13 @@ generate_60_day_tab <- function(cases.need60day) {
   tab.60d <- tab.60d |>
     flextable::add_footer_row(
       top = F,
-      paste0("*120 days post-paralysis onset (90 days to complete follow-up + 30 days to account for data lag)\n",
-             "** Defined as inadequate cases with: ",
-             "1) FU finding (Residual weakness, Lost to FU, Died) or no FU visit; ",
-             "2) Discarded or Pending Lab / Pending Classification; ",
-             '3) Filtered for "OPV/IPV status: <3 doses, or Unknown"'),
+      paste0(
+        "*120 days post-paralysis onset (90 days to complete follow-up + 30 days to account for data lag)\n",
+        "** Defined as inadequate cases with: ",
+        "1) FU finding (Residual weakness, Lost to FU, Died) or no FU visit; ",
+        "2) Discarded or Pending Lab / Pending Classification; ",
+        '3) Filtered for "OPV/IPV status: <3 doses, or Unknown"'
+      ),
       colwidths = ncol(comp.by.year)
     )
 
@@ -3630,7 +3755,6 @@ generate_60_day_tab <- function(cases.need60day) {
 generate_es_tab <- function(es.data,
                             es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
                             es_end_date = end_date) {
-
   es_start_date <- lubridate::as_date(es_start_date)
   es_end_date <- lubridate::as_date(es_end_date)
 

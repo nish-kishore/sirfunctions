@@ -26,26 +26,28 @@ Generates a table summarizing both NPAFP and stool adequacy rates at the provinc
 ctry.data <- init_dr("algeria")
 start_date <- "2021-01-01"
 end_date <- "2023-12-31"
-prov.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
-                                pop.data = ctry.data$prov.pop,
-                                start.date = start_date,
-                                end.date = end_date,
-                                spatial.scale = "prov",
-                                pending = T,
-                                rolling = F,
-                                sp_continuity_validation = F
-                                )
+prov.extract <- f.npafp.rate.01(
+  afp.data = ctry.data$afp.all.2,
+  pop.data = ctry.data$prov.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "prov",
+  pending = T,
+  rolling = F,
+  sp_continuity_validation = F
+)
 prov.case.ind <- prep_npafp_table(prov.extract, ctry.data$afp.all.2, start_date, end_date, "prov")
-pstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-                        admin.data = ctry.data$prov.pop,
-                        start.date = start_date,
-                        end.date = end_date,
-                        spatial.scale = "prov",
-                        missing = "good",
-                        bad.data = "inadequate",
-                        rolling = F,
-                        sp_continuity_validation = F
-                       )
+pstool <- f.stool.ad.01(
+  afp.data = ctry.data$afp.all.2,
+  admin.data = ctry.data$prov.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "prov",
+  missing = "good",
+  bad.data = "inadequate",
+  rolling = F,
+  sp_continuity_validation = F
+)
 generate_pop_tab(prov.case.ind, pstool, start_date, end_date)
 }
 

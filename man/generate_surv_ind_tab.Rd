@@ -40,44 +40,48 @@ districts with greater than or equal to 100,000 U15 meeting both indicators.
 \examples{
 \dontrun{
 ctry.data <- init_dr("algeria")
-ctry.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
-                                pop.data = ctry.data$ctry.pop,
-                                start.date = start_date,
-                                end.date = end_date,
-                                spatial.scale = "ctry",
-                                pending = T,
-                                rolling = F,
-                                sp_continuity_validation = F
-                                )
-dist.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
-                                pop.data = ctry.data$ctry.pop,
-                                start.date = start_date,
-                                end.date = end_date,
-                                spatial.scale = "dist",
-                                pending = T,
-                                rolling = F,
-                                sp_continuity_validation = F
-                                )
-cstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-                        admin.data = ctry.data$ctry.pop,
-                        start.date = start_date,
-                        end.date = end_date,
-                        spatial.scale = "ctry",
-                        missing = "good",
-                        bad.data = "inadequate",
-                        rolling = F,
-                        sp_continuity_validation = F
-                       )
-dstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-                        admin.data = ctry.data$dist.pop,
-                        start.date = start_date,
-                        end.date = end_date,
-                        spatial.scale = "dist",
-                        missing = "good",
-                        bad.data = "inadequate",
-                        rolling = F,
-                        sp_continuity_validation = F
-                       )
+ctry.extract <- f.npafp.rate.01(
+  afp.data = ctry.data$afp.all.2,
+  pop.data = ctry.data$ctry.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "ctry",
+  pending = T,
+  rolling = F,
+  sp_continuity_validation = F
+)
+dist.extract <- f.npafp.rate.01(
+  afp.data = ctry.data$afp.all.2,
+  pop.data = ctry.data$ctry.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "dist",
+  pending = T,
+  rolling = F,
+  sp_continuity_validation = F
+)
+cstool <- f.stool.ad.01(
+  afp.data = ctry.data$afp.all.2,
+  admin.data = ctry.data$ctry.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "ctry",
+  missing = "good",
+  bad.data = "inadequate",
+  rolling = F,
+  sp_continuity_validation = F
+)
+dstool <- f.stool.ad.01(
+  afp.data = ctry.data$afp.all.2,
+  admin.data = ctry.data$dist.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "dist",
+  missing = "good",
+  bad.data = "inadequate",
+  rolling = F,
+  sp_continuity_validation = F
+)
 afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
 afp.case <- generate_afp_by_month_summary(afp.by.month, ctry.data, start_date, end_date, "year")
 generate_surv_ind_tab(ctry.data, ctry.extract, dist.extract, cstool, dstool, afp.case)

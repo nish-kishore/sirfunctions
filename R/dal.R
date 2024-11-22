@@ -122,7 +122,7 @@ edav_io <- function(
     }
 
     return(AzureStor::list_storage_files(azcontainer, file_loc) |>
-             dplyr::as_tibble())
+      dplyr::as_tibble())
   }
 
   if (io == "exists.dir") {
@@ -187,7 +187,6 @@ edav_io <- function(
   }
 
   if (io == "write") {
-
     if (grepl(".rds", file_loc)) {
       AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
     }
@@ -199,16 +198,20 @@ edav_io <- function(
     if ("gg" %in% class(obj)) {
       temp <- tempfile()
       ggplot2::ggsave(filename = paste0(temp, "/", sub(".*\\/", "", file_loc)), plot = obj)
-      AzureStor::storage_upload(container = azcontainer, dest = file_loc,
-                                src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
+      AzureStor::storage_upload(
+        container = azcontainer, dest = file_loc,
+        src = paste0(temp, "/", sub(".*\\/", "", file_loc))
+      )
       unlink(temp)
     }
 
     if ("flextable" %in% class(obj)) {
       temp <- tempfile()
       flextable::save_as_image(obj, path = paste0(temp, "/", sub(".*\\/", "", file_loc)))
-      AzureStor::storage_upload(container = azcontainer, dest = file_loc,
-                                src = paste0(temp, "/", sub(".*\\/", "", file_loc)))
+      AzureStor::storage_upload(
+        container = azcontainer, dest = file_loc,
+        src = paste0(temp, "/", sub(".*\\/", "", file_loc))
+      )
       unlink(temp)
     }
   }
@@ -263,10 +266,10 @@ test_EDAV_connection <- function(
     folder = "GID/PEB/SIR/Data",
     return_list = F,
     test_size = 10000000) {
-
   if (!requireNamespace("prettyunits", quietly = TRUE)) {
     stop('Package "prettyunits" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
 
   tmp_data <- replicate(100, iris, simplify = F) |>
@@ -520,9 +523,11 @@ get_all_polio_data <- function(
       ) |>
       dplyr::filter(surveillancetypename == "AFP") |>
       dplyr::mutate(
-        cdc.classification.all2 = dplyr::case_when(final.cell.culture.result == "Not received in lab" &
-                                                     cdc.classification.all == "PENDING" ~ "LAB PENDING",
-                                                   TRUE ~ cdc.classification.all),
+        cdc.classification.all2 = dplyr::case_when(
+          final.cell.culture.result == "Not received in lab" &
+            cdc.classification.all == "PENDING" ~ "LAB PENDING",
+          TRUE ~ cdc.classification.all
+        ),
         hot.case = ifelse(
           paralysis.asymmetric == "Yes" &
             paralysis.onset.fever == "Yes" &
@@ -619,21 +624,27 @@ get_all_polio_data <- function(
 
     cli::cli_process_start("5) Loading population data from EDAV")
     raw.data$dist.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
-                dplyr::pull(file), default_dir = NULL) |>
+      edav_io(
+        io = "read",
+        file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
+          dplyr::pull(file), default_dir = NULL
+      ) |>
       dplyr::ungroup()
 
     raw.data$prov.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
-                dplyr::pull(file), default_dir = NULL) |>
+      edav_io(
+        io = "read",
+        file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
+          dplyr::pull(file), default_dir = NULL
+      ) |>
       dplyr::ungroup()
 
     raw.data$ctry.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
-                dplyr::pull(file), default_dir = NULL) |>
+      edav_io(
+        io = "read",
+        file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
+          dplyr::pull(file), default_dir = NULL
+      ) |>
       dplyr::ungroup()
     cli::cli_process_done()
 
@@ -729,29 +740,33 @@ get_all_polio_data <- function(
     cli::cli_process_done()
 
     cli::cli_process_start("13) Loading SIA Clusters and Calculating Rounds")
-    sia.clusters <- edav_io(io = "list", file_loc = paste0(folder, "sia_cluster_cache"),
-                            default_dir = NULL) |>
+    sia.clusters <- edav_io(
+      io = "list", file_loc = paste0(folder, "sia_cluster_cache"),
+      default_dir = NULL
+    ) |>
       dplyr::filter(grepl("data_cluster_cache", name)) |>
       dplyr::pull(name)
 
     sia.cluster.data <- list()
 
-    for(i in 1:length(sia.clusters)){
+    for (i in 1:length(sia.clusters)) {
       sia.cluster.data[[length(sia.cluster.data) + 1]] <- edav_io(io = "read", file_loc = sia.clusters[i], default_dir = NULL)
     }
 
     raw.data$sia.rounds <- do.call(rbind.data.frame, sia.cluster.data) |>
       dplyr::arrange(adm2guid, sub.activity.start.date) |>
-      dplyr::group_by(adm2guid, vaccine.type, cluster) |>
+      dplyr::group_by(.data$adm2guid, .data$vaccine.type, .data$cluster) |>
       dplyr::mutate(cdc.round.num = row_number()) |>
       dplyr::ungroup() |>
       dplyr::group_by(adm2guid) |>
       dplyr::mutate(cdc.max.round = max(sub.activity.start.date)) |>
       dplyr::ungroup() |>
-      dplyr::mutate(cdc.last.camp = ifelse(cdc.max.round == sub.activity.start.date, 1, 0)) |>
-      dplyr::select(sia.code, sia.sub.activity.code, sub.activity.start.date, vaccine.type,
-                    place.admin.0, place.admin.1, place.admin.2, adm0guid, adm1guid, adm2guid,
-                    cluster, cluster_method, cdc.round.num, cdc.max.round, cdc.last.camp)
+      dplyr::mutate(cdc.last.camp = ifelse(.data$cdc.max.round == sub.activity.start.date, 1, 0)) |>
+      dplyr::select(dplyr::any_of(c(
+        "sia.code", "sia.sub.activity.code", "sub.activity.start.date", "vaccine.type",
+        "place.admin.0", "place.admin.1", "place.admin.2", "adm0guid", "adm1guid", "adm2guid",
+        "cluster", "cluster_method", "cdc.round.num", "cdc.max.round", "cdc.last.camp"
+      )))
     rm(sia.clusters, sia.cluster.data)
 
     cli::cli_process_done()
@@ -825,7 +840,7 @@ get_all_polio_data <- function(
     cli::cli_process_done()
   }
 
-  if(create.cache){
+  if (create.cache) {
     cli::cli_process_start("16) Caching processed data")
 
     out <- split_concat_raw_data(action = "split", split.years = c(2000, 2016, 2019), raw.data.all = raw.data)
@@ -877,7 +892,6 @@ get_all_polio_data <- function(
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("nigeria", raw.data)
-#'
 #'
 #' @export
 extract_country_data <- function(
@@ -1318,9 +1332,11 @@ duplicate_check <- function(.raw.data = raw.data) {
   )]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dupe")
     .raw.data$sia.dupe <- .raw.data$sia |>
-      dplyr::group_by(.data$adm2guid, .data$sub.activity.start.date,
-                      .data$vaccine.type, .data$age.group, .data$status,
-                      .data$lqas.loaded, .data$im.loaded) |>
+      dplyr::group_by(
+        .data$adm2guid, .data$sub.activity.start.date,
+        .data$vaccine.type, .data$age.group, .data$status,
+        .data$lqas.loaded, .data$im.loaded
+      ) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
       dplyr::filter(count > 1) |>
@@ -1333,17 +1349,19 @@ duplicate_check <- function(.raw.data = raw.data) {
   )]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the ES data, please check es.dupe")
     .raw.data$es.dupe <- .raw.data$es |>
-      dplyr::group_by(.data$env.sample.id, .data$virus.type, .data$emergence.group,
-                      .data$nt.changes, .data$site.id, .data$collection.date,
-                      .data$collect.yr) |>
+      dplyr::group_by(
+        .data$env.sample.id, .data$virus.type, .data$emergence.group,
+        .data$nt.changes, .data$site.id, .data$collection.date,
+        .data$collect.yr
+      ) |>
       dplyr::mutate(es.dups = dplyr::n()) |>
       dplyr::filter(.data$es.dups > 1) |>
-      dplyr::select(dplyr::all_of(c("env.sample.manual.edit.id", "env.sample.id",
-                                  "sample.id", "site.id", "site.code", "site.name",
-                                  "sample.condition", "collection.date", "virus.type",
-                                  "nt.changes", "emergence.group", "collect.date", "collect.yr", "es.dups")
-                                  )
-      )
+      dplyr::select(dplyr::all_of(c(
+        "env.sample.manual.edit.id", "env.sample.id",
+        "sample.id", "site.id", "site.code", "site.name",
+        "sample.condition", "collection.date", "virus.type",
+        "nt.changes", "emergence.group", "collect.date", "collect.yr", "es.dups"
+      )))
   }
 
   if (nrow(.raw.data$pos[duplicated(.raw.data$pos[, c(
@@ -1403,11 +1421,10 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                data.only = F,
                                type = NULL,
                                version = "standard") {
-
-  if(version == "dev"){
+  if (version == "dev") {
     fp <- "GID/PEB/SIR/Data/spatial_dev/global.dist.rds"
     cli::cli_alert_info("Loading under development district spatial files")
-  }else{
+  } else {
     cli::cli_alert_info("Loading district spatial files")
   }
 
@@ -1499,11 +1516,10 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                data.only = F,
                                type = NULL,
                                version = "standard") {
-
-  if(version == "dev"){
+  if (version == "dev") {
     fp <- "GID/PEB/SIR/Data/spatial_dev/global.prov.rds"
     cli::cli_alert_info("Loading under development province spatial files")
-  }else{
+  } else {
     cli::cli_alert_info("Loading province spatial files")
   }
 
@@ -1582,11 +1598,10 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                data.only = F,
                                type = NULL,
                                version = "standard") {
-
-  if(version == "dev"){
+  if (version == "dev") {
     fp <- "GID/PEB/SIR/Data/spatial_dev/global.ctry.rds"
     cli::cli_alert_info("Loading under development country spatial files")
-  }else{
+  } else {
     cli::cli_alert_info("Loading country spatial files")
   }
 
@@ -1874,30 +1889,34 @@ check_afp_guid_ctry_data <- function(ctry.data) {
 #' raw.data <- get_all_polio_data()
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' error.list <- check_afp_guid_ctry_data(ctry.data)
-#' ctry.data$afp.all.2 <- fix_ctry_data_missing_guids(ctry.data$afp.all.2,
-#'                                                    ctry.data$dist.pop,
-#'                                                    error.list$dist_mismatches_pop,
-#'                                                    "dist")
+#' ctry.data$afp.all.2 <- fix_ctry_data_missing_guids(
+#'   ctry.data$afp.all.2,
+#'   ctry.data$dist.pop,
+#'   error.list$dist_mismatches_pop,
+#'   "dist"
+#' )
 #'
 #' @export
 fix_ctry_data_missing_guids <- function(afp.data, pop.data, guid_list, spatial_scale) {
   afp.data <- switch(spatial_scale,
-                     "prov" = {
-                       afp.data |>
-                         dplyr::mutate(adm1guid = dplyr::if_else(.data$adm1guid %in% guid_list, NA, .data$adm1guid)) |>
-                         dplyr::left_join(pop.data, by = c("ctry", "prov", "year", "adm0guid")) |>
-                         dplyr::mutate(adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)) |>
-                         dplyr::select(-dplyr::any_of(c("adm1guid.x", "adm1guid.y")))
-                     },
-                     "dist" = {
-                       afp.data |>
-                         dplyr::mutate(adm2guid = dplyr::if_else(.data$adm2guid %in% guid_list, NA, .data$adm2guid)) |>
-                         dplyr::left_join(pop.data, by = c("ctry", "prov", "dist", "year",
-                                                    "adm0guid", "adm1guid")) |>
-                         dplyr::mutate(adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)) |>
-                         dplyr::select(-dplyr::any_of(c("adm2guid.x", "adm2guid.y")))
-                     }
-                     )
+    "prov" = {
+      afp.data |>
+        dplyr::mutate(adm1guid = dplyr::if_else(.data$adm1guid %in% guid_list, NA, .data$adm1guid)) |>
+        dplyr::left_join(pop.data, by = c("ctry", "prov", "year", "adm0guid")) |>
+        dplyr::mutate(adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)) |>
+        dplyr::select(-dplyr::any_of(c("adm1guid.x", "adm1guid.y")))
+    },
+    "dist" = {
+      afp.data |>
+        dplyr::mutate(adm2guid = dplyr::if_else(.data$adm2guid %in% guid_list, NA, .data$adm2guid)) |>
+        dplyr::left_join(pop.data, by = c(
+          "ctry", "prov", "dist", "year",
+          "adm0guid", "adm1guid"
+        )) |>
+        dplyr::mutate(adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)) |>
+        dplyr::select(-dplyr::any_of(c("adm2guid.x", "adm2guid.y")))
+    }
+  )
 
   return(afp.data)
 }
@@ -1919,11 +1938,9 @@ fix_ctry_data_missing_guids <- function(afp.data, pop.data, guid_list, spatial_s
 #'
 #' @export
 compress_png <- function(img, pngquant_path = NULL, suffix = "") {
-
   # Check
   if (!stringr::str_detect(img, ".png$")) {
     stop("Only .png files can be compressed.")
-
   }
   if (is.null(pngquant_path)) {
     stop("Please pass an argument to the pngquant_path parameter.")
@@ -1931,7 +1948,7 @@ compress_png <- function(img, pngquant_path = NULL, suffix = "") {
 
   if (!file.exists(pngquant_path)) {
     stop("Path pngquant.exe not found.")
-    }
+  }
 
   # Compress the image file
   system2(pngquant_path, args = c("--ext", paste0(suffix, ".png"), "--force", img))
@@ -1951,7 +1968,7 @@ compress_png <- function(img, pngquant_path = NULL, suffix = "") {
 #'
 #' @return `tibble` A tibble showing the columns where duplicates differ.
 #' @examples
-#' df1 <- tibble::tibble(col1 = c(1,1,2), col2 = c("a", "b", "c"), col3 = c(1,1,3))
+#' df1 <- tibble::tibble(col1 = c(1, 1, 2), col2 = c("a", "b", "c"), col3 = c(1, 1, 3))
 #' diff_cols <- get_diff_cols(df1, "col1")
 #'
 #' @export
@@ -1967,5 +1984,3 @@ get_diff_cols <- function(df, id_col) {
 
   return(col_with_differences)
 }
-
-

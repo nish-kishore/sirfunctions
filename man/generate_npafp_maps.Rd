@@ -39,15 +39,16 @@ Generates a map of NPAFP rates for each province per year.
 \examples{
 \dontrun{
 ctry.data <- init_dr("algeria")
-prov.extract <- f.npafp.rate.01(afp.data = ctry.data$afp.all.2,
-                                pop.data = ctry.data$prov.pop,
-                                start.date = start_date,
-                                end.date = end_date,
-                                spatial.scale = "prov",
-                                pending = T,
-                                rolling = F,
-                                sp_continuity_validation = F
-                                )
+prov.extract <- f.npafp.rate.01(
+  afp.data = ctry.data$afp.all.2,
+  pop.data = ctry.data$prov.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "prov",
+  pending = T,
+  rolling = F,
+  sp_continuity_validation = F
+)
 ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
 generate_npafp_maps(prov.extract, ctry.shape, prov.shape, "2021-01-01", "2023-12-31")

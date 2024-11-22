@@ -48,9 +48,11 @@ the function will only work on \code{ctry.data} (output of \code{\link[=extract_
 \examples{
 raw.data <- get_all_polio_data()
 ctry.data <- extract_country_data("algeria", raw.data)
-stool.summary <- f.timely.01(ctry.data$afp.all.2, ctry.data$ctry.pop,
-                             lubridate::as_date("2021-01-01"),
-                             lubridate::as_date("2023-12-31"),
-                             "ctry")
+stool.summary <- f.timely.01(
+  ctry.data$afp.all.2, ctry.data$ctry.pop,
+  lubridate::as_date("2021-01-01"),
+  lubridate::as_date("2023-12-31"),
+  "ctry"
+)
 
 }

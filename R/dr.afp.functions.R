@@ -267,7 +267,8 @@ add_age_group <- function(age.months) {
       age.months >= 145 & age.months < 180 ~ "145-179",
       age.months >= 180 ~ ">=180"
     )) |>
-    dplyr::select("age_group") |> dplyr::pull("age_group")
+    dplyr::select("age_group") |>
+    dplyr::pull("age_group")
   cli::cli_process_done()
 
   return(age.months)
@@ -315,16 +316,16 @@ generate_afp_by_month <- function(afp.data, start_date, end_date) {
   # extract.country.data()
 
   afp.data <- dplyr::rename_with(afp.data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
-                                 )
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
+  )
 
   summary <- afp.data |>
     dplyr::filter(dplyr::between(date, start_date, end_date)) |>
@@ -348,12 +349,14 @@ generate_afp_by_month <- function(afp.data, start_date, end_date) {
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
-#' afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2,
-#'                                       "2021-01-01", "2023-12-31"
-#'                                       )
-#' afp.by.month.prov <- generate_afp_by_month_summary(afp.by.month, ctry.data,
-#'                                                    "2021-01-01", "2023-12-31", "prov"
-#'                                                    )
+#' afp.by.month <- generate_afp_by_month(
+#'   ctry.data$afp.all.2,
+#'   "2021-01-01", "2023-12-31"
+#' )
+#' afp.by.month.prov <- generate_afp_by_month_summary(
+#'   afp.by.month, ctry.data,
+#'   "2021-01-01", "2023-12-31", "prov"
+#' )
 #'
 #' @export
 generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, end_date, by) {
@@ -368,7 +371,7 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
     "prov" = {
       afp.by.month |>
         dplyr::group_by(adm1guid, mon.year, year) |> # changed to guid
-        dplyr::summarize(cases =dplyr::n()) |>
+        dplyr::summarize(cases = dplyr::n()) |>
         dplyr::ungroup() |>
         tidyr::complete(
           mon.year = seq(lubridate::floor_date(start_date, "month"),
@@ -379,7 +382,7 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
           fill = list(cases = 0)
         ) |>
         dplyr::ungroup() |>
-        dplyr::mutate(year =lubridate::year(mon.year)) |>
+        dplyr::mutate(year = lubridate::year(mon.year)) |>
         # join this to the original  province population dataset
         dplyr::left_join(ctry.data$prov.pop[, c("adm1guid", "year", "prov", "u15pop")],
           by = c(
@@ -409,7 +412,7 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
     "dist" = {
       afp.by.month |>
         dplyr::group_by(dist, adm2guid, mon.year) |> # changed to guid
-        dplyr::summarize(cases =dplyr::n()) |>
+        dplyr::summarize(cases = dplyr::n()) |>
         dplyr::ungroup() |>
         tidyr::complete(
           mon.year = seq(lubridate::floor_date(start_date, "month"),
@@ -450,7 +453,7 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
       afp.by.month |>
         dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
         dplyr::group_by(year) |>
-        dplyr::summarize(afp.case =dplyr::n())
+        dplyr::summarize(afp.case = dplyr::n())
     }
   )
   return(afp.by.month.summary)
@@ -474,12 +477,13 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.ind <- f.npafp.rate.01(raw.data$afp, raw.data$ctry.pop,
-#'                             "2021-01-01", "2023-12-31","ctry",
-#'                             sp_continuity_validation = FALSE
-#'                             )
-#' ctry.ind <- prep_npafp_table(ctry.ind, raw.data$afp,
-#'                              "2021-01-01", "2023-12-31", "ctry"
-#'                              )
+#'   "2021-01-01", "2023-12-31", "ctry",
+#'   sp_continuity_validation = FALSE
+#' )
+#' ctry.ind <- prep_npafp_table(
+#'   ctry.ind, raw.data$afp,
+#'   "2021-01-01", "2023-12-31", "ctry"
+#' )
 #'
 #' @export
 prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spatial.scale) {
@@ -493,16 +497,16 @@ prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spati
 
   # If using raw.data ensure required columns are present
   afp.data <- dplyr::rename_with(afp.data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
-                                 )
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
+  )
 
 
 
@@ -586,6 +590,7 @@ prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spati
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.data <- clean_ctry_data(ctry.data)
 #' int.data <- generate_int_data(ctry.data, "2021-01-01", "2023-12-31", "ctry") # lab data not attached
 #' \dontrun{
 #' # If lab data is available. Assume ctry.data is loaded.
@@ -597,7 +602,6 @@ prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spati
 #' @seealso [clean_ctry_data()]
 #' @export
 generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, lab.data = NULL) {
-
   if (!"daysstooltolab" %in% names(ctry.data$afp.all.2)) {
     cli::cli_abort("'daysstooltolab' column is missing.
                    Please run 'clean_ctry_data()' and try again.")
@@ -612,20 +616,20 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 
   select_criteria <- NULL
   select_criteria <- switch(spatial.scale,
-                            "ctry" = {
-                              c(
-                                "epid", "ontonot", "nottoinvest", "investtostool1",
-                                "stool1tostool2", stool_to_lab_name, "year",
-                                "adm0guid", "ctry"
-                              )
-                            },
-                            "prov" = {
-                              c(
-                                "epid", "ontonot", "nottoinvest", "investtostool1",
-                                "stool1tostool2", stool_to_lab_name, "year",
-                                "adm0guid", "adm1guid", "ctry", "prov"
-                              )
-                            }
+    "ctry" = {
+      c(
+        "epid", "ontonot", "nottoinvest", "investtostool1",
+        "stool1tostool2", stool_to_lab_name, "year",
+        "adm0guid", "ctry"
+      )
+    },
+    "prov" = {
+      c(
+        "epid", "ontonot", "nottoinvest", "investtostool1",
+        "stool1tostool2", stool_to_lab_name, "year",
+        "adm0guid", "adm1guid", "ctry", "prov"
+      )
+    }
   )
   as_num_conversion <- c(stool_to_lab_name, "ontonot", "nottoinvest", "investtostool1", "stool1tostool2")
 
@@ -637,8 +641,8 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
         dplyr::group_by(adm0guid, year) |>
         dplyr::select(any_of(select_criteria)) |>
         dplyr::mutate(dplyr::across(
-          dplyr::any_of(as_num_conversion), \(x) as.numeric(x))
-          )
+          dplyr::any_of(as_num_conversion), \(x) as.numeric(x)
+        ))
     },
     "prov" = {
       int.data <- afp.data |>
@@ -646,8 +650,8 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
         dplyr::group_by(adm1guid, year) |>
         dplyr::select(dplyr::any_of(select_criteria)) |>
         dplyr::mutate(dplyr::across(
-          dplyr::any_of(as_num_conversion), \(x) as.numeric(x))
-          )
+          dplyr::any_of(as_num_conversion), \(x) as.numeric(x)
+        ))
     }
   )
 
@@ -659,9 +663,10 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
           values_to = "value"
         ) |>
         dplyr::group_by(year, type, adm0guid, ctry) |>
-        dplyr::summarize(medi = median(value, na.rm = T),
-                         freq = sum(!is.na(value))
-                         )
+        dplyr::summarize(
+          medi = median(value, na.rm = T),
+          freq = sum(!is.na(value))
+        )
     },
     "prov" = {
       int.data <- int.data |>
@@ -671,8 +676,10 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
           values_to = "value"
         ) |>
         dplyr::group_by(year, type, adm1guid, prov, ctry) |>
-        dplyr::summarize(medi = median(value, na.rm = T),
-                         freq = sum(!is.na(value)))
+        dplyr::summarize(
+          medi = median(value, na.rm = T),
+          freq = sum(!is.na(value))
+        )
     }
   )
 
@@ -687,26 +694,25 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
   }
 
   # Filtering based on whether labs are attached
-  if(is.null(lab.data)) {
+  if (is.null(lab.data)) {
     int.data <- int.data |>
       dplyr::filter(type %in% c(
         "ontonot",
         "nottoinvest",
         "investtostool1",
-        "stool1tostool2" ,
+        "stool1tostool2",
         "daysstooltolab"
-        )
-      )
+      ))
   } else {
-    who.additional.cols <- c("days.coll.sent.field",
-                             "days.sent.field.rec.nat",
-                             "days.rec.nat.sent.lab",
-                             "days.sent.lab.rec.lab",
-                             "days.rec.lab.culture"
-                             )
+    who.additional.cols <- c(
+      "days.coll.sent.field",
+      "days.sent.field.rec.nat",
+      "days.rec.nat.sent.lab",
+      "days.sent.lab.rec.lab",
+      "days.rec.lab.culture"
+    )
     int.data.filter <- int.data |>
-      dplyr::filter(type %in% who.additional.cols
-                    ) |>
+      dplyr::filter(type %in% who.additional.cols) |>
       dplyr::summarise(sum = sum(.data$medi)) |>
       dplyr::pull()
 
@@ -718,8 +724,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
         dplyr::filter(!type %in% c(
           "days.collect.lab",
           "days.lab.culture"
-        )
-        )
+        ))
     }
   }
 
@@ -729,7 +734,7 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
     "nottoinvest" = "Case notification to investigation",
     "investtostool1" = "Case investigation to stool 1 collection",
     "stool1tostool2" = "Stool 1 collection to stool 2 collection",
-    "daysstooltolab" = "Last stool collection sent to lab", #if no lab data
+    "daysstooltolab" = "Last stool collection sent to lab", # if no lab data
     "days.collect.lab" = "Last stool collection to received in lab",
     "days.lab.culture" = "Stool received lab to final culture results",
 
@@ -755,13 +760,11 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
       "days.itd.seqres",
       "days.itd.arriveseq",
       "days.seq.rec.res"
-      )
-      ) |>
+    )) |>
     dplyr::mutate(type = ordered(.data$type,
-                                 levels = names(levs),
-                                 labels = levs
-                                 )
-                  ) |>
+      levels = names(levs),
+      labels = levs
+    )) |>
     dplyr::arrange(year)
 
   # Remove columns containing only NA values
@@ -786,10 +789,11 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
-#' stool.data <- generate_stool_data(ctry.data$afp.all.2,
-#'                                   "2021-01-01", "2023-12-31",
-#'                                   "good", "inadequate"
-#'                                   )
+#' stool.data <- generate_stool_data(
+#'   ctry.data$afp.all.2,
+#'   "2021-01-01", "2023-12-31",
+#'   "good", "inadequate"
+#' )
 #' table60.days <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
 #'
 #' @export
@@ -826,11 +830,13 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
     #   end_date > Sys.Date() - 120, (Sys.Date() - 120),
     #   end_date
     # ))) |>
-    dplyr::mutate(due.60followup = dplyr::if_else(date <= (Sys.Date() - days(120)), 1, 0),
-                  need60.sys.date = Sys.Date()) |> # needed to record when the table was created
+    dplyr::mutate(
+      due.60followup = dplyr::if_else(date <= (Sys.Date() - days(120)), 1, 0),
+      need60.sys.date = Sys.Date()
+    ) |> # needed to record when the table was created
     dplyr::filter(dplyr::between(date, start_date, end_date)) |>
     dplyr::mutate(need60day.v2 = dplyr::if_else(.data$adequacy.final == "Inadequate" &
-                                                  .data$due.60followup == 1, 1, 0)) |>
+      .data$due.60followup == 1, 1, 0)) |>
     # dplyr::filter(need60day.v2 == 1 |
     #   cdc.classification.all2 == "COMPATIBLE") |>
     dplyr::mutate(
@@ -954,15 +960,16 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
 #'
-#'
 #' @export
 generate_year_lab <- function(ctry.data, start_date, end_date) {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   afp.year.lab <- ctry.data$afp.all.2 |>
-    dplyr::filter(dplyr::between(.data$date, start_date, end_date),
-                  cdc.classification.all2 != "NOT-AFP") |>
+    dplyr::filter(
+      dplyr::between(.data$date, start_date, end_date),
+      cdc.classification.all2 != "NOT-AFP"
+    ) |>
     dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
     dplyr::mutate(labs = paste0(
       year,
@@ -1015,13 +1022,14 @@ generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
-#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "2021-01-01", "2023-12-31",
-#'                                   "good", "inadequate"
-#'                                   )
+#' stool.data <- generate_stool_data(
+#'   ctry.data$afp.all.2, "2021-01-01", "2023-12-31",
+#'   "good", "inadequate"
+#' )
 #' table60.days <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
 #' pot.c.clust <- generate_potentially_compatibles_cluster(table60.days,
-#'                                                         create_cluster = TRUE
-#'                                                         )
+#'   create_cluster = TRUE
+#' )
 #'
 #' @export
 generate_potentially_compatibles_cluster <- function(cases.need60day, create_cluster = F) {
@@ -1208,7 +1216,7 @@ clean_ctry_data <- function(ctry.data) {
 #'
 #' @seealso [f.stool.ad.01()]
 #' @export
-generate_stool_data <- function(afp.data, start_date, end_date, missing="good", bad.data="inadequate") {
+generate_stool_data <- function(afp.data, start_date, end_date, missing = "good", bad.data = "inadequate") {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
@@ -1216,15 +1224,16 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing="good", 
   # extract.country.data()
 
   afp.data <- dplyr::rename_with(afp.data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class")
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
+  )
 
   afp.data <- afp.data |>
     dplyr::filter(dplyr::between(date, start_date, end_date))
@@ -1234,34 +1243,35 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing="good", 
 
   # Select how to treat bad data
   stool.data <- switch(bad.data,
-                       "remove" = {
-                         cli::cli_alert_warning("AFP cases with bad data excluded from stool adequacy calculation.")
-                         stool.data
-                       },
-                       "inadequate" = {
-                         stool.data |>
-                           dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 77, 0, .data$adequacy.final))
-                       }
+    "remove" = {
+      cli::cli_alert_warning("AFP cases with bad data excluded from stool adequacy calculation.")
+      stool.data
+    },
+    "inadequate" = {
+      stool.data |>
+        dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 77, 0, .data$adequacy.final))
+    }
   )
 
   # Select how to treat missing data
   # adequacy.01, adequacy.02, adequacy.03 are generated in pre-processing
   stool.data <- switch(missing,
-                       "good" = {
-                         stool.data |>
-                           dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99 , .data$adequacy.03, .data$adequacy.final))
-                       },
-                       "bad" = {
-                         stool.data |>
-                           dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.01, .data$adequacy.final))
-                       },
-                       "exclude" = {
-                         cli::cli_alert_warning("AFP cases with missing adequacy excluded from stool adequacy calculation.")
-                         stool.data |>
-                           dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.02, .data$adequacy.final))
-                       })
+    "good" = {
+      stool.data |>
+        dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.03, .data$adequacy.final))
+    },
+    "bad" = {
+      stool.data |>
+        dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.01, .data$adequacy.final))
+    },
+    "exclude" = {
+      cli::cli_alert_warning("AFP cases with missing adequacy excluded from stool adequacy calculation.")
+      stool.data |>
+        dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.02, .data$adequacy.final))
+    }
+  )
 
-    # Rename values for stool adequacy final
+  # Rename values for stool adequacy final
   stool.data <- stool.data |>
     dplyr::mutate(
       adequacy.final = dplyr::case_when(

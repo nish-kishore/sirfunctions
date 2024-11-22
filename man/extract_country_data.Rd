@@ -21,5 +21,4 @@ Filters country specific data from the CDC generated \code{raw.data} object from
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("nigeria", raw.data)
 
-
 }

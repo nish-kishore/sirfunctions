@@ -15,9 +15,10 @@
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate",
-#'                                   "2021-01-01", "2023-12-31"
-#'                                   )
+#' stool.data <- generate_stool_data(
+#'   ctry.data$afp.all.2, "good", "inadequate",
+#'   "2021-01-01", "2023-12-31"
+#' )
 #' create_afp_export(stool.data)
 #' }
 #'
@@ -90,15 +91,18 @@ create_afp_export <- function(stool.data, country = Sys.getenv("DR_COUNTRY"), ex
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' cstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$ctry.pop,
-#'                         "2021-01-01", "2023-01-01", "ctry"
-#'                         )
-#' pstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$prov.pop,
-#'                         "2021-01-01", "2023-01-01", "prov"
-#'                         )
-#' dstool <- f.stool.ad.01(ctry.data$afp.all.2, ctry.data$dist.pop,
-#'                         "2021-01-01", "2023-01-01", "dist"
-#'                         )
+#' cstool <- f.stool.ad.01(
+#'   ctry.data$afp.all.2, ctry.data$ctry.pop,
+#'   "2021-01-01", "2023-01-01", "ctry"
+#' )
+#' pstool <- f.stool.ad.01(
+#'   ctry.data$afp.all.2, ctry.data$prov.pop,
+#'   "2021-01-01", "2023-01-01", "prov"
+#' )
+#' dstool <- f.stool.ad.01(
+#'   ctry.data$afp.all.2, ctry.data$dist.pop,
+#'   "2021-01-01", "2023-01-01", "dist"
+#' )
 #' create_stool_adequacy_export(cstool, pstool, dstool)
 #' }
 #'
@@ -128,15 +132,18 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' ctry.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$ctry.pop,
-#'                                  "2021-01-01", "2023-01-01", "ctry"
-#'                                  )
-#' prov.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$prov.pop,
-#'                                  "2021-01-01", "2023-01-01", "prov"
-#'                                  )
-#' dist.case.ind <- f.npafp.rate.01(ctry.data$afp.all.2, ctry.data$dist.pop,
-#'                                  "2021-01-01", "2023-01-01", "dist"
-#'                                  )
+#' ctry.case.ind <- f.npafp.rate.01(
+#'   ctry.data$afp.all.2, ctry.data$ctry.pop,
+#'   "2021-01-01", "2023-01-01", "ctry"
+#' )
+#' prov.case.ind <- f.npafp.rate.01(
+#'   ctry.data$afp.all.2, ctry.data$prov.pop,
+#'   "2021-01-01", "2023-01-01", "prov"
+#' )
+#' dist.case.ind <- f.npafp.rate.01(
+#'   ctry.data$afp.all.2, ctry.data$dist.pop,
+#'   "2021-01-01", "2023-01-01", "dist"
+#' )
 #' create_npafp_export(ctry.case.ind, prov.case.ind, dist.case.ind)
 #' }
 #'
@@ -212,9 +219,10 @@ create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate",
-#'                                   "2021-01-01", "2023-12-31"
-#'                                   )
+#' stool.data <- generate_stool_data(
+#'   ctry.data$afp.all.2, "good", "inadequate",
+#'   "2021-01-01", "2023-12-31"
+#' )
 #' cases.need60day <- generate_60_day_table_data(stool.data, start_date, end_date)
 #' create_60_day_export(cases.need60day)
 #' }
@@ -255,9 +263,10 @@ create_60_day_export <- function(cases.need60day, country = Sys.getenv("DR_COUNT
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate",
-#'                                   "2021-01-01", "2023-12-31"
-#'                                   )
+#' stool.data <- generate_stool_data(
+#'   ctry.data$afp.all.2, "good", "inadequate",
+#'   "2021-01-01", "2023-12-31"
+#' )
 #' cases.need60day <- generate_60_day_table_data(stool.data, start_date, end_date)
 #' pot.c.clust <- generate_potentially_compatibles_cluster(cases.need60day)
 #' create_pot_comp_clust_export(pot.c.clust)

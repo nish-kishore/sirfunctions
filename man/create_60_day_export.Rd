@@ -26,9 +26,10 @@ Exports the output of \link{generate_60_day_table_data} into an Excel file.
 \examples{
 \dontrun{
 ctry.data <- init_dr("algeria")
-stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate",
-                                  "2021-01-01", "2023-12-31"
-                                  )
+stool.data <- generate_stool_data(
+  ctry.data$afp.all.2, "good", "inadequate",
+  "2021-01-01", "2023-12-31"
+)
 cases.need60day <- generate_60_day_table_data(stool.data, start_date, end_date)
 create_60_day_export(cases.need60day)
 }

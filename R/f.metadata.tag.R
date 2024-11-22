@@ -13,10 +13,9 @@
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' df <- datasets::iris
 #' p1 <- ggplot2::ggplot() +
-#'       ggplot2::geom_col(data = df, ggplot2::aes(x = Sepal.Length, y = Sepal.Width))
+#'   ggplot2::geom_col(data = df, ggplot2::aes(x = Sepal.Length, y = Sepal.Width))
 #' p2 <- f.metadata.tag(p1, raw.data) # use raw.data download time
 #' p3 <- f.metadata.tag(p1, time_tag = "2021-01-01") # use custom time tag
-#'
 #'
 #' @export
 f.metadata.tag <- function(object,
@@ -29,13 +28,14 @@ f.metadata.tag <- function(object,
     return(object)
   } else if (!is.null(raw_data) & is.null(time_tag)) {
     tryCatch(
-      {time_tag = raw_data$metadata$download_time
+      {
+        time_tag <- raw_data$metadata$download_time
       },
       error = function(cond) {
         cond$message <- "raw_data does not contain metadata$download_time."
         stop(cond)
-        }
-      )
+      }
+    )
   }
 
   #

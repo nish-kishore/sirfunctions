@@ -21,8 +21,7 @@
 #' @export
 
 f.expand.bbox <- function(bbox, X, Y, X2 = X, Y2 = Y,
-                        crs_out = 4326) {
-
+                          crs_out = 4326) {
   bbox <- bbox |>
     sf::st_as_sfc() |>
     sf::st_transform(crs = 4326) |>

@@ -20,12 +20,14 @@ Generates a table summarizing the number of inadequate cases that need follow up
 \dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
-stool.data <- generate_stool_data(ctry.data$afp.all.2, "good", "inadequate",
-                                  "2021-01-01", "2023-12-31"
-                                  )
-cases.need60day <- generate_60_day_table_data(stool.data,
-                                  "2021-01-01", "2023-12-31"
-                                  )
+stool.data <- generate_stool_data(
+  ctry.data$afp.all.2, "good", "inadequate",
+  "2021-01-01", "2023-12-31"
+)
+cases.need60day <- generate_60_day_table_data(
+  stool.data,
+  "2021-01-01", "2023-12-31"
+)
 generate_60_day_tab(cases.need60day)
 }
 

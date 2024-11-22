@@ -31,9 +31,10 @@ Generates a tile plot for the number of AFP cases per month by province.
 \dontrun{
 ctry.data <- init_dr("algeria")
 afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, start_date, end_date)
-afp.by.month.prov <- generate_afp_by_month_summary(afp.by.month, ctry.data,
-                                                   start_date, end_date, "prov"
-                                                   )
+afp.by.month.prov <- generate_afp_by_month_summary(
+  afp.by.month, ctry.data,
+  start_date, end_date, "prov"
+)
 generate_afp_prov_year(afp.by.month.prov, start_date, end_date)
 }
 

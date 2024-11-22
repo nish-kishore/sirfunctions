@@ -26,10 +26,12 @@
 #' @examples
 #' raw.data <- get_all_polio_data()
 #' ctry.data <- extract_country_data("algeria", raw.data)
-#' stool.summary <- f.timely.01(ctry.data$afp.all.2, ctry.data$ctry.pop,
-#'                              lubridate::as_date("2021-01-01"),
-#'                              lubridate::as_date("2023-12-31"),
-#'                              "ctry")
+#' stool.summary <- f.timely.01(
+#'   ctry.data$afp.all.2, ctry.data$ctry.pop,
+#'   lubridate::as_date("2021-01-01"),
+#'   lubridate::as_date("2023-12-31"),
+#'   "ctry"
+#' )
 #'
 #' @export
 
@@ -75,10 +77,10 @@ f.timely.01 <- function(
   end.date <- lubridate::as_date(end.date)
 
   admin.data <- admin.data %>%
-    dplyr::filter(dplyr::between(year, lubridate::year(start.date),
-                                 lubridate::year(end.date)
-                                 )
-                  )
+    dplyr::filter(dplyr::between(
+      year, lubridate::year(start.date),
+      lubridate::year(end.date)
+    ))
 
   afp.data1 <- afp.data
 

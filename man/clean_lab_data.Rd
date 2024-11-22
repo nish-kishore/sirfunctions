@@ -17,6 +17,8 @@ clean_lab_data(
 \item{ctry.data}{\code{list} Large list containing country polio data with lab data attached. Either from
 \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
+\item{ctry_name}{\code{str} Name of the country. Defaults to the desk review country.}
+
 \item{start.date}{\code{str} Start date of analysis.}
 
 \item{end.date}{\code{str} End date of analysis.}

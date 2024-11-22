@@ -673,10 +673,10 @@ init_dr <-
 #' @export
 upload_dr_to_github <-
   function(file_path, repo_path, message = "updating file") {
-
     if (!requireNamespace("git2r", quietly = TRUE)) {
       stop('Package "git2r" must be installed to use this function.',
-           .call = FALSE)
+        .call = FALSE
+      )
     }
 
     # Check if the repository is initialized
@@ -743,8 +743,7 @@ upload_dr_to_github <-
 freeze_dr_data <- function(rds_obj,
                            file_name,
                            country = Sys.getenv("DR_COUNTRY"),
-                           year = as.numeric(format(Sys.Date(), "%Y"))
-                           ) {
+                           year = as.numeric(format(Sys.Date(), "%Y"))) {
   country <- stringr::str_to_lower(country)
 
   sirfunctions::edav_io(

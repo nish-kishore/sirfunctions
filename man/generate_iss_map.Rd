@@ -40,9 +40,10 @@ ctry.data <- init_dr("algeria", iss_data_path = iss_path)
 ctry.data$iss.data <- clean_iss_data(ctry.data)
 ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
-generate_iss_map(ctry.data$iss.data, ctry.shape, prov.shape,
-                 "2021-01-01", "2023-12-31"
-                 )
+generate_iss_map(
+  ctry.data$iss.data, ctry.shape, prov.shape,
+  "2021-01-01", "2023-12-31"
+)
 }
 
 }

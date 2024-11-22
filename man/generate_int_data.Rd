@@ -37,6 +37,7 @@ sent to lab.
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
+ctry.data <- clean_ctry_data(ctry.data)
 int.data <- generate_int_data(ctry.data, "2021-01-01", "2023-12-31", "ctry") # lab data not attached
 \dontrun{
 # If lab data is available. Assume ctry.data is loaded.

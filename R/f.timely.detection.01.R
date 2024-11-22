@@ -22,10 +22,14 @@
 #' raw.data <- get_all_polio_data()
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.seq <- get_lab_locs()
-#' global.summary <- f.timely.detection.01(raw.data$afp, raw.data$es, ctry.seq,
-#'                                         "2021-01-01", "2023-12-31")
-#' ctry.summary <- f.timely.detection.01(ctry.data$afp.all.2, ctry.data$es, ctry.seq,
-#'                                       "2021-01-01", "2023-12-31")
+#' global.summary <- f.timely.detection.01(
+#'   raw.data$afp, raw.data$es, ctry.seq,
+#'   "2021-01-01", "2023-12-31"
+#' )
+#' ctry.summary <- f.timely.detection.01(
+#'   ctry.data$afp.all.2, ctry.data$es, ctry.seq,
+#'   "2021-01-01", "2023-12-31"
+#' )
 #'
 #' @export
 
@@ -53,15 +57,15 @@ f.timely.detection.01 <- function(
 
   # borrowed from extract.country.data
   afp.data <- dplyr::rename_with(afp.data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
   )
 
 
@@ -89,7 +93,8 @@ f.timely.detection.01 <- function(
   es.data <- es.data |>
     dplyr::filter(between(.data$collect.date, start.date, end.date)) |>
     dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) lubridate::as_date(x)),
-                  ctry = ADM0_NAME)
+      ctry = ADM0_NAME
+    )
 
   # Warning message about non-overlapping dates
   if (start.date < lubridate::as_date(es.data$collect.date |> min(na.rm = T))) {

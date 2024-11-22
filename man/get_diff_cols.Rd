@@ -21,7 +21,7 @@ it is difficult to figure out which columns these potential duplicates differ. T
 where records with the same unique identifier differ.
 }
 \examples{
-df1 <- tibble::tibble(col1 = c(1,1,2), col2 = c("a", "b", "c"), col3 = c(1,1,3))
+df1 <- tibble::tibble(col1 = c(1, 1, 2), col2 = c("a", "b", "c"), col3 = c(1, 1, 3))
 diff_cols <- get_diff_cols(df1, "col1")
 
 }

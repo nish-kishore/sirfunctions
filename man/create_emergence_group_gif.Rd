@@ -49,8 +49,10 @@ include_env <- T
 cumulative <- F
 out_gif <- getwd()
 
-create_emergence_group_gif(emergence_group, pos, dist, ctry, include_env,
-                           cumulative, out_gif)
+create_emergence_group_gif(
+  emergence_group, pos, dist, ctry, include_env,
+  cumulative, out_gif
+)
 }
 
 }

@@ -22,12 +22,13 @@ optional parameter to run a clustering algorithm.
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
-stool.data <- generate_stool_data(ctry.data$afp.all.2, "2021-01-01", "2023-12-31",
-                                  "good", "inadequate"
-                                  )
+stool.data <- generate_stool_data(
+  ctry.data$afp.all.2, "2021-01-01", "2023-12-31",
+  "good", "inadequate"
+)
 table60.days <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
 pot.c.clust <- generate_potentially_compatibles_cluster(table60.days,
-                                                        create_cluster = TRUE
-                                                        )
+  create_cluster = TRUE
+)
 
 }

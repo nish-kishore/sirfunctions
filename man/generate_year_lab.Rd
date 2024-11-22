@@ -27,5 +27,4 @@ raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
 ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
 
-
 }

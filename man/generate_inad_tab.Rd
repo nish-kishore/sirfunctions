@@ -4,13 +4,11 @@
 \alias{generate_inad_tab}
 \title{Issues with stool adequacy at the country level}
 \usage{
-generate_inad_tab(ctry.data, stool.data, cstool, start_date, end_date)
+generate_inad_tab(ctry.data, cstool, start_date, end_date)
 }
 \arguments{
 \item{ctry.data}{\code{list} large list containing polio data for a country. This is the output of
 \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
-
-\item{stool.data}{\code{tibble} AFP data with stool adequacy columns. This is the output of \code{\link[=generate_stool_data]{generate_stool_data()}}.}
 
 \item{cstool}{\code{tibble} Stool adequacy at the country level. This is the output of \code{\link[=f.stool.ad.01]{f.stool.ad.01()}}.}
 
@@ -30,16 +28,17 @@ ctry.data <- init_dr("algeria")
 start_date <- "2021-01-01"
 end_date <- "2023-12-31"
 stool.data <- generate_stool_data(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
-cstool <- f.stool.ad.01(afp.data = ctry.data$afp.all.2,
-                        admin.data = ctry.data$ctry.pop,
-                        start.date = start_date,
-                        end.date = end_date,
-                        spatial.scale = "ctry",
-                        missing = "good",
-                        bad.data = "inadequate",
-                        rolling = F,
-                        sp_continuity_validation = F
-                       )
+cstool <- f.stool.ad.01(
+  afp.data = ctry.data$afp.all.2,
+  admin.data = ctry.data$ctry.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "ctry",
+  missing = "good",
+  bad.data = "inadequate",
+  rolling = F,
+  sp_continuity_validation = F
+)
 generate_inad_tab(ctry.data, stool.data, cstool, start_date, end_date)
 }
 

@@ -33,11 +33,11 @@ lab_path <- "C:/Users/ABC1/Desktop/algeria_lab_data.csv"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
 lab.timeliness.ctry <- generate_lab_timeliness(ctry.data$lab.data, "ctry", start_date, end_date)
 int.data.ctry <- generate_int_data(ctry.data, start_date, end_date,
-                                   spatial.scale = "ctry",
-                                   lab.timeliness.ctry
-                                   )
- afp.year.lab <- generate_year_lab(ctry.data, start_date, end_date)
- generate_ctry_timeliness_graph(int.data.ctry, afp.year.lab)
+  spatial.scale = "ctry",
+  lab.timeliness.ctry
+)
+afp.year.lab <- generate_year_lab(ctry.data, start_date, end_date)
+generate_ctry_timeliness_graph(int.data.ctry, afp.year.lab)
 }
 }
 \seealso{

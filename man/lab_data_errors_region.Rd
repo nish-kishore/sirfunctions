@@ -39,5 +39,4 @@ ctry.data <- init_dr("algeria", lab_data_path = lab_path)
 lab_data_errors_region(ctry.data, "2021-01-01", "2023-12-31")
 }
 
-
 }

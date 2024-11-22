@@ -102,16 +102,16 @@ directly from objects, unlike \code{generate_dr_ppt2()} which uses images saved 
 \dontrun{
 # Assume all figures and tables are assigned to the appropriate variable.
 template_path <- "C:/Users/ABC1/Desktop/deskreview_template.pptx"
-generate_dr_ppt(template_path, ctry.data, start_date, end_date, pop.map,
-pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
-surv.ind.tab, afp.dets.prov.year, pop.tab, npafp.map,
-npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
-inad.tab.flex, tab.60d, case.num.dose.g,
-timely_nation, timely_prov,
-mapt_all, es.site.det, es.det.map, es.timely,
-es.table
+generate_dr_ppt(
+  template_path, ctry.data, start_date, end_date, pop.map,
+  pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
+  surv.ind.tab, afp.dets.prov.year, pop.tab, npafp.map,
+  npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
+  inad.tab.flex, tab.60d, case.num.dose.g,
+  timely_nation, timely_prov,
+  mapt_all, es.site.det, es.det.map, es.timely,
+  es.table
 )
-
 }
 
 }

@@ -110,7 +110,7 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
   g1 <- ggplot2::ggplot() +
     ggplot2::geom_sf(data = m_base_region, fill = "grey80", color = "black", lwd = 0.6, show.legend = FALSE) +
     ggplot2::geom_sf(data = m_base_prov, aes(fill = .data$detect_status2), color = "grey", lwd = 0.5, show.legend = TRUE) +
-    ggplot2::geom_sf(data = m_base_region, alpha = 0,  color = "black", lwd = 0.6, show.legend = FALSE) +
+    ggplot2::geom_sf(data = m_base_region, alpha = 0, color = "black", lwd = 0.6, show.legend = FALSE) +
     ggplot2::scale_fill_manual(
       name = "Last detection \nin region:",
       values = c(
@@ -322,12 +322,11 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
 #' @return `tibble` Filtered dataset used to build the map.
 pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_date, .end_date) {
   if (.vdpv == "YES") {
-
-    virus_type_modified <- dplyr::case_when(virus_type =="cVDPV 1" ~ "vtype 1",
-                                  virus_type == "cVDPV 2" ~ "vtype 2",
-                                  virus_type == "cVDPV 3" ~ "vtype 3",
-                                  virus_type == "WILD 1" ~ "wtype 1",
-                                  .default = as.character(virus_type)
+    virus_type_modified <- dplyr::case_when(virus_type == "cVDPV 1" ~ "vtype 1",
+      virus_type == "cVDPV 2" ~ "vtype 2",
+      virus_type == "cVDPV 3" ~ "vtype 3",
+      virus_type == "WILD 1" ~ "wtype 1",
+      .default = as.character(virus_type)
     )
 
     data_p <- raw.data$pos |>
@@ -445,8 +444,7 @@ load_sharepoint_env <- function(raw.data) {
 #' }
 #'
 #' @export
-set_emergence_colors <- function(raw.data, country, start_date=NULL, end_date=NULL) {
-
+set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date = NULL) {
   # Default start and end dates
   if (is.null(end_date)) {
     end_date <- lubridate::as_date(raw.data$metadata$download_time)
@@ -479,9 +477,11 @@ set_emergence_colors <- function(raw.data, country, start_date=NULL, end_date=NU
       .data$measurement == "WILD 1" ~ viruscluster,
       TRUE ~ emergencegroup
     )) |>
-    dplyr::filter(.data$dateonset >= start_date,
-                  .data$source %in% c("AFP", "ENV"),
-                  .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")) |>
+    dplyr::filter(
+      .data$dateonset >= start_date,
+      .data$source %in% c("AFP", "ENV"),
+      .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")
+    ) |>
     dplyr::distinct(.data$emg_grp2) |>
     dplyr::arrange(.data$emg_grp2) |>
     tidyr::drop_na()
@@ -605,18 +605,17 @@ set_emergence_colors <- function(raw.data, country, start_date=NULL, end_date=NU
 #' @export
 generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
                                vdpv = T, new_detect = T,
-                      surv = c("AFP", "ES", "OTHER"), labels = "YES",
-                      owner = "CDC-GID-PEB",
-                      new_detect_expand = F,
-                      start_date = NULL,
-                      end_date = NULL,
-                      output = NULL,
-                      image_size = NULL,
-                      height = 6.2,
-                      width = 4.5,
-                      scale = 1.25,
-                      dpi = 300) {
-
+                               surv = c("AFP", "ES", "OTHER"), labels = "YES",
+                               owner = "CDC-GID-PEB",
+                               new_detect_expand = F,
+                               start_date = NULL,
+                               end_date = NULL,
+                               output = NULL,
+                               image_size = NULL,
+                               height = 6.2,
+                               width = 4.5,
+                               scale = 1.25,
+                               dpi = 300) {
   if (!requireNamespace("ggspatial", quietly = TRUE)) {
     stop('Package "ggspatial" must be installed to use this function.',
       .call = FALSE
@@ -631,7 +630,7 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
 
   if (!requireNamespace("tibble", quietly = TRUE)) {
     stop('Package "tibble" must be installed to use this function.',
-         .call = FALSE
+      .call = FALSE
     )
   }
 
@@ -886,4 +885,3 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
 # raw.data <- sirfunctions::get_all_polio_data()
 # country <- c("central african republic", "south sudan", "sudan")
 # adhoc_map(raw.data, country)
-

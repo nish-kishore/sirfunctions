@@ -45,8 +45,8 @@ es.data.long <- generate_es_data_long(ctry.data$es)
 ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
 generate_es_det_map(ctry.data$es, es.data.long, ctry.shape, prov.shape,
-                    es_end_date = "2023-01-01"
-                    )
+  es_end_date = "2023-01-01"
+)
 }
 
 }

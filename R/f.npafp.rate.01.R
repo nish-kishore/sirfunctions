@@ -14,20 +14,18 @@
 #'
 #' @return `tibble` A summary table including NPAFP rates and population data.
 npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
-
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
 
   geo <- switch(spatial_scale,
-                "ctry" = "adm0guid",
-                "prov" = "adm1guid",
-                "dist" = "adm2guid"
+    "ctry" = "adm0guid",
+    "prov" = "adm1guid",
+    "dist" = "adm2guid"
   )
 
-  pop_cols <- switch(
-    spatial_scale,
+  pop_cols <- switch(spatial_scale,
     "ctry" = names.ctry,
     "prov" = names.prov,
     "dist" = names.dist
@@ -42,18 +40,20 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
     dplyr::ungroup()
 
   int.data <- switch(spatial_scale,
-                     "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
-                     "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
-                     "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
+    "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
+    "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
+    "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
   )
 
   int.data <- dplyr::full_join(int.data, pop.data) |>
     dplyr::left_join(year.data) |>
     dplyr::mutate(npafp_rate = .data$n_npafp / .data$u15pop * 100000 / .data$weight) |>
-    dplyr::select(dplyr::all_of(c("year", "n_npafp", "u15pop",
-                                  "n_days", "days_in_year", "weight",
-                                  "earliest_date", "latest_date", "npafp_rate",
-                                  pop_cols))) |>
+    dplyr::select(dplyr::all_of(c(
+      "year", "n_npafp", "u15pop",
+      "n_days", "days_in_year", "weight",
+      "earliest_date", "latest_date", "npafp_rate",
+      pop_cols
+    ))) |>
     arrange(!!!dplyr::syms(spatial_scale), .data$year)
 
   return(int.data)
@@ -83,15 +83,15 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
   end_date <- lubridate::as_date(end_date)
 
   geo <- switch(spatial_scale,
-                "ctry" = "adm0guid",
-                "prov" = "adm1guid",
-                "dist" = "adm2guid"
+    "ctry" = "adm0guid",
+    "prov" = "adm1guid",
+    "dist" = "adm2guid"
   )
 
   pop_cols <- switch(spatial_scale,
-                     "ctry" = names.ctry,
-                     "prov" = names.prov,
-                     "dist" = names.dist
+    "ctry" = names.ctry,
+    "prov" = names.prov,
+    "dist" = names.dist
   )
 
   # Calculate par
@@ -117,9 +117,9 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
     dplyr::left_join(par.data)
 
   int.data <- switch(spatial_scale,
-                     "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
-                     "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
-                     "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
+    "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
+    "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
+    "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
   )
 
   int.data <- int.data |>
@@ -128,8 +128,8 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
   # Get population information
   int.data <- int.data |>
     dplyr::left_join(year.pop.data |>
-                       dplyr::select(dplyr::all_of(pop_cols), -year) |>
-                       dplyr::distinct())
+      dplyr::select(dplyr::all_of(pop_cols), -year) |>
+      dplyr::distinct())
 
   return(int.data)
 }
@@ -170,7 +170,6 @@ f.npafp.rate.01 <- function(
     pending = T,
     rolling = F,
     sp_continuity_validation = T) {
-
   # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
@@ -180,22 +179,22 @@ f.npafp.rate.01 <- function(
   # extract.country.data()
 
   afp.data <- dplyr::rename_with(afp.data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
   )
   pop.data <- dplyr::rename_with(pop.data, recode,
-                                 ADM0_NAME = "ctry",
-                                 ADM1_NAME = "prov",
-                                 ADM2_NAME = "dist",
-                                 ADM0_GUID = "adm0guid",
-                                 u15pop.prov = "u15pop"
+    ADM0_NAME = "ctry",
+    ADM1_NAME = "prov",
+    ADM2_NAME = "dist",
+    ADM0_GUID = "adm0guid",
+    u15pop.prov = "u15pop"
   )
 
 
@@ -302,8 +301,10 @@ f.npafp.rate.01 <- function(
 
   # Select only relevant columns
   afp.data <- afp.data |>
-    dplyr::select(dplyr::any_of(c("epid", "date", "ctry", "adm0guid",
-                                  "prov", "adm1guid", "dist", "adm2guid"))) |>
+    dplyr::select(dplyr::any_of(c(
+      "epid", "date", "ctry", "adm0guid",
+      "prov", "adm1guid", "dist", "adm2guid"
+    ))) |>
     dplyr::mutate(year = lubridate::year(date))
 
   # Merge afp data with days in year

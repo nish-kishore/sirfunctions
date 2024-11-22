@@ -57,8 +57,9 @@ figures to remain consistent. Tables remain as PowerPoint tables.
 # Assume all figures and tables are assigned to the appropriate variable.
 ppt_template <- "C:/Users/ABC1/Desktop/deskreview_template.pptx"
 generate_dr_ppt2(ctry.data, start_date, end_date,
-surv.ind.tab, inad.tab.flex, tab.60d, es.table,
-ppt_template_path = ppt_template)
+  surv.ind.tab, inad.tab.flex, tab.60d, es.table,
+  ppt_template_path = ppt_template
+)
 }
 
 }
