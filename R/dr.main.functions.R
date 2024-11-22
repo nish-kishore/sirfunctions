@@ -465,7 +465,7 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 #' @param iss_data_path `str` Location of the ISS data. Defaults to `NULL`.
 #' @param branch `str` What branch to download the DR functions from GitHub.
 #' `"main"` is the default, which contains the official version of the package. Other branches,
-#' like `"dev"` may contain experimental features not yet available in the `"main` branch.
+#' like `"dev"` may contain experimental features not yet available in the `"main"` branch.
 #' @param source `bool` Whether to source local functions or use sirfunctions. Defaults to `TRUE`.
 #'
 #' @return `list` A list containing all dataframe for all polio data.
@@ -730,7 +730,7 @@ upload_dr_to_github <-
 #' @param year `int` It is recommended to set this to the year
 #' when the desk review was ran.
 #'
-#' @return A status message
+#' @return A status message.
 #' @examples
 #' \dontrun{
 #' raw.data <- get_all_polio_data()

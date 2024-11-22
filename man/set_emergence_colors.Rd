@@ -19,7 +19,8 @@ set_emergence_colors(raw.data, country, start_date = NULL, end_date = NULL)
 \code{list} A named list containing the mapping of emergence and corresponding colors.
 }
 \description{
-Set the emergence colors
+Used in conjunction to \code{\link[=generate_adhoc_map]{generate_adhoc_map()}}. The function returns a named
+list with emergence names mapped to a color.
 }
 \examples{
 \dontrun{

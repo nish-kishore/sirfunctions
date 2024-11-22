@@ -93,7 +93,7 @@ generate_ctry_timeliness_graph <- function(int.data,
 #' @import ggplot2
 #' @param int.data `tibble` Summary table with timeliness intervals at the province level.
 #' @param afp.prov.year.lab `tibble` Summary table of samples sent by year and province.
-#' Output of [generate_prov_year_lab()].
+#'  Output of [generate_prov_year_lab()].
 #' @param output_path `str` Path where to output the figure.
 #'
 #' @returns `ggplot` Plot of timeliness intervals at the country level.

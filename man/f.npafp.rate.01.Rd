@@ -25,11 +25,11 @@ formatted as \verb{adm(0,1,2)guid}, onset date as \code{date} and \code{cdc.clas
 \code{year}, \verb{adm(0,1,2)guid}, \code{u15pop}, and \code{ctry/prov/dist} as appropriate. This is part of the output of
 \code{\link[=get_all_polio_data]{get_all_polio_data()}} and \code{\link[=extract_country_data]{extract_country_data()}}.}
 
-\item{start.date}{\code{chr} Start date with the format \code{"YYYY-MM-DD"}.}
+\item{start.date}{\code{str} Start date with the format \code{"YYYY-MM-DD"}.}
 
-\item{end.date}{\code{chr} Start date with the format \code{"YYYY-MM-DD"}.}
+\item{end.date}{\code{str} Start date with the format \code{"YYYY-MM-DD"}.}
 
-\item{spatial.scale}{\code{chr} Spatial scale for analysis.
+\item{spatial.scale}{\code{str} Spatial scale for analysis.
 \itemize{
 \item \code{"prov"} Province level.
 \item \code{"dist"} District level.

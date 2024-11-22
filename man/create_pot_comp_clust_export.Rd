@@ -19,7 +19,7 @@ create_pot_comp_clust_export(
 \item{excel_output_path}{\code{str} Output path of where to store the Excel file.}
 }
 \value{
-Nothing.
+None.
 }
 \description{
 Exports the output of \code{\link[=generate_potentially_compatibles_cluster]{generate_potentially_compatibles_cluster()}} as an Excel file.

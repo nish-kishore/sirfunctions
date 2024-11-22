@@ -42,7 +42,7 @@ the information in \code{default_dir} if you set that parameter to \code{NULL}.}
 This parameter is only required when passing \code{"upload"} in the \code{io} parameter.}
 }
 \value{
-Output dependent on "io".
+Output dependent on argument passed in the \code{io} parameter.
 }
 \description{
 The function serves as the primary way to interact with the EDAV system from R. It can

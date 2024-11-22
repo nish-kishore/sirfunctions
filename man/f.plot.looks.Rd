@@ -7,8 +7,14 @@
 f.plot.looks(type)
 }
 \arguments{
-\item{type}{\code{string} Type of graph format. Accepted values include:
-\verb{"02", "epicurve", "geomtile", "gpln_type1", "gpln_type2"}}
+\item{type}{\code{str} Type of graph format. Accepted values include:
+\itemize{
+\item \code{"02"}
+\item \code{"epicurve"}
+\item \code{"geomtile"}
+\item \code{"gpln_type1"}
+\item \code{"gpln_type2"}
+}}
 }
 \value{
 \verb{ggplot2 theme obj} A theme object that can be added into an existing plot.

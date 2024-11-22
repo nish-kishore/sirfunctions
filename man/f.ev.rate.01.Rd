@@ -14,9 +14,9 @@ that indicates absence/presence (0, 1) of enterovius in an ES sample. This is
 \code{ctry.data$es} of \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}, or \code{raw.data$es} of
 \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 
-\item{start.date}{\code{chr} Date in the format of \code{"YYYY-MM-DD"}.}
+\item{start.date}{\code{str} Date in the format of \code{"YYYY-MM-DD"}.}
 
-\item{end.date}{\code{chr} Date in the format of \code{"YYYY-MM-DD"}.}
+\item{end.date}{\code{str} Date in the format of \code{"YYYY-MM-DD"}.}
 }
 \value{
 \code{tibble} Long format dataframe including site specific EV detection rates.

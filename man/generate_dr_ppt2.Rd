@@ -31,7 +31,7 @@ generate_dr_ppt2(
 
 \item{inad.tab.flex}{\code{flextable} Inadequates table.}
 
-\item{tab.60d}{\code{flextable} 60 day follow up table.}
+\item{tab.60d}{\code{flextable} 60-day follow-up table.}
 
 \item{pop.tab}{\code{flextable} Population table.}
 

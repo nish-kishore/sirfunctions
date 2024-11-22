@@ -3,8 +3,12 @@
 #' The function serves to collate and return plot looks. Depending on the parameter,
 #' specific values in a `ggplot2` theme object will be returned.
 #' @import ggplot2
-#' @param type `string` Type of graph format. Accepted values include:
-#' `"02", "epicurve", "geomtile", "gpln_type1", "gpln_type2"`
+#' @param type `str` Type of graph format. Accepted values include:
+#' - `"02"`
+#' - `"epicurve"`
+#' - `"geomtile"`
+#' - `"gpln_type1"`
+#' - `"gpln_type2"`
 #' @return `ggplot2 theme obj` A theme object that can be added into an existing plot.
 #' @examples
 #' epicurve_looks <- f.plot.looks("epicurve")

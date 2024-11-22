@@ -14,7 +14,7 @@ generate_afp_by_month(afp.data, start_date, end_date)
 \item{end_date}{\code{str} End date of analysis.}
 }
 \value{
-\code{tibble} AFP case count with .
+\code{tibble} AFP case count with.
 }
 \description{
 Generates the \code{mon.year} column in the AFP linelist. This column is used in

@@ -300,7 +300,7 @@ add_prov_npafp_table <- function(npafp.output) {
 #' @param start_date `str` Start date of analysis.
 #' @param end_date  `str` End date of analysis.
 #'
-#' @returns `tibble` AFP case count with .
+#' @returns `tibble` AFP case count with.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
@@ -771,18 +771,18 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
   return(int.data)
 }
 
-#' Generate summary table for those requiring 60 day follow up
+#' Generate summary table for those requiring 60-day follow-up
 #'
-#' The 60-day table highlights the number of cases per year that need 60 day follow up. It
+#' The 60-day table highlights the number of cases per year that need 60-day follow-up. It
 #' summarizes the number of cases due for follow up, those with recorded follow ups, number missing
-#' follow ups,and compatible cases.
+#' follow ups, and compatible cases.
 #'
 #' @import dplyr lubridate
 #' @param stool.data `tibble` AFP data with stool adequacy columns. This is the output of
 #' [generate_stool_data()].
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
-#' @returns `tibble` A summary table for those requiring 60 day follow up.
+#' @returns `tibble` A summary table for those requiring 60-day follow-up.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)

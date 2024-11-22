@@ -329,13 +329,12 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 }
 
 # Main function ----
-#' Calculate percent stool adequacy on a case basis
+#' Calculate percent stool adequacy
 #'
-#' Creates an adequacy variable - 'missing' parameter defines how
-#' missing data is treated - "Good" classifies missing data as good quality
-#' (POLIS method)
-#' "Bad" classifies all missing as bad quality, "missing" excludes missing from
-#' the calculations
+#' Creates a summary table of stool adequacy. The `missing` parameter defines how
+#' missing data is treated. `"good"` classifies missing data as good quality
+#' (POLIS method). `"bad"` classifies all missing as bad quality. `"missing"`
+#' excludes missing from the calculations.
 #' @import dplyr
 #' @import lubridate
 #'

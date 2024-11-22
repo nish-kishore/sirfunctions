@@ -68,7 +68,7 @@ generate_dr_ppt(
 
 \item{inad.tab.flex}{\code{flextable} Inadequate table.}
 
-\item{tab.60d}{\code{flextable} 60 day follow up table.}
+\item{tab.60d}{\code{flextable} 60-day follow-up table.}
 
 \item{case.num.dose.g}{\code{ggplot} Immunization rates per year.}
 

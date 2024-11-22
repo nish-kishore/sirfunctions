@@ -39,7 +39,7 @@ Defaults to the current working directory.}
 
 \item{branch}{\code{str} What branch to download the DR functions from GitHub.
 \code{"main"} is the default, which contains the official version of the package. Other branches,
-like \code{"dev"} may contain experimental features not yet available in the \verb{"main} branch.}
+like \code{"dev"} may contain experimental features not yet available in the \code{"main"} branch.}
 
 \item{source}{\code{bool} Whether to source local functions or use sirfunctions. Defaults to \code{TRUE}.}
 }

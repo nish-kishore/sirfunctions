@@ -123,7 +123,7 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
 #' @param ctry.case.ind `tibble` Country NPAFP indicator summary table.
 #' @param prov.case.ind `tibble` Province NPAFP indicator summary table.
 #' @param dist.case.ind `tibble` District NPAFP indicator summary table.
-#' @param excel_output_path `str Output path of the Excel file.
+#' @param excel_output_path `str` Output path of the Excel file.
 #' @returns None.
 #' @examples
 #' \dontrun{
@@ -163,7 +163,7 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dist.case.ind, exc
 #' [init_dr()] or [extract_country_data()].
 #' @param country `str` Name of the country.
 #' @param excel_output_path `str` Output path of the Excel file.
-#' @returns Nothing.
+#' @returns None.
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
@@ -205,10 +205,10 @@ create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"
 #'
 #' Exports the output of [generate_60_day_table_data] into an Excel file.
 #' @import dplyr readr
-#' @param cases.need60day `tibble` Summary table for 60 day follow up.
+#' @param cases.need60day `tibble` Summary table for 60-day follow-up.
 #' @param country `str` Name of the country.
 #' @param excel_output_path `str` Output path of the Excel file.
-#' @returns Nothing.
+#' @returns None.
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
@@ -251,7 +251,7 @@ create_60_day_export <- function(cases.need60day, country = Sys.getenv("DR_COUNT
 #' [generate_potentially_compatibles_cluster()].
 #' @param country `str` Name of the country.
 #' @param excel_output_path `str` Output path of where to store the Excel file.
-#' @returns Nothing.
+#' @returns None.
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
@@ -264,7 +264,9 @@ create_60_day_export <- function(cases.need60day, country = Sys.getenv("DR_COUNT
 #' }
 #'
 #' @export
-create_pot_comp_clust_export <- function(pot.c.clust, country = Sys.getenv("DR_COUNTRY"), excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+create_pot_comp_clust_export <- function(pot.c.clust,
+                                         country = Sys.getenv("DR_COUNTRY"),
+                                         excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
   writexl::write_xlsx(
     pot.c.clust,
     file.path(

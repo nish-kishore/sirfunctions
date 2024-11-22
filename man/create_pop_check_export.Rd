@@ -19,7 +19,7 @@ create_pop_check_export(
 \item{excel_output_path}{\code{str} Output path of the Excel file.}
 }
 \value{
-Nothing.
+None.
 }
 \description{
 Export the population roll-ups and determine differences between each population counts.

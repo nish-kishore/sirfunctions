@@ -11,14 +11,14 @@ create_60_day_export(
 )
 }
 \arguments{
-\item{cases.need60day}{\code{tibble} Summary table for 60 day follow up.}
+\item{cases.need60day}{\code{tibble} Summary table for 60-day follow-up.}
 
 \item{country}{\code{str} Name of the country.}
 
 \item{excel_output_path}{\code{str} Output path of the Excel file.}
 }
 \value{
-Nothing.
+None.
 }
 \description{
 Exports the output of \link{generate_60_day_table_data} into an Excel file.

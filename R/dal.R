@@ -72,7 +72,7 @@ get_azure_storage_connection <- function(
 #' @param force_delete `bool` Use delete io without verification in the command line.
 #' @param local_path `str` Local file pathway to upload a file to EDAV. Default is `NULL`.
 #' This parameter is only required when passing `"upload"` in the `io` parameter.
-#' @returns Output dependent on "io".
+#' @returns Output dependent on argument passed in the `io` parameter.
 #' @examples
 #' \dontrun{
 #' df <- edav_io("read", file_loc = "df1.csv") # read file from EDAV
@@ -1633,6 +1633,7 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' @param df `tibble` Dataframe to be used for fixing years.
 #' @param yrs `array` Numeric array of years to fix data.
 #' @returns `tibble` Long format table to fix years.
+#' @keywords internal
 f.yrs.01 <- function(df, yrs) {
   quo.yrs <- dplyr::enquo(yrs)
 
@@ -1654,6 +1655,7 @@ f.yrs.01 <- function(df, yrs) {
 #' @param raw.data.2016.2019 `list` A list of data objects to be concatenated.
 #' @param raw.data.2001.2016 `list` A list of data objects to be concatenated.
 #' @returns `list` A list of lists or a single concatenated list.
+#' @keywords internal
 split_concat_raw_data <- function(
     action,
     split.years = NULL,

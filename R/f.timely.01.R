@@ -12,8 +12,8 @@
 #' @param admin.data `tibble` Full list of country administrative units by a given
 #' spatial scale including `year`, `adm(0,1,2)guid`, and `ctry/prov/dist`
 #' as appropriate.
-#' @param start.date `date` Start date of the analysis formatted as "YYYY-MM-DD".
-#' @param end.date `date` End date of the analysis formatted as "YYYY-MM-DD".
+#' @param start.date `str` Start date of the analysis formatted as `"YYYY-MM-DD"`.
+#' @param end.date `str` End date of the analysis formatted as `"YYYY-MM-DD"`.
 #' @param spatial.scale `str` Spatial scale to group analysis by. Valid values are:
 #' -`"prov"` Province level.
 #' - `"dist"` District level.
@@ -71,8 +71,14 @@ f.timely.01 <- function(
   # Stool 2 collection date
   # Date stool received in lab
 
+  start.date <- lubridate::as_date(start.date)
+  end.date <- lubridate::as_date(end.date)
+
   admin.data <- admin.data %>%
-    dplyr::filter(dplyr::between(year, lubridate::year(start.date), lubridate::year(end.date)))
+    dplyr::filter(dplyr::between(year, lubridate::year(start.date),
+                                 lubridate::year(end.date)
+                                 )
+                  )
 
   afp.data1 <- afp.data
 

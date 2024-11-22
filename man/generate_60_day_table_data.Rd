@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{generate_60_day_table_data}
 \alias{generate_60_day_table_data}
-\title{Generate summary table for those requiring 60 day follow up}
+\title{Generate summary table for those requiring 60-day follow-up}
 \usage{
 generate_60_day_table_data(stool.data, start_date, end_date)
 }
@@ -15,12 +15,12 @@ generate_60_day_table_data(stool.data, start_date, end_date)
 \item{end_date}{\code{str} End date of analysis.}
 }
 \value{
-\code{tibble} A summary table for those requiring 60 day follow up.
+\code{tibble} A summary table for those requiring 60-day follow-up.
 }
 \description{
-The 60-day table highlights the number of cases per year that need 60 day follow up. It
+The 60-day table highlights the number of cases per year that need 60-day follow-up. It
 summarizes the number of cases due for follow up, those with recorded follow ups, number missing
-follow ups,and compatible cases.
+follow ups, and compatible cases.
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)

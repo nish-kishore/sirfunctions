@@ -93,7 +93,7 @@ get_ppt_template <- function(path = NULL) {
 #' @param stool.ad.maps `ggplot` Stool adequacy maps at province.
 #' @param stool.ad.maps.dist `ggplot` Stool adequacy maps at district.
 #' @param inad.tab.flex `flextable` Inadequate table.
-#' @param tab.60d `flextable` 60 day follow up table.
+#' @param tab.60d `flextable` 60-day follow-up table.
 #' @param case.num.dose.g `ggplot` Immunization rates per year.
 #' @param timely_nation `ggplot` Timeliness at country level.
 #' @param timely_prov `ggplot` Timeliness at province level.
@@ -291,10 +291,10 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
       value = "Virus isolation in/around SIA rounds",
       location = officer::ph_location_type("title")
     ) %>%
-    # 60 day follow up table by year (table) ----
+    # 60-day follow-up table by year (table) ----
     officer::add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     officer::ph_with(
-      value = "60 day follow up",
+      value = "60-day follow-up",
       location = officer::ph_location_type("title")
     ) %>%
     officer::ph_with(tab.60d, location = officer::ph_location_type("body")) %>%
@@ -451,7 +451,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
 #' @param end_date `str` End date of desk review.
 #' @param surv.ind.tab `flextable` Surveillance indicator table
 #' @param inad.tab.flex `flextable` Inadequates table.
-#' @param tab.60d `flextable` 60 day follow up table.
+#' @param tab.60d `flextable` 60-day follow-up table.
 #' @param pop.tab `flextable` Population table.
 #' @param es.table `flextable` ES table.
 #' @param ppt_template_path `str` Path to the PowerPoint template.
@@ -630,10 +630,10 @@ generate_dr_ppt2 <- function(ctry.data,
       value = "Virus isolation in/around SIA rounds",
       location = officer::ph_location_type("title")
     ) %>%
-    # 60 day follow up table by year (table) ----
+    # 60-day follow-up table by year (table) ----
     officer::add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     officer::ph_with(
-      value = "60 day follow up",
+      value = "60-day follow-up",
       location = officer::ph_location_type("title")
     ) %>%
     officer::ph_with(tab.60d, location = officer::ph_location_type("body")) %>%

@@ -36,7 +36,8 @@ This table is the output of \code{\link[=get_lab_locs]{get_lab_locs()}}.}
 \item{rolling}{\code{bool} Should timeliness be calculated in a rolling basis? Default \code{FALSE}.}
 }
 \value{
-\code{list} A list with two \code{tibble} with global and sub-global AFP / ES detection timeliness evaluation.
+\code{list} A list with two \code{tibble}s with global and sub-global
+AFP / ES detection timeliness evaluation.
 }
 \description{
 Calculates the overall timeliness of detection in AFP & ES POLIS data.

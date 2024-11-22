@@ -16,7 +16,8 @@
 #' @param start.date `str` Start date for evaluation with format `"YYYY-MM-DD"`.
 #' @param end.date `str` End date for evaluation with format `"YYYY-MM-DD"`.
 #' @param rolling `bool` Should timeliness be calculated in a rolling basis? Default `FALSE`.
-#' @returns `list` A list with two `tibble` with global and sub-global AFP / ES detection timeliness evaluation.
+#' @returns `list` A list with two `tibble`s with global and sub-global
+#' AFP / ES detection timeliness evaluation.
 #' @examples
 #' raw.data <- get_all_polio_data()
 #' ctry.data <- extract_country_data("algeria", raw.data)

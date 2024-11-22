@@ -427,6 +427,9 @@ load_sharepoint_env <- function(raw.data) {
 
 # Public Functions ----
 #' Set the emergence colors
+#'
+#' Used in conjunction to [generate_adhoc_map()]. The function returns a named
+#' list with emergence names mapped to a color.
 #' @importFrom dplyr filter arrange case_when distinct mutate
 #' @importFrom tidyr drop_na
 #' @param raw.data `list` Global polio data output of [get_all_polio_data()].

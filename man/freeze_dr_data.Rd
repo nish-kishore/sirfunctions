@@ -23,7 +23,7 @@ what gets stored in EDAV.}
 when the desk review was ran.}
 }
 \value{
-A status message
+A status message.
 }
 \description{
 Data from the desk review can be stored in EDAV so there's an exact copy of the

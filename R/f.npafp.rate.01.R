@@ -149,9 +149,9 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' @param pop.data `tibble` Under 15 population data by a given spatial scale including
 #' `year`, `adm(0,1,2)guid`, `u15pop`, and `ctry/prov/dist` as appropriate. This is part of the output of
 #' [get_all_polio_data()] and [extract_country_data()].
-#' @param start.date `chr` Start date with the format `"YYYY-MM-DD"`.
-#' @param end.date `chr` Start date with the format `"YYYY-MM-DD"`.
-#' @param spatial.scale `chr` Spatial scale for analysis.
+#' @param start.date `str` Start date with the format `"YYYY-MM-DD"`.
+#' @param end.date `str` Start date with the format `"YYYY-MM-DD"`.
+#' @param spatial.scale `str` Spatial scale for analysis.
 #' - `"prov"` Province level.
 #' - `"dist"` District level.
 #' - `"ctry"` Country level.

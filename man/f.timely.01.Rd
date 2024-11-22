@@ -21,9 +21,9 @@ formated as \verb{adm(0,1,2)guid}, onset date as \code{date}.}
 spatial scale including \code{year}, \verb{adm(0,1,2)guid}, and \code{ctry/prov/dist}
 as appropriate.}
 
-\item{start.date}{\code{date} Start date of the analysis formatted as "YYYY-MM-DD".}
+\item{start.date}{\code{str} Start date of the analysis formatted as \code{"YYYY-MM-DD"}.}
 
-\item{end.date}{\code{date} End date of the analysis formatted as "YYYY-MM-DD".}
+\item{end.date}{\code{str} End date of the analysis formatted as \code{"YYYY-MM-DD"}.}
 
 \item{spatial.scale}{\code{str} Spatial scale to group analysis by. Valid values are:
 -\code{"prov"} Province level.

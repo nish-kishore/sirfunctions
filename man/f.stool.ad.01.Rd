@@ -2,7 +2,7 @@
 % Please edit documentation in R/f.stool.ad.01.R
 \name{f.stool.ad.01}
 \alias{f.stool.ad.01}
-\title{Calculate percent stool adequacy on a case basis}
+\title{Calculate percent stool adequacy}
 \usage{
 f.stool.ad.01(
   afp.data,
@@ -54,11 +54,10 @@ When calculating the \code{adequacy.final} column:
 \code{tibble} Long format stool adequacy evaluations.
 }
 \description{
-Creates an adequacy variable - 'missing' parameter defines how
-missing data is treated - "Good" classifies missing data as good quality
-(POLIS method)
-"Bad" classifies all missing as bad quality, "missing" excludes missing from
-the calculations
+Creates a summary table of stool adequacy. The \code{missing} parameter defines how
+missing data is treated. \code{"good"} classifies missing data as good quality
+(POLIS method). \code{"bad"} classifies all missing as bad quality. \code{"missing"}
+excludes missing from the calculations.
 }
 \examples{
 raw.data <- get_all_polio_data()

@@ -18,7 +18,7 @@ create_npafp_export(
 
 \item{dist.case.ind}{\code{tibble} District NPAFP indicator summary table.}
 
-\item{excel_output_path}{`str Output path of the Excel file.}
+\item{excel_output_path}{\code{str} Output path of the Excel file.}
 }
 \value{
 None.
