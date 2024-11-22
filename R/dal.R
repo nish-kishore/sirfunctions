@@ -703,7 +703,7 @@ get_all_polio_data <- function(
     )
     cli::cli_process_done()
 
-    cli::cli_process_start("14) Creating Metadata object")
+    cli::cli_process_start("13) Creating Metadata object")
 
     polis.cache <- edav_io(
       io = "read",
@@ -767,13 +767,13 @@ get_all_polio_data <- function(
 
     cli::cli_process_done()
 
-    cli::cli_process_start("15) Clearing out unused memory")
+    cli::cli_process_start("14) Clearing out unused memory")
     gc()
     cli::cli_process_done()
   }
 
   if(create.cache){
-    cli::cli_process_start("16) Caching processed data")
+    cli::cli_process_start("15) Caching processed data")
 
     out <- split_concat_raw_data(action = "split", split.years = c(2000, 2016, 2019), raw.data.all = raw.data)
 
