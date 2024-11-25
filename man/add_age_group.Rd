@@ -15,3 +15,4 @@ a column containing age group categories
 \description{
 Create age group categories
 }
+\keyword{internal}

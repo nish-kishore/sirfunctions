@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.lab.functions.R
 \name{lab_data_errors_who}
 \alias{lab_data_errors_who}
-\title{Checks for common data errors in lab data}
+\title{Checks for common data errors in WHO lab data}
 \usage{
 lab_data_errors_who(
   ctry.data,
@@ -12,14 +12,24 @@ lab_data_errors_who(
 )
 }
 \arguments{
-\item{ctry.data}{RDS object containing polio data from a country}
+\item{ctry.data}{\code{list} large list containing polio data from a country. Output of either
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{start.date}{start date of the desk review}
+\item{start.date}{\code{str} Start date of analysis.}
 
-\item{end.date}{end date of the desk review}
+\item{end.date}{\code{str} End date of analysis.}
 
-\item{error_path}{folder to save the log to}
+\item{error_path}{\code{str} Path to folder to save the error log to.}
 }
 \description{
-Checks for common data errors in lab data
+This function is used internally within \code{\link[=lab_data_errors]{lab_data_errors()}}. This checks for potential errors in the
+WHO lab data.
+}
+\examples{
+\dontrun{
+lab_path <- "C:/Users/XRG9/lab_data_who.csv"
+ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+lab_data_errors_who(ctry.data, "2021-01-01", "2023-12-31")
+}
+
 }

@@ -12,17 +12,30 @@ generate_afp_prov_year(
 )
 }
 \arguments{
-\item{afp.by.month.prov}{table summarizing afp cases by month and province}
+\item{afp.by.month.prov}{\code{tibble} Table summarizing AFP cases by month and province. This is the output of
+\code{\link[=generate_afp_by_month_summary]{generate_afp_by_month_summary()}}.}
 
-\item{start_date}{start date of the desk review}
+\item{start_date}{\code{str} Start date of the analysis.}
 
-\item{end_date}{cutoff date of calculating the number of cases}
+\item{end_date}{\code{str} End date of the analysis. By default, it displays the most recent date.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path to output the figure.}
 }
 \value{
-ggplot object
+\code{ggplot} A tile plot displaying the number of AFP cases by month and province.
 }
 \description{
-AFP cases by province and year
+Generates a tile plot for the number of AFP cases per month by province.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, start_date, end_date)
+afp.by.month.prov <- generate_afp_by_month_summary(
+  afp.by.month, ctry.data,
+  start_date, end_date, "prov"
+)
+generate_afp_prov_year(afp.by.month.prov, start_date, end_date)
+}
+
 }

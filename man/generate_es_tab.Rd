@@ -2,24 +2,37 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_es_tab}
 \alias{generate_es_tab}
-\title{ES table with indicators}
+\title{ES surveillance sites summary table}
 \usage{
 generate_es_tab(
   es.data,
-  es_start_date = (end_date - lubridate::years(1)),
+  es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
   es_end_date = end_date
 )
 }
 \arguments{
-\item{es.data}{ES data}
+\item{es.data}{\code{tibble} ES data. This is \code{ctry.data$es}, which is part of the output of either
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}. Ensure that the \code{ctry.data} object has been cleaned with
+\code{\link[=clean_ctry_data]{clean_ctry_data()}} first. Otherwise, there will be an error.}
 
-\item{es_start_date}{ES start date}
+\item{es_start_date}{\code{str} Start date of analysis. Defaults to a year before the end date.}
 
-\item{es_end_date}{ES end date}
+\item{es_end_date}{\code{str} End date of analysis.}
 }
 \value{
-flextable with ES indicators
+\code{flextable} Summary table of ES surveillance site performance.
 }
 \description{
-ES table with indicators
+Generates a summary table on the performance of surveillance sites over a rolling basis as
+indicated by the start and end dates. Includes information on the EV detection rate, number of
+samples collected, percentage of samples with good condition, and percentage of samples meeting the
+timeliness target of arriving to lab within 3 days.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+ctry.data <- clean_ctry_data(ctry.data)
+generate_es_tab(ctry.data$es, es_end_date = "2023-12-31")
+}
+
 }

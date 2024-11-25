@@ -1,30 +1,31 @@
 # Helper functions ----
 #' Calculate NPAFP by year and geographic level
-#' @description
+#'
 #' Helper function for calculating the NPAFP rate based on the geographic level.
-#' This function is used inside `f.npafp.rate.01()`.
+#' This function is used inside [f.npafp.rate.01()].
 #'
-#' @param afp.data AFP linelist, either from `raw.data` or `ctry.data`.
-#' @param pop.data Population data
-#' @param year.data Summary table. Created from `generate_year_data()`.
-#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`
+#' @param afp.data `tibble` AFP linelist. Either from `raw.data$afp` of [get_all_polio_data()]
+#' or `ctry.data$afp.all.2` of [extract_country_data()].
+#' @param pop.data `tibble` Population data. Either from `raw.data${ctry/prov/dist}.pop` of [get_all_polio_data()]
+#' or `ctry.data${ctry/prov/dist}.pop` of [extract_country_data()].
+#' @param year.data `tibble` Summary table. Created from [generate_year_data()].
+#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`.
+#' @keywords internal
 #'
-#' @return A summary table including NPAFP rates and population data.
+#' @return `tibble` A summary table including NPAFP rates and population data.
 npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
-
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
 
   geo <- switch(spatial_scale,
-                "ctry" = "adm0guid",
-                "prov" = "adm1guid",
-                "dist" = "adm2guid"
+    "ctry" = "adm0guid",
+    "prov" = "adm1guid",
+    "dist" = "adm2guid"
   )
 
-  pop_cols <- switch(
-    spatial_scale,
+  pop_cols <- switch(spatial_scale,
     "ctry" = names.ctry,
     "prov" = names.prov,
     "dist" = names.dist
@@ -39,33 +40,38 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
     dplyr::ungroup()
 
   int.data <- switch(spatial_scale,
-                     "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
-                     "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
-                     "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
+    "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
+    "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
+    "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
   )
 
   int.data <- dplyr::full_join(int.data, pop.data) |>
     dplyr::left_join(year.data) |>
     dplyr::mutate(npafp_rate = .data$n_npafp / .data$u15pop * 100000 / .data$weight) |>
-    dplyr::select(dplyr::all_of(c("year", "n_npafp", "u15pop",
-                                  "n_days", "days_in_year", "weight",
-                                  "earliest_date", "latest_date", "npafp_rate",
-                                  pop_cols))) |>
+    dplyr::select(dplyr::all_of(c(
+      "year", "n_npafp", "u15pop",
+      "n_days", "days_in_year", "weight",
+      "earliest_date", "latest_date", "npafp_rate",
+      pop_cols
+    ))) |>
     arrange(!!!dplyr::syms(spatial_scale), .data$year)
 
   return(int.data)
 }
 
 #' Calculate the NPAFP rate on a rolling basis
-#' @description
+#'
 #' Calculates the NPAFP rate on a rolling basis, based on the start and end dates
 #' specified.
 #'
-#' @param afp.data AFP linelist, either from `raw.data` or `ctry.data`.
-#' @param year.pop.data Summary table containing year and pop data.
-#' @param start_date Start date to calculate the rolling interval for.
-#' @param end_date End date to calculate the rolling interval for.
-#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`
+#' @param afp.data `tibble` AFP linelist, Either from `raw.data$afp` of [get_all_polio_data()]
+#' or `ctry.data$afp.all.2` of [extract_country_data()].
+#' @param year.pop.data `tibble` Summary table containing year and pop data. This is created
+#' inside [f.npafp.rate.01()].
+#' @param start_date `str` Start date to calculate the rolling interval for.
+#' @param end_date `str` End date to calculate the rolling interval for.
+#' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`.
+#' @keywords internal
 #'
 #' @return A summary table including NPAFP rates and population data.
 npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial_scale) {
@@ -73,17 +79,19 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
 
   geo <- switch(spatial_scale,
-                "ctry" = "adm0guid",
-                "prov" = "adm1guid",
-                "dist" = "adm2guid"
+    "ctry" = "adm0guid",
+    "prov" = "adm1guid",
+    "dist" = "adm2guid"
   )
 
   pop_cols <- switch(spatial_scale,
-                     "ctry" = names.ctry,
-                     "prov" = names.prov,
-                     "dist" = names.dist
+    "ctry" = names.ctry,
+    "prov" = names.prov,
+    "dist" = names.dist
   )
 
   # Calculate par
@@ -109,9 +117,9 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
     dplyr::left_join(par.data)
 
   int.data <- switch(spatial_scale,
-                     "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
-                     "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
-                     "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
+    "ctry" = int.data |> dplyr::rename("adm0guid" = "get(geo)"),
+    "prov" = int.data |> dplyr::rename("adm1guid" = "get(geo)"),
+    "dist" = int.data |> dplyr::rename("adm2guid" = "get(geo)")
   )
 
   int.data <- int.data |>
@@ -120,32 +128,38 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
   # Get population information
   int.data <- int.data |>
     dplyr::left_join(year.pop.data |>
-                       dplyr::select(dplyr::all_of(pop_cols), -year) |>
-                       dplyr::distinct())
+      dplyr::select(dplyr::all_of(pop_cols), -year) |>
+      dplyr::distinct())
 
   return(int.data)
 }
 # Main function ----
 
-#' Calculate Non-Polio AFP Rate Function
+#' Calculate non-polio AFP rate
 #'
-#' @name f.npafp.rate.01
-#' @description Calculate the NPAFP rate from POLIS data
+#' Calculate the NPAFP rate from POLIS data. Can either pass `raw.data` to calculate NPAFP rates
+#' on the global dataset, or a `ctry.data` dataset.
 #' @import dplyr
 #' @import lubridate
 #' @import tidyr
-#' @param afp.data tibble: AFP data which includes GUID at a given spatial scale
-#' formated as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2 which includes
-#' c("NPAFP", "PENDING", "LAB PENDING")
-#' @param pop.data tibble: Under 15 population data by a given spatial scale including
-#' "year", "adm(0,1,2)guid, "u15pop", and "(ctry/prov/dist)" as appropriate
-#' @param start.date chr: "YYYY-MM-DD"
-#' @param end.date chr: "YYYY-MM-DD"
-#' @param spatial.scale chr: "prov" or "dist" or "ctry"
-#' @param pending boolean: default TRUE
-#' @param rolling boolean: default FALSE
-#' @param sp_continuity_validation boolean: default TRUE
-#' @returns tibble
+#' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
+#' formatted as `adm(0,1,2)guid`, onset date as `date` and `cdc.classification.all2` which includes
+#' `"NPAFP", "PENDING", "LAB PENDING"`. This is either `ctry.data$afp.all.2` of [extract_country_data()] or
+#' [init_dr()] or `raw.data$afp` of [get_all_polio_data()].
+#' @param pop.data `tibble` Under 15 population data by a given spatial scale including
+#' `year`, `adm(0,1,2)guid`, `u15pop`, and `ctry/prov/dist` as appropriate. This is part of the output of
+#' [get_all_polio_data()] and [extract_country_data()].
+#' @param start.date `str` Start date with the format `"YYYY-MM-DD"`.
+#' @param end.date `str` Start date with the format `"YYYY-MM-DD"`.
+#' @param spatial.scale `str` Spatial scale for analysis.
+#' - `"prov"` Province level.
+#' - `"dist"` District level.
+#' - `"ctry"` Country level.
+#' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
+#' @param rolling `bool` Should the analysis be performed on a rolling bases? Default `FALSE`.
+#' @param sp_continuity_validation Should we filter places that are not present
+#' for the entirety of the analysis dates? Default `TRUE`.
+#' @returns `tibble` A table containing NPAFP rates as well as additional information relevant to each location analyzed.
 #' @export
 f.npafp.rate.01 <- function(
     afp.data,
@@ -156,7 +170,6 @@ f.npafp.rate.01 <- function(
     pending = T,
     rolling = F,
     sp_continuity_validation = T) {
-
   # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
@@ -166,22 +179,22 @@ f.npafp.rate.01 <- function(
   # extract.country.data()
 
   afp.data <- dplyr::rename_with(afp.data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
   )
   pop.data <- dplyr::rename_with(pop.data, recode,
-                                 ADM0_NAME = "ctry",
-                                 ADM1_NAME = "prov",
-                                 ADM2_NAME = "dist",
-                                 ADM0_GUID = "adm0guid",
-                                 u15pop.prov = "u15pop"
+    ADM0_NAME = "ctry",
+    ADM1_NAME = "prov",
+    ADM2_NAME = "dist",
+    ADM0_GUID = "adm0guid",
+    u15pop.prov = "u15pop"
   )
 
 
@@ -288,8 +301,10 @@ f.npafp.rate.01 <- function(
 
   # Select only relevant columns
   afp.data <- afp.data |>
-    dplyr::select(dplyr::any_of(c("epid", "date", "ctry", "adm0guid",
-                                  "prov", "adm1guid", "dist", "adm2guid"))) |>
+    dplyr::select(dplyr::any_of(c(
+      "epid", "date", "ctry", "adm0guid",
+      "prov", "adm1guid", "dist", "adm2guid"
+    ))) |>
     dplyr::mutate(year = lubridate::year(date))
 
   # Merge afp data with days in year

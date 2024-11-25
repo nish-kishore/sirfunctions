@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_dist_pop_map}
 \alias{generate_dist_pop_map}
-\title{Generate a map of population by district}
+\title{Map district U15 populations}
 \usage{
 generate_dist_pop_map(
   ctry.data,
@@ -15,23 +15,36 @@ generate_dist_pop_map(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file of polio country data}
+\item{ctry.data}{\code{list} Large list of polio country data. This is the output of
+either \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{ctry.shape}{recent shape file of country}
+\item{ctry.shape}{\code{sf} Shapefile of country in long format.}
 
-\item{prov.shape}{recent shape file of province}
+\item{prov.shape}{\code{sf} Shapefile of province in long format.}
 
-\item{dist.shape}{recent shape file of district}
+\item{dist.shape}{\code{sf} Shapefile of district in long format.}
 
-\item{end_date}{end date of the desk review}
+\item{end_date}{\code{str} End date of the analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path of where to save the figure.}
 
-\item{caption_size}{size of the caption}
+\item{caption_size}{\code{numeric} Size of the caption. Default is \code{11}.}
 }
 \value{
-ggplot object
+\code{ggplot} A map of district level populations and population centers.
 }
 \description{
-Generate a map of population by district
+Generates a map of U15 district populations, with population centers and roads.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
+generate_pop_map(ctry.data, ctry.shape, prov.shape, dist.shape, "2023-12-31")
+}
+}
+\seealso{
+\code{\link[=load_clean_ctry_sp]{load_clean_ctry_sp()}}, \code{\link[=load_clean_prov_sp]{load_clean_prov_sp()}}, \code{\link[=load_clean_dist_sp]{load_clean_dist_sp()}}
 }

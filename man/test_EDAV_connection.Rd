@@ -12,19 +12,23 @@ test_EDAV_connection(
 )
 }
 \arguments{
-\item{azcontainer}{Azure storage container provided by \code{get_azure_storage_connection()}}
+\item{azcontainer}{Azure storage container provided by \code{\link[=get_azure_storage_connection]{get_azure_storage_connection()}}.}
 
-\item{folder}{str: Location of folder in the EDAV environment that you want to download
-and upload data from}
+\item{folder}{\code{str} Location of folder in the EDAV environment that you want to download
+and upload data from.}
 
-\item{return_list}{boolean: return a list of download time estimates, default F}
+\item{return_list}{\code{bool} return a list of download time estimates. Defaults to \code{FALSE}.}
 
-\item{test_size}{int: byte size of a theoretical file to be uploaded or downloaded}
+\item{test_size}{\code{int} byte size of a theoretical file to be uploaded or downloaded.}
 }
 \value{
-System message with download and update time, potentially list output
+System message with download and update time, potentially a list.
 }
 \description{
 Tests upload and download from EDAV by creating a temporary file
 of a given size and testing the time it takes to upload and download the file.
+}
+\examples{
+test_EDAV_connection()
+
 }

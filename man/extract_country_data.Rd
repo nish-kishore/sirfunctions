@@ -7,14 +7,18 @@
 extract_country_data(.country, .raw.data = raw.data)
 }
 \arguments{
-\item{.country}{str: a country name of interest}
+\item{.country}{\code{str} Country name of interest. Case insensitive.}
 
-\item{.raw.data}{list: list of raw data sources that is output from \code{get_all_polio_data}.}
+\item{.raw.data}{\code{list} Output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 }
 \value{
-list with country specific objects
+Named \code{list} with country specific datasets.
 }
 \description{
-Extract country specific data from the CDC generated "raw.data" file from \code{get_all_polio_data}.
-Outputs list of country specific data and spatial objects (if applicable).
+Filters country specific data from the CDC generated \code{raw.data} object from \code{\link[=get_all_polio_data]{get_all_polio_data()}}.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+ctry.data <- extract_country_data("nigeria", raw.data)
+
 }

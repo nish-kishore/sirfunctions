@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_stool_ad_maps_dist}
 \alias{generate_stool_ad_maps_dist}
-\title{Stool adequacy map by district}
+\title{Maps of stool adequacy by district and year}
 \usage{
 generate_stool_ad_maps_dist(
   ctry.data,
@@ -17,27 +17,54 @@ generate_stool_ad_maps_dist(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file of polio data for a country}
+\item{ctry.data}{\code{list} Large list containing polio data for a country. This is
+the output of \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{dstool}{district stool adequacy table}
+\item{dstool}{\code{tibble} District stool adequacy table. This is the output of
+\code{\link[=f.stool.ad.01]{f.stool.ad.01()}} calculated at the district level.}
 
-\item{ctry.shape}{country shapefile in long format}
+\item{ctry.shape}{\code{sf} Country shapefile in long format.}
 
-\item{prov.shape}{province shapefile in long format}
+\item{prov.shape}{\code{sf} Province shapefile in long format.}
 
-\item{dist.shape}{district shapefile in long format}
+\item{dist.shape}{\code{sf} District shapefile in long format.}
 
-\item{start_date}{start date}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path where to save the figure to.}
 
-\item{caption_size}{size of the caption}
+\item{caption_size}{\code{numeric} Size of the caption. Defaults to 3.}
 }
 \value{
-ggplot object
+\code{ggplot} Maps of stool adequacy rates for each district by year.
 }
 \description{
-Stool adequacy map by district
+Generates maps of stool adequacy map by district and year.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+dstool <- f.stool.ad.01(
+  afp.data = ctry.data$afp.all.2,
+  admin.data = ctry.data$dist.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "dist",
+  missing = "good",
+  bad.data = "inadequate",
+  rolling = F,
+  sp_continuity_validation = F
+)
+ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
+generate_stool_ad_maps_dist(
+  ctry.data, dstool,
+  ctry.shape, prov.shape, dist.shape,
+  "2021-01-01", "2023-12-31"
+)
+}
+
 }

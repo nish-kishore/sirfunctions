@@ -2,7 +2,7 @@
 % Please edit documentation in R/f.timely.01.R
 \name{f.timely.01}
 \alias{f.timely.01}
-\title{Calculate timeliness of stool collection using only epi variables}
+\title{Calculate stool collection timeliness using only AFP data (DRAFT)}
 \usage{
 f.timely.01(
   afp.data,
@@ -14,26 +14,45 @@ f.timely.01(
 )
 }
 \arguments{
-\item{afp.data}{tibble: AFP data which includes GUID at a given spatial scale
-formated as "adm(0,1,2)guid, onset date as "date"}
+\item{afp.data}{\code{tibble} AFP data which includes GUID at a given spatial scale
+formated as \verb{adm(0,1,2)guid}, onset date as \code{date}.}
 
-\item{admin.data}{tibble: Full list of country administrative units by a given
-spatial scale including "year", "adm(0,1,2)guid, and "(ctry/prov/dist)"
-as appropriate}
+\item{admin.data}{\code{tibble} Full list of country administrative units by a given
+spatial scale including \code{year}, \verb{adm(0,1,2)guid}, and \code{ctry/prov/dist}
+as appropriate.}
 
-\item{start.date}{date: "YYYY-MM-DD"}
+\item{start.date}{\code{str} Start date of the analysis formatted as \code{"YYYY-MM-DD"}.}
 
-\item{end.date}{date: "YYYY-MM-DD"}
+\item{end.date}{\code{str} End date of the analysis formatted as \code{"YYYY-MM-DD"}.}
 
-\item{spatial.scale}{chr: "prov" or "dist" or "ctry"}
+\item{spatial.scale}{\code{str} Spatial scale to group analysis by. Valid values are:
+-\code{"prov"} Province level.
+\itemize{
+\item \code{"dist"} District level.
+\item \code{"ctry"} Country level.
+}}
 
-\item{intervals.manual}{boolean: Should user input their own timeliness interval
-requirements? Default is false}
+\item{intervals.manual}{\code{bool} Should user input their own timeliness interval
+requirements? Default is \code{FALSE}. This is only required if timeliness column such as
+\code{noti.7d.on}, \code{inv.2d.noti} are not already calculated. This draft function will currently fail if
+this parameter is set to \code{TRUE}.}
 }
 \value{
-tibble
+\code{tibble} A summary table of timeliness of stool collection.
 }
 \description{
-creates a table for timeliness by geographic unit including the
-number of timely stool samples for each interval and percent timely
+Creates a table for timeliness by geographic unit including the
+number of timely stool samples for each interval and percent timeliness. Currently,
+the function will only work on \code{ctry.data} (output of \code{\link[=extract_country_data]{extract_country_data()}}).
+}
+\examples{
+raw.data <- get_all_polio_data()
+ctry.data <- extract_country_data("algeria", raw.data)
+stool.summary <- f.timely.01(
+  ctry.data$afp.all.2, ctry.data$ctry.pop,
+  lubridate::as_date("2021-01-01"),
+  lubridate::as_date("2023-12-31"),
+  "ctry"
+)
+
 }

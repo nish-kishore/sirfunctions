@@ -2,16 +2,25 @@
 % Please edit documentation in R/f.stool.ad.01.R
 \name{generate_ad_final_col}
 \alias{generate_ad_final_col}
-\title{Helper function to add the adequacy.final column}
+\title{Helper function to add the \code{adequacy.final} column}
 \usage{
 generate_ad_final_col(afp.data)
 }
 \arguments{
-\item{afp.data}{AFP dataset}
+\item{afp.data}{\code{tibble} AFP dataset. Either \code{raw.data$afp} from
+\code{\link[=get_all_polio_data]{get_all_polio_data()}} or \code{ctry.data$afp.all.2} from \code{\link[=extract_country_data]{extract_country_data()}}.}
 }
 \value{
-AFP dataset with the adequacy final column
+\code{tibble} AFP dataset with \code{adequacy.final} column
 }
 \description{
-Helper function to add the adequacy.final column
+The function is meant to be used for \code{\link[=f.stool.ad.01]{f.stool.ad.01()}}. This function will
+classify the adequacy of a stool sample based on timeliness and condition.
+}
+\examples{
+\dontrun{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+stool.data <- generate_ad_final_col(raw.data$afp)
+}
+
 }

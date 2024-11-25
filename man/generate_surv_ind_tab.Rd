@@ -2,12 +2,12 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_surv_ind_tab}
 \alias{generate_surv_ind_tab}
-\title{Generate surveillance indicator table}
+\title{Surveillance indicator table}
 \usage{
 generate_surv_ind_tab(
   ctry.data,
   ctry.extract,
-  dis.extract,
+  dist.extract,
   cstool,
   dstool,
   afp.case,
@@ -15,23 +15,75 @@ generate_surv_ind_tab(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file containing polio data of a country}
+\item{ctry.data}{\code{list} Large list containing polio data of a country.}
 
-\item{ctry.extract}{country NPAFP rate}
+\item{ctry.extract}{\code{tibble} Country NPAFP rate. Output of \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}} calculated at the country level.}
 
-\item{dis.extract}{district NPAFP rate}
+\item{dist.extract}{\code{tibble} District NPAFP rate. Output of \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}} calculated at the district level.}
 
-\item{cstool}{stool adequacy at country level}
+\item{cstool}{\code{tibble} Country stool adequacy. Output of \code{\link[=f.stool.ad.01]{f.stool.ad.01()}} calculated at the country level.}
 
-\item{dstool}{stool adequacy at a district level}
+\item{dstool}{\code{tibble} District stool adequacy. Output of \code{\link[=f.stool.ad.01]{f.stool.ad.01()}} calculated at the district level.}
 
-\item{afp.case}{AFP cases}
+\item{afp.case}{\code{tibble} AFP case counts. Output of \code{\link[=generate_afp_by_month_summary]{generate_afp_by_month_summary()}} with \code{by="year"}.}
 
-\item{country_name}{name of the country}
+\item{country_name}{\code{str} Name of the country.}
 }
 \value{
-a flex table object for timeliness indicators
+\code{flextable} Table summarizing yearly trends in NPAFP and stool adequacy at the national level.
 }
 \description{
-Generate surveillance indicator table
+Generates the surveillance indicator table for each year. Outputs the number of
+AFP cases, national NPAFP rate and stool adequacy,percentage of population living in
+districts with greater than or equal to 100,000 U15 meeting both indicators.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+ctry.extract <- f.npafp.rate.01(
+  afp.data = ctry.data$afp.all.2,
+  pop.data = ctry.data$ctry.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "ctry",
+  pending = T,
+  rolling = F,
+  sp_continuity_validation = F
+)
+dist.extract <- f.npafp.rate.01(
+  afp.data = ctry.data$afp.all.2,
+  pop.data = ctry.data$ctry.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "dist",
+  pending = T,
+  rolling = F,
+  sp_continuity_validation = F
+)
+cstool <- f.stool.ad.01(
+  afp.data = ctry.data$afp.all.2,
+  admin.data = ctry.data$ctry.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "ctry",
+  missing = "good",
+  bad.data = "inadequate",
+  rolling = F,
+  sp_continuity_validation = F
+)
+dstool <- f.stool.ad.01(
+  afp.data = ctry.data$afp.all.2,
+  admin.data = ctry.data$dist.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "dist",
+  missing = "good",
+  bad.data = "inadequate",
+  rolling = F,
+  sp_continuity_validation = F
+)
+afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
+afp.case <- generate_afp_by_month_summary(afp.by.month, ctry.data, start_date, end_date, "year")
+generate_surv_ind_tab(ctry.data, ctry.extract, dist.extract, cstool, dstool, afp.case)
+}
 }

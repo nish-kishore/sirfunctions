@@ -2,20 +2,29 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{generate_prov_year_lab}
 \alias{generate_prov_year_lab}
-\title{Generate a summary of samples sent to lab by year and province}
+\title{Generate a summary of samples by year and province}
 \usage{
 generate_prov_year_lab(ctry.data, start_date, end_date)
 }
 \arguments{
-\item{ctry.data}{Rds file containing country polio data}
+\item{ctry.data}{\code{list} Large list containing country polio data. This is the output
+of \code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
 
-\item{start_date}{start date of the desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of the desk review}
+\item{end_date}{\code{str} End date of analysis.}
 }
 \value{
-a tibble containing summary of samples sent to lab by year and province
+\code{tibble} A table containing summary of AFP cases by year and province.
 }
 \description{
-Generate a summary of samples sent to lab by year and province
+Generates a summary table of the number of AFP cases per province and year.
+This function is used primarily with \code{\link[=generate_prov_timeliness_graph]{generate_prov_timeliness_graph()}} as a
+label of the y-axis.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+ctry.data <- extract_country_data("algeria", raw.data)
+prov.labels <- generate_prov_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+
 }

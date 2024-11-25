@@ -18,3 +18,4 @@ tibble containing records with missing geographic data
 checks the AFP dataset for rows with missing geographic data.
 It checks for missing data based on the scale passed through spatial.scale.
 }
+\keyword{internal}

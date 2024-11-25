@@ -2,12 +2,12 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_es_site_det}
 \alias{generate_es_site_det}
-\title{Dot plot of virus detections in ES sites}
+\title{Virus detection in ES sites}
 \usage{
 generate_es_site_det(
   ctry.data,
   es.data.long,
-  es_start_date = (end_date - lubridate::years(1)),
+  es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
   es_end_date = end_date,
   output_path = Sys.getenv("DR_FIGURE_PATH"),
   vaccine_types = NULL,
@@ -15,23 +15,37 @@ generate_es_site_det(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file of polio data for a country}
+\item{ctry.data}{\code{list} Large list of polio data for a country. This is the output of either
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{es.data.long}{AFP data with viral detection columns}
+\item{es.data.long}{\code{tibble} AFP data with viral detection columns. This is the output of
+\code{\link[=generate_es_data_long]{generate_es_data_long()}}.}
 
-\item{es_start_date}{start date of ES data}
+\item{es_start_date}{\code{str} Start date of analysis. By default, it is one year from the end date.}
 
-\item{es_end_date}{end date of ES data}
+\item{es_end_date}{\code{str} End date of analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path to output the figure to.}
 
-\item{vaccine_types}{named list with vaccine types with color associations}
+\item{vaccine_types}{\code{list} A named list with colors assigned names corresponding to vaccine types. By
+default, it will use a prefilled list inside the function. However, the function will alert for missing
+vaccine types and the user must pass another list appended by that vaccine type.}
 
-\item{detection_types}{named list with detection types with color associations}
+\item{detection_types}{\code{list} A named list with colors assigned names corresponding to viral detection type.
+By default, it will use a prefilled list inside the function. However, the function will alert for missing
+detection types and the user must pass another list appended by that vaccine type.}
 }
 \value{
-ggplot object dot plot
+\code{ggplot} A dot plot of viral detections per ES sites and SIA campaigns.
 }
 \description{
-Dot plot of virus detections in ES sites
+Generates a dot plot for viral detections across ES sites, with SIA dates
+overlaid.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+es.data.long <- generate_es_data_long(ctry.data$es)
+generate_es_site_det(ctry.data, es.data.long)
+}
 }

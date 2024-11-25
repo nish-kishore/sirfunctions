@@ -14,3 +14,4 @@ check_missing_afp_var(afp_data, spatial_scale)
 \description{
 Helper function to check missing variables in the AFP linelist based on spatial scale
 }
+\keyword{internal}

@@ -7,19 +7,21 @@
 add_new_detection(data_p, country, date_3a, date_3a_a, date_3b)
 }
 \arguments{
-\item{data_p}{map data}
+\item{data_p}{\code{tibble} Map data.}
 
-\item{country}{country or a list of countries}
+\item{country}{\code{str} or \code{list} Country or a list of countries.}
 
-\item{date_3a}{???}
+\item{date_3a}{\code{str} ???}
 
-\item{date_3a_a}{???}
+\item{date_3a_a}{\code{str} ???}
 
-\item{date_3b}{???}
+\item{date_3b}{\code{str} ???}
 }
 \value{
 a dataset containing new detections
 }
 \description{
-Identifying new detections
+The function adds new detections as specified by the user when they use
+\code{\link[=generate_adhoc_map]{generate_adhoc_map()}}. This function inherits arguments from the parent function.
 }
+\keyword{internal}

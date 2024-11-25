@@ -2,13 +2,11 @@
 % Please edit documentation in R/dr.lab.functions.R
 \name{clean_lab_data_regional}
 \alias{clean_lab_data_regional}
-\title{Clean lab data from the regional offices.
-Regional data have different columns compared to the WHO lab data. The cleaning
-of the regional data is adapted from the lab data cleaning code from the GPSAP
-indicator script.}
+\title{Clean lab data from the regional offices.}
 \usage{
 clean_lab_data_regional(
   ctry.data,
+  ctry_name = Sys.getenv("DR_COUNTRY"),
   start.date,
   end.date,
   delim = "-",
@@ -16,22 +14,37 @@ clean_lab_data_regional(
 )
 }
 \arguments{
-\item{ctry.data}{Rds polio data at the country level with lab data attached}
+\item{ctry.data}{\code{list} Large list of country polio data with lab data attached. Either from
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{start.date}{start date of the desk review}
+\item{ctry_name}{\code{str} Name of the country. Defaults to the desk review country.}
 
-\item{end.date}{end date of the desk review}
+\item{start.date}{\code{str} Start date of analysis.}
 
-\item{delim}{delimiter used for EPIDs. Default is "-".}
+\item{end.date}{\code{str} End date of analysis.}
 
-\item{lab_locs_path}{path to CSV file containing lab location. Will pull from EDAV if not attached}
+\item{delim}{\code{str} Delimiter used for EPIDs. Default is \code{"-"}.}
+
+\item{lab_locs_path}{\code{str} Path to CSV file containing lab location. Will pull from EDAV if not attached.}
 }
 \value{
-tibble of lab data
+\code{tibble} Cleaned lab data.
 }
 \description{
-Clean lab data from the regional offices.
 Regional data have different columns compared to the WHO lab data. The cleaning
 of the regional data is adapted from the lab data cleaning code from the GPSAP
 indicator script.
+}
+\examples{
+\dontrun{
+lab_path <- "C:/Users/XRG9/lab_data_region.csv"
+ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+ctry.data$lab.data <- clean_lab_data_regional(ctry.data, "2021-01-01", "2023-12-31")
+
+# Not using the desk review pipeline
+raw.data <- get_all_polio_data()
+ctry.data <- extract_country_data("algeria", raw.data)
+ctry.data$lab.data <- read_csv(lab_path)
+ctry.data$lab.data <- clean_lab_data_regional(ctry.data, "2021-01-01", "2023-12-31")
+}
 }
