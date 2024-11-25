@@ -1,20 +1,36 @@
 #' Function to calculate timeliness of detection
 #'
-#' @name f.timely.detection.01
-#' @description Function to calculate the overall timeliness of detection in AFP & ES POLIS data
+#' Calculates the overall timeliness of detection in AFP & ES POLIS data.
 #' @import dplyr
 #' @import lubridate
-#' @param afp.data tibble: AFP data which includes classification of AFP cases with onset date and date of notification to HQ,
-#' @param es.data tibble: ES data which includes classification of samples with collection date and date of notification to HQ,
-#' @param ctryseq.data tibble: countries with sequencing capacity within or outside of the country,
-#' country (ADM0_NAME),
-#' classification of AFP cases & ES samples
-#' onset date of AFP cases and collection date of ES samples
-#' date of notification to HQ (date.notification.to.hq),
-#' @param start.date chr: "YYYY-MM-DD" - start date for evaluation
-#' @param end.date chr: "YYYY-MM-DD" - end date for evaluation
-#' @param rolling boolean: default FALSE
-#' @returns list of two tibbles with global and sub-global AFP / ES detection timeliness evaluation
+#' @param afp.data `tibble` AFP data which includes classification of AFP cases with onset date and date of notification to HQ.
+#' @param es.data `tibble` ES data which includes classification of samples with collection date and date of notification to HQ.
+#' @param ctryseq.data `tibble` A table consisting of the following columns for each country:
+#' - With sequencing capacity within or outside of the country
+#' - Country (`ADM0_NAME`)
+#' - Classification of AFP cases & ES samples
+#' - Onset date of AFP cases and collection date of ES samples
+#' - Date of notification to HQ (`date.notification.to.hq`)
+#'
+#' This table is the output of [get_lab_locs()].
+#' @param start.date `str` Start date for evaluation with format `"YYYY-MM-DD"`.
+#' @param end.date `str` End date for evaluation with format `"YYYY-MM-DD"`.
+#' @param rolling `bool` Should timeliness be calculated in a rolling basis? Default `FALSE`.
+#' @returns `list` A list with two `tibble`s with global and sub-global
+#' AFP / ES detection timeliness evaluation.
+#' @examples
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.seq <- get_lab_locs()
+#' global.summary <- f.timely.detection.01(
+#'   raw.data$afp, raw.data$es, ctry.seq,
+#'   "2021-01-01", "2023-12-31"
+#' )
+#' ctry.summary <- f.timely.detection.01(
+#'   ctry.data$afp.all.2, ctry.data$es, ctry.seq,
+#'   "2021-01-01", "2023-12-31"
+#' )
+#'
 #' @export
 
 f.timely.detection.01 <- function(
@@ -38,11 +54,27 @@ f.timely.detection.01 <- function(
     }
   )
 
+
+  # borrowed from extract.country.data
+  afp.data <- dplyr::rename_with(afp.data, recode,
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
+  )
+
+
   years <- lubridate::year(start.date):year(end.date)
 
   # Limit AFP data to the range described by the analysis start and end dates
   afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date))
+    dplyr::filter(between(.data$date, start.date, end.date)) |>
+    dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) lubridate::as_date(x)))
 
   # Warning message about non-overlapping dates
   if (start.date < lubridate::as_date(afp.data$date |> min(na.rm = T))) {
@@ -59,7 +91,10 @@ f.timely.detection.01 <- function(
 
   # Limit ES data to the range described by the analysis start and end dates
   es.data <- es.data |>
-    dplyr::filter(dplyr::between(collect.date, start.date, end.date))
+    dplyr::filter(between(.data$collect.date, start.date, end.date)) |>
+    dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) lubridate::as_date(x)),
+      ctry = ADM0_NAME
+    )
 
   # Warning message about non-overlapping dates
   if (start.date < lubridate::as_date(es.data$collect.date |> min(na.rm = T))) {
@@ -78,14 +113,14 @@ f.timely.detection.01 <- function(
     dplyr::as_tibble() |>
     dplyr::mutate(
       # Replaces all Missing as "BAD"
-      date.notification.to.hq = lubridate::dmy(date.notification.to.hq),
+      date.notification.to.hq = date.notification.to.hq,
       collecttonothq = as.numeric(date.notification.to.hq - collect.date)
     ) %>%
     dplyr::mutate(
-      date.final.combined.result = lubridate::dmy(date.final.combined.result),
-      date.final.results.reported = lubridate::dmy(date.final.results.reported),
-      date.final.culture.result = lubridate::dmy(date.final.culture.result),
-      date.f6.ref.itd = lubridate::dmy(date.f6.ref.itd),
+      date.final.combined.result = date.final.combined.result,
+      date.final.results.reported = date.final.results.reported,
+      date.final.culture.result = date.final.culture.result,
+      date.f6.ref.itd = date.f6.ref.itd,
       pv = ifelse(wpv == 1 | vdpv == 1, 1, 0),
       end.date = case_when(
         pv == 1 ~ coalesce(date.notification.to.hq, date.final.results.reported, date.final.combined.result),
@@ -106,7 +141,7 @@ f.timely.detection.01 <- function(
     dplyr::filter(!cdc.classification.all2 %in% c("COMPATIBLE", "NPAFP", "PENDING", "UNKNOWN", "VAPP", "LAB PENDING")) %>%
     dplyr::select(epid, ctry, year, cdc.classification.all2, date, datenotificationtohq) %>%
     dplyr::mutate(
-      datenotifytohq = lubridate::dmy(datenotificationtohq),
+      datenotifytohq = datenotificationtohq,
       ontonothq = as.numeric(datenotifytohq - date)
     ) %>%
     dplyr::select(epid, ctry, year, ontonothq)
@@ -173,7 +208,7 @@ f.timely.detection.01 <- function(
       ) %>%
       dplyr::ungroup()
 
-    afpes.detect.02 <- dplyr::left_join(afpes.detect.01, ctryseq.data, by = c("ctry" = "ctry")) %>%
+    afpes.detect.02 <- dplyr::left_join(afpes.detect.01, ctryseq.data, by = c("ctry" = "country")) %>%
       dplyr::select(who.region, ctry, year, afpes.pos.spec, seq.capacity, median_days)
 
     afpes.detect.03 <- afpes.detect.02 %>%

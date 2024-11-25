@@ -2,18 +2,38 @@
 % Please edit documentation in R/dr.pop.functions.R
 \name{set_shapefiles}
 \alias{set_shapefiles}
-\title{Get the most recent shapefile at a given spatial scale}
+\title{Get a long version of shapefile at a given spatial scale}
 \usage{
 set_shapefiles(ctry.data, spatial.scale)
 }
 \arguments{
-\item{ctry.data}{RDS file containing country data}
+\item{ctry.data}{\code{list} List containing country data. Either the result of
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{spatial.scale}{either "ctry", "prov", "dist"}
+\item{spatial.scale}{\code{str} Either \verb{"ctry", "prov", "dist"}.}
 }
 \value{
-sf object of the most recent shapefile
+\code{sf} Data frame including the most recent shapefile.
 }
 \description{
-Get the most recent shapefile at a given spatial scale
+This function was used primarily as a way to build maps in the desk review.
+However, the map generation functions in the desk review will now use the long
+formatted shapefile as of \verb{sirfunctions v1.2}.
+This function will be changed in the next version.
+}
+\details{
+\code{\link[=load_clean_ctry_sp]{load_clean_ctry_sp()}}, \code{\link[=load_clean_prov_sp]{load_clean_prov_sp()}}, \code{\link[=load_clean_dist_sp]{load_clean_dist_sp()}} with
+\code{type = long} are the longform shapefiles.
+}
+\examples{
+\dontrun{
+raw.data <- get_all_polio_data()
+ctry.data <- extract_country_data("algeria", raw.data)
+ctry.shape <- set_shapefiles(ctry.data, "ctry")
+
+# Using init_dr()
+ctry.data <- init_dr("algeria")
+ctry.shape <- set_shapefiles(ctry.data, "ctry")
+}
+
 }

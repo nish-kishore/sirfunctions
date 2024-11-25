@@ -2,13 +2,17 @@
 % Please edit documentation in R/dal.R
 \name{duplicate_check}
 \alias{duplicate_check}
-\title{function to assess duplicates in output from get_all_polio_data}
+\title{Assess duplicates in the get_all_polio_data() output}
 \usage{
 duplicate_check(.raw.data = raw.data)
 }
 \arguments{
-\item{.raw.data}{\verb{named list} list of dataframes produced from \code{get_all_polio_data()}}
+\item{.raw.data}{Named \code{list} output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}}
 }
 \description{
-checks for duplicate records in afp, other surveillance, sia, and virus data
+Checks for duplicate records in AFP, other, SIA, and Virus datasets.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+raw.data <- duplicate_check(raw.data)
 }

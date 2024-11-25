@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_afp_case_map}
 \alias{generate_afp_case_map}
-\title{Generate a map of AFP cases}
+\title{AFP case map}
 \usage{
 generate_afp_case_map(
   afp.all,
@@ -14,21 +14,34 @@ generate_afp_case_map(
 )
 }
 \arguments{
-\item{afp.all}{AFP linelist containing point geometry}
+\item{afp.all}{\code{sf} AFP linelist containing point geometry. This is
+\code{ctry.data$afp.all}, which is an output of either \code{\link[=extract_country_data]{extract_country_data()}} and
+\code{\link[=init_dr]{init_dr()}}.}
 
-\item{ctry.shape}{province shapefile in long format}
+\item{ctry.shape}{\code{sf} Country shapefile in long format.}
 
-\item{prov.shape}{province shapefile in long format}
+\item{prov.shape}{\code{sf} Province shapefile in long format.}
 
-\item{start_date}{start date}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date}
+\item{end_date}{\code{str} End date of analysis. Default is today's date.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path where to save the figure to.}
 }
 \value{
-ggplot object
+\code{ggplot} Map of AFP cases.
 }
 \description{
-Generate a map of AFP cases
+Generates a map of AFP cases, excluding any with pending classification.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+generate_afp_case_map(ctry.data, ctry.shape, prov.shape, "2023-12-31")
+}
+}
+\seealso{
+\code{\link[=load_clean_ctry_sp]{load_clean_ctry_sp()}}, \code{\link[=load_clean_prov_sp]{load_clean_prov_sp()}}
 }

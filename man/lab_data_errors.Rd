@@ -12,14 +12,28 @@ lab_data_errors(
 )
 }
 \arguments{
-\item{ctry.data}{RDS object containing country polio data}
+\item{ctry.data}{\code{list} Large list containing country polio data. Output of \code{\link[=extract_country_data]{extract_country_data()}} or
+\code{\link[=init_dr]{init_dr()}}. Ensure that the lab data is attached to \code{ctry.data} as \code{lab.data}.}
 
-\item{start.date}{start date of the desk review}
+\item{start.date}{\code{str} Start date of the analysis.}
 
-\item{end.date}{end date of the desk review}
+\item{end.date}{\code{str} End date of the analysis.}
 
-\item{error_path}{file path to the error folder}
+\item{error_path}{\code{str} File path to store the error log.}
+}
+\value{
+None. It outputs locally an Excel file containing the error log.
 }
 \description{
-Generate a log of potential errors in the lab data
+Checks the loaded lab data for potential issues. The function will detect whether
+the lab data loaded either came from the regional office or from global.
+}
+\examples{
+\dontrun{
+lab_path <- "C:/Users/ABC1/Desktop/lab_data.xlsx"
+start_date <- "2021-01-01"
+end_date <- "2023-12-31"
+ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+lab_data_errors(ctry.data)
+}
 }

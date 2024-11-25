@@ -17,3 +17,4 @@ list of strings
 \description{
 Generate PowerPoint assumptions
 }
+\keyword{internal}

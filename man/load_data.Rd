@@ -15,3 +15,4 @@ load_data(data_dir_path)
 \description{
 Loads .Rds file
 }
+\keyword{internal}

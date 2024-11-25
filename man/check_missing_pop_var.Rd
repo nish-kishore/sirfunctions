@@ -14,3 +14,4 @@ check_missing_pop_var(pop_data, spatial_scale)
 \description{
 Helper function to check missing variables in the pop file based on spatial scale
 }
+\keyword{internal}

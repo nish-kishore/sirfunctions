@@ -3,6 +3,7 @@
 #' Downloads the desk review template code
 #'
 #' @param output_path where to download the desk review template code
+#' @keywords internal
 #'
 copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
   dr_template_name <- "desk_review_template.Rmd"
@@ -26,6 +27,7 @@ copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
 #' @importFrom utils download.file
 #' @param branch which branch to use
 #' @param output_folder where the function scripts should be stored
+#' @keywords internal
 #'
 #' @export
 copy_dr_functions <- function(branch = "main", output_folder = Sys.getenv("DR_FUNC_PATH")) {
@@ -94,6 +96,7 @@ copy_dr_functions <- function(branch = "main", output_folder = Sys.getenv("DR_FU
 #' @param start_date start date of the desk review
 #' @param end_date  end date of the desk review
 #' @param country_name name of the country
+#' @keywords internal
 #'
 #' @return boolean whether to use cache or not
 #' @export
@@ -149,6 +152,8 @@ check_cache <- function(param_path, start_date, end_date, country_name = Sys.get
 #' data_path is expected to be ~/country/year
 #'
 #' @param path location of the local desk review folder
+#' @keywords internal
+#'
 set_dr_local_folders <- function(path) {
   # Check if required directories exist locally and create it if it does not
   if (!dir.exists(path)) {
@@ -193,6 +198,7 @@ set_dr_local_folders <- function(path) {
 #' Determine the size of data to pull
 #'
 #' @param year `int` start year of the desk review
+#' @keywords internal
 #'
 #' @return `str` size of the data
 set_data_size <- function(year) {
@@ -213,6 +219,7 @@ set_data_size <- function(year) {
 #' @param dr_data_path `str` path to save the data set to.
 #' Expected path is ./country/year/data
 #' @param attach_spatial_data whether to attach spatial data
+#' @keywords internal
 #'
 #' @return `list` large list containing polio data
 update_data <-
@@ -240,6 +247,7 @@ update_data <-
 #' Loads .Rds file
 #'
 #' @param data_dir_path `str` data path
+#' @keywords internal
 #'
 #' @return `list` large list containing the polio data
 load_data <- function(data_dir_path) {
@@ -272,6 +280,7 @@ load_data <- function(data_dir_path) {
 #' Creates a meta data file
 #' @import readr
 #' @param path location where the .txt file is located/should be created
+#' @keywords internal
 #'
 #' @return this function does not return anything
 create_metadata <- function(path) {
@@ -296,6 +305,7 @@ create_metadata <- function(path) {
 #' @param country_name `str` name of the country
 #' @param data_path path of the data folder used in the desk review
 #' @param attach_spatial_data whether to attach spatial data
+#' @keywords internal
 #'
 #' @return `list` large list containing polio data
 generate_data <-
@@ -354,6 +364,7 @@ generate_data <-
 #' @param country country name as a string
 #' @param year year as an integer
 #' @param local_dr_repo the local desk review repository
+#' @keywords internal
 #'
 #' @return A status message
 fetch_dr_data <- function(country, year, local_dr_repo) {
@@ -434,20 +445,36 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 }
 
 # "public" methods ----
-#' Set up the folders and load polio data
-#' @import stringr lubridate
-#' @param country_name `str` name of the country
-#' @param start_date `str` start date of the desk review
-#' @param end_date `str` end date of the desk review
-#' @param local_dr_folder folder where the desk review code is located
-#' @param attach_spatial_data boolean whether to include spatial data
-#' @param sg_dr_folder folder where the local git repository is located
-#' @param lab_data_path location of the lab data
-#' @param iss_data_path location of the ISS data
-#' @param branch what branch to download the DR functions from GitHub
-#' @param source whether to source local functions or use sirfunctions
+#' Set up the folders and load polio data for the desk review
 #'
-#' @return `list` large list containing all dataframe for all polio data
+#' Prepares the folders and files required for the desk review. The function primarily
+#' serves to organize the files used for the desk review and set standardized
+#' environmental variables (i.e., [Sys.getenv()], where values for `x` related to
+#' the desk review is prefixed with `"DR"`) . The function only supports running one country at a time.
+#' @import stringr lubridate
+#' @param country_name `str` Name of the country.
+#' @param start_date `str` Start date of the desk review. If `NULL`, defaults to four years
+#' from when the function was ran on January 1st.
+#' @param end_date `str` End date of the desk review. If `NULL`, defaults to six weeks from when
+#' the function is ran.
+#' @param local_dr_folder `str` Folder where the desk review code is located.
+#' Defaults to the current working directory.
+#' @param attach_spatial_data `bool` Whether to include spatial data. Defaults to `TRUE`.
+#' @param sg_dr_folder `str` Folder where the local git repository is located. Defaults to `NULL`.
+#' @param lab_data_path `str` Location of the lab data. Defaults to `NULL`.
+#' @param iss_data_path `str` Location of the ISS data. Defaults to `NULL`.
+#' @param branch `str` What branch to download the DR functions from GitHub.
+#' `"main"` is the default, which contains the official version of the package. Other branches,
+#' like `"dev"` may contain experimental features not yet available in the `"main"` branch.
+#' @param source `bool` Whether to source local functions or use sirfunctions. Defaults to `TRUE`.
+#'
+#' @return `list` A list containing all dataframe for all polio data.
+#' @examples
+#' \dontrun{
+#' ctry.data <- init_dr("algeria", source = F) # Sets up folder in the current working directory
+#' ctry.data <- init_dr("algeria", branch = "dev") # Use functions from the dev branch
+#' }
+#'
 #' @export
 init_dr <-
   function(country_name,
@@ -624,19 +651,32 @@ init_dr <-
     return(country_data)
   }
 
-#' Upload desk review script to the sg-desk-review Github repository
-#' @param file_path location of the file to upload to the sg-desk-review repo
-#' @param repo_path local path of the sg-desk-review repo
-#' @param message message to include in the commit
+#' Upload desk review script to the sg-desk-reviews GitHub repository
 #'
-#' @return Status message
+#' Upload the desk review template script to the [sg-desk-reviews](https://github.com/nish-kishore/sg-desk-reviews)
+#' repository, which houses the code for the desk reviews.
+#' This function can be used in a general sense to upload files to
+#' a github repository. Note that the function will only commit, and that the user must push themselves.
+#'
+#' @param file_path `str` Location of the file to upload to the sg-desk-reviews repo.
+#' @param repo_path `str` Local path of the sg-desk-review repo.
+#' @param message `str` Message to include in the commit.
+#'
+#' @return A status message.
+#' @examples
+#' \dontrun{
+#' dr_template_path <- "C:/Users/ABC1/Desktop/local_dr/algeria/2024/algeria_template.Rmd"
+#' repo_path <- "C:/Users/ABC1/Desktop/github/sg-desk-reviews"
+#' str_message <- "Added algeria to the SG folder"
+#' upload_dr_to_github(dr_template_path, repo_path, str_message)
+#' }
 #' @export
 upload_dr_to_github <-
   function(file_path, repo_path, message = "updating file") {
-
     if (!requireNamespace("git2r", quietly = TRUE)) {
       stop('Package "git2r" must be installed to use this function.',
-           .call = FALSE)
+        .call = FALSE
+      )
     }
 
     # Check if the repository is initialized
@@ -680,14 +720,32 @@ upload_dr_to_github <-
 
 #' Freeze desk review data to the desk review folder in EDAV
 #'
-#' @param rds_obj Rds object loaded in R
-#' @param file_name name given to the Rds object, do not append .rds
-#' @param country country as a string
-#' @param year year as an integer
+#' Data from the desk review can be stored in EDAV so there's an exact copy of the
+#' dataset used in the desk review. This ensures that even after years,
+#' the desk reviews can be ran exactly as it was.
+#' @param rds_obj `Robj` Object loaded in R. This would be `ctry.data`, for example.
+#' @param file_name `str` Name given to the Rds object, do not append `.rds`. This is
+#' what gets stored in EDAV.
+#' @param country `str` Country as a string.
+#' @param year `int` It is recommended to set this to the year
+#' when the desk review was ran.
 #'
-#' @return A status message
+#' @return A status message.
+#' @examples
+#' \dontrun{
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- init_dr("algeria")
+#' freeze_dr_data(ctry.data, "algeria_ctry_data")
+#' }
+#'
 #' @export
-freeze_dr_data <- function(rds_obj, country, year, file_name) {
+#' @seealso [init_dr()]
+freeze_dr_data <- function(rds_obj,
+                           file_name,
+                           country = Sys.getenv("DR_COUNTRY"),
+                           year = as.numeric(format(Sys.Date(), "%Y"))) {
+  country <- stringr::str_to_lower(country)
+
   sirfunctions::edav_io(
     io = "write",
     default_dir = NULL,

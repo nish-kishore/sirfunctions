@@ -26,3 +26,4 @@ boolean whether to use cache or not
 \description{
 Checks the cache file and see if it should load parameters from it
 }
+\keyword{internal}

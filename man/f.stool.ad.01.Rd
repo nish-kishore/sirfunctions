@@ -2,7 +2,7 @@
 % Please edit documentation in R/f.stool.ad.01.R
 \name{f.stool.ad.01}
 \alias{f.stool.ad.01}
-\title{Calculate percent stool adequacy on a case basis}
+\title{Calculate percent stool adequacy}
 \usage{
 f.stool.ad.01(
   afp.data,
@@ -17,35 +17,54 @@ f.stool.ad.01(
 )
 }
 \arguments{
-\item{afp.data}{tibble: AFP data which includes GUID at a given spatial scale
-formatted as "adm(0,1,2)guid, onset date as "date" and cdc.classification.all2
+\item{afp.data}{\code{tibble} AFP data which includes GUID at a given spatial scale
+formatted as \verb{adm(0,1,2)guid}, onset date as \code{date} and \code{cdc.classification.all2}
 which includes "NOT-AFP".}
 
-\item{admin.data}{tibble: Full list of country administrative units by a given
-spatial scale including "year", "adm(0,1,2)guid, and "(ctry/prov/dist)"}
+\item{admin.data}{\code{tibble} Full list of country administrative units by a given
+spatial scale including \code{year}, \verb{adm(0,1,2)guid}, and \code{ctry/prov/dist} (as appropriate).}
 
-\item{start.date}{chr: "YYYY-MM-DD" - starting date for analysis.}
+\item{start.date}{\code{str} Starting date for analysis formatted as "YYYY-MM-DD".}
 
-\item{end.date}{chr: "YYYY-MM-DD" - ending date for analysis.}
+\item{end.date}{\code{str} Ending date for analysis as "YYYY-MM-DD".}
 
-\item{spatial.scale}{chr: "prov" or "dist" or "ctry".}
+\item{spatial.scale}{\code{str} Geographic level to group analysis on.
+\itemize{
+\item \code{"prov"} Province level.
+\item \code{"dist"} District level.
+\item \code{"ctry"} Country level.
+}}
 
-\item{missing}{chr: "good" or "bad" or "remove", default "good". "good" uses "adequacy.03", "bad" uses "adequacy.01",
-and "exclude" uses "adequacy.02" when calculating the adequacy.final column.}
+\item{missing}{\code{str} How to treat missing data. Valid values are: \verb{"good", "bad", "remove"}. Defaults to \code{"good"}.
+When calculating the \code{adequacy.final} column:
+\itemize{
+\item \code{"good"} uses \code{adequacy.03}
+\item \code{"bad"} uses \code{adequacy.01}
+\item \code{"exclude"} uses \code{adequacy.02}
+}}
 
-\item{bad.data}{chr: "remove" or "inadequate"; default "inadequate". "inadequate" treats samples bad data as inadequate.}
+\item{bad.data}{\code{str} How to  treat bad data. Valid values are:\verb{"remove", "inadequate"}. Defaults to \code{"inadequate"}.
+\code{"inadequate"} treats samples with bad data as inadequate.}
 
-\item{rolling}{boolean: Should data be annualized or calculated within the time period allotted.}
+\item{rolling}{\code{bool} Should data be analyzed on a rolling bases? Defaults to \code{FALSE}.}
 
-\item{sp_continuity_validation}{boolean: Exclude GUIDs not present in all years of the dataset. Default T.}
+\item{sp_continuity_validation}{\code{bool} Should GUIDs not present in all years of the dataset be excluded? Default \code{TRUE}.}
 }
 \value{
-tibble: long format stool adequacy evaluations
+\code{tibble} Long format stool adequacy evaluations.
 }
 \description{
-creates an adequacy variable - 'missing' parameter defines how
-missing data is treated - "Good" classifies missing data as good quality
-(POLIS method)
-"Bad" classifies all missing as bad quality, "missing" excludes missing from
-the calculations
+Creates a summary table of stool adequacy. The \code{missing} parameter defines how
+missing data is treated. \code{"good"} classifies missing data as good quality
+(POLIS method). \code{"bad"} classifies all missing as bad quality. \code{"missing"}
+excludes missing from the calculations.
+}
+\examples{
+raw.data <- get_all_polio_data()
+stool.ads <- f.stool.ad.01(raw.data$afp, raw.data$ctry.pop,
+  "2021-01-01", "2023-12-31",
+  "ctry",
+  sp_continuity_validation = FALSE
+)
+
 }

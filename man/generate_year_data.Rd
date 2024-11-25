@@ -17,3 +17,4 @@ a tibble with year data
 \description{
 Helper function to generate year.data
 }
+\keyword{internal}

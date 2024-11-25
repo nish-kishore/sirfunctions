@@ -2,15 +2,24 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{ctry_data_errors}
 \alias{ctry_data_errors}
-\title{Checks data quality errors from the country data}
+\title{Check data quality errors from the country data}
 \usage{
 ctry_data_errors(ctry.data, error_path = Sys.getenv("DR_ERROR_PATH"))
 }
 \arguments{
-\item{ctry.data}{RDS object containing polio country data}
+\item{ctry.data}{\code{list} Large list containing polio country data. This is the output of
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{error_path}{path where to store errors in ctry.data}
+\item{error_path}{\code{str} Path where to store checks in \code{ctry.data}.}
 }
 \description{
-Checks data quality errors from the country data
+Performs a check for different errors in the AFP linelist and population files.
+It also alerts the users for GUIDs that have changed.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+ctry_data_errors(ctry.data)
+}
+
 }

@@ -2,20 +2,26 @@
 % Please edit documentation in R/dal.R
 \name{get_diff_cols}
 \alias{get_diff_cols}
-\title{Get the columns where records differ in a group. Useful for identifying where duplicates differ after
-performing a distinct() operation}
+\title{Get the columns where records differ in a group}
 \usage{
 get_diff_cols(df, id_col)
 }
 \arguments{
-\item{df}{data frame or tibble}
+\item{df}{\code{df} or \code{tibble} Dataframe with at least one column containing unique identifiers and other columns.}
 
-\item{id_col}{\code{string} column used as a unique identifier for records}
+\item{id_col}{\code{str} Column used as a unique identifier for records.}
 }
 \value{
-tibble showing the columns where duplicates differ
+\code{tibble} A tibble showing the columns where duplicates differ.
 }
 \description{
-Get the columns where records differ in a group. Useful for identifying where duplicates differ after
-performing a distinct() operation
+Get the columns where duplicates differ after performing a \code{\link[dplyr:distinct]{dplyr::distinct()}} operation.
+In some instances, two records might exist with the same unique identifier. In datasets with lots of columns,
+it is difficult to figure out which columns these potential duplicates differ. The function outputs the columns
+where records with the same unique identifier differ.
+}
+\examples{
+df1 <- tibble::tibble(col1 = c(1, 1, 2), col2 = c("a", "b", "c"), col3 = c(1, 1, 3))
+diff_cols <- get_diff_cols(df1, "col1")
+
 }

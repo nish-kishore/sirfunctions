@@ -2,11 +2,11 @@
 % Please edit documentation in R/dr.lab.functions.R
 \name{clean_lab_data}
 \alias{clean_lab_data}
-\title{Main lab data cleaning function. Automatically detects whether the dataset
-came from WHO or the regional office}
+\title{Clean lab data}
 \usage{
 clean_lab_data(
   ctry.data,
+  ctry_name = Sys.getenv("DR_COUNTRY"),
   start.date = start_date,
   end.date = end_date,
   delim = "-",
@@ -14,20 +14,36 @@ clean_lab_data(
 )
 }
 \arguments{
-\item{ctry.data}{Rds file containing country polio data with lab.data attached}
+\item{ctry.data}{\code{list} Large list containing country polio data with lab data attached. Either from
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{start.date}{start date of the desk review}
+\item{ctry_name}{\code{str} Name of the country. Defaults to the desk review country.}
 
-\item{end.date}{end date of the desk review}
+\item{start.date}{\code{str} Start date of analysis.}
 
-\item{delim}{delimiter for EPIDs. Default is "-".}
+\item{end.date}{\code{str} End date of analysis.}
 
-\item{lab_locs_path}{location of testing lab locations. Default is NULL. Will download from EDAV, if necessary.}
+\item{delim}{\code{str} Delimiter for EPIDs. Default is \code{"-"}.}
+
+\item{lab_locs_path}{\code{str} Location of testing lab locations. Default is \code{NULL}. Will download from EDAV, if necessary.}
 }
 \value{
-a tibble containing the cleaned lab data
+\code{tibble} Cleaned lab data.
 }
 \description{
 Main lab data cleaning function. Automatically detects whether the dataset
-came from WHO or the regional office
+came from WHO or the regional office.
+}
+\examples{
+\dontrun{
+lab_path <- "C:/Users/XRG9/lab_data_who.csv"
+ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+ctry.data$lab.data <- clean_lab_data(ctry.data, "2021-01-01", "2023-12-31")
+
+# Not using the desk review pipeline
+raw.data <- get_all_polio_data()
+ctry.data <- extract_country_data("algeria", raw.data)
+ctry.data$lab.data <- read_csv(lab_path)
+ctry.data$lab.data <- clean_lab_data(ctry.data, "2021-01-01", "2023-12-31")
+}
 }

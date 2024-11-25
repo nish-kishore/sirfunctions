@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.excel.export.functions.R
 \name{create_60_day_export}
 \alias{create_60_day_export}
-\title{Exports output for 60-day follow ups}
+\title{Export 60-day follow up table}
 \usage{
 create_60_day_export(
   cases.need60day,
@@ -11,12 +11,27 @@ create_60_day_export(
 )
 }
 \arguments{
-\item{cases.need60day}{table for 60 day follow up}
+\item{cases.need60day}{\code{tibble} Summary table for 60-day follow-up.}
 
-\item{country}{name of the country}
+\item{country}{\code{str} Name of the country.}
 
-\item{excel_output_path}{output path}
+\item{excel_output_path}{\code{str} Output path of the Excel file.}
+}
+\value{
+None.
 }
 \description{
-Exports output for 60-day follow ups
+Exports the output of \link{generate_60_day_table_data} into an Excel file.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+stool.data <- generate_stool_data(
+  ctry.data$afp.all.2, "good", "inadequate",
+  "2021-01-01", "2023-12-31"
+)
+cases.need60day <- generate_60_day_table_data(stool.data, start_date, end_date)
+create_60_day_export(cases.need60day)
+}
+
 }

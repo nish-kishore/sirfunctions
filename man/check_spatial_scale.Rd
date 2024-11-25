@@ -14,3 +14,4 @@ check_spatial_scale(admin_data, spatial_scale)
 \description{
 Helper function to check if spatial scale of data matches spatial scale chosen
 }
+\keyword{internal}

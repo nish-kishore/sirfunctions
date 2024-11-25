@@ -21,3 +21,4 @@ summary table of stool adequacy on a yearly basis
 \description{
 Helper function to generate stool adequacy on a non-rolling basis
 }
+\keyword{internal}

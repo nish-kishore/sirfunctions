@@ -15,24 +15,44 @@ create_emergence_group_gif(
 )
 }
 \arguments{
-\item{emergence_group}{str: designation of the emergence group to review}
+\item{emergence_group}{\code{str} Designation of the emergence group to review.}
 
-\item{pos}{tibble: positives data set}
+\item{pos}{\code{tibble} Positives data set. This is \code{raw.data$pos}, which is part of the
+output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 
-\item{dist}{sf: shapefile of all districts}
+\item{dist}{\code{sf} Shapefile of all districts.}
 
-\item{ctry}{sf: shapefile of all countries}
+\item{ctry}{\code{sf} Shapefile of all countries.}
 
-\item{include_env}{boolean: To include environmental detections in analysis}
+\item{include_env}{\code{bool} To include environmental detections in analysis. Defaults to \code{TRUE}.}
 
-\item{cumulative}{boolean: To display cases as cumulative}
+\item{cumulative}{\code{bool} To display cases as cumulative. Defaults to \code{TRUE}.}
 
-\item{out_gif}{str: location where gif should be saved}
+\item{out_gif}{\code{str} Location where gif should be saved.}
 }
 \value{
-GIF written out to a location
+GIF written out to location of \code{out_gif}.
 }
 \description{
 Generate the figures and stitch together a GIF to evaluate emergence group
 movement over time, generally aggregated as cumulative per month
+}
+\examples{
+\dontrun{
+
+data <- get_all_polio_data(size = "medium")
+pos <- data$pos
+emergence_group <- "NIE-JIS-1"
+dist <- data$global.dist
+ctry <- data$global.ctry
+include_env <- T
+cumulative <- F
+out_gif <- getwd()
+
+create_emergence_group_gif(
+  emergence_group, pos, dist, ctry, include_env,
+  cumulative, out_gif
+)
+}
+
 }

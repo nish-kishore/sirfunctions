@@ -7,11 +7,20 @@
 generate_es_data_long(es.data)
 }
 \arguments{
-\item{es.data}{tibble containing ES data}
+\item{es.data}{\code{tibble} ES data.}
 }
 \value{
-tibble of ES data with viral detection columns
+\code{tibble} ES data with viral detection columns.
 }
 \description{
-Generate ES data with viral detection columns
+The function importantly adds the \code{ed.detect}, \code{all_dets}, and \code{year} columns to the
+environmental surveillance data. However, this function will probably be moved
+as part of the \code{\link[=clean_es_data]{clean_es_data()}} function in the future.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+ctry.data <- extract_country_data("algeria", raw.data)
+ctry.data$es <- clean_es_data(ctry.data)
+es.data.long <- generate_es_data_long(ctry.data$es)
+
 }

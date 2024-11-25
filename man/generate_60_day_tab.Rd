@@ -2,16 +2,33 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_60_day_tab}
 \alias{generate_60_day_tab}
-\title{Table used for those requiring 60 day follow up}
+\title{60-day follow up table}
 \usage{
 generate_60_day_tab(cases.need60day)
 }
 \arguments{
-\item{cases.need60day}{summary table containing those that need 60 day follow-up}
+\item{cases.need60day}{\code{tibble} Summary table containing those that need 60 day follow-up.
+Output of \code{\link[=generate_60_day_table_data]{generate_60_day_table_data()}}.}
 }
 \value{
-a flextable with 60 day follow up data
+\code{flextable} A summary of cases requiring 60-day followups per year.
 }
 \description{
-Table used for those requiring 60 day follow up
+Generates a table summarizing the number of inadequate cases that need follow up.
+}
+\examples{
+\dontrun{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+ctry.data <- extract_country_data("algeria", raw.data)
+stool.data <- generate_stool_data(
+  ctry.data$afp.all.2, "good", "inadequate",
+  "2021-01-01", "2023-12-31"
+)
+cases.need60day <- generate_60_day_table_data(
+  stool.data,
+  "2021-01-01", "2023-12-31"
+)
+generate_60_day_tab(cases.need60day)
+}
+
 }

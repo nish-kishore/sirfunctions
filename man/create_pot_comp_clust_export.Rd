@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.excel.export.functions.R
 \name{create_pot_comp_clust_export}
 \alias{create_pot_comp_clust_export}
-\title{Export potentially compatible and compatible summaries}
+\title{Export potentially compatible and compatible summary table}
 \usage{
 create_pot_comp_clust_export(
   pot.c.clust,
@@ -11,12 +11,29 @@ create_pot_comp_clust_export(
 )
 }
 \arguments{
-\item{pot.c.clust}{potentially compatible cluster summary}
+\item{pot.c.clust}{\code{tibble} Potentially compatible cluster summary. The output of
+\code{\link[=generate_potentially_compatibles_cluster]{generate_potentially_compatibles_cluster()}}.}
 
-\item{country}{name of the country}
+\item{country}{\code{str} Name of the country.}
 
-\item{excel_output_path}{output path}
+\item{excel_output_path}{\code{str} Output path of where to store the Excel file.}
+}
+\value{
+None.
 }
 \description{
-Export potentially compatible and compatible summaries
+Exports the output of \code{\link[=generate_potentially_compatibles_cluster]{generate_potentially_compatibles_cluster()}} as an Excel file.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+stool.data <- generate_stool_data(
+  ctry.data$afp.all.2, "good", "inadequate",
+  "2021-01-01", "2023-12-31"
+)
+cases.need60day <- generate_60_day_table_data(stool.data, start_date, end_date)
+pot.c.clust <- generate_potentially_compatibles_cluster(cases.need60day)
+create_pot_comp_clust_export(pot.c.clust)
+}
+
 }

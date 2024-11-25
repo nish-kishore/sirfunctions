@@ -1,9 +1,11 @@
+# Private functions ----
 #' Generate PowerPoint assumptions
 #' @importFrom officer fp_text unordered_list
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
+#' @keywords internal
 #'
-#' @return list of strings
+#' @returns list of strings
 generate_pptx_assumptions <- function(start_date, end_date) {
   pptx.assumptions <- c(
     "Data sources:",
@@ -35,12 +37,25 @@ generate_pptx_assumptions <- function(start_date, end_date) {
   return(assump)
 }
 
-
+# Public functions ----
 #' Get path of the PowerPoint template
 #'
-#' @param path path to the PowerPoint template. If NULL, will prompt user to download from the sg-desk-review GitHub repository
+#' The desk review PowerPoint template is used to build the desk review slide deck.
+#' The function will either download the template from the sg-desk-reviews GitHub page
+#' or get it locally.
+#' @param path `str` Path to the PowerPoint template. If `NULL`,
+#' will prompt user to download from the sg-desk-review GitHub repository
 #'
-#' @return a string containing the path of the PowerPoint template
+#' @returns `str` Local path of the PowerPoint template.
+#' @examples
+#' \dontrun{
+#' get_ppt_template()
+#'
+#' # If present locally
+#' template_path <- "C:/Users/ABC1/Desktop/deskreview_template.pptx"
+#' ppt_template <- get_ppt_template(template_path)
+#' }
+#'
 #' @export
 get_ppt_template <- function(path = NULL) {
   if (is.null(path)) {
@@ -54,40 +69,62 @@ get_ppt_template <- function(path = NULL) {
 
 
 #' Generate the desk review slide deck
+#'
+#' The original function to build the desk review PowerPoint. This function has been
+#' superseded by [generate_dr_ppt2()]. The function outputs images to the PowerPoint
+#' directly from objects, unlike `generate_dr_ppt2()` which uses images saved in a folder.
+#'
 #' @importFrom officer add_slide layout_properties layout_summary ph_location_label ph_location_type ph_with read_pptx
 #'
-#' @param ppt_template_path path to the PowerPoint template
-#' @param ctry.data RDS file containing polio data for a country
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
-#' @param pop.map country pop map
-#' @param pop.map.prov prov pop map
-#' @param afp.case.map map of afp cases
-#' @param afp.epi.curve afp epicurv
-#' @param surv.ind.tab surveillance indicator table
-#' @param afp.dets.prov.year afp dets for province
-#' @param npafp.map npafp map for country level
-#' @param npafp.map.dist npafp map for district level
-#' @param stool.ad.maps stool adequacy maps at province
-#' @param stool.ad.maps.dist stool adequact maps at district
-#' @param inad.tab.flex inadequacy table
-#' @param tab.60d 60 day follow up table
-#' @param timely_nation timeliness at country level
-#' @param timely_prov timeliness at province level
-#' @param mapt_all map with all indicators
-#' @param es.site.det ES site viral detection
-#' @param es.det.map ES site detection maps
-#' @param es.timely ES timeliness
-#' @param es.table ES table
-#' @param country name of the country
-#' @param ppt_output_path path where the powerpoint should be outputted
-#' @param case.num.dose.g figure containing immunization rates per year
+#' @param ppt_template_path `str` Sath to the PowerPoint template.
+#' @param ctry.data `list` List containing polio data for a country. Either the output of
+#' [extract_country_data()] or [init_dr()].
+#' @param start_date `str` Start date of desk review.
+#' @param end_date `str` End date of desk review.
+#' @param pop.map `ggplot` Country pop map.
+#' @param pop.map.prov `ggplot` Prov pop map.
+#' @param afp.case.map `ggplot` Map of afp cases.
+#' @param afp.epi.curve `ggplot` AFP epicurve.
+#' @param surv.ind.tab `flextable` Surveillance indicator table.
+#' @param afp.dets.prov.year `ggplot` AFP detections for province.
+#' @param pop.tab `flextable` Table of population.
+#' @param npafp.map `ggplot` NPAFP map for country level.
+#' @param npafp.map.dist `ggplot` NPAFP map for district level.
+#' @param stool.ad.maps `ggplot` Stool adequacy maps at province.
+#' @param stool.ad.maps.dist `ggplot` Stool adequacy maps at district.
+#' @param inad.tab.flex `flextable` Inadequate table.
+#' @param tab.60d `flextable` 60-day follow-up table.
+#' @param case.num.dose.g `ggplot` Immunization rates per year.
+#' @param timely_nation `ggplot` Timeliness at country level.
+#' @param timely_prov `ggplot` Timeliness at province level.
+#' @param mapt_all `ggplot` Map with all indicators.
+#' @param es.site.det `ggplot` ES site viral detection.
+#' @param es.det.map `ggplot` ES site detection maps.
+#' @param es.timely `ggplot` ES timeliness.
+#' @param es.table `flextable` ES table.
+#' @param country `str` Name of the country.
+#' @param ppt_output_path `str` Path where the PowerPoint should be outputted.
+#' @returns None.
+#' @examples
+#' \dontrun{
+#' # Assume all figures and tables are assigned to the appropriate variable.
+#' template_path <- "C:/Users/ABC1/Desktop/deskreview_template.pptx"
+#' generate_dr_ppt(
+#'   template_path, ctry.data, start_date, end_date, pop.map,
+#'   pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
+#'   surv.ind.tab, afp.dets.prov.year, pop.tab, npafp.map,
+#'   npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
+#'   inad.tab.flex, tab.60d, case.num.dose.g,
+#'   timely_nation, timely_prov,
+#'   mapt_all, es.site.det, es.det.map, es.timely,
+#'   es.table
+#' )
+#' }
 #'
-#' @return does not return anything
 #' @export
 generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
                             pop.map, pop.map.prov, afp.case.map, afp.epi.curve,
-                            surv.ind.tab, afp.dets.prov.year, npafp.map,
+                            surv.ind.tab, afp.dets.prov.year, pop.tab, npafp.map,
                             npafp.map.dist, stool.ad.maps, stool.ad.maps.dist,
                             inad.tab.flex, tab.60d, case.num.dose.g,
                             timely_nation, timely_prov,
@@ -254,10 +291,10 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
       value = "Virus isolation in/around SIA rounds",
       location = officer::ph_location_type("title")
     ) %>%
-    # 60 day follow up table by year (table) ----
+    # 60-day follow-up table by year (table) ----
     officer::add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     officer::ph_with(
-      value = "60 day follow up",
+      value = "60-day follow-up",
       location = officer::ph_location_type("title")
     ) %>%
     officer::ph_with(tab.60d, location = officer::ph_location_type("body")) %>%
@@ -396,35 +433,50 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
+    paste0("Deskreview_", country, "_", format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }
 
 #' Generate the desk review slide deck from the figures folder
+#'
 #' Generating the PowerPoint from the figures folder is generally faster and allows
 #' figures to remain consistent. Tables remain as PowerPoint tables.
 #'
 #' @importFrom lubridate today
 #' @importFrom officer add_slide block_list external_img fp_text fpar ftext layout_properties layout_summary ph_location ph_location_label ph_location_type ph_with read_pptx
-#' @param ctry.data RDS file containing polio data for a country
-#' @param start_date start date of desk review
-#' @param end_date end date of desk review
-#' @param surv.ind.tab surveillance indicator table
-#' @param inad.tab.flex inadequacy table
-#' @param tab.60d 60 day follow up table
-#' @param es.table ES table
-#' @param ppt_template_path path to the PowerPoint template
-#' @param fig.path file path to the figures folder
-#' @param country name of the country
-#' @param ppt_output_path path where the powerpoint should be outputted
 #'
-#' @return does not return anything
+#' @param ctry.data `list` Country polio data. Either the output of [extract_country_data()] or
+#' [init_dr()].
+#' @param start_date `str` Start date of desk review.
+#' @param end_date `str` End date of desk review.
+#' @param surv.ind.tab `flextable` Surveillance indicator table
+#' @param inad.tab.flex `flextable` Inadequates table.
+#' @param tab.60d `flextable` 60-day follow-up table.
+#' @param pop.tab `flextable` Population table.
+#' @param es.table `flextable` ES table.
+#' @param ppt_template_path `str` Path to the PowerPoint template.
+#' @param fig.path `str` File path to the figures folder.
+#' @param country `str` Name of the country.
+#' @param ppt_output_path `str` Path where the PowerPoint should be outputted.
+#'
+#' @returns None.
+#' @examples
+#' \dontrun{
+#' # Assume all figures and tables are assigned to the appropriate variable.
+#' ppt_template <- "C:/Users/ABC1/Desktop/deskreview_template.pptx"
+#' generate_dr_ppt2(ctry.data, start_date, end_date,
+#'   surv.ind.tab, inad.tab.flex, tab.60d, es.table,
+#'   ppt_template_path = ppt_template
+#' )
+#' }
+#'
 #' @export
 generate_dr_ppt2 <- function(ctry.data,
                              start_date, end_date,
                              surv.ind.tab,
                              inad.tab.flex,
                              tab.60d,
+                             pop.tab,
                              es.table,
                              ppt_template_path = NULL,
                              fig.path = Sys.getenv("DR_FIGURE_PATH"),
@@ -579,10 +631,10 @@ generate_dr_ppt2 <- function(ctry.data,
       value = "Virus isolation in/around SIA rounds",
       location = officer::ph_location_type("title")
     ) %>%
-    # 60 day follow up table by year (table) ----
+    # 60-day follow-up table by year (table) ----
     officer::add_slide(layout = "Title and Content", master = "1_Office Theme") %>%
     officer::ph_with(
-      value = "60 day follow up",
+      value = "60-day follow-up",
       location = officer::ph_location_type("title")
     ) %>%
     officer::ph_with(tab.60d, location = officer::ph_location_type("body")) %>%
@@ -858,6 +910,6 @@ generate_dr_ppt2 <- function(ctry.data,
   # Print output  ----
   print(draft_output, file.path(
     ppt_output_path,
-    paste0("Deskreview_", country, "_",  format(Sys.Date(), "%d%m%Y"), ".pptx")
+    paste0("Deskreview_", country, "_", format(Sys.Date(), "%d%m%Y"), ".pptx")
   ))
 }

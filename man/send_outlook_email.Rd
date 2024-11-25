@@ -7,17 +7,26 @@
 send_outlook_email(title, body, recipient, attachment = NULL)
 }
 \arguments{
-\item{title}{str: Subject of message to be sent}
+\item{title}{\code{str} Subject of message to be sent.}
 
-\item{body}{str: long string of body of message to be sent}
+\item{body}{\code{str} Long string of body of message to be sent.}
 
-\item{recipient}{str: semicolon separated list of recipients}
+\item{recipient}{\code{str} A semicolon separated list of recipients.}
 
-\item{attachment}{str: path to local document to be attached to email, defaults to NULL}
+\item{attachment}{\code{str} Path to local document to be attached to email. Defaults to \code{NULL}.}
 }
 \value{
-Success or error message
+Status message whether the operation was a success or an error message.
 }
 \description{
-Helper function to send an email through Outlook from R
+Function to send an email through Outlook from R.
+}
+\examples{
+\dontrun{
+title_message <- "Test"
+body_message <- "this is a test"
+recipient_list <- c("ab123@email.com")
+send_outlook_email(title_message, body_message, recipient_list)
+}
+
 }

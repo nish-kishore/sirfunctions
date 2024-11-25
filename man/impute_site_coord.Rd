@@ -2,16 +2,18 @@
 % Please edit documentation in R/dr.es.functions.R
 \name{impute_site_coord}
 \alias{impute_site_coord}
-\title{Adds coordinates for ES surveillance sites missing them}
+\title{Imputes missing site coordinates in ES data}
 \usage{
 impute_site_coord(ctry.data)
 }
 \arguments{
-\item{ctry.data}{RDS object containing country polio data}
+\item{ctry.data}{\code{list} A list containing polio country data. This is either the output of
+\code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
 }
 \value{
-tibble of ES data with imputed coordinates for sites missing them
+\code{tibble} ES data with imputed coordinates for sites missing them.
 }
 \description{
-Adds coordinates for ES surveillance sites missing them
+Adds coordinates for ES surveillance sites missing them. This function is not meant
+to be exported. This is part of \code{\link[=clean_es_data]{clean_es_data()}}.
 }
