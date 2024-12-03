@@ -2,16 +2,24 @@
 % Please edit documentation in R/dr.es.functions.R
 \name{clean_es_data}
 \alias{clean_es_data}
-\title{Transform ES data cleaning with additional columns}
+\title{Clean environmental surveillance data}
 \usage{
 clean_es_data(ctry.data)
 }
 \arguments{
-\item{ctry.data}{RDS object containing country polio data}
+\item{ctry.data}{\code{list} Polio data at the country level. This is either the output
+of \code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
 }
 \value{
-tibble of cleaned ES data
+\code{tibble} Cleaned environmental surveillance data.
 }
 \description{
-Transform ES data cleaning with additional columns
+The cleaning step will attempt to impute missing site coordinates and create
+standardized columns used in the desk review.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+ctry.data <- extract_country_data("algeria", raw.data)
+ctry.data$es <- clean_es_data(ctry.data)
+
 }

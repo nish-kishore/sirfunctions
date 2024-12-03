@@ -2,7 +2,7 @@
 % Please edit documentation in R/dal.R
 \name{load_clean_ctry_sp}
 \alias{load_clean_ctry_sp}
-\title{Standard function to load Country data}
+\title{Download country georgraphic data}
 \usage{
 load_clean_ctry_sp(
   azcontainer = suppressMessages(get_azure_storage_connection()),
@@ -12,29 +12,45 @@ load_clean_ctry_sp(
   end.year = lubridate::year(Sys.Date()),
   st.year = 2000,
   data.only = F,
-  type = NULL
+  type = NULL,
+  version = "standard"
 )
 }
 \arguments{
-\item{azcontainer}{azure validated container object}
+\item{azcontainer}{Azure validated container object}
 
-\item{fp}{str: Location of geodatabase}
+\item{fp}{\code{str} Location of geodatabase.}
 
-\item{ctry_guid}{array/str: Array of all country GUIDS that you want to pull}
+\item{ctry_guid}{\verb{str array} Array of all country GUIDS that you want to pull.}
 
-\item{ctry_name}{array/str: Array of all country names that you want to pull}
+\item{ctry_name}{\verb{str array} Array of all country names that you want to pull.}
 
-\item{end.year}{int: last year you want to pull information for - default is current year}
+\item{end.year}{\code{int} Last year you want to pull information for. Default is current year.}
 
-\item{st.year}{int: earlier year of spatial data you want to pull - default is 2000}
+\item{st.year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
 
-\item{data.only}{boolean: default F, if true, returns a rectangular tibble instead of a shape file}
+\item{data.only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
 
-\item{type}{str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group}
+\item{type}{\code{str} Whether to return a spatial object for every year group. Defaults to \code{NULL}.
+\itemize{
+\item \code{"long"} Return a dataset for every year group.
+\item \code{NULL} Return a dataset only with unique GUIDs and when they were active.
+}}
+
+\item{version}{\code{str} Specify whether to return standard shapefiles or new shapefiles
+still under evaluation/development. Default is \code{"standard"}.
+\itemize{
+\item \code{"standard"} Standard shapefiles.
+\item \code{"dev"}  New shapefiles still under evaluation/development.
+}}
 }
 \value{
-tibble or sf dataframe
+\code{tibble} or \code{sf} Dataframe containing spatial data.
 }
 \description{
-Pulls province shapefiles directly from the geodatabase
+Pulls country shapefiles directly from the geodatabase.
+}
+\examples{
+ctry <- load_clean_ctry_sp(ctry_name = "ALGERIA")
+ctry.long <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 }

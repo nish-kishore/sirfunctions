@@ -1,5 +1,4 @@
 test_that("testing f.plot.looks", {
-
   plot_class <- ggplot2::theme()
   unrecognized_option_message <- "Expected a vector of class theme and gg"
 
@@ -13,8 +12,6 @@ test_that("testing f.plot.looks", {
 
   # Check if error gets caught as appropriate
   expect_error(f.plot.looks("invalid"),
-               info = " 'invalid' is not a supported plot type.")
-
-
-
+    info = " 'invalid' is not a supported plot type."
+  )
 })

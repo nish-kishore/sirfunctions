@@ -1,9 +1,22 @@
-#' Function to return specific plot looks
-#' @description Function to collate and return plot looks
+#' Set plot looks
+#'
+#' The function serves to collate and return plot looks. Depending on the parameter,
+#' specific values in a `ggplot2` theme object will be returned.
 #' @import ggplot2
-#' @param type String describing a value to be returned. Accepted values include:
-#' '02', 'epicurve', 'geomtile', 'gpln_type1', 'gpln_type2'
-#' @return ggplot theme for addition into plot
+#' @param type `str` Type of graph format. Accepted values include:
+#' - `"02"`
+#' - `"epicurve"`
+#' - `"geomtile"`
+#' - `"gpln_type1"`
+#' - `"gpln_type2"`
+#' @return `ggplot2 theme obj` A theme object that can be added into an existing plot.
+#' @examples
+#' epicurve_looks <- f.plot.looks("epicurve")
+#' df <- datasets::iris
+#' p1 <- ggplot2::ggplot() +
+#'   ggplot2::geom_col(data = df, ggplot2::aes(x = Sepal.Length, y = Sepal.Width))
+#' p2 <- p1 + epicurve_looks
+#'
 #' @export
 f.plot.looks <- function(type) {
   types <- c("02", "epicurve", "geomtile", "gpln_type1", "gpln_type2")

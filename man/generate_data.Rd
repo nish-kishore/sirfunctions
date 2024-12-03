@@ -29,3 +29,4 @@ generate_data(
 \description{
 Handles the logic of which files to load in the current R session
 }
+\keyword{internal}

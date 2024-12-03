@@ -2,22 +2,53 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_pop_tab}
 \alias{generate_pop_tab}
-\title{Generate table for population}
+\title{Summary table of indicators at the province level}
 \usage{
 generate_pop_tab(prov.case.ind, pstool, start_date, end_date)
 }
 \arguments{
-\item{prov.case.ind}{case indicator at province level}
+\item{prov.case.ind}{\code{tibble} Case indicator at province level. Output of \code{\link[=prep_npafp_table]{prep_npafp_table()}} at the province level.}
 
-\item{pstool}{stool adequacy at porvince level}
+\item{pstool}{\code{tibble} Stool adequacy at province level. Output of \code{\link[=f.stool.ad.01]{f.stool.ad.01()}} at the province level.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{\code{str} End date of analysis.}
 }
 \value{
-a flextable containing population indicators
+\code{flextable} Summary table of province NPAFP and stool adequacy rates per year.
 }
 \description{
-Generate table for population
+Generates a table summarizing both NPAFP and stool adequacy rates at the province level and by year.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+start_date <- "2021-01-01"
+end_date <- "2023-12-31"
+prov.extract <- f.npafp.rate.01(
+  afp.data = ctry.data$afp.all.2,
+  pop.data = ctry.data$prov.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "prov",
+  pending = T,
+  rolling = F,
+  sp_continuity_validation = F
+)
+prov.case.ind <- prep_npafp_table(prov.extract, ctry.data$afp.all.2, start_date, end_date, "prov")
+pstool <- f.stool.ad.01(
+  afp.data = ctry.data$afp.all.2,
+  admin.data = ctry.data$prov.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "prov",
+  missing = "good",
+  bad.data = "inadequate",
+  rolling = F,
+  sp_continuity_validation = F
+)
+generate_pop_tab(prov.case.ind, pstool, start_date, end_date)
+}
+
 }

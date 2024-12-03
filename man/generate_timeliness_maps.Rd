@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_timeliness_maps}
 \alias{generate_timeliness_maps}
-\title{Map containing timeliness of samples}
+\title{Maps evaluating timeliness of samples against timeliness targets.}
 \usage{
 generate_timeliness_maps(
   ctry.data,
@@ -16,25 +16,39 @@ generate_timeliness_maps(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file containing polio data for a country}
+\item{ctry.data}{\code{list} Large list containing polio data for a country. This is the output
+of \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{ctry.shape}{recent country shapefile}
+\item{ctry.shape}{\code{sf} Country shapefile in long format.}
 
-\item{prov.shape}{recent province shapefile}
+\item{prov.shape}{\code{sf} Province shapefile in long format.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end dtae of desk review}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{mark_x}{whether to put a mark on where AFP cases are less than 5}
+\item{mark_x}{\code{bool} Mark where there are less than 5 AFP cases? Defaults to \code{TRUE}.}
 
-\item{pt_size}{size of the marks}
+\item{pt_size}{\code{numeric} Size of the marks.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path where to save the figure to.}
 }
 \value{
-ggplot object
+\code{ggplot} Faceted map of each province evaluated against timeliness targets
+across years.
 }
 \description{
-Map containing timeliness of samples
+Generates a map at the provincial level summarizing the timeliness of samples
+across different timeliness targets. The figure is faceted by the type of
+timeliness target, with each facet containing the percentage of samples
+from each province that met the targets over the years.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+generate_timeliness_maps(ctry.data, ctry.shape, prov.shape, "2021-01-01", "2023-12-31")
+}
+
 }

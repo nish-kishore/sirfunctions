@@ -4,20 +4,40 @@
 \alias{freeze_dr_data}
 \title{Freeze desk review data to the desk review folder in EDAV}
 \usage{
-freeze_dr_data(rds_obj, country, year, file_name)
+freeze_dr_data(
+  rds_obj,
+  file_name,
+  country = Sys.getenv("DR_COUNTRY"),
+  year = as.numeric(format(Sys.Date(), "\%Y"))
+)
 }
 \arguments{
-\item{rds_obj}{Rds object loaded in R}
+\item{rds_obj}{\code{Robj} Object loaded in R. This would be \code{ctry.data}, for example.}
 
-\item{country}{country as a string}
+\item{file_name}{\code{str} Name given to the Rds object, do not append \code{.rds}. This is
+what gets stored in EDAV.}
 
-\item{year}{year as an integer}
+\item{country}{\code{str} Country as a string.}
 
-\item{file_name}{name given to the Rds object, do not append .rds}
+\item{year}{\code{int} It is recommended to set this to the year
+when the desk review was ran.}
 }
 \value{
-A status message
+A status message.
 }
 \description{
-Freeze desk review data to the desk review folder in EDAV
+Data from the desk review can be stored in EDAV so there's an exact copy of the
+dataset used in the desk review. This ensures that even after years,
+the desk reviews can be ran exactly as it was.
+}
+\examples{
+\dontrun{
+raw.data <- get_all_polio_data()
+ctry.data <- init_dr("algeria")
+freeze_dr_data(ctry.data, "algeria_ctry_data")
+}
+
+}
+\seealso{
+\code{\link[=init_dr]{init_dr()}}
 }

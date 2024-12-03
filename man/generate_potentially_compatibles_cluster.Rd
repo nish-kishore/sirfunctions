@@ -7,13 +7,28 @@
 generate_potentially_compatibles_cluster(cases.need60day, create_cluster = F)
 }
 \arguments{
-\item{cases.need60day}{summary table of cases that need 60 day follow-up}
+\item{cases.need60day}{\code{tibble} Summary table of cases that need 60-day follow-up.
+This is the output of \code{\link[=generate_60_day_table_data]{generate_60_day_table_data()}}.}
 
-\item{create_cluster}{whether to use clustering algorithm. Default to F.}
+\item{create_cluster}{\code{bool} Add column for clusters? Default to \code{FALSE}.}
 }
 \value{
-summary table with clustering info
+\code{tibble} A summary table of cases.
 }
 \description{
-Creating a table of compatible and potentially compatible cases
+Creates a table of compatible and potentially compatible cases, with an
+optional parameter to run a clustering algorithm.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+ctry.data <- extract_country_data("algeria", raw.data)
+stool.data <- generate_stool_data(
+  ctry.data$afp.all.2, "2021-01-01", "2023-12-31",
+  "good", "inadequate"
+)
+table60.days <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
+pot.c.clust <- generate_potentially_compatibles_cluster(table60.days,
+  create_cluster = TRUE
+)
+
 }

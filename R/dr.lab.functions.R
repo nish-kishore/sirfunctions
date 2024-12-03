@@ -1,10 +1,19 @@
-#' Gets information related to testing labs
-#' @import cli dplyr
-#' @param path path the lab location file
+#' Table of information regarding testing labs in each country
 #'
-#' @return tibble containing the test lab locations
+#' Imports information on testing labs for each country, either from a CSV file
+#' or downloaded from EDAV. If no argument is passed, the function will download
+#' the table from EDAV.
+#'
+#' @import cli dplyr
+#' @param path `str` Path to the lab location file. Defaults to `NULL`.
+#'
+#' @return `tibble` A table containing the test lab location information.
+#' @examples
+#' ctry.seq <- get_lab_locs()
+#'
+#' @export
 
-get_lab_locs <- function(path) {
+get_lab_locs <- function(path = NULL) {
   lab.locs <- NULL
   if (is.null(path)) {
     tryCatch(
@@ -31,10 +40,16 @@ get_lab_locs <- function(path) {
 }
 
 #' Determines whether lab data is EMRO or AFRO
-#' @import stringr
-#' @param country_name name of the country
 #'
-#' @return string "EMRO" or "AFRO"
+#' Outputs the name of the region which a country belongs to.
+#'
+#' @import stringr
+#' @param country_name `str` Name of the country.
+#'
+#' @return `str` A string, either `"EMRO"` or `"AFRO"`.
+#' @examples
+#' get_region("algeria")
+#'
 #' @export
 get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
   # Countries that belong in a region
@@ -77,17 +92,27 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
 
 
 #' Function to load the raw lab data
-#' @import stringr readr
-#' @param lab_data_path file path as a string to the lab data
-#' @param sheet_name name of the sheet to load
 #'
-#' @return a tibble containing lab data
+#' This a function to load lab data that are either CSVs or Excel files.
+#'
+#' @import stringr readr
+#' @param lab_data_path `str` File path as a string to the lab data.
+#' @param sheet_name `str` Name of the sheet to load. This is optional in cases
+#' of an Excel sheet with multiple tabs.
+#'
+#' @return `tibble` Lab data loaded from the CSV or Excel file path.
+#' @examples
+#' \dontrun{
+#' lab_data_path <- "C:/Users/ABC1/Desktop/lab_data.csv"
+#' lab.data <- load_lab_data(lab_data_path)
+#' }
+#'
 #' @export
 load_lab_data <- function(lab_data_path, sheet_name = NULL) {
-
   if (!requireNamespace("readxl", quietly = TRUE)) {
     stop('Package "readxl" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
 
   if (stringr::str_ends(lab_data_path, ".csv")) {
@@ -102,14 +127,29 @@ load_lab_data <- function(lab_data_path, sheet_name = NULL) {
 
 #' Generate a log of potential errors in the lab data
 #'
-#' @param ctry.data RDS object containing country polio data
-#' @param start.date start date of the desk review
-#' @param end.date end date of the desk review
-#' @param error_path file path to the error folder
+#' Checks the loaded lab data for potential issues. The function will detect whether
+#' the lab data loaded either came from the regional office or from global.
 #'
+#' @param ctry.data `list` Large list containing country polio data. Output of [extract_country_data()] or
+#' [init_dr()]. Ensure that the lab data is attached to `ctry.data` as `lab.data`.
+#' @param start.date `str` Start date of the analysis.
+#' @param end.date `str` End date of the analysis.
+#' @param error_path `str` File path to store the error log.
+#' @returns None. It outputs locally an Excel file containing the error log.
+#' @examples
+#' \dontrun{
+#' lab_path <- "C:/Users/ABC1/Desktop/lab_data.xlsx"
+#' start_date <- "2021-01-01"
+#' end_date <- "2023-12-31"
+#' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+#' lab_data_errors(ctry.data)
+#' }
 #' @export
 lab_data_errors <- function(ctry.data, start.date = start_date, end.date = end_date,
                             error_path = Sys.getenv("DR_ERROR_PATH")) {
+  start.date <- lubridate::as_date(start.date)
+  end.date <- lubridate::as_date(end.date)
+
   # Check if the lab data is attached
   if (is.null(ctry.data$lab.data)) {
     stop("Lab data not attached to ctry.data. Please attach and try again.")
@@ -125,23 +165,41 @@ lab_data_errors <- function(ctry.data, start.date = start_date, end.date = end_d
   }
 }
 
-#' Check common errors in the regional lab data
-#' @import dplyr stringr cli writexl
-#' @param ctry.data Rds file containing polio country data
-#' @param start.date start date of the desk review
-#' @param end.date end date of the desk review
-#' @param error_path path to folder to save the error log
+#' Check common errors in the regional lab data.
 #'
-lab_data_errors_region <- function(ctry.data, start.date, end.date,
+#' Error checking for regional lab data. This is a helper function meant to be used inside
+#' [lab_data_errors()].
+#' @import dplyr stringr cli writexl
+#'
+#' @param ctry.data `list` Large list containing polio country data. Output of either
+#' [extract_country_data()] or [init_dr()]. Note that lab data must be attached to`ctry.data` as
+#' `lab.data`.
+#' @param ctry_name `str` Name of the country. Defaults to the desk review country.
+#' @param start.date `str` Start date of analysis.
+#' @param end.date `str` End date of analysis.
+#' @param error_path `str` Path to folder to save the error log.
+#'
+#' @returns None. It outputs an Excel file locally containing the error log.
+#' @examples
+#' \dontrun{
+#' lab_path <- "C:/Users/XRG9/lab_data_region.csv"
+#' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+#' lab_data_errors_region(ctry.data, "2021-01-01", "2023-12-31")
+#' }
+#'
+lab_data_errors_region <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTRY"), start.date, end.date,
                                    error_path = Sys.getenv("DR_ERROR_PATH")) {
   lab.data <- ctry.data$lab.data
+  start.date <- lubridate::as_date(start.date)
+  end.date <- lubridate::as_date(end.date)
+  ctry_name <- stringr::str_to_upper(ctry_name)
 
   # Filter to only the country of interest
   lab.data <- lab.data |>
-    dplyr::filter(Name == Sys.getenv("DR_COUNTRY"))
+    dplyr::filter(Name == ctry_name)
 
   # Cleaning for Cote D'Ivoire
-  if (stringr::str_detect(Sys.getenv("DR_COUNTRY"), "(?i)IVIORE")) {
+  if (stringr::str_detect(ctry_name, "(?i)IVIORE")) {
     lab.data <- lab.data |>
       dplyr::mutate(Name = dplyr::if_else(stringr::str_detect(.data$Name, "(?i)IVOIRE"), "COTE D'IVIORE", .data$Name))
   }
@@ -164,8 +222,8 @@ lab_data_errors_region <- function(ctry.data, start.date, end.date,
         "DateRArmIsolate",
         "DateofSequencing",
         "DateNotificationtoHQ"
-      )), \(x) as.Date.character(x, "%m/%d/%Y")
-    ))
+      )), \(x) as.Date.character(x, "%m/%d/%Y"))
+    )
 
   # Check for duplicates
   cli::cli_process_start("Checking for duplicate data")
@@ -186,7 +244,7 @@ lab_data_errors_region <- function(ctry.data, start.date, end.date,
       year = lubridate::year(.data$ParalysisOnsetDate),
       whoregion = "AFRO"
     ) %>%
-    dplyr::filter(country == ctry.data$ctry$ADM0_NAME)
+    dplyr::filter(country == ctry.data$ctry.pop$ctry[1])
 
 
   # Join lab locations
@@ -281,12 +339,23 @@ lab_data_errors_region <- function(ctry.data, start.date, end.date,
   cli::cli_alert("Run clean_lab_data() to attempt data fixes and perform the check again. Log saved in the errors folder.")
 }
 
-#' Checks for common data errors in lab data
+#' Checks for common data errors in WHO lab data
+#'
+#' This function is used internally within [lab_data_errors()]. This checks for potential errors in the
+#' WHO lab data.
+#'
 #' @import dplyr cli writexl
-#' @param start.date start date of the desk review
-#' @param end.date end date of the desk review
-#' @param error_path folder to save the log to
-#' @param ctry.data RDS object containing polio data from a country
+#' @param ctry.data `list` large list containing polio data from a country. Output of either
+#' [extract_country_data()] or [init_dr()].
+#' @param start.date `str` Start date of analysis.
+#' @param end.date `str` End date of analysis.
+#' @param error_path `str` Path to folder to save the error log to.
+#' @examples
+#' \dontrun{
+#' lab_path <- "C:/Users/XRG9/lab_data_who.csv"
+#' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+#' lab_data_errors_who(ctry.data, "2021-01-01", "2023-12-31")
+#' }
 #'
 lab_data_errors_who <- function(ctry.data, start.date, end.date,
                                 error_path = Sys.getenv("DR_ERROR_PATH")) {
@@ -354,15 +423,49 @@ lab_data_errors_who <- function(ctry.data, start.date, end.date,
 }
 
 #' Clean polio lab data from WHO
-#' @import dplyr cli stringr tidyr
-#' @param ctry.data country data RDS object
-#' @param start.date start date of the desk review
-#' @param end.date end date of the desk review
-#' @param delim delimiter used in the EPIDs. Defaults to "-".
 #'
-#' @return a tibble containing clean lab data
+#' Cleans the lab data from WHO. This is used in [clean_lab_data()], but can be used on its own.
+#'
+#' @import dplyr cli stringr tidyr
+#' @param ctry.data `list` Large list of country polio data. Output of either
+#' [extract_country_data()] or [init_dr()]. Ensure that lab data is attached to `ctry.data`.
+#' @param start.date `str` Start date of analysis.
+#' @param end.date `str` End date of analysis.
+#' @param delim `str` Delimiter used in the EPIDs. Defaults to `"-"`.
+#'
+#' @returns `tibble` Cleaned lab data.
+#' @examples
+#' \dontrun{
+#' lab_path <- "C:/Users/XRG9/lab_data_who.csv"
+#' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+#' ctry.data$lab.data <- clean_lab_data_who(ctry.data, "2021-01-01", "2023-12-31")
+#'
+#' # Not using the desk review pipeline
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.data$lab.data <- read_csv(lab_path)
+#' ctry.data$lab.data <- clean_lab_data_who(ctry.data, "2021-01-01", "2023-12-31")
+#' }
+#'
 #' @export
 clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
+  start.date <- lubridate::as_date(start.date)
+  end.date <- lubridate::as_date(end.date)
+
+  if (is.null(ctry.data$lab.data)) {
+    message("Lab data not attached to country data.")
+    return(NULL)
+  }
+
+  if ("prov" %in% names(ctry.data$lab.data)) {
+    cli::cli_alert_warning("Lab data already cleaned.")
+    return(ctry.data$lab.data)
+  }
+
+  if (nrow(ctry.data$lab.data) == 0) {
+    message("There are no entries for lab data.")
+    return(NULL)
+  }
 
   cli::cli_process_start("Filtering country-specific lab data")
 
@@ -492,7 +595,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   # Check look up table for potential duplicated rows
   prov_lookup_row_dups <- prov_lookup_table |>
     dplyr::mutate(epid_comb = str_c(epid_prov, year, sep = "-")) |>
-    dplyr::group_by(epid_comb, epid_prov, year) |>
+    dplyr::group_by(.data$epid_comb, .data$epid_prov, .data$year) |>
     dplyr::summarise(n = n()) |>
     dplyr::filter(n > 1) |>
     ungroup()
@@ -511,7 +614,7 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
   # Check look up table for potential duplicated rows
   dist_lookup_row_dups <- dist_lookup_table |>
     dplyr::mutate(epid_comb = str_c(epid_dist, year, sep = "-")) |>
-    dplyr::group_by(epid_comb, epid_dist, year) |>
+    dplyr::group_by(.data$epid_comb, .data$epid_dist, .data$year) |>
     dplyr::summarise(n = n()) |>
     dplyr::filter(n > 1) |>
     ungroup()
@@ -584,25 +687,55 @@ clean_lab_data_who <- function(ctry.data, start.date, end.date, delim = "-") {
 
 
 #' Clean lab data from the regional offices.
+#'
 #' Regional data have different columns compared to the WHO lab data. The cleaning
 #' of the regional data is adapted from the lab data cleaning code from the GPSAP
 #' indicator script.
-#' @import cli dplyr stringr
-#' @param ctry.data Rds polio data at the country level with lab data attached
-#' @param start.date start date of the desk review
-#' @param end.date end date of the desk review
-#' @param delim delimiter used for EPIDs. Default is "-".
-#' @param lab_locs_path path to CSV file containing lab location. Will pull from EDAV if not attached
 #'
-#' @return tibble of lab data
+#' @import cli dplyr stringr
+#'
+#' @param ctry.data `list` Large list of country polio data with lab data attached. Either from
+#' [extract_country_data()] or [init_dr()].
+#' @param start.date `str` Start date of analysis.
+#' @param end.date `str` End date of analysis.
+#' @param delim `str` Delimiter used for EPIDs. Default is `"-"`.
+#' @param ctry_name `str` Name of the country. Defaults to the desk review country.
+#' @param lab_locs_path `str` Path to CSV file containing lab location. Will pull from EDAV if not attached.
+#'
+#' @returns `tibble` Cleaned lab data.
+#' @examples
+#' \dontrun{
+#' lab_path <- "C:/Users/XRG9/lab_data_region.csv"
+#' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+#' ctry.data$lab.data <- clean_lab_data_regional(ctry.data, "2021-01-01", "2023-12-31")
+#'
+#' # Not using the desk review pipeline
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.data$lab.data <- read_csv(lab_path)
+#' ctry.data$lab.data <- clean_lab_data_regional(ctry.data, "2021-01-01", "2023-12-31")
+#' }
 #' @export
 
-clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-", lab_locs_path = NULL) {
+clean_lab_data_regional <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTRY"),
+                                    start.date, end.date, delim = "-", lab_locs_path = NULL) {
+  start.date <- lubridate::as_date(start.date)
+  end.date <- lubridate::as_date(end.date)
+
+  # Check if the lab data is attached
+  if (is.null(ctry.data$lab.data)) {
+    stop("Lab data not attached to ctry.data. Please attach and try again.")
+  }
+
+  if ("country" %in% names(ctry.data$lab.data)) {
+    cli::cli_alert_warning("Lab data already cleaned.")
+    return(ctry.data$lab.data)
+  }
 
   lab.data <- ctry.data$lab.data
 
   # Cleaning for Cote D'Ivoire
-  if (stringr::str_detect(Sys.getenv("DR_COUNTRY"), "(?i)IVOIRE")
+  if (stringr::str_detect(ctry_name, "(?i)IVOIRE")
   ) {
     lab.data <- lab.data |>
       dplyr::mutate(Name = dplyr::if_else(stringr::str_detect(.data$Name, "(?i)IVOIRE"),
@@ -611,16 +744,16 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   }
 
   # Filter to only the country of interest
-  if (stringr::str_detect(Sys.getenv("DR_COUNTRY"), "(?i)IVOIRE")) {
+  if (stringr::str_detect(ctry_name, "(?i)IVOIRE")) {
     lab.data <- lab.data |>
       dplyr::filter(Name == "COTE D'IVOIRE")
   } else {
     lab.data <- lab.data |>
-      dplyr::filter(Name == Sys.getenv("DR_COUNTRY"))
+      dplyr::filter(Name == ctry_name)
   }
 
   # Assign the region
-  region <- get_region()
+  region <- get_region(ctry_name)
 
   # Download lab.locs if not assigned
   lab.locs <- get_lab_locs(lab_locs_path)
@@ -644,7 +777,10 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
         country = ifelse(.data$country == "MOR", "MOROCCO", .data$country),
         country = ifelse(.data$country == "OMA", "OMAN", .data$country),
         country = ifelse(.data$country == "PAK", "PAKISTAN", .data$country),
-        country = ifelse(.data$country == "PNA", "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM", .data$country),
+        country = ifelse(.data$country == "PNA",
+          "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM",
+          .data$country
+        ),
         country = ifelse(.data$country == "QAT", "QATAR", .data$country),
         country = ifelse(.data$country == "SAA", "SAUDI ARABIA", .data$country),
         country = ifelse(.data$country == "SOM", "SOMALIA", .data$country),
@@ -689,7 +825,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
     emro.lab.02 <- emro.lab.01 %>%
       dplyr::filter(
         dplyr::between(ParalysisOnsetDate, start.date, end.date),
-        country == ctry.data$ctry$ADM0_NAME
+        country == ctry.data$ctry.pop$ctry[1]
       ) %>%
       dplyr::distinct()
 
@@ -811,8 +947,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
           "DateRArmIsolate",
           "DateofSequencing",
           "DateNotificationtoHQ"
-        )), \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y"))
-      ))
+        )), \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y")))
+      )
     cli::cli_process_done()
     # This is a very quick clean and can be improved upon with futher steps such as:
     #  - eliminating nonsensical dates
@@ -840,8 +976,8 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
         year = lubridate::year(.data$ParalysisOnsetDate),
         whoregion = "AFRO"
       ) %>%
-      dplyr::filter(country == ctry.data$ctry$ADM0_NAME) %>%
-      dplyr::select(-"Name")
+      dplyr::filter(country == ctry.data$ctry.pop$ctry[1]) %>%
+      dplyr::select(-dplyr::any_of(c("Name")))
 
 
     # Join lab locations
@@ -965,7 +1101,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   # Check look up table for potential duplicated rows
   prov_lookup_row_dups <- prov_lookup_table |>
     dplyr::mutate(epid_comb = str_c(epid_prov, year, sep = "-")) |>
-    dplyr::group_by(epid_comb, epid_prov, year) |>
+    dplyr::group_by(.data$epid_comb, .data$epid_prov, .data$year) |>
     dplyr::summarise(n = n()) |>
     dplyr::filter(n > 1) |>
     ungroup()
@@ -984,7 +1120,7 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   # Check look up table for potential duplicated rows
   dist_lookup_row_dups <- dist_lookup_table |>
     dplyr::mutate(epid_comb = str_c(epid_dist, year, sep = "-")) |>
-    dplyr::group_by(epid_comb, epid_dist, year) |>
+    dplyr::group_by(.data$epid_comb, .data$epid_dist, .data$year) |>
     dplyr::summarise(n = n()) |>
     dplyr::filter(n > 1) |>
     ungroup()
@@ -1042,19 +1178,36 @@ clean_lab_data_regional <- function(ctry.data, start.date, end.date, delim = "-"
   return(lab.data)
 }
 
+#' Clean lab data
+#'
 #' Main lab data cleaning function. Automatically detects whether the dataset
-#' came from WHO or the regional office
+#' came from WHO or the regional office.
 #'
-#' @param ctry.data Rds file containing country polio data with lab.data attached
-#' @param start.date start date of the desk review
-#' @param end.date end date of the desk review
-#' @param delim delimiter for EPIDs. Default is "-".
-#' @param lab_locs_path location of testing lab locations. Default is NULL. Will download from EDAV, if necessary.
+#' @param ctry.data `list` Large list containing country polio data with lab data attached. Either from
+#' [extract_country_data()] or [init_dr()].
+#' @param ctry_name `str` Name of the country. Defaults to the desk review country.
+#' @param start.date `str` Start date of analysis.
+#' @param end.date `str` End date of analysis.
+#' @param delim `str` Delimiter for EPIDs. Default is `"-"`.
+#' @param lab_locs_path `str` Location of testing lab locations. Default is `NULL`. Will download from EDAV, if necessary.
+#' @returns `tibble` Cleaned lab data.
+#' @examples
+#' \dontrun{
+#' lab_path <- "C:/Users/XRG9/lab_data_who.csv"
+#' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+#' ctry.data$lab.data <- clean_lab_data(ctry.data, "2021-01-01", "2023-12-31")
 #'
-#' @return a tibble containing the cleaned lab data
+#' # Not using the desk review pipeline
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.data$lab.data <- read_csv(lab_path)
+#' ctry.data$lab.data <- clean_lab_data(ctry.data, "2021-01-01", "2023-12-31")
+#' }
 #' @export
-clean_lab_data <- function(ctry.data, start.date = start_date, end.date = end_date,
+clean_lab_data <- function(ctry.data, ctry_name = Sys.getenv("DR_COUNTRY"),
+                           start.date = start_date, end.date = end_date,
                            delim = "-", lab_locs_path = NULL) {
+  ctry_name <- stringr::str_to_upper(ctry_name)
   # Check if the lab data is attached
   if (is.null(ctry.data$lab.data)) {
     stop("Lab data not attached to ctry.data. Please attach and try again.")
@@ -1078,7 +1231,6 @@ clean_lab_data <- function(ctry.data, start.date = start_date, end.date = end_da
     }
 
     lab.data <- clean_lab_data_who(ctry.data, start.date, end.date, delim)
-
   } else {
     if ("Province" %in% names(ctry.data$lab.data)) {
       cli::cli_alert_warning("Lab data already cleaned.")
@@ -1091,14 +1243,26 @@ clean_lab_data <- function(ctry.data, start.date = start_date, end.date = end_da
 }
 
 
-#' Generate timeliness intervals with lab data
-#' @import dplyr
-#' @param lab.data lab data
-#' @param spatial.scale spatial scale to analyze the data. Valid values are "ctry", "prov", "dist"
-#' @param start.date start date of analysis
-#' @param end.date end date of analysis
+#' Summary of lab sample timeliness
 #'
-#' @return a table with timeliness data summary
+#' Generates a summary of the timeliness of samples for specific intervals.
+#'
+#' @import dplyr
+#' @param lab.data `tibble` Lab data. Ensure that this lab data is cleaned using
+#' [clean_lab_data()] before running the function.
+#' @param spatial.scale `str` Spatial scale to analyze the data. Valid values are `"ctry", "prov", "dist"`.
+#' @param start.date `str` Start date of analysis.
+#' @param end.date `str` End date of analysis.
+#'
+#' @return `tibble` A table with timeliness data summary.
+#' @returns `tibble` Cleaned lab data.
+#' @examples
+#' \dontrun{
+#' lab_path <- "C:/Users/XRG9/lab_data_who.csv"
+#' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
+#' ctry.data$lab.data <- clean_lab_data(ctry.data, "2021-01-01", "2023-12-31")
+#' lab.timeliness.ctry <- generate_lab_timeliness(ctry.data$lab.data, "ctry", start_date, end_date)
+#' }
 #' @export
 generate_lab_timeliness <-
   function(lab.data,
@@ -1111,6 +1275,9 @@ generate_lab_timeliness <-
       "dist" = "adm2guid"
     )
 
+    start.date <- lubridate::as_date(start.date)
+    end.date <- lubridate::as_date(end.date)
+
     # Check if the lab data is attached
     if (is.null(lab.data)) {
       stop("Lab data not attached. Please attach and try again.")
@@ -1119,17 +1286,25 @@ generate_lab_timeliness <-
     lab_medians <- lab.data |>
       dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
       dplyr::group_by(year, get(geo)) |>
-      dplyr::summarise(dplyr::across(dplyr::starts_with("days."),
-                                     \(x) as.numeric(median(x, na.rm = T)))) |>
-      tidyr::pivot_longer(cols = dplyr::starts_with("days."),
-                          names_to = "type", values_to = "medi")
+      dplyr::summarise(dplyr::across(
+        dplyr::starts_with("days."),
+        \(x) as.numeric(median(x, na.rm = T))
+      )) |>
+      tidyr::pivot_longer(
+        cols = dplyr::starts_with("days."),
+        names_to = "type", values_to = "medi"
+      )
     lab_counts <- lab.data |>
       dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
       dplyr::group_by(year, get(geo)) |>
-      dplyr::summarise(dplyr::across(dplyr::starts_with("days."),
-                                     \(x) sum(!is.na(x)))) |>
-      tidyr::pivot_longer(cols = dplyr::starts_with("days."),
-                          names_to = "type", values_to = "freq")
+      dplyr::summarise(dplyr::across(
+        dplyr::starts_with("days."),
+        \(x) sum(!is.na(x))
+      )) |>
+      tidyr::pivot_longer(
+        cols = dplyr::starts_with("days."),
+        names_to = "type", values_to = "freq"
+      )
 
     lab <- dplyr::full_join(lab_counts, lab_medians)
 

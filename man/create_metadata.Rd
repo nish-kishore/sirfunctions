@@ -15,3 +15,4 @@ this function does not return anything
 \description{
 Creates a meta data file
 }
+\keyword{internal}

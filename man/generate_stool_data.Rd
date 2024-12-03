@@ -6,27 +6,49 @@
 \usage{
 generate_stool_data(
   afp.data,
-  missing = "good",
-  bad.data = "inadequate",
   start_date,
-  end_date
+  end_date,
+  missing = "good",
+  bad.data = "inadequate"
 )
 }
 \arguments{
-\item{afp.data}{tibble of AFP data (afp.all.2)}
+\item{afp.data}{\code{tibble} AFP linelist. Either \code{ctry.data$afp.all.2}}
 
-\item{missing}{chr: "good" or "bad" or "remove", default "good". "good" uses "adequacy.03", "bad" uses "adequacy.01",
-and "exclude" uses "adequacy.02" when calculating the adequacy.final2 column.}
+\item{start_date}{\code{str} Start date of the analysis.}
 
-\item{bad.data}{chr: "remove" or "inadequate"; default "inadequate". "inadequate" treats samples bad data as inadequate.}
+\item{end_date}{\code{str} End date of the analysis.}
 
-\item{start_date}{start date of the desk review}
+\item{missing}{\code{str} How to treat missing data. Valid values are: \verb{"good", "bad", "remove"}. Defaults to \code{"good"}.
+When calculating the \code{adequacy.final} column:
+\itemize{
+\item \code{"good"} uses \code{adequacy.03}
+\item \code{"bad"} uses \code{adequacy.01}
+\item \code{"exclude"} uses \code{adequacy.02}
+}}
 
-\item{end_date}{end date of the desk review}
+\item{bad.data}{\code{str} How to  treat bad data. Valid values are:\verb{"remove", "inadequate"}. Defaults to \code{"inadequate"}.
+\code{"inadequate"} treats samples with bad data as inadequate.}
 }
 \value{
-a tibble containing stool adequacy columns
+\code{tibble} AFP linelist with stool adequacy columns.
 }
 \description{
-Generate stool adequacy columns in the AFP dataset
+The function adds the adequacy final column called \code{adequacy.final} and \code{adequacy.final2} into the AFP linelist. The function borrows
+in part from \code{\link[=f.stool.ad.01]{f.stool.ad.01()}}, so that the adequacy final column generated can match with how the stool adequacy
+function treats bad or missing data and classify the adequacy final column. \code{adequacy.final} contains the original
+classification of the sample and \code{adequacy.final2} contains the final classification according to how missing and bad
+data are treated.
+}
+\details{
+Unlike the stool adequacy function, this will not filter out \code{NOT-AFP} cases, as it is expected for other functions
+that use the output of this function to do the filtering. For example, \code{\link[=generate_60_day_table_data]{generate_60_day_table_data()}}.
+}
+\examples{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+stool.data <- generate_stool_data(raw.data$afp, "2021-01-01", "2023-12-31")
+
+}
+\seealso{
+\code{\link[=f.stool.ad.01]{f.stool.ad.01()}}
 }

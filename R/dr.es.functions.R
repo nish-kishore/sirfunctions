@@ -1,8 +1,13 @@
-#' Adds coordinates for ES surveillance sites missing them
-#' @import cli dplyr sf
-#' @param ctry.data RDS object containing country polio data
+#' Imputes missing site coordinates in ES data
 #'
-#' @return tibble of ES data with imputed coordinates for sites missing them
+#' Adds coordinates for ES surveillance sites missing them. This function is not meant
+#' to be exported. This is part of [clean_es_data()].
+#'
+#' @import cli dplyr sf
+#' @param ctry.data `list` A list containing polio country data. This is either the output of
+#' [init_dr()] or [extract_country_data()].
+#'
+#' @return `tibble` ES data with imputed coordinates for sites missing them.
 impute_site_coord <- function(ctry.data) {
   df01 <- ctry.data$es %>%
     dplyr::distinct(.data$ADM0_NAME, .data$site.name, .data$dist.guid, .data$lat, .data$lng) |>
@@ -93,11 +98,20 @@ impute_site_coord <- function(ctry.data) {
   return(es.data)
 }
 
-#' Transform ES data cleaning with additional columns
+#' Clean environmental surveillance data
 #'
-#' @param ctry.data RDS object containing country polio data
+#' The cleaning step will attempt to impute missing site coordinates and create
+#' standardized columns used in the desk review.
+#'
 #' @import cli dplyr tidyr
-#' @return tibble of cleaned ES data
+#' @param ctry.data `list` Polio data at the country level. This is either the output
+#' of [init_dr()] or [extract_country_data()].
+#' @return `tibble` Cleaned environmental surveillance data.
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.data$es <- clean_es_data(ctry.data)
+#'
 #' @export
 clean_es_data <- function(ctry.data) {
   es.data <- ctry.data$es
@@ -179,16 +193,28 @@ clean_es_data <- function(ctry.data) {
 }
 
 #' Generate ES data with viral detection columns
-#' @import dplyr lubridate
-#' @param es.data tibble containing ES data
 #'
-#' @return tibble of ES data with viral detection columns
+#' The function importantly adds the `ed.detect`, `all_dets`, and `year` columns to the
+#' environmental surveillance data. However, this function will probably be moved
+#' as part of the [clean_es_data()] function in the future.
+#' @import dplyr lubridate
+#' @param es.data `tibble` ES data.
+#'
+#' @return `tibble` ES data with viral detection columns.
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.data$es <- clean_es_data(ctry.data)
+#' es.data.long <- generate_es_data_long(ctry.data$es)
+#'
 #' @export
 generate_es_data_long <- function(es.data) {
   es.data.long <- es.data %>%
-    dplyr::select("site.name", "ADM1_NAME", "collect.date",
-                  "early.dat", "ev.detect", "all_dets",
-                  "npev") %>%
+    dplyr::select(
+      "site.name", "ADM1_NAME", "collect.date",
+      "early.dat", "ev.detect", "all_dets",
+      "npev"
+    ) %>%
     dplyr::mutate(ev.detect = as.character(.data$ev.detect)) %>%
     dplyr::mutate(all_dets = dplyr::case_when(
       all_dets == "" & npev == "1" ~ "NPEV only",

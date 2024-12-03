@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_afp_epicurve}
 \alias{generate_afp_epicurve}
-\title{Generate epicurve of AFP cases by year}
+\title{Epicurve of AFP cases by year}
 \usage{
 generate_afp_epicurve(
   ctry.data,
@@ -12,17 +12,25 @@ generate_afp_epicurve(
 )
 }
 \arguments{
-\item{ctry.data}{RDS data countaining polio data for a country}
+\item{ctry.data}{\code{list} Large list containing country polio data. This is the output of either
+\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
 
-\item{start_date}{start date of the desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of the desk review}
+\item{end_date}{\code{str} End date of analysis. By default, it is up to the current date.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path location to save the figure.}
 }
 \value{
-ggplot object
+\code{ggplot} A line graph of AFP cases faceted by year.
 }
 \description{
-Generate epicurve of AFP cases by year
+Generates an epicurve line graph of AFP cases by year.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+generate_afp_epicurve(ctry.data, start_date)
+}
+
 }

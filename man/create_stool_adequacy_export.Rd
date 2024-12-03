@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.excel.export.functions.R
 \name{create_stool_adequacy_export}
 \alias{create_stool_adequacy_export}
-\title{Exports stool adequacy data}
+\title{Export stool adequacy data}
 \usage{
 create_stool_adequacy_export(
   cstool,
@@ -12,14 +12,37 @@ create_stool_adequacy_export(
 )
 }
 \arguments{
-\item{cstool}{stool adequacy at country level}
+\item{cstool}{\code{tibble} Stool adequacy at country level.}
 
-\item{pstool}{stool adequacy at province level}
+\item{pstool}{\code{tibble} Stool adequacy at province level.}
 
-\item{dstool}{stool adequacy at district level}
+\item{dstool}{\code{tibble} Stool adequacy at district level.}
 
-\item{excel_output_path}{output path}
+\item{excel_output_path}{\code{str} Output path.}
+}
+\value{
+None.
 }
 \description{
-Exports stool adequacy data
+The function combines the stool adequacy summary tables from \code{\link[=f.stool.ad.01]{f.stool.ad.01()}}
+and exports to an Excel file, with each geographic level on its own tab.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+cstool <- f.stool.ad.01(
+  ctry.data$afp.all.2, ctry.data$ctry.pop,
+  "2021-01-01", "2023-01-01", "ctry"
+)
+pstool <- f.stool.ad.01(
+  ctry.data$afp.all.2, ctry.data$prov.pop,
+  "2021-01-01", "2023-01-01", "prov"
+)
+dstool <- f.stool.ad.01(
+  ctry.data$afp.all.2, ctry.data$dist.pop,
+  "2021-01-01", "2023-01-01", "dist"
+)
+create_stool_adequacy_export(cstool, pstool, dstool)
+}
+
 }

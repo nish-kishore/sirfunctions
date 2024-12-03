@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_npafp_maps_dist}
 \alias{generate_npafp_maps_dist}
-\title{Generate map of NPAFP rates by district}
+\title{Maps of NPAFP rates by district and year}
 \usage{
 generate_npafp_maps_dist(
   dist.extract,
@@ -16,25 +16,49 @@ generate_npafp_maps_dist(
 )
 }
 \arguments{
-\item{dist.extract}{NPAFP rates by district}
+\item{dist.extract}{\code{tibble} Province NPAFP rate table. This is the output of
+\code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}} calculated at the province level.}
 
-\item{ctry.shape}{recent country shapefile}
+\item{ctry.shape}{\code{sf} Country shapefile in long format.}
 
-\item{prov.shape}{recent province shapefile}
+\item{prov.shape}{\code{sf} Province shapefile in long format.}
 
-\item{dist.shape}{recent district shapefile}
+\item{dist.shape}{\code{sf} District shapefile in long format.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path Where the figure is saved to.}
 
-\item{caption_size}{size of the caption}
+\item{caption_size}{\code{numeric} Size of the caption. Default is \code{2}.}
 }
 \value{
-ggplot object
+\code{ggplot} A map of districts with their NPAFP rates.
 }
 \description{
-Generate map of NPAFP rates by district
+Generates maps of the NPAFP rates for each district per year.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+dist.extract <- f.npafp.rate.01(
+  afp.data = ctry.data$afp.all.2,
+  pop.data = ctry.data$prov.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "dist",
+  pending = T,
+  rolling = F,
+  sp_continuity_validation = F
+)
+ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+dist.shape <- load_clean_dist_sp(ctry_name = "ALGERIA", type = "long")
+generate_npafp_maps_dist(
+  dist.extract, ctry.shape, prov.shape, dist.shape,
+  "2021-01-01", "2023-12-31"
+)
+}
+
 }

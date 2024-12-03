@@ -15,23 +15,25 @@ pull_map_data(
 )
 }
 \arguments{
-\item{raw.data}{global polio data output from sirfunctions::get_all_polio_data()}
+\item{raw.data}{\code{list} global polio data output from \code{\link[=get_all_polio_data]{get_all_polio_data()}}}
 
-\item{.vdpv}{whether to include VDPV in maps}
+\item{.vdpv}{\code{bool} Whether to include VDPV in maps.}
 
-\item{country}{name of the country or countries}
+\item{country}{\code{str} or \code{list} Name of the country or countries.}
 
-\item{surv}{surveillance type}
+\item{surv}{\code{str} or \code{list} Surveillance type.}
 
-\item{virus_type}{virus type to map}
+\item{virus_type}{\code{str} or \code{list} Virus type to map.}
 
-\item{.start_date}{start date}
+\item{.start_date}{\code{date} Start date.}
 
-\item{.end_date}{end date}
+\item{.end_date}{\code{date} End date.}
 }
 \value{
-dataset used to build the map
+\code{tibble} Filtered dataset used to build the map.
 }
 \description{
-Pull the main map data to build the map
+This function primarily pulls the relevant information to build the map. Inherits
+areguments from \code{\link[=generate_adhoc_map]{generate_adhoc_map()}}.
 }
+\keyword{internal}

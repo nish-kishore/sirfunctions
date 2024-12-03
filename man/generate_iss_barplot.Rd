@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_iss_barplot}
 \alias{generate_iss_barplot}
-\title{Generate the ISS/eSURV barplot}
+\title{Visits to health clinics per year}
 \usage{
 generate_iss_barplot(
   iss.data = NULL,
@@ -12,17 +12,27 @@ generate_iss_barplot(
 )
 }
 \arguments{
-\item{iss.data}{tibble of ISS data}
+\item{iss.data}{\code{tibble} ISS/eSURV data that has been cleaned via \code{\link[=clean_iss_data]{clean_iss_data()}}.}
 
-\item{start_date}{start date of the desk review}
+\item{start_date}{\code{str} Start date of the analysis.}
 
-\item{end_date}{end date of the desk review}
+\item{end_date}{\code{str} End date of the analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path where the figure is saved to.}
 }
 \value{
-ggplot object of a barplot
+\code{ggplot} Bar plot of health clinic visits.
 }
 \description{
-Generate the ISS/eSURV barplot
+Generates a bar plot showing the number of visits to health clinics per year
+using the ISS/eSURV data.
+}
+\examples{
+\dontrun{
+iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
+ctry.data <- init_dr("algeria", iss_data_path = iss_path)
+ctry.data$iss.data <- clean_iss_data(ctry.data)
+generate_iss_barplot(ctry.data$iss.data)
+}
+
 }

@@ -11,12 +11,23 @@ create_pop_check_export(
 )
 }
 \arguments{
-\item{ctry.data}{RDS file containing polio data for a country}
+\item{ctry.data}{\code{list} A large list containing polio data for a country. This is the output of either
+\code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
 
-\item{country}{name of the country}
+\item{country}{\code{str} Name of the country.}
 
-\item{excel_output_path}{output path}
+\item{excel_output_path}{\code{str} Output path of the Excel file.}
+}
+\value{
+None.
 }
 \description{
-Exports file for checking population roll-ups
+Export the population roll-ups and determine differences between each population counts.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+create_pop_check_export(ctry.data)
+}
+
 }

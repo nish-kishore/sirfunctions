@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.figure.functions.R
 \name{generate_npafp_maps}
 \alias{generate_npafp_maps}
-\title{Map of NPAFP rate by province}
+\title{Maps of NPAFP rates by province and year}
 \usage{
 generate_npafp_maps(
   prov.extract,
@@ -15,23 +15,45 @@ generate_npafp_maps(
 )
 }
 \arguments{
-\item{prov.extract}{province NPAFP rate}
+\item{prov.extract}{\code{tibble} Province NPAFP rate table. This is the output of
+\code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}} calculated at the province level.}
 
-\item{ctry.shape}{recent country shape}
+\item{ctry.shape}{\code{sf} Country shape in long format.}
 
-\item{prov.shape}{recent province shape}
+\item{prov.shape}{\code{sf} Province shape in long format.}
 
-\item{start_date}{start date of desk review}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{end_date}{end date of desk review}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{output_path}{where to save the figure}
+\item{output_path}{\code{str} Local path where the figure is saved to.}
 
-\item{caption_size}{size of the caption}
+\item{caption_size}{\code{numeric} Size of the caption. Default is \code{2}.}
 }
 \value{
-ggplot object
+\code{ggplot} Map of NPAFP rates by province.
 }
 \description{
-Map of NPAFP rate by province
+Generates a map of NPAFP rates for each province per year.
+}
+\examples{
+\dontrun{
+ctry.data <- init_dr("algeria")
+prov.extract <- f.npafp.rate.01(
+  afp.data = ctry.data$afp.all.2,
+  pop.data = ctry.data$prov.pop,
+  start.date = start_date,
+  end.date = end_date,
+  spatial.scale = "prov",
+  pending = T,
+  rolling = F,
+  sp_continuity_validation = F
+)
+ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
+generate_npafp_maps(prov.extract, ctry.shape, prov.shape, "2021-01-01", "2023-12-31")
+}
+}
+\seealso{
+\code{\link[=load_clean_ctry_sp]{load_clean_ctry_sp()}}, \code{\link[=load_clean_prov_sp]{load_clean_prov_sp()}}
 }

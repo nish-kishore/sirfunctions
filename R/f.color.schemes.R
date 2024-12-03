@@ -1,9 +1,23 @@
 #' Utility function for colors
-#' @description Utility function to return SIR colors
-#' @param type str: type of colors we can return. Accepted values include:
-#' 'epicurve', 'para.case', 'afp.prov', 'afp.dist', 'pot.comp', 'silence',
-#' 'silence.v2', 'cases', 'es', 'mapval', 'timeliness.col.vars'
-#' @returns list: color sets
+#'
+#' Utility function to return SIR color schemes used in various graphs and visualizations.
+#'
+#' @param type `str` Type of colors we can return. Accepted values include:
+#' -`"epicurve"` Mapped to different `cdc.classification.all2` values.
+#' - `"para.case"` A subset of `"epicurve"` representing paralytic cases.
+#' - `"afp.prov"` Mapped for case counts at the province level.
+#' - `"afp.dist"` Mapped for case counts at the province level.
+#' - `"pot.comp"` Colors for categories of compatibles and potentially compatibles.
+#' - `"silence"` Colors to use to map silent populations.
+#' - `"silence.v2"` Colors to use to map silent populations.
+#' - `"cases"` Values to map case type.
+#' - `"es"` Values used in ES data.
+#' - `"mapval"` Values used for creating maps with percentages.
+#' - `"timeliness.col.vars"` Mapping intervals  used for lab timeliness intervals graphs.
+#' @returns Named `list` with color sets.
+#' @examples
+#' color_list <- f.color.schemes("epicurve")
+#'
 #' @export
 
 f.color.schemes <- function(type) {
@@ -115,15 +129,12 @@ f.color.schemes <- function(type) {
       "Stool 1 collection to stool 2 collection" = "#33a02c",
       "Last stool collection to received in lab" = "#ff7f00",
       "Last stool collection sent to lab" = "#ff7f00",
-
       "Stool received lab to final culture results" = "#cab2d6",
-
       "Collection to sent from field" = "#fb9a99",
       "Sent from field to received nat level" = "#e31a1c",
       "Received nat level to sent to lab" = "#fdbf6f",
       "Sent to lab to received at lab" = "#ff7f00",
       "Received at lab to culture results" = "#cab2d6"
     )
-
   )
 }

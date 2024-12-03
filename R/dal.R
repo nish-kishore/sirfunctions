@@ -4,15 +4,18 @@
 
 #' Validate connection to EDAV
 #'
-#' @description Generate token which connects to CDC EDAV resources and
+#' Generate token which connects to CDC EDAV resources and
 #' validates that the individual still has access. The current tenant ID
 #' is hard coded for CDC resources.
 #' @importFrom utils head
-#' @param app_id str: Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
-#' this can be changed if you have a service principal
-#' @param auth str: authorization type defaults to "authorization_code",
-#' this can be changed if you have a service principal
-#' @returns azure container verification
+#' @param app_id `str` Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+#' this can be changed if you have a service principal.
+#' @param auth `str` Authorization type defaults to "authorization_code",
+#' this can be changed if you have a service principal.
+#' @returns Azure container verification
+#' @examples
+#' azcontainer <- get_azure_storage_connection()
+#'
 #' @export
 get_azure_storage_connection <- function(
     app_id = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
@@ -48,23 +51,38 @@ get_azure_storage_connection <- function(
 
 #' Helper function to read and write key data to the EDAV environment
 #'
-#' @description Helper function read and write key data to EDAV
-#' @import cli AzureStor
-#' @param io str: "read", "write", "delete", "exists.dir", "exists.file", "create" or "list".
-#' "read" - read a file from EDAV, must be an rds, csv, or rda;
-#' "write" - write a file from EDAV, must be an rds, csv or rda;
-#' "exists.dir" - returns a boolean after checking to see if a folder exists;
-#' "exists.file" - returns a boolean after checking to see if a file exists;
-#' "create" - creates a folder and all preceding folders
-#' "list" - returns a tibble with all objects in a folder
-#' @param default_dir str: "GID/PEB/SIR" - the default directory for all SIR data in EDAV, can be set to NULL
-#' if you provide the full directory path in `file_loc`
-#' @param file_loc str: location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
-#' the information in `default_dir` if you set that parameter to NULL.
-#' @param obj default NULL object to be saved, needed for "write"
-#' @param azcontainer azure container object returned from `get_azure_storage_connection()`
-#' @param force_delete boolean: use delete io without verification in the command line
-#' @returns output dependent on "io"
+#' The function serves as the primary way to interact with the EDAV system from R. It can
+#' read, write, create folders, check whether a file or a folder exists, upload files, and list
+#' all files in a folder.
+#' @import cli AzureStor ggplot2 flextable
+#' @param io `str` The type of operation to perform in EDAV.
+#' - `"read"` Read a file from EDAV, must be an rds, csv, or rda.
+#' - `"write"` Write a file from EDAV, must be an rds, csv or rda.
+#' - `"exists.dir"` Returns a boolean after checking to see if a folder exists.
+#' - `"exists.file"`Returns a boolean after checking to see if a file exists.
+#' - `"create"` Creates a folder and all preceding folders.
+#' - `"list"` Returns a tibble with all objects in a folder.
+#' - `"upload"` Moves a file of any type to EDAV.
+#' @param default_dir `str` The default directory in EDAV. `"GID/PEB/SIR"` is the default directory
+#' for all SIR data in EDAV. Can be set to `NULL` if you provide the full directory path in `file_loc`.
+#' @param file_loc `str` Location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
+#' the information in `default_dir` if you set that parameter to `NULL`.
+#' @param obj `robj` Object to be saved, needed for `"write"`. Defaults to `NULL`.
+#' @param azcontainer Azure container object returned from [get_azure_storage_connection()].
+#' @param force_delete `bool` Use delete io without verification in the command line.
+#' @param local_path `str` Local file pathway to upload a file to EDAV. Default is `NULL`.
+#' This parameter is only required when passing `"upload"` in the `io` parameter.
+#' @returns Output dependent on argument passed in the `io` parameter.
+#' @examples
+#' \dontrun{
+#' df <- edav_io("read", file_loc = "df1.csv") # read file from EDAV
+#' edav_io("write", file_loc = "Data/test", obj = df) # saves df to the test folder in EDAV
+#' edav_io("exists.dir", "Data/nonexistentfolder") # returns FALSE
+#' edav_io("exists.file", file_loc = "Data/test/df1.csv") # returns TRUE
+#' edav_io("create", "Data/nonexistentfolder") # creates a folder called nonexistentfolder
+#' edav_io("list") # list all files from the default directory
+#' edav_io("upload", file_loc = "Data/test", local_path = "C:/Users/ABC1/Desktop/df2.csv")
+#' }
 #' @export
 edav_io <- function(
     io,
@@ -72,7 +90,8 @@ edav_io <- function(
     file_loc = NULL,
     obj = NULL,
     azcontainer = suppressMessages(get_azure_storage_connection()),
-    force_delete = F) {
+    force_delete = F,
+    local_path = NULL) {
   if (!is.null(file_loc)) {
     if (is.null(default_dir)) {
       file_loc <- file_loc
@@ -83,14 +102,18 @@ edav_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create")
+  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create", "upload")
 
   if (!io %in% opts) {
-    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' or 'list'")
+    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' 'list' or 'upload'")
   }
 
   if (io == "write" & is.null(obj)) {
     stop("Need to supply an object to be written")
+  }
+
+  if (io == "upload" & is.null(local_path)) {
+    stop("Need to supply file pathway of file to be uploaded")
   }
 
   if (io == "list") {
@@ -99,7 +122,7 @@ edav_io <- function(
     }
 
     return(AzureStor::list_storage_files(azcontainer, file_loc) |>
-             dplyr::as_tibble())
+      dplyr::as_tibble())
   }
 
   if (io == "exists.dir") {
@@ -164,10 +187,6 @@ edav_io <- function(
   }
 
   if (io == "write") {
-    if (!grepl(".rds|.csv", file_loc)) {
-      stop("At the moment only 'rds' 'rda' and 'csv' are supported for reading.")
-    }
-
     if (grepl(".rds", file_loc)) {
       AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
     }
@@ -175,6 +194,30 @@ edav_io <- function(
     if (grepl(".csv", file_loc)) {
       AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
     }
+
+    if ("gg" %in% class(obj)) {
+      temp <- tempfile()
+      ggplot2::ggsave(filename = paste0(temp, "/", sub(".*\\/", "", file_loc)), plot = obj)
+      AzureStor::storage_upload(
+        container = azcontainer, dest = file_loc,
+        src = paste0(temp, "/", sub(".*\\/", "", file_loc))
+      )
+      unlink(temp)
+    }
+
+    if ("flextable" %in% class(obj)) {
+      temp <- tempfile()
+      flextable::save_as_image(obj, path = paste0(temp, "/", sub(".*\\/", "", file_loc)))
+      AzureStor::storage_upload(
+        container = azcontainer, dest = file_loc,
+        src = paste0(temp, "/", sub(".*\\/", "", file_loc))
+      )
+      unlink(temp)
+    }
+  }
+
+  if (io == "upload") {
+    AzureStor::storage_upload(container = azcontainer, dest = file_loc, src = local_path)
   }
 
   if (io == "delete") {
@@ -205,25 +248,28 @@ edav_io <- function(
 
 #' Test network connection to the EDAV
 #'
-#' @description Tests upload and download from EDAV by creating a temporary file
+#' Tests upload and download from EDAV by creating a temporary file
 #' of a given size and testing the time it takes to upload and download the file.
-#' @param azcontainer Azure storage container provided by `get_azure_storage_connection()`
-#' @param folder str: Location of folder in the EDAV environment that you want to download
-#' and upload data from
-#' @param test_size int: byte size of a theoretical file to be uploaded or downloaded
-#' @param return_list boolean: return a list of download time estimates, default F
 #' @import dplyr readr cli
-#' @returns System message with download and update time, potentially list output
+#' @param azcontainer Azure storage container provided by [get_azure_storage_connection()].
+#' @param folder `str` Location of folder in the EDAV environment that you want to download
+#' and upload data from.
+#' @param test_size `int` byte size of a theoretical file to be uploaded or downloaded.
+#' @param return_list `bool` return a list of download time estimates. Defaults to `FALSE`.
+#' @returns System message with download and update time, potentially a list.
+#' @examples
+#' test_EDAV_connection()
+#'
 #' @export
 test_EDAV_connection <- function(
     azcontainer = suppressMessages(get_azure_storage_connection()),
     folder = "GID/PEB/SIR/Data",
     return_list = F,
     test_size = 10000000) {
-
   if (!requireNamespace("prettyunits", quietly = TRUE)) {
     stop('Package "prettyunits" must be installed to use this function.',
-         .call = FALSE)
+      .call = FALSE
+    )
   }
 
   tmp_data <- replicate(100, iris, simplify = F) |>
@@ -284,7 +330,7 @@ test_EDAV_connection <- function(
 #### 2) Key data pull functions ####
 
 
-#' Retrieve all pre-processed Polio Data
+#' Retrieve all pre-processed polio data
 #'
 #' @description Download POLIS data from the CDC pre-processed endpoint. By default
 #' this function will return a "small" or recent dataset. This is primarily for data
@@ -294,15 +340,21 @@ test_EDAV_connection <- function(
 #' when new information is availble and the Data Management Team can force the
 #' creation of the "medium" and "large" static datasets as necessary.
 #' @import dplyr cli sf
-#' @param size str: "small", "medium", "large", defaults to "small";
-#' "small" - returns data from 2019 onwards;
-#' "medium" - returns data from 2016 onwards;
-#' "large" - returns data from 2001 onwards.
-#' @param folder str: location of the CDC pre-processed endpoint, defaults to "GID/PEB/SIR/Data"
-#' @param force.new.run boolean: default F, if T will run recent data and cache
-#' @param recreate.static.files boolean: default F, if T will run all data and cache
-#' @param attach.spatial.data boolean: default T, adds spatial data to downloaded object
-#' @returns named list containing polio data that is relevant to CDC
+#' @param size `str` Size of data to download. Defaults to `"small"`.
+#' - `"small"`: Data from 2019-present.
+#' - `"medium"`: Data from 2016-present.
+#' - `"large"`: Data from 2001-present.
+#' @param folder `str` Location of the CDC pre-processed endpoint, defaults to `"GID/PEB/SIR/Data"`.
+#' @param force.new.run `bool` Default `FALSE`, if `TRUE` will run recent data and cache.
+#' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
+#' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.
+#' @returns Named `list` containing polio data that is relevant to CDC.
+#' @examples
+#' \dontrun{
+#' raw.data <- get_all_polio_data() # downloads data since 2019, including spatial files
+#' }
+#' raw.data <- get_all_polio_data(size = "small", attach.spatial.data = FALSE) # exclude spatial data
+#'
 #' @export
 get_all_polio_data <- function(
     size = "small",
@@ -471,9 +523,11 @@ get_all_polio_data <- function(
       ) |>
       dplyr::filter(surveillancetypename == "AFP") |>
       dplyr::mutate(
-        cdc.classification.all2 = dplyr::case_when(final.cell.culture.result == "Not received in lab" &
-                                                     cdc.classification.all == "PENDING" ~ "LAB PENDING",
-                                                   TRUE ~ cdc.classification.all),
+        cdc.classification.all2 = dplyr::case_when(
+          final.cell.culture.result == "Not received in lab" &
+            cdc.classification.all == "PENDING" ~ "LAB PENDING",
+          TRUE ~ cdc.classification.all
+        ),
         hot.case = ifelse(
           paralysis.asymmetric == "Yes" &
             paralysis.onset.fever == "Yes" &
@@ -570,21 +624,27 @@ get_all_polio_data <- function(
 
     cli::cli_process_start("5) Loading population data from EDAV")
     raw.data$dist.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
-                dplyr::pull(file), default_dir = NULL) |>
+      edav_io(
+        io = "read",
+        file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
+          dplyr::pull(file), default_dir = NULL
+      ) |>
       dplyr::ungroup()
 
     raw.data$prov.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
-                dplyr::pull(file), default_dir = NULL) |>
+      edav_io(
+        io = "read",
+        file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
+          dplyr::pull(file), default_dir = NULL
+      ) |>
       dplyr::ungroup()
 
     raw.data$ctry.pop <-
-      edav_io(io = "read",
-              file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
-                dplyr::pull(file), default_dir = NULL) |>
+      edav_io(
+        io = "read",
+        file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
+          dplyr::pull(file), default_dir = NULL
+      ) |>
       dplyr::ungroup()
     cli::cli_process_done()
 
@@ -792,12 +852,15 @@ get_all_polio_data <- function(
 
 #' Extract country specific information from raw polio data
 #'
-#' @description Extract country specific data from the CDC generated "raw.data" file from `get_all_polio_data`.
-#' Outputs list of country specific data and spatial objects (if applicable).
+#' @description Filters country specific data from the CDC generated `raw.data` object from [get_all_polio_data()].
 #' @import cli dplyr sf stringr
-#' @param .raw.data list: list of raw data sources that is output from `get_all_polio_data`.
-#' @param .country str: a country name of interest
-#' @return list with country specific objects
+#' @param .raw.data `list` Output of [get_all_polio_data()].
+#' @param .country `str` Country name of interest. Case insensitive.
+#' @return Named `list` with country specific datasets.
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' ctry.data <- extract_country_data("nigeria", raw.data)
+#'
 #' @export
 extract_country_data <- function(
     .country,
@@ -1199,12 +1262,17 @@ extract_country_data <- function(
 }
 
 
-#' function to assess duplicates in output from get_all_polio_data
+#' Assess duplicates in the get_all_polio_data() output
 #'
 #' @description
-#' checks for duplicate records in afp, other surveillance, sia, and virus data
+#' Checks for duplicate records in AFP, other, SIA, and Virus datasets.
 #' @import dplyr cli
-#' @param .raw.data `named list` list of dataframes produced from `get_all_polio_data()`
+#' @param .raw.data Named `list` output of [get_all_polio_data()]
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' raw.data <- duplicate_check(raw.data)
+#' @export
+#'
 duplicate_check <- function(.raw.data = raw.data) {
   if (nrow(.raw.data$afp[duplicated(.raw.data$afp[, c("epid", "place.admin.0", "dateonset")]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the AFP linelist, please check afp.dupe")
@@ -1232,9 +1300,11 @@ duplicate_check <- function(.raw.data = raw.data) {
   )]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the SIA data, please check sia.dupe")
     .raw.data$sia.dupe <- .raw.data$sia |>
-      dplyr::group_by(.data$adm2guid, .data$sub.activity.start.date,
-                      .data$vaccine.type, .data$age.group, .data$status,
-                      .data$lqas.loaded, .data$im.loaded) |>
+      dplyr::group_by(
+        .data$adm2guid, .data$sub.activity.start.date,
+        .data$vaccine.type, .data$age.group, .data$status,
+        .data$lqas.loaded, .data$im.loaded
+      ) |>
       dplyr::mutate(count = dplyr::n()) |>
       dplyr::ungroup() |>
       dplyr::filter(count > 1) |>
@@ -1247,28 +1317,30 @@ duplicate_check <- function(.raw.data = raw.data) {
   )]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the ES data, please check es.dupe")
     .raw.data$es.dupe <- .raw.data$es |>
-      dplyr::group_by(.data$env.sample.id, .data$virus.type, .data$emergence.group,
-                      .data$nt.changes, .data$site.id, .data$collection.date,
-                      .data$collect.yr) |>
+      dplyr::group_by(
+        .data$env.sample.id, .data$virus.type, .data$emergence.group,
+        .data$nt.changes, .data$site.id, .data$collection.date,
+        .data$collect.yr
+      ) |>
       dplyr::mutate(es.dups = dplyr::n()) |>
       dplyr::filter(.data$es.dups > 1) |>
-      dplyr::select(dplyr::all_of(c("env.sample.manual.edit.id", "env.sample.id",
-                                  "sample.id", "site.id", "site.code", "site.name",
-                                  "sample.condition", "collection.date", "virus.type",
-                                  "nt.changes", "emergence.group", "collect.date", "collect.yr", "es.dups")
-                                  )
-      )
+      dplyr::select(dplyr::all_of(c(
+        "env.sample.manual.edit.id", "env.sample.id",
+        "sample.id", "site.id", "site.code", "site.name",
+        "sample.condition", "collection.date", "virus.type",
+        "nt.changes", "emergence.group", "collect.date", "collect.yr", "es.dups"
+      )))
   }
 
   if (nrow(.raw.data$pos[duplicated(.raw.data$pos[, c(
-    "epid", "epid.in.polis", "pons.epid", "virus.id", "polis.case.id",
+    "epid", "epid.in.polis", "pons.epid", "polis.case.id",
     "env.sample.id", "place.admin.0", "source", "datasource",
     "virustype", "dateonset", "yronset", "ntchanges", "emergencegroup"
   )]), ]) > 0) {
     cli::cli_alert_warning("There are potential duplicates in the Positives data, please check pos.dupe")
     .raw.data$pos.dupe <- .raw.data$pos |>
       dplyr::group_by(
-        .data$epid, .data$epid.in.polis, .data$pons.epid, .data$virus.id,
+        .data$epid, .data$epid.in.polis, .data$pons.epid,
         .data$polis.case.id, .data$env.sample.id, .data$place.admin.0,
         .data$source, .data$datasource, .data$virustype, .data$dateonset,
         .data$yronset, .data$ntchanges, .data$emergencegroup
@@ -1284,19 +1356,29 @@ duplicate_check <- function(.raw.data = raw.data) {
 
 #### 3) Secondary SP Functions ####
 
-#' Standard function to load District data
+#' Download district geographic data
 #
-#' @description Pulls district shapefiles directly from the geodatabase
-#' @param fp str: Location of geodatabase
+#' @description Pulls district shapefiles directly from the geodatabase.
 #' @import stringr AzureStor dplyr lubridate
-#' @param azcontainer Azure validated container object
-#' @param dist_guid array/str: Array of all district GUIDS that you want to pull
-#' @param ctry_name array/str: Array of all country names that you want to pull
-#' @param end.year int: last year you want to pull information for - default is current year
-#' @param st.year int: earlier year of spatial data you want to pull - default is 2000
-#' @param data.only boolean: default F, if true, returns a rectangular tibble instead of a shape file
-#' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
-#' @returns tibble or sf dataframe
+#' @param fp `str` Location of geodatabase.
+#' @param azcontainer Azure validated container object.
+#' @param dist_guid `str array` Array of all district GUIDS that you want to pull.
+#' @param ctry_name `str array` Array of all country names that you want to pull.
+#' @param end.year `int` Last year you want to pull information for. Default is current year.
+#' @param st.year `int` Earlier year of spatial data you want to pull. Default is 2000.
+#' @param data.only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
+#' @param type `str` Whether to return a spatial object for every year group. Defaults to `NULL`.
+#' - `"long"` Return a dataset for every year group.
+#' - `NULL` Return a dataset only with unique GUIDs and when they were active.
+#' @param version `str` Specify whether to return standard shapefiles or new shapefiles
+#' still under evaluation/development. Default is `"standard"`.
+#' - `"standard"` Standard shapefiles.
+#' - `"dev"`  New shapefiles still under evaluation/development.
+#' @returns `tibble` or `sf` Dataframe containing spatial data.
+#' @examples
+#' dist <- load_clean_dist_sp(ctry_name = c("ALGERIA", "NIGERIA"), st.year = 2019)
+#' dist.long <- load_clean_dist_sp(ctry_name = "ALGERIA", st.year = 2019, type = "long")
+#'
 #' @export
 load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
                                fp = "GID/PEB/SIR/Data/spatial/global.dist.rds",
@@ -1305,8 +1387,15 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                end.year = lubridate::year(Sys.Date()),
                                st.year = 2000,
                                data.only = F,
-                               type = NULL) {
-  cli::cli_alert_info("Loading district spatial files")
+                               type = NULL,
+                               version = "standard") {
+  if (version == "dev") {
+    fp <- "GID/PEB/SIR/Data/spatial_dev/global.dist.rds"
+    cli::cli_alert_info("Loading under development district spatial files")
+  } else {
+    cli::cli_alert_info("Loading district spatial files")
+  }
+
   out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
       STARTDATE = lubridate::as_date(STARTDATE),
@@ -1359,20 +1448,31 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
   return(out)
 }
 
-#' Standard function to load Province data
+#' Download province geographic data
 #'
 #' @description Pulls province shapefiles directly from the geodatabase
 #' @import stringr AzureStor lubridate dplyr
 #' @param azcontainer Azure validated container object
-#' @param fp str: Location of geodatabase
-#' @param prov_guid array/str: Array of all province GUIDS that you want to pull
-#' @param prov_name array/str: Array of all province names that you want to pull
-#' @param ctry_name array/str: Array of all country names that you want to pull
-#' @param end.year int: last year you want to pull information for - default is current year
-#' @param st.year int: earlier year of spatial data you want to pull - default is 2000
-#' @param data.only boolean: default F, if true, returns a rectangular tibble instead of a shape file
-#' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
-#' @returns tibble or sf dataframe
+#' @param fp `str` Location of geodatabase.
+#' @param prov_guid `str array` Array of all province GUIDS that you want to pull.
+#' @param prov_name `str array` Array of all province names that you want to pull.
+#' @param ctry_name `str array` Array of all country names that you want to pull.
+#' @param end.year `int` Last year you want to pull information for. Default is current year.
+#' @param st.year `int` Earlier year of spatial data you want to pull. Default is 2000.
+#' @param data.only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
+#' @param type `str` Whether to return a spatial object for every year group. Defaults to `NULL`.
+#' - `"long"` Return a dataset for every year group.
+#' - `NULL` Return a dataset only with unique GUIDs and when they were active.
+#' @param version `str` Specify whether to return standard shapefiles or new shapefiles
+#' still under evaluation/development. Default is `"standard"`.
+#' - `"standard"` Standard shapefiles.
+#' - `"dev"`  New shapefiles still under evaluation/development.
+#' @returns `tibble` or `sf` Dataframe containing spatial data.
+#' @examples
+#' \dontrun{
+#' prov <- load_clean_prov_sp(ctry_name = c("ALGERIA", "NIGERIA"), st.year = 2019)
+#' prov.long <- load_clean_prov_sp(ctry_name = "ALGERIA", st.year = 2019, type = "long")
+#' }
 #' @export
 load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
                                fp = "GID/PEB/SIR/Data/spatial/global.prov.rds",
@@ -1382,8 +1482,15 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                end.year = lubridate::year(Sys.Date()),
                                st.year = 2000,
                                data.only = F,
-                               type = NULL) {
-  cli::cli_alert_info("Loading province spatial files")
+                               type = NULL,
+                               version = "standard") {
+  if (version == "dev") {
+    fp <- "GID/PEB/SIR/Data/spatial_dev/global.prov.rds"
+    cli::cli_alert_info("Loading under development province spatial files")
+  } else {
+    cli::cli_alert_info("Loading province spatial files")
+  }
+
   out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
       yr.st = lubridate::year(STARTDATE),
@@ -1427,19 +1534,28 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
   return(out)
 }
 
-#' Standard function to load Country data
+#' Download country georgraphic data
 #'
-#' @description Pulls province shapefiles directly from the geodatabase
+#' @description Pulls country shapefiles directly from the geodatabase.
 #' @import stringr AzureStor dplyr lubridate
-#' @param azcontainer azure validated container object
-#' @param fp str: Location of geodatabase
-#' @param ctry_guid array/str: Array of all country GUIDS that you want to pull
-#' @param ctry_name array/str: Array of all country names that you want to pull
-#' @param end.year int: last year you want to pull information for - default is current year
-#' @param st.year int: earlier year of spatial data you want to pull - default is 2000
-#' @param data.only boolean: default F, if true, returns a rectangular tibble instead of a shape file
-#' @param type str: "long" or NULL, default NULL, if "long" returns a spatial object for every year group
-#' @returns tibble or sf dataframe
+#' @param azcontainer Azure validated container object
+#' @param fp `str` Location of geodatabase.
+#' @param ctry_guid `str array` Array of all country GUIDS that you want to pull.
+#' @param ctry_name `str array` Array of all country names that you want to pull.
+#' @param end.year `int` Last year you want to pull information for. Default is current year.
+#' @param st.year `int` Earlier year of spatial data you want to pull. Default is 2000.
+#' @param data.only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
+#' @param type `str` Whether to return a spatial object for every year group. Defaults to `NULL`.
+#' - `"long"` Return a dataset for every year group.
+#' - `NULL` Return a dataset only with unique GUIDs and when they were active.
+#' @param version `str` Specify whether to return standard shapefiles or new shapefiles
+#' still under evaluation/development. Default is `"standard"`.
+#' - `"standard"` Standard shapefiles.
+#' - `"dev"`  New shapefiles still under evaluation/development.
+#' @returns `tibble` or `sf` Dataframe containing spatial data.
+#' @examples
+#' ctry <- load_clean_ctry_sp(ctry_name = "ALGERIA")
+#' ctry.long <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 #' @export
 load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
                                fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
@@ -1448,8 +1564,15 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                end.year = lubridate::year(Sys.Date()),
                                st.year = 2000,
                                data.only = F,
-                               type = NULL) {
-  cli::cli_alert_info("Loading country spatial files")
+                               type = NULL,
+                               version = "standard") {
+  if (version == "dev") {
+    fp <- "GID/PEB/SIR/Data/spatial_dev/global.ctry.rds"
+    cli::cli_alert_info("Loading under development country spatial files")
+  } else {
+    cli::cli_alert_info("Loading country spatial files")
+  }
+
   out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
     dplyr::mutate(
       yr.st = lubridate::year(STARTDATE),
@@ -1490,9 +1613,10 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 
 #' Utility function to fix years
 #'
-#' @param df tibble: dataframe to be used for fixing years
-#' @param yrs numeric array: array of years to fix data
-#' @returns long tibble
+#' @param df `tibble` Dataframe to be used for fixing years.
+#' @param yrs `array` Numeric array of years to fix data.
+#' @returns `tibble` Long format table to fix years.
+#' @keywords internal
 f.yrs.01 <- function(df, yrs) {
   quo.yrs <- dplyr::enquo(yrs)
 
@@ -1507,13 +1631,14 @@ f.yrs.01 <- function(df, yrs) {
 
 #' Split or concatenate raw.data by year
 #'
-#' @param action Can either be to `concat` or `split`
-#' @param split.years an array of years by which data should be split
-#' @param raw.data.all a list of data objects to be split
-#' @param raw.data.post.2019 a list of data objects to be concatenated
-#' @param raw.data.2016.2019 a list of data objects to be concatenated
-#' @param raw.data.2001.2016 a list of data objects to be concatenated
-#' @returns list of lists or a single concatenated list
+#' @param action `str` Can either be to `"concat"` or `"split"`.
+#' @param split.years `array` A numeric array of years by which data should be split.
+#' @param raw.data.all `list` A list of data objects to be split.
+#' @param raw.data.post.2019 `list` A list of data objects to be concatenated.
+#' @param raw.data.2016.2019 `list` A list of data objects to be concatenated.
+#' @param raw.data.2001.2016 `list` A list of data objects to be concatenated.
+#' @returns `list` A list of lists or a single concatenated list.
+#' @keywords internal
 split_concat_raw_data <- function(
     action,
     split.years = NULL,
@@ -1632,11 +1757,22 @@ split_concat_raw_data <- function(
   }
 }
 
-#' Check GUIDs present in afp.all.2 but not in the pop files
+#' Check GUIDs present in the AFP linelist but not in the pop files
 #'
-#' @param ctry.data object containing polio data for a country
+#' The function will run a check in the AFP linelist for GUIDs that are not part
+#' of the spatial files. In these instances, typically, unknown GUIDs are part of the
+#' new geodatabase from WHO that get released in the next updated geodatabase. Therefore,
+#' this function should be used only if necessary. For example, in instances where mapping an AFP case into a
+#' a district is critical and the shapefile from [extract_country_data()] is not yet updated.
+#' @param ctry.data `list` Country polio data, with spatial data attached. Output of [extract_country_data()] or
+#' [init_dr()].
 #'
-#' @return list containing errors in province and district GUIDs
+#' @return `list` A list containing errors in province and district GUIDs.
+#' @examples
+#' raw.data <- get_all_polio_data() # must contain spatial data to run the function
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' error.list <- check_afp_guid_ctry_data(ctry.data)
+#'
 #' @export
 check_afp_guid_ctry_data <- function(ctry.data) {
   error_list <- list()
@@ -1705,49 +1841,74 @@ check_afp_guid_ctry_data <- function(ctry.data) {
   return(error_list)
 }
 
-#' Function to fix unknown GUIDs in the AFP linelist by obtaining GUIDs found in the pop files
-#' @param afp.data AFP linelist (afp.all.2)
-#' @param pop.data population file (prov.pop or dist.pop)
-#' @param guid_list list of unknown GUIDs from the AFP linelist.
-#' This is the output of check_afp_guid_ctry_data().
-#' @param spatial_scale "prov" or "dist"
+#' Fix unknown GUIDs in the AFP linelist
 #'
-#' @return AFP data with corrected GUIDs based on the population files.
+#' Fix unknown GUIDs in the AFP linelist by obtaining GUIDs found in the pop files. It attempts to replace
+#' the unknown GUIDs from the AFP linelist by using geographic info for a specific year that coincides with the case date
+#' and uses the GUIDs contained in the current spatial data instead.
+#' @param afp.data `tibble` AFP linelist (afp.all.2).
+#' @param pop.data `tibble` Population file (prov.pop or dist.pop).
+#' @param guid_list `str list` Unknown GUIDs from the AFP linelist.
+#' This is the output of [check_afp_guid_ctry_data()].
+#' @param spatial_scale `str` The spatial scale to impute data. Either `"prov"` or `"dist"`.
+#'
+#' @return `tibble` AFP data with corrected GUIDs based on the population files.
+#' @examples
+#' raw.data <- get_all_polio_data()
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' error.list <- check_afp_guid_ctry_data(ctry.data)
+#' ctry.data$afp.all.2 <- fix_ctry_data_missing_guids(
+#'   ctry.data$afp.all.2,
+#'   ctry.data$dist.pop,
+#'   error.list$dist_mismatches_pop,
+#'   "dist"
+#' )
+#'
 #' @export
 fix_ctry_data_missing_guids <- function(afp.data, pop.data, guid_list, spatial_scale) {
   afp.data <- switch(spatial_scale,
-                     "prov" = {
-                       afp.data |>
-                         dplyr::mutate(adm1guid = dplyr::if_else(.data$adm1guid %in% guid_list, NA, .data$adm1guid)) |>
-                         dplyr::left_join(pop.data, by = c("ctry", "prov", "year", "adm0guid")) |>
-                         dplyr::mutate(adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)) |>
-                         dplyr::select(-dplyr::any_of(c("adm1guid.x", "adm1guid.y")))
-                     },
-                     "dist" = {
-                       afp.data |>
-                         dplyr::mutate(adm2guid = dplyr::if_else(.data$adm2guid %in% guid_list, NA, .data$adm2guid)) |>
-                         dplyr::left_join(pop.data, by = c("ctry", "prov", "dist", "year",
-                                                    "adm0guid", "adm1guid")) |>
-                         dplyr::mutate(adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)) |>
-                         dplyr::select(-dplyr::any_of(c("adm2guid.x", "adm2guid.y")))
-                     }
-                     )
+    "prov" = {
+      afp.data |>
+        dplyr::mutate(adm1guid = dplyr::if_else(.data$adm1guid %in% guid_list, NA, .data$adm1guid)) |>
+        dplyr::left_join(pop.data, by = c("ctry", "prov", "year", "adm0guid")) |>
+        dplyr::mutate(adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)) |>
+        dplyr::select(-dplyr::any_of(c("adm1guid.x", "adm1guid.y")))
+    },
+    "dist" = {
+      afp.data |>
+        dplyr::mutate(adm2guid = dplyr::if_else(.data$adm2guid %in% guid_list, NA, .data$adm2guid)) |>
+        dplyr::left_join(pop.data, by = c(
+          "ctry", "prov", "dist", "year",
+          "adm0guid", "adm1guid"
+        )) |>
+        dplyr::mutate(adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)) |>
+        dplyr::select(-dplyr::any_of(c("adm2guid.x", "adm2guid.y")))
+    }
+  )
 
   return(afp.data)
 }
-#' Compress .png files using pngquant
+#' Compress PNG files using pngquant
 #'
-#' @param img file path to the png file
-#' @param pngquant_path file path to pngquant.exe
-#' @param suffix add a suffix to the compressed image
+#' Compress PNG files. The software pngquant is required to use this function.
+#' It attempts to reduce the file size of images without major loss in image quality. Files sizes can be reduced
+#' from 30-60% using this function. The compressed file will be outputted to the same folder as the original image.
+#' @param img `str` File path to the png file.
+#' @param pngquant_path `str` File path to pngquant executable file (pngquant.exe).
+#' @param suffix `str` Optional parameter to add a suffix to the compressed image.
+#' @returns None. Will output compressed image to the local folder.
+#' @examples
+#' \dontrun{
+#' img_path <- "C:/Users/ABC1/Desktop/pic1.png"
+#' pngquant_path <- "C:/Users/ABC1/Downloads/pngquant.exe"
+#' compress_png(img_path, pngquant_path, "_compressed")
+#' }
 #'
 #' @export
 compress_png <- function(img, pngquant_path = NULL, suffix = "") {
-
   # Check
   if (!stringr::str_detect(img, ".png$")) {
     stop("Only .png files can be compressed.")
-
   }
   if (is.null(pngquant_path)) {
     stop("Please pass an argument to the pngquant_path parameter.")
@@ -1755,10 +1916,39 @@ compress_png <- function(img, pngquant_path = NULL, suffix = "") {
 
   if (!file.exists(pngquant_path)) {
     stop("Path pngquant.exe not found.")
-    }
+  }
 
   # Compress the image file
   system2(pngquant_path, args = c("--ext", paste0(suffix, ".png"), "--force", img))
 }
 
+#' Get the columns where records differ in a group
+#'
+#' Get the columns where duplicates differ after performing a [dplyr::distinct()] operation.
+#' In some instances, two records might exist with the same unique identifier. In datasets with lots of columns,
+#' it is difficult to figure out which columns these potential duplicates differ. The function outputs the columns
+#' where records with the same unique identifier differ.
+#'
+#' @importFrom dplyr syms mutate everything across group_by summarise filter
+#' @importFrom tidyr pivot_longer
+#' @param df `df` or `tibble` Dataframe with at least one column containing unique identifiers and other columns.
+#' @param id_col `str` Column used as a unique identifier for records.
+#'
+#' @return `tibble` A tibble showing the columns where duplicates differ.
+#' @examples
+#' df1 <- tibble::tibble(col1 = c(1, 1, 2), col2 = c("a", "b", "c"), col3 = c(1, 1, 3))
+#' diff_cols <- get_diff_cols(df1, "col1")
+#'
+#' @export
+get_diff_cols <- function(df, id_col) {
+  col_with_differences <- df |>
+    dplyr::mutate(dplyr::across(dplyr::everything(), \(x) as.character(x))) |>
+    dplyr::group_by(!!!syms(id_col)) |>
+    dplyr::summarise(dplyr::across(dplyr::everything(), \(x) length(unique(x)) == 1)) |>
+    tidyr::pivot_longer(cols = -c(id_col), names_to = "column_name", values_to = "logical") |>
+    dplyr::filter(logical == FALSE) |>
+    dplyr::group_by(!!!dplyr::syms(id_col)) |>
+    dplyr::summarise(col_with_diff = paste(unique(.data$column_name), collapse = ", "))
 
+  return(col_with_differences)
+}

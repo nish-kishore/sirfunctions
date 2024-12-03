@@ -4,16 +4,28 @@
 \alias{set_emergence_colors}
 \title{Set the emergence colors}
 \usage{
-set_emergence_colors(raw.data, download_date)
+set_emergence_colors(raw.data, country, start_date = NULL, end_date = NULL)
 }
 \arguments{
-\item{raw.data}{global polio data output of sirfunctions::get_all_polio_data()}
+\item{raw.data}{\code{list} Global polio data output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 
-\item{download_date}{date global polio data was downloaded}
+\item{country}{\code{str} or \code{list} Countries of interest.}
+
+\item{start_date}{\code{str} Start date of the time span to look for emergences. Defaults to 13 months from the end date.}
+
+\item{end_date}{\code{str} End date of the time span to look for emergences Defaults to download date of \code{raw.data}.}
 }
 \value{
-a named list containing the mapping of emergence and corresponding colors
+\code{list} A named list containing the mapping of emergence and corresponding colors.
 }
 \description{
-Set the emergence colors
+Used in conjunction to \code{\link[=generate_adhoc_map]{generate_adhoc_map()}}. The function returns a named
+list with emergence names mapped to a color.
+}
+\examples{
+\dontrun{
+raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+emg.cols <- set_emergence_colors(raw.data, "algeria")
+}
+
 }

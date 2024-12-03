@@ -2,20 +2,31 @@
 % Please edit documentation in R/dr.main.functions.R
 \name{upload_dr_to_github}
 \alias{upload_dr_to_github}
-\title{Upload desk review script to the sg-desk-review Github repository}
+\title{Upload desk review script to the sg-desk-reviews GitHub repository}
 \usage{
 upload_dr_to_github(file_path, repo_path, message = "updating file")
 }
 \arguments{
-\item{file_path}{location of the file to upload to the sg-desk-review repo}
+\item{file_path}{\code{str} Location of the file to upload to the sg-desk-reviews repo.}
 
-\item{repo_path}{local path of the sg-desk-review repo}
+\item{repo_path}{\code{str} Local path of the sg-desk-review repo.}
 
-\item{message}{message to include in the commit}
+\item{message}{\code{str} Message to include in the commit.}
 }
 \value{
-Status message
+A status message.
 }
 \description{
-Upload desk review script to the sg-desk-review Github repository
+Upload the desk review template script to the \href{https://github.com/nish-kishore/sg-desk-reviews}{sg-desk-reviews}
+repository, which houses the code for the desk reviews.
+This function can be used in a general sense to upload files to
+a github repository. Note that the function will only commit, and that the user must push themselves.
+}
+\examples{
+\dontrun{
+dr_template_path <- "C:/Users/ABC1/Desktop/local_dr/algeria/2024/algeria_template.Rmd"
+repo_path <- "C:/Users/ABC1/Desktop/github/sg-desk-reviews"
+str_message <- "Added algeria to the SG folder"
+upload_dr_to_github(dr_template_path, repo_path, str_message)
+}
 }

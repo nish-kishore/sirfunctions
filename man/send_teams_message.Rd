@@ -13,19 +13,26 @@ send_teams_message(
 )
 }
 \arguments{
-\item{msg}{str: message to be sent}
+\item{msg}{\code{str} Message to be sent.}
 
-\item{team_id}{str: Team id, defaults to "CGH-GID-PEB-SIR"}
+\item{team_id}{\code{str} Teams ID. Defaults to \code{"CGH-GID-PEB-SIR"}.}
 
-\item{channel}{str: channel where message should be sent}
+\item{channel}{\code{str} Channel where message should be sent.}
 
-\item{attach}{str: local path of files to be attached in message}
+\item{attach}{\code{str} Local path of files to be attached in message.}
 
-\item{type}{str: "text" or "html"}
+\item{type}{\code{str} Type of message to be sent. Either \code{"text"} or \code{"html"}.}
 }
 \value{
-Success or error message
+Status message whether the operation was a success or an error message.
 }
 \description{
-Helper function to send message to validated MS Teams interface
+Helper function to send message to validated MS Teams interface.
+}
+\examples{
+\dontrun{
+message <- "this is a test"
+send_teams_message(message)
+}
+
 }

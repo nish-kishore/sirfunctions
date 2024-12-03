@@ -25,41 +25,75 @@ generate_adhoc_map(
 )
 }
 \arguments{
-\item{raw.data}{global polio data}
+\item{raw.data}{\code{list} Global polio data. The output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.
+Make sure the spatial data is attached, otherwise, it will not work.}
 
-\item{country}{\code{str} or \code{list} country name or a list of country names}
+\item{country}{\code{str} or \code{list} Country name or a list of country names.}
 
-\item{virus_type}{\code{str} virus type to include. Valid entries are "cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1". Can pass a list.}
+\item{virus_type}{\code{str} or \code{list}. Virus type to include. Valid values are:
 
-\item{vdpv}{\code{bool} whether to include VPDV in maps. Default TRUE.}
+\verb{"cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1".}
 
-\item{new_detect}{\code{bool} whether to highlight new detections based on WHO HQ report date. Default TRUE.}
+Can pass as a list.}
 
-\item{surv}{surveillance options. AFP, ES, OTHER (Includes Case Contact, Community, Healthy Children Sampling).}
+\item{vdpv}{\code{bool} Whether to include VPDV in maps. Default \code{TRUE}.}
 
-\item{labels}{Include labels for regions with virus detections.
-Options: "ALL": All regions, "YES": Recent Detections - <13 months}
+\item{new_detect}{\code{bool} Whether to highlight new detections based on WHO HQ report date. Default \code{TRUE}.}
 
-\item{owner}{who produced the map. Defaults to "CDC-GID-PEB"}
+\item{surv}{\code{str} or \code{list} Surveillance options. Valid values are:
 
-\item{new_detect_expand}{whether to expand the reporting window. Defaults to FALSE.}
+\verb{"AFP", "ES", "OTHER"}
 
-\item{start_date}{start date. If not specified, defaults to 13 months prior to the download date of raw.data}
+\code{"OTHER"} includes Case Contact, Community, Healthy Children Sampling. Can pass as a list.}
 
-\item{end_date}{end date. If not specified, defaults to the download date of raw.data}
+\item{labels}{\code{str} Include labels for regions with virus detections.
+Options:
+\itemize{
+\item \code{"ALL"}: All regions
+\item \code{"YES"}: Recent Detections - <13 months
+}}
 
-\item{output}{either a path to a local folder to save the map to, "sharepoint", or none. Defaults to NULL.}
+\item{owner}{\code{str} Who produced the map. Defaults to \code{"CDC-GID-PEB"}.}
 
-\item{image_size}{standard sizes of the map outputs. Options are: "full_slide", "soco_slide", "half_slide". Defaults to NULL.}
+\item{new_detect_expand}{\code{bool} Whether to expand the reporting window. Defaults to \code{FALSE}.}
 
-\item{height}{height of the map}
+\item{start_date}{\code{str} Start date. If not specified, defaults to 13 months prior to the download date of raw.data.}
 
-\item{width}{width of the map}
+\item{end_date}{\code{str} End date. If not specified, defaults to the download date of raw.data.}
 
-\item{scale}{scale of the map}
+\item{output}{\code{str} Either a path to a local folder to save the map to, \code{"sharepoint"}, or \code{NULL}. Defaults to \code{NULL}.}
 
-\item{dpi}{dpi of the map}
+\item{image_size}{\code{str} Standard sizes of the map outputs. Options are:
+\itemize{
+\item \code{"full_slide"}
+\item \code{"soco_slide"}
+\item \code{"half_slide"}
+}
+
+Defaults to \code{NULL}.}
+
+\item{height}{\code{numeric} Height of the map. Defaults to \code{6.2}.}
+
+\item{width}{\code{numeric} Width of the map. Defaults to \code{4.5}.}
+
+\item{scale}{\code{numeric} Scale of the map. Defaults to \code{1.25}.}
+
+\item{dpi}{\code{numeric} DPI of the map. Defaults to \code{300}.}
+}
+\value{
+\code{ggplot} A map of outbreaks.
 }
 \description{
-Create adhoc maps for emergences
+Creates a map of recent emergences. The default will display outbreaks from the past 13 months.
+}
+\examples{
+\dontrun{
+raw.data <- get_all_polio_data()
+p1 <- generate_adhoc_map(raw.data, c("nigeria", "chad"))
+# Put colors in emergences that don't have a mapped color
+emg_cols <- set_emergence_colors(raw.data, c("nigeria", "chad"))
+emg_cols["NIE-BOS-1"] <- "yellow"
+emg_cols["NIE-YBS-1"] <- "green"
+p2 <- p1 + ggplot2::scale_color_manual(name = "Emergence Group", values = emg_cols)
+}
 }
