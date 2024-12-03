@@ -101,9 +101,6 @@ brief descriptions.
 11) `get_diff_cols`: get the columns where records differ in a group. Useful for identifying where duplicates differ.
 
 ## Release Schedule
-
--   V1.2 to be released 08 November 2024, you can track its progress
-    [here](https://github.com/nish-kishore/sirfunctions/milestone/4).
 -   Please see the
     [Releases](https://github.com/nish-kishore/sirfunctions/releases)
     page for specifics on previous releases.
