@@ -8,8 +8,8 @@ f.color.schemes(type)
 }
 \arguments{
 \item{type}{\code{str} Type of colors we can return. Accepted values include:
--\code{"epicurve"} Mapped to different \code{cdc.classification.all2} values.
 \itemize{
+\item \code{"epicurve"} Mapped to different \code{cdc.classification.all2} values.
 \item \code{"para.case"} A subset of \code{"epicurve"} representing paralytic cases.
 \item \code{"afp.prov"} Mapped for case counts at the province level.
 \item \code{"afp.dist"} Mapped for case counts at the province level.
@@ -20,6 +20,12 @@ f.color.schemes(type)
 \item \code{"es"} Values used in ES data.
 \item \code{"mapval"} Values used for creating maps with percentages.
 \item \code{"timeliness.col.vars"} Mapping intervals  used for lab timeliness intervals graphs.
+\item \code{"emergence.groups"} Standard emergence group colors. Used primarily
+with \code{\link[=generate_adhoc_map]{generate_adhoc_map()}}.
+\item \code{"es.vaccine.types"} Default vaccine types. Used primarily with
+\code{\link[=generate_es_site_det]{generate_es_site_det()}}.
+\item \code{"es.detections"} Default detection types. Used primarily with
+\code{\link[=generate_es_site_det]{generate_es_site_det()}}.
 }}
 }
 \value{
