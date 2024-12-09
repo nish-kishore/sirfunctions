@@ -1986,7 +1986,7 @@ check_missing_rows <- function(df,
   }
 
   missing <- df |>
-    dplyr::group_by(dplyr::across(.group_by)) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarise(n = sum(is.na(.data[[.col_name]])),
                      total_rows = dplyr::n(),
                      prop = round(n / total_rows, 2)
