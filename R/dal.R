@@ -154,7 +154,7 @@ edav_io <- function(
       stop("At the moment only 'rds' 'rda' and 'csv' are supported for reading.")
     }
 
-    if (grepl(".rds", file_loc)) {
+    if (endsWith(file_loc, ".rds")) {
       corrupted.rds <- NULL
 
       tryCatch(
@@ -177,21 +177,21 @@ edav_io <- function(
       }
     }
 
-    if (grepl(".csv", file_loc)) {
+    if (endsWith(file_loc, ".csv")) {
       return(suppressWarnings(AzureStor::storage_read_csv(azcontainer, file_loc)))
     }
 
-    if (grepl(".rda", file_loc)) {
+    if (endsWith(file_loc, ".rda")) {
       return(suppressWarnings(AzureStor::storage_load_rdata(azcontainer, file_loc)))
     }
   }
 
   if (io == "write") {
-    if (grepl(".rds", file_loc)) {
+    if (endsWith(file_loc, ".rds")) {
       AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
     }
 
-    if (grepl(".csv", file_loc)) {
+    if (endsWith(file_loc, ".csv")) {
       AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
     }
 
