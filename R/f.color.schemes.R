@@ -14,7 +14,7 @@
 #' - `"es"` Values used in ES data.
 #' - `"mapval"` Values used for creating maps with percentages.
 #' - `"timeliness.col.vars"` Mapping intervals  used for lab timeliness intervals graphs.
-#' - `"emergence.groups` Standard emergence group colors. Used primarily
+#' - `"emergence.groups"` Standard emergence group colors. Used primarily
 #' with [generate_adhoc_map()].
 #' - `"es.vaccine.types"` Default vaccine types. Used primarily with
 #' [generate_es_site_det()].

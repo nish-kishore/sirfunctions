@@ -20,7 +20,7 @@ f.color.schemes(type)
 \item \code{"es"} Values used in ES data.
 \item \code{"mapval"} Values used for creating maps with percentages.
 \item \code{"timeliness.col.vars"} Mapping intervals  used for lab timeliness intervals graphs.
-\item \verb{"emergence.groups} Standard emergence group colors. Used primarily
+\item \code{"emergence.groups"} Standard emergence group colors. Used primarily
 with \code{\link[=generate_adhoc_map]{generate_adhoc_map()}}.
 \item \code{"es.vaccine.types"} Default vaccine types. Used primarily with
 \code{\link[=generate_es_site_det]{generate_es_site_det()}}.
