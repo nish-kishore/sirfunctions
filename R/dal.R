@@ -1953,7 +1953,7 @@ get_diff_cols <- function(df, id_col) {
   return(col_with_differences)
 }
 
-#' Check the number of cases missing age and months
+#' Check for rows with NA values
 #'
 #' A general function that checks the number of `NA` rows for a particular
 #' column.

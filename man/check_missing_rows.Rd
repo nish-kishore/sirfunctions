@@ -2,7 +2,7 @@
 % Please edit documentation in R/dal.R
 \name{check_missing_rows}
 \alias{check_missing_rows}
-\title{Check the number of cases missing age and months}
+\title{Check for rows with NA values}
 \usage{
 check_missing_rows(df, .col_name, .group_by)
 }
