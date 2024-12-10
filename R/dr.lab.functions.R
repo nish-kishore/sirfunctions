@@ -1,4 +1,60 @@
 # Private functions ----
+#' Adds rolling date information
+#'
+#' @inheritParams clean_lab_data
+#'
+#' @returns `tibble` Lab data with rolling date period information added.
+#' @keywords internal
+#'
+add_rolling_date_info <- function(lab_data, start_date, end_date) {
+
+  # Making it work for WHO data
+  if (!"ParalysisOnsetDate" %in% names(lab_data)) {
+    lab_data <- lab_data |>
+      dplyr::mutate(ParalysisOnsetDate = .data$DateOfOnset)
+  }
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  cli::cli_process_start("Adding rolling period date information")
+  end.year <- lubridate::year(end_date)
+  st.year <- lubridate::year(start_date)
+
+  month.start <- lubridate::month(start_date, label = TRUE, abbr = TRUE)
+  month.end <- lubridate::month(end_date, label = TRUE, abbr = TRUE)
+  # prior_period = paste0(month.start, " ", st.year, " - ", month.end, " ", year(start_date + days(364)) )
+  # current_period = paste0(month.start, " ", st.year + 1, " - ", month.end, " ", end.year)
+
+  # Calculate prior_period correctly accounting for leap years
+  prior_year_end <- start_date + lubridate::years(1) - lubridate::days(1)
+  prior_period = paste0(month.start, " ", st.year,
+                        " - ", month.end,
+                        " ", lubridate::year(prior_year_end))
+
+  current_period = paste0(month.start,
+                          " ", st.year + 1,
+                          " - ", month.end,
+                          " ", end.year)
+
+  lab_data <- lab_data |>
+    #renaming culture.itd.lab for Nigeria which has two labs in lab.locs, simply naming Nigeria
+    dplyr::mutate(
+                  weeks.analysis = ((end_date - start_date) / 7), # weeks in the analysis
+                  weeks.from.end = ((end_date - .data$ParalysisOnsetDate) / 7),  # weeks from onset to end of analysis
+                  case.week = (.data$weeks.analysis - .data$weeks.from.end),  # estimating week in the analysis for each case
+                  year.analysis = f.year.roll(.data$case.week), # analysis year
+                  year.analysis.start = start_date + (365 * (as.integer(.data$year.analysis) - 1)),
+                  year.analysis.end = .data$year.analysis.start + 364,
+                  rolling_period =
+                    case_when(year.analysis == 'Year 1' ~ prior_period,
+                              year.analysis == 'Year 2' ~ current_period
+                    )
+    )
+  cli::cli_process_done()
+
+  return(lab_data)
+}
 
 #' Impute missing geographic information from the AFP linelist
 #'
@@ -419,6 +475,13 @@ clean_lab_data_regional <- function(lab_data,
     dplyr::group_by(.data$EPID, .data$SpecimenNumber) %>%
     dplyr::mutate(n = dplyr::n()) %>%
     dplyr::ungroup()
+
+  lab_data4 <- lab_data4 |>
+    dplyr::mutate(culture.itd.lab = dplyr::case_when(
+      .data$country == "NIGERIA" ~ "Nigeria",
+      .data$culture.itd.lab == "NOGUCHI- Ghana" ~ "NOGUCHI-Ghana",
+      .default = .data$culture.itd.lab
+    ))
 
   # Seperate blank epids from rest of lab_data4 in order to de-dupe
   # based on epid and specimen number, join back after dedup
@@ -998,6 +1061,8 @@ clean_lab_data <- function(lab_data, start_date, end_date,
     lab_data <- clean_lab_data_regional(lab_data, start_date, end_date,
                                         afp_data, ctry_name, lab_locs_path)
   }
+
+  lab_data <- add_rolling_date_info(lab_data, start_date, end_date)
 
   return(lab_data)
 }
