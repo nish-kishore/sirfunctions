@@ -1952,3 +1952,46 @@ get_diff_cols <- function(df, id_col) {
 
   return(col_with_differences)
 }
+
+#' Check for rows with NA values
+#'
+#' A general function that checks the number of `NA` rows for a particular
+#' column.
+#' @param df `tibble` Dataset to check.
+#' @param .col_name `str` Name of the target column.
+#' @param .group_by `str` or `list` A string or a list of strings to group the
+#' check by.
+#'
+#' @return `tibble` A summary of the number of rows missing for the target
+#' variable.
+#' @export
+#'
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' missing <- check_missing_rows(raw.data$afp, "age.months", c("place.admin.0", "yronset"))
+check_missing_rows <- function(df,
+                               .col_name,
+                               .group_by) {
+
+  # Input checks
+  if (!.col_name %in% names(df)) {
+    cli::cli_abort(paste0(.col_name, "column is missing in the dataset."))
+  }
+
+  if (length(setdiff(.group_by, names(df))) != 0) {
+    invalid_cols <- setdiff(.group_by, names(df))
+    cli::cli_alert_warning(paste0("These columns are missing in the dataset: ",
+                                  paste(invalid_cols, collapse = ", ")))
+    cli::cli_abort("Please use different grouping columns and try again.")
+  }
+
+  missing <- df |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
+    dplyr::summarise(n = sum(is.na(.data[[.col_name]])),
+                     total_rows = dplyr::n(),
+                     prop = round(n / total_rows, 2)
+                     )
+
+  return(missing)
+}
+

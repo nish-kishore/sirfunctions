@@ -2,6 +2,7 @@
 
 export(check_afp_guid_ctry_data)
 export(check_cache)
+export(check_missing_rows)
 export(clean_ctry_data)
 export(clean_es_data)
 export(clean_iss_data)
