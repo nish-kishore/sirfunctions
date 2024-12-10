@@ -1,4 +1,5 @@
 # Private functions ----
+
 #' Adds rolling date information
 #'
 #' @inheritParams clean_lab_data
@@ -273,6 +274,43 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
     return(NULL)
   }
 
+  # Remove time portion of any date time columns
+  cli::cli_process_start("Converting date/date-time character columns to date columns")
+  lab_data <- lab_data |>
+    dplyr::mutate(dplyr::across(
+      dplyr::starts_with("Date"),
+      \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y"))
+    ))
+  cli::cli_process_done()
+
+  # Check if timeliness columns are precalculated
+  if (!"days.collect.lab" %in% names(lab_data)) {
+    cli::cli_process_start("Generating timeliness columns")
+    lab_data <- lab_data |>
+      dplyr::mutate(
+        # Intervals
+        days.collect.lab = .data$DateStoolReceivedinLab - .data$DateStoolCollected,
+        days.lab.culture = .data$DateFinalCellCultureResults - .data$DateStoolReceivedinLab,
+        days.seq.ship = .data$DateIsolateRcvdForSeq - .data$DateSeqResultsEntered,
+        days.lab.seq = .data$DateSeqResult - .data$DateStoolReceivedinLab,
+        days.itd.seqres = .data$DateSeqResult - .data$DateFinalrRTPCRResults,
+        days.itd.arriveseq = .data$DateIsolateRcvdForSeq - .data$DateFinalrRTPCRResults,
+        days.seq.rec.res = .data$DateSeqResult - .data$DateIsolateRcvdForSeq,
+
+        # Met target yes/no
+        met.targ.collect.lab = ifelse(.data$days.collect.lab < 3, 1, 0),
+        negative.spec = ifelse(!stringr::str_detect(.data$DateFinalCellCultureResults, "ITD") &
+                                 .data$FinalITDResult == "NULL", 1, 0),
+        met.lab.culture = ifelse(.data$days.lab.culture < 14, 1, 0),
+      )
+    cli::cli_process_done()
+  }
+
+  if (!"year" %in% names(lab_data)) {
+    lab_data <- lab_data |>
+      dplyr::mutate(year = lubridate::year(.data$DateOfOnset))
+  }
+
   cli::cli_process_start("Filtering for cases with valid dates")
   lab_data2 <- lab_data |>
     dplyr::filter((days.collect.lab >= 0 | is.na(days.collect.lab)) &
@@ -283,20 +321,11 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
                     (days.itd.arriveseq >= 0 | is.na(days.itd.arriveseq)) &
                     (days.seq.rec.res >= 0 | is.na(days.seq.rec.res))) |>
     dplyr::filter(
-      dplyr::between(year,
+      dplyr::between(.data$year,
                      lubridate::year(start_date), lubridate::year(end_date)
       ),
       CaseOrContact == "1-Case"
     )
-  cli::cli_process_done()
-
-  # Remove time portion of any date time columns
-  cli::cli_process_start("Converting date/date-time character columns to date columns")
-  lab_data2 <- lab_data2 |>
-    dplyr::mutate(dplyr::across(
-      dplyr::starts_with("Date"),
-      \(x) as.Date.character(x, tryFormats = c("%Y-%m-%d", "%Y/%m%/%d", "%m/%d/%Y"))
-    ))
   cli::cli_process_done()
 
   cli::cli_process_start("Imputing missing years")
