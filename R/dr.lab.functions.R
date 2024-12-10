@@ -987,15 +987,16 @@ clean_lab_data <- function(lab_data, start_date, end_date,
       return(NULL)
     }
 
-    lab_data <- clean_lab_data_who(lab_data, afp_data, ctry_name,
-                                   start_date, end_date
+    lab_data <- clean_lab_data_who(lab_data, start_date, end_date,
+                                   afp_data, ctry_name
                                    )
   } else {
     if ("Province" %in% lab_data_cols) {
       cli::cli_alert_warning("Lab data already cleaned.")
       return(lab_data)
     }
-    lab_data <- clean_lab_data_regional(lab_data, afp.data, start.date, end.date, delim, lab_locs_path)
+    lab_data <- clean_lab_data_regional(lab_data, start_date, end_date,
+                                        afp_data, ctry_name, lab_locs_path)
   }
 
   return(lab_data)
