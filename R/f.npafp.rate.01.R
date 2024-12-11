@@ -156,6 +156,7 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' - `"dist"` District level.
 #' - `"ctry"` Country level.
 #' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
+#' @param missing_agemonths `bool` Should cases with `NA` values for `age.months` be included? Default `FALSE`.
 #' @param rolling `bool` Should the analysis be performed on a rolling bases? Default `FALSE`.
 #' @param sp_continuity_validation Should we filter places that are not present
 #' for the entirety of the analysis dates? Default `TRUE`.
@@ -168,6 +169,7 @@ f.npafp.rate.01 <- function(
     end.date,
     spatial.scale,
     pending = T,
+    missing_agemonths = F,
     rolling = F,
     sp_continuity_validation = T) {
   # Check if afp.data and pop.data has arguments
@@ -240,6 +242,18 @@ f.npafp.rate.01 <- function(
   check_missing_pop_var(pop.data, spatial.scale)
   check_spatial_scale(pop.data, spatial.scale)
 
+  agemonth_summary <- switch(spatial.scale,
+    "ctry" = {
+      check_missing_rows(afp.data, "age.months", names.ctry)
+    },
+    "prov" = {
+      check_missing_rows(afp.data, "age.months", names.prov)
+    },
+    "dist" = {
+      check_missing_rows(afp.data, "age.months", names.dist)
+    }
+  )
+
   # Get inconsistent GUIDs across temporal scale
   incomplete.adm <- get_incomplete_adm(pop.data, spatial.scale, start.date, end.date)
 
@@ -276,8 +290,26 @@ f.npafp.rate.01 <- function(
   }
 
   # Filter AFP and population data based on start and end dates
-  afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180)
+  if (missing_agemonths) {
+    afp.data <- afp.data |>
+      dplyr::filter(dplyr::between(date, start.date, end.date),
+                    (age.months < 180 | is.na(age.months))
+                    )
+  } else {
+    if (nrow(agemonth_summary) > 0) {
+      cli::cli_alert_warning(paste0(
+        "Proportion of cases missing `age.months`",
+        "for some combinations of ", paste(names.ctry, collapse = ", "),
+        " range between ", min(agemonth_summary$prop) * 100, "-",
+        max(agemonth_summary$prop) * 100, "%",
+        ".\nCheck if toggling missing_agemonths = TRUE is warranted.",
+        "\nRun check_missing_rows() on the dataset for specifics on missingness."
+      ))
+    }
+    afp.data <- afp.data |>
+      dplyr::filter(dplyr::between(date, start.date, end.date),
+                    age.months < 180)
+  }
 
   # Only years of analysis
   pop.data <- pop.data %>%

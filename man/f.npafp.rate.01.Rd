@@ -11,6 +11,7 @@ f.npafp.rate.01(
   end.date,
   spatial.scale,
   pending = T,
+  missing_agemonths = F,
   rolling = F,
   sp_continuity_validation = T
 )
@@ -37,6 +38,8 @@ formatted as \verb{adm(0,1,2)guid}, onset date as \code{date} and \code{cdc.clas
 }}
 
 \item{pending}{\code{bool} Should cases classified as \code{PENDING} or \verb{LAB PENDING} be included in calculations? Default \code{TRUE}.}
+
+\item{missing_agemonths}{\code{bool} Should cases with \code{NA} values for \code{age.months} be included? Default \code{FALSE}.}
 
 \item{rolling}{\code{bool} Should the analysis be performed on a rolling bases? Default \code{FALSE}.}
 
