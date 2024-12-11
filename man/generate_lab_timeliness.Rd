@@ -4,10 +4,10 @@
 \alias{generate_lab_timeliness}
 \title{Summary of lab sample timeliness}
 \usage{
-generate_lab_timeliness(lab.data, spatial.scale, start.date, end.date)
+generate_lab_timeliness(lab_data, spatial.scale, start.date, end.date)
 }
 \arguments{
-\item{lab.data}{\code{tibble} Lab data. Ensure that this lab data is cleaned using
+\item{lab_data}{\code{tibble} Lab data. Ensure that this lab data is cleaned using
 \code{\link[=clean_lab_data]{clean_lab_data()}} before running the function.}
 
 \item{spatial.scale}{\code{str} Spatial scale to analyze the data. Valid values are \verb{"ctry", "prov", "dist"}.}
@@ -18,8 +18,6 @@ generate_lab_timeliness(lab.data, spatial.scale, start.date, end.date)
 }
 \value{
 \code{tibble} A table with timeliness data summary.
-
-\code{tibble} Cleaned lab data.
 }
 \description{
 Generates a summary of the timeliness of samples for specific intervals.
@@ -28,7 +26,7 @@ Generates a summary of the timeliness of samples for specific intervals.
 \dontrun{
 lab_path <- "C:/Users/XRG9/lab_data_who.csv"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-ctry.data$lab.data <- clean_lab_data(ctry.data, "2021-01-01", "2023-12-31")
-lab.timeliness.ctry <- generate_lab_timeliness(ctry.data$lab.data, "ctry", start_date, end_date)
+ctry.data$lab_data <- clean_lab_data(ctry.data, "2021-01-01", "2023-12-31")
+lab.timeliness.ctry <- generate_lab_timeliness(ctry.data$lab_data, "ctry", start_date, end_date)
 }
 }
