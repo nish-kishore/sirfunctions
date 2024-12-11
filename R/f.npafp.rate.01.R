@@ -254,9 +254,6 @@ f.npafp.rate.01 <- function(
     }
   )
 
-  agemonth_summary <- agemonth_summary |>
-    dplyr::filter(prop >= 0.1)
-
   # Get inconsistent GUIDs across temporal scale
   incomplete.adm <- get_incomplete_adm(pop.data, spatial.scale, start.date, end.date)
 
@@ -301,9 +298,12 @@ f.npafp.rate.01 <- function(
   } else {
     if (nrow(agemonth_summary) > 0) {
       cli::cli_alert_warning(paste0(
-        "Proportion of cases missing `age.months` are greater than or equal to 10% ",
+        "Proportion of cases missing `age.months`",
         "for some combinations of ", paste(names.ctry, collapse = ", "),
-        ".\nConsider toggling missing_agemonths = TRUE."
+        " range between ", min(agemonth_summary$prop) * 100, "-",
+        max(agemonth_summary$prop) * 100, "%",
+        ".\nCheck if toggling missing_agemonths = TRUE is warranted.",
+        "\nRun check_missing_rows() on the dataset for specifics on missingness."
       ))
     }
     afp.data <- afp.data |>
