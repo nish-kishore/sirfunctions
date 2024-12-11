@@ -327,6 +327,38 @@ test_EDAV_connection <- function(
   }
 }
 
+#' Obtain a constant variable used in sirfunctions
+#'
+#' Some links used in certain functions are hardcoded, but may change in the future.
+#' For ease of link maintenance, constants will be added to this function.
+#'
+#' @param constant_name `str` Name of the constant. Valid values include:
+#' - `"DEFAULT_EDAV_FOLDER"`
+#' - `"CTRY_RISK_CAT"`
+#' - `"LAB_LOCATIONS"`
+#' - `"DR_TEMPLATE"`
+#' - `"SIRFUNCTIONS_GITHUB_TREE"`
+#' - `"AFRO_LAB_DATA"`
+#' - `"EMRO_LAB_DATA"`
+#'
+#' @returns `str` A string, typically a file path or a URL.
+#' @export
+#'
+#' @examples
+#' get_constant("DEFAULT_EDAV_FOLDER")
+get_constant <- function(constant_name) {
+  switch(
+    constant_name,
+    "DEFAULT_EDAV_FOLDER" = "GID/PEB/SIR",
+    "CTRY_RISK_CAT" = "Data/misc/country_prioritization/SG_country_prioritization_update_21_june_2023.csv",
+    "LAB_LOCATIONS" = "Data/lab/Routine_lab_testing_locations.csv",
+    "DR_TEMPLATE" = "https://raw.githubusercontent.com/nish-kishore/sg-desk-reviews/main/resources/desk_review_template.Rmd",
+    "SIRFUNCTIONS_GITHUB_TREE" = "https://api.github.com/repos/nish-kishore/sirfunctions/git/trees",
+    "AFRO_LAB_DATA" = "Data/lab/2024-09-20 AFRO Lab Extract (AFP only since 2022).csv",
+    "EMRO_LAB_DATA" = "Data/lab/2024-09-20 EMRO Lab Extract (AFP only since 2022).csv"
+  )
+}
+
 #### 2) Key data pull functions ####
 
 
