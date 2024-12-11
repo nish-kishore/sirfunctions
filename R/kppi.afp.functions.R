@@ -94,10 +94,17 @@ add_rolling_date_info <- function(df, onset_col="ParalysisOnsetDate", start_date
 #' @return `tibble` A dataframe with risk category columns added.
 #' @keywords internal
 #'
-add_risk_category <- function(df, risk_table = NULL) {
-  if(is.null(risk_table)) {
-    risk_table <- edav_io("read", file_loc = "Data/misc/country_prioritization/SG_country_prioritization_update_21_june_2023.csv")
+add_risk_category <- function(df, risk_table = NULL, ctry_col="ctry") {
+  if (is.null(risk_table)) {
+    risk_table <- edav_io("read", file_loc = get_constant("CTRY_RISK_CAT"))
   }
+
+  risk_table <- risk_table |>
+    mutate(Country = if_else(.data$Country == "TÜRKIYE", "TURKEY", .data$Country))
+
+  df <- df |>
+    dplyr::left_join(risk_table, by = setNames("Country", ctry_col))
+  return(df)
 }
 
 # Public functions ----
