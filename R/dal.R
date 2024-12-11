@@ -645,7 +645,7 @@ test_EDAV_connection <- function(
 get_constant <- function(constant_name) {
   switch(constant_name,
     "DEFAULT_EDAV_FOLDER" = "GID/PEB/SIR",
-    "CTRY_RISK_CAT" = "Data/misc/country_prioritization/SG_country_prioritization_update_21_june_2023.csv",
+    "CTRY_RISK_CAT" = "Data/misc/country_prioritization/SG_country_prioritization_GPSAP2025-2026_04Dec2024.csv",
     "LAB_LOCATIONS" = "Data/lab/Routine_lab_testing_locations.csv",
     "DR_TEMPLATE" = "https://raw.githubusercontent.com/nish-kishore/sg-desk-reviews/main/resources/desk_review_template.Rmd",
     "SIRFUNCTIONS_GITHUB_TREE" = "https://api.github.com/repos/nish-kishore/sirfunctions/git/trees",
