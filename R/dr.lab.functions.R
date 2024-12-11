@@ -96,6 +96,7 @@ impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
                                    cdc.classification.all = "cdc.class"
     )
 
+    cli::cli_process_start("Obtaining geographic information based on matching EPIDs from the AFP linelist")
     lab_data$ctry <- afp_data$ctry[match(lab_data$EpidNumber, afp_data$epid)]
     lab_data$prov <- afp_data$prov[match(lab_data$EpidNumber, afp_data$epid)]
     lab_data$dist <- afp_data$dist[match(lab_data$EpidNumber, afp_data$epid)]
@@ -103,6 +104,7 @@ impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
     lab_data$adm0guid <- afp_data$adm0guid[match(lab_data$EpidNumber, afp_data$epid)]
     lab_data$adm1guid <- afp_data$adm1guid[match(lab_data$EpidNumber, afp_data$epid)]
     lab_data$adm2guid <- afp_data$adm2guid[match(lab_data$EpidNumber, afp_data$epid)]
+    cli::cli_process_done()
 
     # If these columns are available (in WHO lab)
     if ("Province" %in% names(lab_data)) {
@@ -136,10 +138,18 @@ impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
           epid_05 = ".*"),
         too_few = "align_start"
       ) |>
-      dplyr::select(dplyr::contains("epid"), "ctry", "prov", "dist",
+      dplyr::select("epid_ctry", "epid_prov", "epid_dist",
+                    "ctry", "prov", "dist",
                     dplyr::matches("adm[0-3]guid"), "year") |>
       dplyr::distinct()
 
+    # Geomatching algorithm
+    cli::cli_process_start("Beginning geomatching based on AFP lookup table")
+
+    # Imputing missing countries
+    cli::cli_process_start("Imputing ctry and adm0guid")
+    cli::cli_alert_info(paste0("Initial records missing ctry: ", sum(is.na(lab_data$ctry))))
+    cli::cli_alert_info(paste0("Initial records missing adm0guid: ", sum(is.na(lab_data$adm0guid))))
     ctry_lookup_table <- geo_lookup_table |>
       dplyr::select("epid_ctry", "ctry", "adm0guid", "year") |>
       dplyr::distinct() |>
@@ -159,16 +169,29 @@ impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
     ctry_lookup_table <- dplyr::anti_join(ctry_lookup_table,
                                           ctry_lookup_row_dups
     )
+    lab_data <- lab_data |>
+      dplyr::left_join(ctry_lookup_table, by = dplyr::join_by(epid_ctry, year)) |>
+      dplyr::mutate(
+        ctry = dplyr::coalesce(.data$ctry.x, .data$ctry.y),
+        adm0guid = dplyr::coalesce(.data$adm0guid.x, .data$adm0guid.y)
+      )
+    cli::cli_alert_info(paste0("Final records missing ctry: ", sum(is.na(lab_data$ctry))))
+    cli::cli_alert_info(paste0("Final records missing adm0guid: ", sum(is.na(lab_data$adm0guid))))
+    cli::cli_process_done()
 
+    # Imputing missing provinces
+    cli::cli_process_start("Imputing prov and adm1guid")
+    cli::cli_alert_info(paste0("Initial records missing prov: ", sum(is.na(lab_data$prov))))
+    cli::cli_alert_info(paste0("Initial records missing adm1guid: ", sum(is.na(lab_data$adm1guid))))
     prov_lookup_table <- geo_lookup_table |>
-      dplyr::select("epid_prov", "prov", "adm0guid", "adm1guid", "year") |>
+      dplyr::select("epid_ctry", "epid_prov", "ctry", "prov", "adm1guid", "year") |>
       dplyr::distinct() |>
       tidyr::drop_na("prov")
 
     # Check look up table for potential duplicated rows
     prov_lookup_row_dups <- prov_lookup_table |>
-      dplyr::mutate(epid_comb = str_c(epid_prov, year, sep = "-")) |>
-      dplyr::group_by(.data$epid_comb, .data$epid_prov, .data$year) |>
+      dplyr::mutate(epid_comb = str_c(epid_ctry, epid_prov, ctry, year, sep = "-")) |>
+      dplyr::group_by(.data$epid_comb, .data$epid_ctry, .data$ctry, .data$epid_prov, .data$year) |>
       dplyr::summarise(n = n()) |>
       dplyr::filter(n > 1) |>
       ungroup()
@@ -178,15 +201,32 @@ impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
       dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
     prov_lookup_table <- anti_join(prov_lookup_table, prov_lookup_row_dups)
 
+    lab_data <- lab_data |>
+      dplyr::left_join(prov_lookup_table, by = dplyr::join_by(epid_ctry, ctry, epid_prov, year)) |>
+      dplyr::mutate(
+        prov = dplyr::coalesce(.data$prov.x, .data$prov.y),
+        adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)
+      )
+    cli::cli_alert_info(paste0("Final records missing prov: ", sum(is.na(lab_data$prov))))
+    cli::cli_alert_info(paste0("Final records missing adm1guid: ", sum(is.na(lab_data$adm1guid))))
+    cli::cli_process_done()
+
+    # Imputing district
+    cli::cli_process_start("Imputing dist and adm2guid")
+    cli::cli_alert_info(paste0("Initial records missing dist: ", sum(is.na(lab_data$dist))))
+    cli::cli_alert_info(paste0("Initial records missing adm2guid: ", sum(is.na(lab_data$adm2guid))))
     dist_lookup_table <- geo_lookup_table |>
-      dplyr::select("epid_dist", "dist", "adm2guid", "year") |>
+      dplyr::select("epid_ctry", "epid_prov", "epid_dist", "ctry", "prov", "dist", "adm2guid", "year") |>
       dplyr::distinct() |>
       tidyr::drop_na("dist")
 
     # Check look up table for potential duplicated rows
     dist_lookup_row_dups <- dist_lookup_table |>
-      dplyr::mutate(epid_comb = str_c(epid_dist, year, sep = "-")) |>
-      dplyr::group_by(.data$epid_comb, .data$epid_dist, .data$year) |>
+      dplyr::mutate(epid_comb = str_c(epid_ctry, epid_prov, epid_dist, ctry, prov, year, sep = "-")) |>
+      dplyr::group_by(.data$epid_comb, .data$epid_ctry, .data$ctry,
+                      .data$epid_prov, .data$prov,
+                      .data$epid_dist,
+                      .data$year) |>
       dplyr::summarise(n = n()) |>
       dplyr::filter(n > 1) |>
       ungroup()
@@ -196,27 +236,17 @@ impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
       dplyr::select(!dplyr::any_of(c("epid_comb", "n")))
     dist_lookup_table <- anti_join(dist_lookup_table, dist_lookup_row_dups)
 
-    # geomatching algorithm
     lab_data <- lab_data |>
-      dplyr::left_join(ctry_lookup_table) |>
-      dplyr::left_join(ctry_lookup_table, by = dplyr::join_by(epid_ctry, year)) |>
-      dplyr::mutate(
-        ctry = dplyr::coalesce(.data$ctry.x, .data$ctry.y),
-        adm0guid = dplyr::coalesce(.data$adm0guid.x, .data$adm0guid.y)
-      ) |>
-      dplyr::left_join(prov_lookup_table) |>
-      dplyr::left_join(prov_lookup_table, by = dplyr::join_by(epid_prov, year)) |>
-      dplyr::mutate(
-        prov = dplyr::coalesce(.data$prov.x, .data$prov.y),
-        adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)
-      ) |>
-      dplyr::left_join(dist_lookup_table) |>
-      dplyr::left_join(dist_lookup_table, by = dplyr::join_by(epid_dist, year)) |>
+      dplyr::left_join(dist_lookup_table,
+                       by = dplyr::join_by(epid_ctry, epid_prov, ctry, prov, epid_dist, year)) |>
       dplyr::mutate(
         dist = dplyr::coalesce(.data$dist.x, .data$dist.y),
         adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)
       ) |>
       dplyr::select(-dplyr::ends_with(".y"), -dplyr::ends_with(".x"))
+    cli::cli_alert_info(paste0("Final records missing dist: ", sum(is.na(lab_data$dist))))
+    cli::cli_alert_info(paste0("Final records missing adm2guid: ", sum(is.na(lab_data$adm2guid))))
+    cli::cli_process_done()
 
     # check for correctness
     check <- lab_data |>
@@ -226,10 +256,9 @@ impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
     mismatch_dist <- dplyr::anti_join(check, dist_lookup_table)
     mismatch_prov <- dplyr::anti_join(check, prov_lookup_table)
 
+    cli::cli_process_done()
+
     # Message for values without any province or district information
-    cli::cli_alert_warning(paste0("Remaining records with missing country: ", sum(is.na(lab_data$ctry))))
-    cli::cli_alert_warning(paste0("Remaining records with missing province: ", sum(is.na(lab_data$prov))))
-    cli::cli_alert_warning(paste0("Remaining records with missing district: ", sum(is.na(lab_data$dist))))
   } else {
     cli::cli_alert_warning("AFP linelist not attached. Geographic columns will be empty.")
   }
