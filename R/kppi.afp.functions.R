@@ -230,19 +230,18 @@ generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL,
 
   return(pos_summary)
 }
+
 generate_e2_table <- function(raw.data, start_date, end_date) {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
-  afp_data <- raw.data$afp
-  es_data <- raw.data$es
 
   # Filtering
-  afp_data <- afp_data |>
+  afp_data <- raw.data$afp |>
     dplyr::filter(dplyr::between(dateonset, start_date, end_date),
-                  stringr::str_detect(cdc.classification.all2, "VDPV|WILD"))
-  es_data <- es_data |>
+                  cdc.classification.all2 != "NOT-AFP")
+  es_data <- raw.data$es |>
     dplyr::filter(dplyr::between(collect.date, start_date, end_date),
-                  stringr::str_detect(cdc.classification.all2, "VDPV|WILD"))
+                  ev.detect == 1)
 
   # Subsetting
   afp_data <- afp_data |>
@@ -250,7 +249,7 @@ generate_e2_table <- function(raw.data, start_date, end_date) {
       "epid", "place.admin.0", "whoregion",
       "ontonot", "ontoinvest", "nottoinvest", "investtostool1",
       "stool1tostool2", "year",
-      "adm0guid", "ctry",
+      "adm0guid", "ctry", "timeliness.01",
       "adequacy.01", "adequacy.02", "adequacy.03"
     )),
     dplyr::where(\(x) lubridate::is.Date(x)))
@@ -259,7 +258,8 @@ generate_e2_table <- function(raw.data, start_date, end_date) {
     dplyr::select(dplyr::any_of(c(
       "env.sample.id", "ADM0_NAME", "who.region"
     )),
-    dplyr::where(\(x) lubridate::is.Date(x)))
+    dplyr::contains("date")) |>
+    dplyr::mutate(across(dplyr::contains("date"), \(x) as.Date(x)))
 
   # Include required columns
   afp_data <- col_to_datecol(afp_data)
@@ -282,7 +282,10 @@ generate_e2_table <- function(raw.data, start_date, end_date) {
       "place.admin.0",
       "rolling_period"
     )))) |>
-    summarise(afp_cases = n()
+    dplyr::summarise(afp_cases = n(),
+              time.notify = sum(.data$noti.7d.on, na.rm = TRUE),
+              time.invest = sum(.data$inv.2d.noti, na.rm = TRUE),
+              time.field.act = sum(.data$timeliness.01 == "Timely")
               )
 
   #ES analysis
