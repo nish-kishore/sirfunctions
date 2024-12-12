@@ -163,10 +163,10 @@ col_to_datecol <- function(afp.data) {
       is.na(datestool2) ~ as.numeric(difftime(stooltolabdate, datestool1), units = "days")
     )) |>
     dplyr::mutate(
-      noti.7d.on = dplyr::if_else(date.notify - date.onset <= 7, T, F),
-      inv.2d.noti = dplyr::if_else(date.invest - date.notify <= 2, T, F),
-      coll.3d.inv = dplyr::if_else(datestool1 - date.invest <= 3, T, F),
-      ship.3d.coll = dplyr::if_else(stool.date.sent.to.lab - datestool2 <= 3, T, F)
+      noti.7d.on = dplyr::if_else(datenotify - dateonset <= 7, T, F),
+      inv.2d.noti = dplyr::if_else(dateinvest - datenotify <= 2, T, F),
+      coll.3d.inv = dplyr::if_else(datestool1 - dateinvest <= 3, T, F),
+      ship.3d.coll = dplyr::if_else(stooltolabdate- datestool2 <= 3, T, F)
     )
   cli::cli_process_done()
 
