@@ -171,10 +171,10 @@ generate_e1_table <- function(pos, start_date, end_date) {
         c(
           "<=35 days from onset",
           "<=49 days from onset"
-        ), 1, 0),
+        ), TRUE, FALSE),
       is_virus_interest = dplyr::if_else((stringr::str_detect(.data$measurement, "^WILD") |
         stringr::str_detect(.data$measurement, "^VDPV")
-      ), 1, 0)
+      ), TRUE, FALSE)
     ) |>
     dplyr::filter(!is.na(rolling_period)) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c(
@@ -187,15 +187,15 @@ generate_e1_table <- function(pos, start_date, end_date) {
       afp_cases = sum(source == "AFP", na.rm = TRUE),
       es_detections = sum(source == "ENV", na.rm = TRUE),
       wild_vdpv_cases = sum(source == "AFP" &
-        is_virus_interest == 1),
+        is_virus_interest),
       wild_vdpv_env = sum(source == "ENV" &
-        is_virus_interest == 1),
+        is_virus_interest),
       timely_samples = sum(is_timely, na.rm = TRUE),
       timely_wild_vdpv_cases = sum(
-        source == "AFP" & is_timely == 1 & is_virus_interest == 1
+        source == "AFP" & is_timely & is_virus_interest
       ),
       timely_wild_vdpv_env = sum(
-        source == "AFP" & is_timely == 1 & is_virus_interest == 1
+        source == "AFP" & is_timely & is_virus_interest
       ),
       prop_timely_wild_vdpv_cases = round(.data$timely_wild_vdpv_cases / .data$wild_vdpv_cases, 2),
       prop_timely_wild_vdpv_env = round(.data$timely_wild_vdpv_env / .data$wild_vdpv_env, 2)
@@ -212,6 +212,84 @@ generate_e1_table <- function(pos, start_date, end_date) {
 
   return(pos_summary)
 }
-generate_e2_table <- function() {}
+generate_e2_table <- function(raw.data, start_date, end_date) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  afp_data <- raw.data$afp
+  es_data <- raw.data$es
+
+  # Filtering
+  afp_data <- afp_data |>
+    dplyr::filter(dplyr::between(dateonset, start_date, end_date),
+                  epid %in% raw.data$pos$epid)
+  es_data <- es_data |>
+    dplyr::filter(dplyr::between(collect.date, start_date, end_date),
+                  env.sample.id %in% raw.data$pos$epid)
+
+  # Subsetting
+  afp_data <- afp_data |>
+    dplyr::select(dplyr::any_of(c(
+      "epid", "place.admin.0", "whoregion",
+      "ontonot", "ontoinvest", "nottoinvest", "investtostool1",
+      "stool1tostool2", "year",
+      "adm0guid", "ctry",
+      "adequacy.01", "adequacy.02", "adequacy.03"
+    )),
+    dplyr::where(\(x) lubridate::is.Date(x)))
+
+  es_data <- es_data |>
+    dplyr::select(dplyr::any_of(c(
+      "env.sample.id", "ADM0_NAME", "who.region"
+    )),
+    dplyr::where(\(x) lubridate::is.Date(x)))
+
+  # Include required columns
+  afp_data <- col_to_datecol(afp_data)
+  afp_data <- add_risk_category(afp_data, ctry_col = "place.admin.0")
+  afp_data <- add_rolling_date_info(afp_data, start_date, end_date, "dateonset")
+
+  es_data <- add_risk_category(es_data, ctry_col = "ADM0_NAME")
+  es_data <- add_rolling_date_info(es_data, start_date, end_date, "collect.date")
+
+  # Calculate timeliness
+
+  cli::cli_process_start("Generating E2 summary table")
+  #AFP analysis
+  # Calculating additional columns
+  afp_summary <- afp_data |>
+    dplyr::filter(!is.na(rolling_period)) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(
+      "whoregion",
+      "SG Priority Level",
+      "place.admin.0",
+      "rolling_period"
+    )))) |>
+    summarise(afp_cases = n()
+              )
+
+  #ES analysis
+  #Calculating additional columns
+  es_summary <- es_data |>
+    dplyr::filter(!is.na(rolling_period)) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(
+      "who.region",
+      "SG Priority Level",
+      "ADM0_NAME",
+      "rolling_period"
+    )))) |>
+    dplyr::summarise(es_detections = n())
+
+  # Combined summary
+  combined_summary <- dplyr::full_join(afp_summary, es_summary,
+                                       by = c("place.admin.0" = "ADM0_NAME",
+                                              "whoregion" = "who.region",
+                                              "SG Priority Level",
+                                              "rolling_period"))
+
+  cli::cli_process_done()
+
+  return(combined_summary)
+}
+
 generate_e3_table <- function() {}
 generate_e4_table <- function() {}
