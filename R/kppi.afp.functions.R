@@ -139,17 +139,17 @@ add_seq_capacity <- function(df, ctry_col = "ctry", lab_locs = NULL) {
 }
 
 # Public functions ----
-generate_e1_table <- function(raw.data, start_date, end_date) {
+generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL, lab_locs = NULL) {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   # Filtering
   afp_data <- raw.data$afp |>
     dplyr::filter(dplyr::between(dateonset, start_date, end_date),
-                  stringr::str_detect(cdc.classification.all2, "VDPV|WILD"))
+                  cdc.classification.all2 != "NOT-AFP")
   es_data <- raw.data$es |>
     dplyr::filter(dplyr::between(collect.date, start_date, end_date),
-                  stringr::str_detect(virus.type, "VDPV|WILD"))
+                  ev.detect == 1)
 
   # Subsetting
   afp_data <- afp_data |>
@@ -174,9 +174,9 @@ generate_e1_table <- function(raw.data, start_date, end_date) {
                                  "source"))
 
   # Adding required columns
-  pos <- add_risk_category(pos, ctry_col = "place.admin.0")
+  pos <- add_risk_category(pos, risk_table, ctry_col = "place.admin.0")
   pos <- add_rolling_date_info(pos, start_date, end_date, "dateonset")
-  pos <- add_seq_capacity(pos, ctry_col = "place.admin.0")
+  pos <- add_seq_capacity(pos, ctry_col = "place.admin.0", lab_locs)
 
   cli::cli_process_start("Generating E1 summary table")
   pos_summary <- pos |>
@@ -195,8 +195,10 @@ generate_e1_table <- function(raw.data, start_date, end_date) {
         c(
           "<=35 days from onset",
           "<=49 days from onset"
-        ), TRUE, FALSE)
-    ) |>
+        ), TRUE, FALSE),
+      is_target = dplyr::if_else(
+        stringr::str_detect(.data$cdc.classification.all2, "WILD|VDPV"),
+        TRUE, FALSE)) |>
     dplyr::filter(!is.na(rolling_period)) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c(
       "whoregion",
@@ -205,14 +207,16 @@ generate_e1_table <- function(raw.data, start_date, end_date) {
       "rolling_period"
     )))) |>
     dplyr::summarise(
-      wild_vdpv_cases = sum(source == "AFP", na.rm = TRUE),
-      wild_vdpv_env = sum(source == "ENV", na.rm = TRUE),
+      afp_cases = sum(source == "AFP", na.rm = TRUE),
+      env_detect = sum(source == "ENV", na.rm = TRUE),
+      wild_vdpv_cases = sum(source == "AFP" & is_target, na.rm = TRUE),
+      wild_vdpv_env = sum(source == "ENV" & is_target, na.rm = TRUE),
       timely_samples = sum(is_timely, na.rm = TRUE),
       timely_cases = sum(source == "AFP" & is_timely),
-      timely_env = sum(source == "AFP" & is_timely),
-      prop_timely_samples = round(.data$timely_samples/ n(), 2),
-      prop_timely_cases = round(.data$timely_cases / .data$wild_vdpv_cases, 2),
-      prop_timely_env = round(.data$timely_env / .data$wild_vdpv_env, 2)
+      timely_env = sum(source == "ENV" & is_timely),
+      prop_timely_samples = .data$timely_samples / dplyr::n(),
+      prop_timely_cases = .data$timely_cases / .data$wild_vdpv_cases,
+      prop_timely_env = .data$timely_env / .data$wild_vdpv_en
     )
 
   pos_summary <- pos_summary |>
