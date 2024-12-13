@@ -1,6 +1,4 @@
 # Private functions ----
-#' Calculates the year a week number falls into.
-#'
 #' @param wk `numeric` Week number.
 #'
 #' @returns `str` The year the week falls into.
@@ -145,33 +143,44 @@ generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL,
 
   # Filtering
   afp_data <- raw.data$afp |>
-    dplyr::filter(dplyr::between(dateonset, start_date, end_date),
-                  cdc.classification.all2 != "NOT-AFP")
+    dplyr::filter(
+      dplyr::between(dateonset, start_date, end_date),
+      cdc.classification.all2 != "NOT-AFP"
+    )
   es_data <- raw.data$es |>
-    dplyr::filter(dplyr::between(collect.date, start_date, end_date),
-                  ev.detect == 1)
+    dplyr::filter(
+      dplyr::between(collect.date, start_date, end_date),
+      ev.detect == 1
+    )
 
   # Subsetting
   afp_data <- afp_data |>
-    dplyr::select(dplyr::any_of(c("epid", "place.admin.0", "whoregion",
-                                  "cdc.classification.all2", "dateonset",
-                                  "datenotificationtohq"))) |>
+    dplyr::select(dplyr::any_of(c(
+      "epid", "place.admin.0", "whoregion",
+      "cdc.classification.all2", "dateonset",
+      "datenotificationtohq"
+    ))) |>
     dplyr::mutate(source = "AFP")
 
   es_data <- es_data |>
-    dplyr::select(dplyr::any_of(c("env.sample.id", "ADM0_NAME", "who.region",
-                                  "virus.type",
-                                  "collect.date", "date.notification.to.hq"))) |>
+    dplyr::select(dplyr::any_of(c(
+      "env.sample.id", "ADM0_NAME", "who.region",
+      "virus.type",
+      "collect.date", "date.notification.to.hq"
+    ))) |>
     dplyr::mutate(source = "ENV")
 
   pos <- dplyr::full_join(afp_data, es_data,
-                          by = c("epid" = "env.sample.id",
-                                 "place.admin.0" = "ADM0_NAME",
-                                 "whoregion" = "who.region",
-                                 "cdc.classification.all2" = "virus.type",
-                                 "dateonset" = "collect.date",
-                                 "datenotificationtohq" = "date.notification.to.hq",
-                                 "source"))
+    by = c(
+      "epid" = "env.sample.id",
+      "place.admin.0" = "ADM0_NAME",
+      "whoregion" = "who.region",
+      "cdc.classification.all2" = "virus.type",
+      "dateonset" = "collect.date",
+      "datenotificationtohq" = "date.notification.to.hq",
+      "source"
+    )
+  )
 
   # Adding required columns
   pos <- add_risk_category(pos, risk_table, ctry_col = "place.admin.0")
@@ -198,7 +207,9 @@ generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL,
         ), TRUE, FALSE),
       is_target = dplyr::if_else(
         stringr::str_detect(.data$cdc.classification.all2, "WILD|VDPV"),
-        TRUE, FALSE)) |>
+        TRUE, FALSE
+      )
+    ) |>
     dplyr::filter(!is.na(rolling_period)) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c(
       "whoregion",
@@ -237,28 +248,36 @@ generate_e2_table <- function(raw.data, start_date, end_date) {
 
   # Filtering
   afp_data <- raw.data$afp |>
-    dplyr::filter(dplyr::between(dateonset, start_date, end_date),
-                  cdc.classification.all2 != "NOT-AFP")
+    dplyr::filter(
+      dplyr::between(dateonset, start_date, end_date),
+      cdc.classification.all2 != "NOT-AFP"
+    )
   es_data <- raw.data$es |>
-    dplyr::filter(dplyr::between(collect.date, start_date, end_date),
-                  ev.detect == 1)
+    dplyr::filter(
+      dplyr::between(collect.date, start_date, end_date),
+      ev.detect == 1
+    )
 
   # Subsetting
   afp_data <- afp_data |>
-    dplyr::select(dplyr::any_of(c(
-      "epid", "place.admin.0", "whoregion",
-      "ontonot", "ontoinvest", "nottoinvest", "investtostool1",
-      "stool1tostool2", "year",
-      "adm0guid", "ctry", "timeliness.01",
-      "adequacy.01", "adequacy.02", "adequacy.03"
-    )),
-    dplyr::where(\(x) lubridate::is.Date(x)))
+    dplyr::select(
+      dplyr::any_of(c(
+        "epid", "place.admin.0", "whoregion",
+        "ontonot", "ontoinvest", "nottoinvest", "investtostool1",
+        "stool1tostool2", "year",
+        "adm0guid", "ctry", "timeliness.01",
+        "adequacy.01", "adequacy.02", "adequacy.03"
+      )),
+      dplyr::where(\(x) lubridate::is.Date(x))
+    )
 
   es_data <- es_data |>
-    dplyr::select(dplyr::any_of(c(
-      "env.sample.id", "ADM0_NAME", "who.region"
-    )),
-    dplyr::contains("date")) |>
+    dplyr::select(
+      dplyr::any_of(c(
+        "env.sample.id", "ADM0_NAME", "who.region"
+      )),
+      dplyr::contains("date")
+    ) |>
     dplyr::mutate(across(dplyr::contains("date"), \(x) as.Date(x)))
 
   # Include required columns
@@ -270,9 +289,14 @@ generate_e2_table <- function(raw.data, start_date, end_date) {
   es_data <- add_rolling_date_info(es_data, start_date, end_date, "collect.date")
 
   # Calculate timeliness
+  es_data <- es_data |>
+    dplyr::mutate(
+      collecttolab = as.numeric(.data$date.received.in.lab - .data$collect.date),
+      ship.3d.coll = dplyr::if_else(.data$collecttolab <= 3, TRUE, FALSE)
+    )
 
   cli::cli_process_start("Generating E2 summary table")
-  #AFP analysis
+  # AFP analysis
   # Calculating additional columns
   afp_summary <- afp_data |>
     dplyr::filter(!is.na(rolling_period)) |>
@@ -282,14 +306,19 @@ generate_e2_table <- function(raw.data, start_date, end_date) {
       "place.admin.0",
       "rolling_period"
     )))) |>
-    dplyr::summarise(afp_cases = n(),
-              time.notify = sum(.data$noti.7d.on, na.rm = TRUE),
-              time.invest = sum(.data$inv.2d.noti, na.rm = TRUE),
-              time.field.act = sum(.data$timeliness.01 == "Timely")
-              )
+    dplyr::summarise(
+      afp_cases = n(),
+      time.notify = sum(.data$noti.7d.on & dplyr::between(ontonot, 0, 365),
+        na.rm = TRUE
+      ),
+      time.invest = sum(.data$inv.2d.noti & dplyr::between(nottoinvest, 0, 365),
+        na.rm = TRUE
+      ),
+      time.field.act = sum(.data$timeliness.01 == "Timely")
+    )
 
-  #ES analysis
-  #Calculating additional columns
+  # ES analysis
+  # Calculating additional columns
   es_summary <- es_data |>
     dplyr::filter(!is.na(rolling_period)) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c(
@@ -298,14 +327,22 @@ generate_e2_table <- function(raw.data, start_date, end_date) {
       "ADM0_NAME",
       "rolling_period"
     )))) |>
-    dplyr::summarise(es_detections = n())
+    dplyr::summarise(
+      es_detections = n(),
+      time.es = sum(.data$ship.3d.coll & dplyr::between(.data$collecttolab, 0, 365),
+        na.rm = TRUE
+      )
+    )
 
   # Combined summary
   combined_summary <- dplyr::full_join(afp_summary, es_summary,
-                                       by = c("place.admin.0" = "ADM0_NAME",
-                                              "whoregion" = "who.region",
-                                              "SG Priority Level",
-                                              "rolling_period"))
+    by = c(
+      "place.admin.0" = "ADM0_NAME",
+      "whoregion" = "who.region",
+      "SG Priority Level",
+      "rolling_period"
+    )
+  )
 
   cli::cli_process_done()
 
