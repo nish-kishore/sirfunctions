@@ -242,17 +242,17 @@ generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL,
   return(pos_summary)
 }
 
-generate_e2_table <- function(raw.data, start_date, end_date) {
+generate_e2_table <- function(raw_data, start_date, end_date) {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   # Filtering
-  afp_data <- raw.data$afp |>
+  afp_data <- raw_data$afp |>
     dplyr::filter(
       dplyr::between(dateonset, start_date, end_date),
       cdc.classification.all2 != "NOT-AFP"
     )
-  es_data <- raw.data$es |>
+  es_data <- raw_data$es |>
     dplyr::filter(
       dplyr::between(collect.date, start_date, end_date),
       ev.detect == 1
@@ -328,7 +328,7 @@ generate_e2_table <- function(raw.data, start_date, end_date) {
       "rolling_period"
     )))) |>
     dplyr::summarise(
-      es_detections = n(),
+      env_detect = n(),
       time.es = sum(.data$ship.3d.coll & dplyr::between(.data$collecttolab, 0, 365),
         na.rm = TRUE
       )
@@ -349,5 +349,60 @@ generate_e2_table <- function(raw.data, start_date, end_date) {
   return(combined_summary)
 }
 
-generate_e3_table <- function() {}
-generate_e4_table <- function() {}
+generate_e4_table <- function(raw_data, start_date, end_date, lab_locs = NULL, risk_table = NULL) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  # Filtering
+  afp_data <- raw_data$afp |>
+    dplyr::filter(
+      dplyr::between(dateonset, start_date, end_date),
+      cdc.classification.all2 != "NOT-AFP"
+    ) |>
+    dplyr::select(-dplyr::starts_with("pons"))
+    # dplyr::select("epid", "cdc.classification.all2",
+    #               dplyr::matches("adm[0-2]guid"),
+    #               dplyr::contains("date"))
+
+  # Include required columns
+  afp_data <- col_to_datecol(afp_data)
+  afp_data <- add_rolling_date_info(afp_data, start_date, end_date, "dateonset")
+
+  # Calculate country indicators
+  ctry_indicators <- afp_data |>
+    dplyr::filter(!is.na(rolling_period)) |>
+    dplyr::group_by(.data$year.analysis) |>
+    dplyr::summarise(
+      npafp = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
+                                         raw.data$ctry.pop,
+                                        min(.data$year.analysis.start),
+                                        max(.data$year.analysis.end),
+                                        "ctry", rolling = TRUE,
+                                        sp_continuity_validation = FALSE)),
+      stool_adequacy = list(f.stool.ad.01(dplyr::pick(dplyr::everything()),
+                                          raw.data$ctry.pop,
+                                          min(year.analysis.start),
+                                          max(year.analysis.end),
+                                          "ctry", rolling = TRUE,
+                                          sp_continuity_validation = FALSE))
+    ) |>
+    dplyr::rowwise() |>
+    dplyr::mutate(dplyr::across(-dplyr::one_of("year.analysis"),
+                         \(x) list(dplyr::tibble(x) |>
+                                     dplyr::mutate(year.analysis = year.analysis
+                                          )))
+                  )
+
+  # Add risk category and sequencing capacity
+  npafp <- dplyr::bind_rows(ctry_indicators$npafp) |>
+    add_risk_category() |> add_seq_capacity()
+  stool_ad <- dplyr::bind_rows(ctry_indicators$stool_adequacy) |>
+    left_join(raw.data$ctry.pop |>
+                select("ctry" = "ADM0_NAME", "adm0guid") |>
+                distinct()) |>
+    add_risk_category() |> add_seq_capacity()
+
+  # Subset to only required columns
+
+}
+generate_e5_table <- function() {}
