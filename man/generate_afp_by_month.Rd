@@ -7,7 +7,7 @@
 generate_afp_by_month(afp.data, start_date, end_date)
 }
 \arguments{
-\item{afp.data}{\code{tibble} Country AFP data (\code{ctry.data$afp.all.2}).}
+\item{afp.data}{\code{tibble} AFP data.}
 
 \item{start_date}{\code{str} Start date of analysis.}
 
@@ -20,6 +20,10 @@ generate_afp_by_month(afp.data, start_date, end_date)
 Generates the \code{mon.year} column in the AFP linelist. This column is used in
 subsequent functions summarizing AFP case counts by geography and year. This function
 will most likely be moved to \code{clean_ctry_data()}.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
+This function was deprecated and combined into \code{\link[=generate_afp_by_month_summary]{generate_afp_by_month_summary()}}.
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
