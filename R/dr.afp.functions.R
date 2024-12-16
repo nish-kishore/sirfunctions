@@ -291,56 +291,11 @@ add_prov_npafp_table <- function(npafp.output) {
 }
 
 # Exported functions ----
-#' Generate `mon.year` column in the AFP linelist.
-#'
-#' Generates the `mon.year` column in the AFP linelist. This column is used in
-#' subsequent functions summarizing AFP case counts by geography and year. This function
-#' will most likely be moved to `clean_ctry_data()`.
-#' `r lifecycle::badge("deprecated")`
-#'
-#' The function was combined into [generate_afp_by_month_summary()].
-#'
-#' @import tidyr dplyr lubridate
-#' @param afp.data `tibble` AFP data.
-#' @param start_date `str` Start date of analysis.
-#' @param end_date  `str` End date of analysis.
-#'
-#' @returns `tibble` AFP case count with.
-#' @examples
-#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' ctry.data <- extract_country_data("algeria", raw.data)
-#' afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
-#' @seealso [generate_afp_by_month_summary]
-#'
-generate_afp_by_month <- function(afp.data, start_date, end_date) {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
-  # Ensure that if using raw.data, required renamed columns are present. Borrowed from
-  # extract.country.data()
-
-  afp.data <- dplyr::rename_with(afp.data, recode,
-    place.admin.0 = "ctry",
-    place.admin.1 = "prov",
-    place.admin.2 = "dist",
-    person.sex = "sex",
-    dateonset = "date",
-    yronset = "year",
-    datenotify = "date.notify",
-    dateinvest = "date.invest",
-    cdc.classification.all = "cdc.class"
-  )
-
-  summary <- afp.data |>
-    dplyr::filter(dplyr::between(date, start_date, end_date)) |>
-    dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
-
-  return(summary)
-}
 
 #' Generate AFP case count summary
 #'
 #' Summarize AFP case counts by month and another grouping variable.
+#' `r lifecycle::badge("stable")`
 #' @import dplyr tidyr lubridate
 #' @importFrom zoo as.yearmon
 #' @param afp_data `tibble` AFP dataset.
@@ -1320,4 +1275,55 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
     )
 
   return(stool.data)
+}
+
+# Deprecated functions ----
+#' Generate `mon.year` column in the AFP linelist
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' Generates the `mon.year` column in the AFP linelist. This column is used in
+#' subsequent functions summarizing AFP case counts by geography and year. This function
+#' will most likely be moved to `clean_ctry_data()`.
+#' @details
+#' The function was merged into [generate_afp_by_month_summary()] as it was only
+#' performing an intermediary step.
+#'
+#' @import tidyr dplyr lubridate
+#' @param afp.data `tibble` AFP data.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date  `str` End date of analysis.
+#'
+#' @returns `tibble` AFP case count with mon-year.
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
+#' @seealso [generate_afp_by_month_summary]
+#'
+generate_afp_by_month <- function(afp.data, start_date, end_date) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  # Ensure that if using raw.data, required renamed columns are present. Borrowed from
+  # extract.country.data()
+
+  afp.data <- dplyr::rename_with(afp.data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+
+  summary <- afp.data |>
+    dplyr::filter(dplyr::between(date, start_date, end_date)) |>
+    dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
+
+  return(summary)
 }

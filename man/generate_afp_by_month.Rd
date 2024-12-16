@@ -2,7 +2,7 @@
 % Please edit documentation in R/dr.afp.functions.R
 \name{generate_afp_by_month}
 \alias{generate_afp_by_month}
-\title{Generate \code{mon.year} column in the AFP linelist.}
+\title{Generate \code{mon.year} column in the AFP linelist}
 \usage{
 generate_afp_by_month(afp.data, start_date, end_date)
 }
@@ -14,16 +14,18 @@ generate_afp_by_month(afp.data, start_date, end_date)
 \item{end_date}{\code{str} End date of analysis.}
 }
 \value{
-\code{tibble} AFP case count with.
+\code{tibble} AFP case count with mon-year.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 Generates the \code{mon.year} column in the AFP linelist. This column is used in
 subsequent functions summarizing AFP case counts by geography and year. This function
 will most likely be moved to \code{clean_ctry_data()}.
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 }
 \details{
-This function was deprecated and combined into \code{\link[=generate_afp_by_month_summary]{generate_afp_by_month_summary()}}.
+The function was merged into \code{\link[=generate_afp_by_month_summary]{generate_afp_by_month_summary()}} as it was only
+performing an intermediary step.
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)

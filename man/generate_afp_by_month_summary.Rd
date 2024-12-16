@@ -32,6 +32,7 @@ the function will explicitly ask for the AFP dataset instead of accessing it fro
 }
 \description{
 Summarize AFP case counts by month and another grouping variable.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
