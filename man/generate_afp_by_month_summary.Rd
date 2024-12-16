@@ -6,23 +6,23 @@
 \usage{
 generate_afp_by_month_summary(
   afp_data,
-  pop_data = NULL,
   start_date,
   end_date,
   by,
+  pop_data = NULL,
   ctry.data = lifecycle::deprecated()
 )
 }
 \arguments{
 \item{afp_data}{\code{tibble} AFP dataset.}
 
-\item{pop_data}{\code{tibble} Population dataset.}
-
 \item{start_date}{\code{str} Start date of analysis.}
 
 \item{end_date}{\code{str} End date of analysis.}
 
 \item{by}{\code{str} How to group the data by. Either \code{"prov"}, \code{"dist"}, or \code{"year"}.}
+
+\item{pop_data}{\code{tibble} Population dataset.}
 
 \item{ctry.data}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} \code{ctry.data} is no longer supported;
 the function will explicitly ask for the AFP dataset instead of accessing it from a list.}

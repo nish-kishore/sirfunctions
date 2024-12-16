@@ -315,7 +315,8 @@ add_prov_npafp_table <- function(npafp.output) {
 #' )
 #'
 #' @export
-generate_afp_by_month_summary <- function(afp_data, pop_data = NULL, start_date, end_date, by,
+generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
+                                          pop_data = NULL,
                                           ctry.data = lifecycle::deprecated()) {
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
