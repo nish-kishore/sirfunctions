@@ -16,12 +16,13 @@ set_shapefiles(ctry.data, spatial.scale)
 \code{sf} Data frame including the most recent shapefile.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 This function was used primarily as a way to build maps in the desk review.
 However, the map generation functions in the desk review will now use the long
 formatted shapefile as of \verb{sirfunctions v1.2}.
 This function will be changed in the next version.
-}
-\details{
+
 \code{\link[=load_clean_ctry_sp]{load_clean_ctry_sp()}}, \code{\link[=load_clean_prov_sp]{load_clean_prov_sp()}}, \code{\link[=load_clean_dist_sp]{load_clean_dist_sp()}} with
 \code{type = long} are the longform shapefiles.
 }
@@ -35,5 +36,5 @@ ctry.shape <- set_shapefiles(ctry.data, "ctry")
 ctry.data <- init_dr("algeria")
 ctry.shape <- set_shapefiles(ctry.data, "ctry")
 }
-
 }
+\keyword{internal}
