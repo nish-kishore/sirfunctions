@@ -41,5 +41,5 @@ ctry.ind <- prep_npafp_table(
   ctry.ind, raw.data$afp,
   "2021-01-01", "2023-12-31", "ctry"
 )
-
 }
+\keyword{internal}

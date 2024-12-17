@@ -1211,7 +1211,7 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
 #'   ctry.ind, raw.data$afp,
 #'   "2021-01-01", "2023-12-31", "ctry"
 #' )
-#'
+#' @keywords internal
 prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spatial.scale) {
   lifecycle::deprecate_warn(
     "1.3.0",
