@@ -168,7 +168,11 @@ spatial_validation <- function(pop.data, spatial.scale) {
   return(incomplete.adm)
 }
 
+# Deprecated functions ----
+
 #' Get a long version of shapefile at a given spatial scale
+#' @description
+#' `r lifecycle::badge("deprecated")`
 #'
 #' This function was used primarily as a way to build maps in the desk review.
 #'  However, the map generation functions in the desk review will now use the long
@@ -194,9 +198,18 @@ spatial_validation <- function(pop.data, spatial.scale) {
 #' ctry.data <- init_dr("algeria")
 #' ctry.shape <- set_shapefiles(ctry.data, "ctry")
 #' }
-#'
-#' @export
+#' @keywords internal
 set_shapefiles <- function(ctry.data, spatial.scale) {
+  lifecycle::deprecate_warn(
+    "1.3.0",
+    "set_shapefiles()",
+    details = paste0("This function is not used in any of the analytic pipelines ",
+                     "and was therefore deprecated.",
+                     " Get the current shapefiles by filtering either:\n",
+                     "raw.data$ctry, raw.data$prov, ",
+                     "raw.data$dist with yr.end == max(yr.end)")
+  )
+
   valid.spatial.scales <- c("ctry", "prov", "dist")
 
   if (!spatial.scale %in% valid.spatial.scales) {
