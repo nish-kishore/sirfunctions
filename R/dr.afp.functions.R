@@ -1302,8 +1302,13 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
 #' @seealso [generate_afp_by_month_summary]
-#'
+#' @keywords internal
 generate_afp_by_month <- function(afp.data, start_date, end_date) {
+  lifecycle::deprecate_warn(
+    "1.3.0",
+    "generate_afp_by_month()",
+    details = "The calculations in this function was merged into generate_afp_by_month_summary()."
+  )
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 

@@ -35,3 +35,4 @@ afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-1
 \seealso{
 \link{generate_afp_by_month_summary}
 }
+\keyword{internal}
