@@ -524,8 +524,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(region_lookup_table) |>
     dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
-    dplyr::summarise(es_sites = n(),
-                     met_ev = sum(ev.rate >= 0.5, na.rm = T),
+    dplyr::summarise(es_sites = sum(num.samples >= 10),
+                     met_ev = sum(num.samples >= 10 & ev.rate >= 0.5, na.rm = T),
                      prop_met_ev = met_ev / es_sites)
 
   combine <- left_join(met_npafp, met_stool) |>
