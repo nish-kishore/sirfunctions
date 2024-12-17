@@ -4,7 +4,13 @@
 \alias{generate_inad_tab}
 \title{Issues with stool adequacy at the country level}
 \usage{
-generate_inad_tab(ctry.data, cstool, start_date, end_date)
+generate_inad_tab(
+  ctry.data,
+  cstool,
+  start_date,
+  end_date,
+  stool.data = lifecycle::deprecated()
+)
 }
 \arguments{
 \item{ctry.data}{\code{list} large list containing polio data for a country. This is the output of
@@ -27,7 +33,6 @@ Generates a summary table at the country level highlighting issues around stool 
 ctry.data <- init_dr("algeria")
 start_date <- "2021-01-01"
 end_date <- "2023-12-31"
-stool.data <- generate_stool_data(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
 cstool <- f.stool.ad.01(
   afp.data = ctry.data$afp.all.2,
   admin.data = ctry.data$ctry.pop,
@@ -39,7 +44,7 @@ cstool <- f.stool.ad.01(
   rolling = F,
   sp_continuity_validation = F
 )
-generate_inad_tab(ctry.data, stool.data, cstool, start_date, end_date)
+generate_inad_tab(ctry.data, cstool, start_date, end_date)
 }
 
 }
