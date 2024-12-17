@@ -1,4 +1,5 @@
 # Private functions ----
+
 #' @param wk `numeric` Week number.
 #'
 #' @returns `str` The year the week falls into.
@@ -52,20 +53,20 @@ add_rolling_date_info <- function(df, start_date, end_date, onset_col = "Paralys
   # prior_period = paste0(month.start, " ", st.year, " - ", month.end, " ", year(start_date + days(364)) )
   # current_period = paste0(month.start, " ", st.year + 1, " - ", month.end, " ", end.year)
 
-  # Calculate prior_period correctly accounting for leap years
-  prior_year_end <- start_date + lubridate::years(1) - lubridate::days(1)
-  prior_period <- paste0(
-    month.start, " ", st.year,
-    " - ", month.end,
-    " ", lubridate::year(prior_year_end)
-  )
-
-  current_period <- paste0(
-    month.start,
-    " ", st.year + 1,
-    " - ", month.end,
-    " ", end.year
-  )
+  # # Calculate prior_period correctly accounting for leap years
+  # prior_year_end <- start_date + lubridate::years(1) - lubridate::days(1)
+  # prior_period <- paste0(
+  #   month.start, " ", st.year,
+  #   " - ", month.end,
+  #   " ", lubridate::year(prior_year_end)
+  # )
+  #
+  # current_period <- paste0(
+  #   month.start,
+  #   " ", st.year + 1,
+  #   " - ", month.end,
+  #   " ", end.year
+  # )
 
   df <- df |>
     # renaming culture.itd.lab for Nigeria which has two labs in lab.locs, simply naming Nigeria
@@ -76,12 +77,13 @@ add_rolling_date_info <- function(df, start_date, end_date, onset_col = "Paralys
       year.analysis = f.year.roll(.data$case.week), # analysis year
       year.analysis.start = start_date + (365 * (as.integer(.data$year.analysis) - 1)),
       year.analysis.end = .data$year.analysis.start + 364,
-      rolling_period =
-        case_when(
-          year.analysis == "Year 1" ~ prior_period,
-          year.analysis == "Year 2" ~ current_period
-        )
-    )
+      rolling_period = paste0(lubridate::month(year.analysis.start, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(year.analysis.start),
+                              " - ",
+                              lubridate::month(year.analysis.end, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(year.analysis.end))
+      )
+
   cli::cli_process_done()
 
   return(df)
@@ -137,7 +139,7 @@ add_seq_capacity <- function(df, ctry_col = "ctry", lab_locs = NULL) {
 }
 
 # Public functions ----
-generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL, lab_locs = NULL) {
+generate_wild_vdpv_summary <- function(raw.data, start_date, end_date, risk_table = NULL, lab_locs = NULL) {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
@@ -187,7 +189,6 @@ generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL,
   pos <- add_rolling_date_info(pos, start_date, end_date, "dateonset")
   pos <- add_seq_capacity(pos, ctry_col = "place.admin.0", lab_locs)
 
-  cli::cli_process_start("Generating E1 summary table")
   pos_summary <- pos |>
     dplyr::mutate(
       ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
@@ -195,15 +196,15 @@ generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL,
       timely_cat =
         case_when(seq.capacity == "yes" & ontonothq <= 35 ~ "<=35 days from onset",
           seq.capacity == "yes" & ontonothq > 35 ~ ">35 days from onset",
-          seq.capacity == "no" & ontonothq <= 49 ~ "<=49 days from onset",
-          seq.capacity == "no" & ontonothq > 49 ~ ">49 days from onset",
+          seq.capacity == "no" & ontonothq <= 46 ~ "<=46 days from onset",
+          seq.capacity == "no" & ontonothq > 46 ~ ">46 days from onset",
           is.na(ontonothq) | ontonothq < 0 ~ "Missing or bad data",
           .default = NA
         ),
       is_timely = dplyr::if_else(.data$timely_cat %in%
         c(
           "<=35 days from onset",
-          "<=49 days from onset"
+          "<=46 days from onset"
         ), TRUE, FALSE),
       is_target = dplyr::if_else(
         stringr::str_detect(.data$cdc.classification.all2, "WILD|VDPV"),
@@ -215,7 +216,8 @@ generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL,
       "whoregion",
       "SG Priority Level",
       "place.admin.0",
-      "rolling_period"
+      "rolling_period",
+      "year.analysis"
     )))) |>
     dplyr::summarise(
       afp_cases = sum(source == "AFP", na.rm = TRUE),
@@ -236,8 +238,6 @@ generate_e1_table <- function(raw.data, start_date, end_date, risk_table = NULL,
       "prop_timely_env"
     )), \(x) if_else(x %in% c(Inf, NaN), 0, x))) |>
     dplyr::ungroup()
-
-  cli::cli_process_done()
 
   return(pos_summary)
 }
@@ -299,7 +299,6 @@ generate_e2_table <- function(raw_data, start_date, end_date) {
   # AFP analysis
   # Calculating additional columns
   afp_summary <- afp_data |>
-    dplyr::filter(!is.na(rolling_period)) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c(
       "whoregion",
       "SG Priority Level",
@@ -417,3 +416,128 @@ generate_e4_table <- function(raw_data, start_date, end_date, lab_locs = NULL, r
 
 }
 generate_e5_table <- function() {}
+
+
+# New functions ----
+
+generate_c1_table <- function(raw_data, start_date, end_date,
+                              lab_locs = NULL, risk_table = NULL,
+                              rolling = T) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  # Filtering
+  afp_data <- raw_data$afp |>
+    dplyr::filter(
+      dplyr::between(dateonset, start_date, end_date),
+      cdc.classification.all2 != "NOT-AFP"
+    ) |>
+    dplyr::select(-dplyr::starts_with("pons"))
+
+  es_data <- raw_data$es |>
+    dplyr::filter(dplyr::between(collect.date, start_date, end_date))
+
+  # Include required columns
+  afp_data <- col_to_datecol(afp_data)
+  afp_data <- add_rolling_date_info(afp_data, start_date, end_date, "dateonset")
+  es_data <- add_rolling_date_info(es_data, start_date, end_date, "collect.date")
+
+  # Calculate country indicators
+  afp_indicators <- afp_data |>
+    dplyr::group_by(.data$year.analysis, .data$rolling_period) |>
+    dplyr::summarise(
+      npafp_dist = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
+                                        raw.data$dist.pop,
+                                        min(.data$year.analysis.start),
+                                        max(.data$year.analysis.end),
+                                        "dist", rolling = TRUE,
+                                        sp_continuity_validation = FALSE)),
+      stoolad_dist = list(f.stool.ad.01(dplyr::pick(dplyr::everything()),
+                                        raw.data$dist.pop,
+                                        min(year.analysis.start),
+                                        max(year.analysis.end),
+                                        "dist", rolling = TRUE,
+                                        sp_continuity_validation = FALSE))
+    ) |>
+    dplyr::rowwise() |>
+    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year.analysis", "rolling.period")),
+                                \(x) list(dplyr::tibble(x) |>
+                                            dplyr::mutate(year.analysis = year.analysis,
+                                                          rolling_period = rolling_period
+                                            )))
+    ) |>
+    dplyr::ungroup()
+
+  es_indicators <- es_data |>
+    dplyr::group_by(.data$year.analysis, .data$rolling_period) |>
+    dplyr::summarise(ev_rate = list(f.ev.rate.01(dplyr::pick(dplyr::everything()),
+                                                 min(.data$year.analysis.start),
+                                                 max(.data$year.analysis.end)))) |>
+    dplyr::rowwise() |>
+    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year.analysis", "rolling.period")),
+                                \(x) list(dplyr::tibble(x) |>
+                                            dplyr::mutate(year.analysis = year.analysis,
+                                                          rolling_period = rolling_period
+                                            )))
+    ) |>
+    dplyr::ungroup()
+
+  timely_det_indicator <- generate_wild_vdpv_summary(raw_data,
+                                                     start_date, end_date,
+                                                     risk_table = NULL,
+                                                     lab_locs = NULL)
+
+  # Calculate meeting indicators
+  region_lookup_table <- raw.data$ctry.pop |>
+    dplyr::select(ctry = ADM0_NAME, adm0guid, whoregion = WHO_REGION) |>
+    dplyr::distinct()
+  dist_lookup_table <- raw.data$dist.pop |>
+    dplyr::select(ctry = ADM0_NAME, prov = ADM1_NAME, dist = ADM2_NAME, adm2guid) |>
+    dplyr::distinct()
+
+  # Summarise
+  met_npafp <- dplyr::bind_rows(afp_indicators$npafp_dist) |>
+    dplyr::left_join(region_lookup_table) |>
+    dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
+    dplyr::summarise(dist_w_100k = sum(par >= 1e5),
+                     dist_npafp = n(),
+                     met_npafp = sum(
+                       (par >= 1e5 & npafp_rate >= 2 & whoregion %in% c("AFRO", "EMRO", "SEARO")),
+                       (par >= 1e5 & npafp_rate >= 1 & whoregion %in% c("AMRO", "EURO", "WPRO")),
+                       na.rm = T),
+                     prop_met_npafp = met_npafp / dist_w_100k) |>
+    ungroup()
+
+  met_stool <- dplyr::bind_rows(afp_indicators$stoolad_dist) |>
+    dplyr::left_join(dist_lookup_table) |>
+    dplyr::left_join(region_lookup_table) |>
+    dplyr::filter(!is.na(ctry)) |>
+    dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
+    dplyr::summarise(dist_stool = n(),
+                     met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = T),
+                     prop_met_stool = met_stool / dist_stool)
+
+  met_ev <- dplyr::bind_rows(es_indicators$ev_rate) |>
+    dplyr::rename("ctry" = ADM0_NAME,
+                  "prov" = ADM1_NAME,
+                  "dist" = ADM2_NAME) |>
+    dplyr::left_join(dist_lookup_table) |>
+    dplyr::left_join(region_lookup_table) |>
+    dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
+    dplyr::summarise(es_sites = n(),
+                     met_ev = sum(ev.rate >= 0.5, na.rm = T),
+                     prop_met_ev = met_ev / es_sites)
+
+  combine <- left_join(met_npafp, met_stool) |>
+    left_join(met_ev) |>
+    left_join(timely_det_indicator |> rename("ctry" = place.admin.0))
+
+  return(combine)
+}
+
+generate_c2_table <- function() {}
+generate_c3_table <- function() {}
+generate_c4_table <- function() {}
+generate_c5_table <- function() {}
+
+
