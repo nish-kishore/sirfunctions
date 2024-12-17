@@ -1213,6 +1213,13 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
 #' )
 #'
 prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spatial.scale) {
+  lifecycle::deprecate_warn(
+    "1.3.0",
+    "prep_npafp_table()",
+    details = paste0("This function added additional columns to the output of f.npafp.rate.01().",
+                     " Those columns are now being calculated in f.npafp.rate.01() directly.")
+  )
+
   geo <- switch(spatial.scale,
                 "ctry" = "adm0guid",
                 "prov" = "adm1guid",
