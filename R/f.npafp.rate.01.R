@@ -160,9 +160,12 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 # Main function ----
 
 #' Calculate non-polio AFP rate
+#' @description
+#' `r lifecycle::badge("stable")`
 #'
 #' Calculate the NPAFP rate from POLIS data. Can either pass `raw.data` to calculate NPAFP rates
 #' on the global dataset, or a `ctry.data` dataset.
+#'
 #' @import dplyr
 #' @import lubridate
 #' @import tidyr
@@ -181,7 +184,7 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' - `"ctry"` Country level.
 #' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @param rolling `bool` Should the analysis be performed on a rolling bases? Default `FALSE`.
-#' @param sp_continuity_validation Should we filter places that are not present
+#' @param sp_continuity_validation `bool` Should we filter places that are not present
 #' for the entirety of the analysis dates? Default `TRUE`.
 #' @returns `tibble` A table containing NPAFP rates as well as additional information relevant to each location analyzed.
 #' @export
