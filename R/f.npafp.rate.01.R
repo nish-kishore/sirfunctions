@@ -35,7 +35,12 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
     dplyr::mutate(year = lubridate::year(date)) |>
     dplyr::group_by(get(geo), .data$year) |>
     dplyr::summarise(
-      n_npafp = sum(!is.na(.data$epid))
+      n_npafp = sum(!is.na(.data$epid)),
+      afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
+      num.wpv.cases = sum(wild.1 == TRUE, wild.3 == TRUE, na.rm = T),
+      num.vdpv1.cases = sum(vdpv.1 == TRUE, na.rm = T),
+      num.vdpv2.cases = sum(vdpv.2 == TRUE, na.rm = T),
+      num.vdpv3.cases = sum(vdpv.3 == TRUE, na.rm = T)
     ) |>
     dplyr::ungroup()
 
@@ -107,7 +112,12 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
     dplyr::summarise(
       n_npafp = sum(!is.na(.data$epid)),
       earliest_date = min(.data$earliest_date),
-      latest_date = max(.data$latest_date)
+      latest_date = max(.data$latest_date),
+      afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
+      num.wpv.cases = sum(wild.1 == TRUE, wild.3 == TRUE, na.rm = T),
+      num.vdpv1.cases = sum(vdpv.1 == TRUE, na.rm = T),
+      num.vdpv2.cases = sum(vdpv.2 == TRUE, na.rm = T),
+      num.vdpv3.cases = sum(vdpv.3 == TRUE, na.rm = T)
     ) |>
     dplyr::ungroup() |>
     dplyr::mutate(days.at.risk = as.numeric(end_date - start_date + 1))

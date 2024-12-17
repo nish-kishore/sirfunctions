@@ -461,10 +461,16 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
 
 #' NPAFP indicator tables with additional columns
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' The function adds additional information to the NPAFP table. In particular,
 #' the number of AFP cases based on the geographic grouping selected. It also
-#' adds a column for the number of WPV, VDPV1-3 cases. However, in a future release,
-#' these columns might be incorporated within the [f.npafp.rate.01()] function.
+#' adds a column for the number of WPV, VDPV1-3 cases.
+#'
+#' @details
+#' This function has been deprecated as the columns are now added
+#' from [f.npafp.rate.01()] directly.
 #'
 #' @import dplyr
 #' @param npafp.output `tibble` Output of running [f.npafp.rate.01()].
@@ -485,7 +491,6 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
 #'   "2021-01-01", "2023-12-31", "ctry"
 #' )
 #'
-#' @export
 prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spatial.scale) {
   geo <- switch(spatial.scale,
     "ctry" = "adm0guid",
