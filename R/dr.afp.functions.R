@@ -459,123 +459,6 @@ generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, e
   return(afp.by.month.summary)
 }
 
-#' NPAFP indicator tables with additional columns
-#'
-#' @description
-#' `r lifecycle::badge("deprecated")`
-#'
-#' The function adds additional information to the NPAFP table. In particular,
-#' the number of AFP cases based on the geographic grouping selected. It also
-#' adds a column for the number of WPV, VDPV1-3 cases.
-#'
-#' @details
-#' This function has been deprecated as the columns are now added
-#' from [f.npafp.rate.01()] directly.
-#'
-#' @import dplyr
-#' @param npafp.output `tibble` Output of running [f.npafp.rate.01()].
-#' @param afp.data `tibble` AFP linelist. Either `raw.data$afp` or `ctry.data$afp.all.2`.
-#' @param spatial.scale `str` Spatial scale to analyze. Valid values are `"ctry", "prov", "dist"`.
-#' @param start_date `str` Start date of the desk review.
-#' @param end_date `str` End date of the desk review.
-#'
-#' @returns `tibble` NPAFP rate table with additional columns related to case counts.
-#' @examples
-#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' ctry.ind <- f.npafp.rate.01(raw.data$afp, raw.data$ctry.pop,
-#'   "2021-01-01", "2023-12-31", "ctry",
-#'   sp_continuity_validation = FALSE
-#' )
-#' ctry.ind <- prep_npafp_table(
-#'   ctry.ind, raw.data$afp,
-#'   "2021-01-01", "2023-12-31", "ctry"
-#' )
-#'
-prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spatial.scale) {
-  geo <- switch(spatial.scale,
-    "ctry" = "adm0guid",
-    "prov" = "adm1guid",
-    "dist" = "adm2guid"
-  )
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
-  # If using raw.data ensure required columns are present
-  afp.data <- dplyr::rename_with(afp.data, recode,
-    place.admin.0 = "ctry",
-    place.admin.1 = "prov",
-    place.admin.2 = "dist",
-    person.sex = "sex",
-    dateonset = "date",
-    yronset = "year",
-    datenotify = "date.notify",
-    dateinvest = "date.invest",
-    cdc.classification.all = "cdc.class"
-  )
-
-
-
-  # afp.data should have already been filtered for start and end dates
-  afp.data <- afp.data |> dplyr::filter(dplyr::between(date, start_date, end_date))
-  cases <- afp.data |>
-    dplyr::group_by(get(geo), year) |>
-    dplyr::summarize(
-      afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
-      num.wpv.cases = sum(wild.1 == TRUE, wild.3 == TRUE, na.rm = T),
-      num.vdpv1.cases = sum(vdpv.1 == TRUE, na.rm = T),
-      num.vdpv2.cases = sum(vdpv.2 == TRUE, na.rm = T),
-      num.vdpv3.cases = sum(vdpv.3 == TRUE, na.rm = T)
-    )
-
-  cases <- switch(spatial.scale,
-    "ctry" = {
-      cases <- cases |>
-        dplyr::rename(adm0guid = "get(geo)")
-    },
-    "prov" = {
-      cases <- cases |>
-        dplyr::rename(adm1guid = "get(geo)")
-    },
-    "dist" = {
-      cases <- cases |>
-        dplyr::rename(adm2guid = "get(geo)")
-    }
-  )
-
-  case.ind <- switch(spatial.scale,
-    "ctry" = {
-      case.ind <-
-        dplyr::left_join(npafp.output, cases, by = c(
-          "adm0guid" = "adm0guid",
-          "year" = "year"
-        ))
-    },
-    "prov" = {
-      case.ind <- dplyr::full_join(npafp.output,
-        cases,
-        by = c(
-          "adm1guid" = "adm1guid",
-          "year" = "year"
-        )
-      ) |>
-        dplyr::select(-"adm1guid")
-    },
-    "dist" = {
-      case.ind <-
-        dplyr::full_join(npafp.output,
-          cases,
-          by = c(
-            "adm2guid" = "adm2guid",
-            "year" = "year"
-          )
-        ) |>
-        dplyr::select(-"adm1guid", -"adm2guid")
-    }
-  )
-
-  return(case.ind)
-}
-
 #' Generate a summary table for sample timeliness intervals
 #'
 #' The summary table will output timeliness intervals of samples from collection to
@@ -1294,4 +1177,122 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
     )
 
   return(stool.data)
+}
+
+#Deprecated functions ----
+#' NPAFP indicator tables with additional columns
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' The function adds additional information to the NPAFP table. In particular,
+#' the number of AFP cases based on the geographic grouping selected. It also
+#' adds a column for the number of WPV, VDPV1-3 cases.
+#'
+#' @details
+#' This function has been deprecated as the columns are now added
+#' from [f.npafp.rate.01()] directly.
+#'
+#' @import dplyr
+#' @param npafp.output `tibble` Output of running [f.npafp.rate.01()].
+#' @param afp.data `tibble` AFP linelist. Either `raw.data$afp` or `ctry.data$afp.all.2`.
+#' @param spatial.scale `str` Spatial scale to analyze. Valid values are `"ctry", "prov", "dist"`.
+#' @param start_date `str` Start date of the desk review.
+#' @param end_date `str` End date of the desk review.
+#'
+#' @returns `tibble` NPAFP rate table with additional columns related to case counts.
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' ctry.ind <- f.npafp.rate.01(raw.data$afp, raw.data$ctry.pop,
+#'   "2021-01-01", "2023-12-31", "ctry",
+#'   sp_continuity_validation = FALSE
+#' )
+#' ctry.ind <- prep_npafp_table(
+#'   ctry.ind, raw.data$afp,
+#'   "2021-01-01", "2023-12-31", "ctry"
+#' )
+#'
+prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spatial.scale) {
+  geo <- switch(spatial.scale,
+                "ctry" = "adm0guid",
+                "prov" = "adm1guid",
+                "dist" = "adm2guid"
+  )
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  # If using raw.data ensure required columns are present
+  afp.data <- dplyr::rename_with(afp.data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+
+
+
+  # afp.data should have already been filtered for start and end dates
+  afp.data <- afp.data |> dplyr::filter(dplyr::between(date, start_date, end_date))
+  cases <- afp.data |>
+    dplyr::group_by(get(geo), year) |>
+    dplyr::summarize(
+      afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
+      num.wpv.cases = sum(wild.1 == TRUE, wild.3 == TRUE, na.rm = T),
+      num.vdpv1.cases = sum(vdpv.1 == TRUE, na.rm = T),
+      num.vdpv2.cases = sum(vdpv.2 == TRUE, na.rm = T),
+      num.vdpv3.cases = sum(vdpv.3 == TRUE, na.rm = T)
+    )
+
+  cases <- switch(spatial.scale,
+                  "ctry" = {
+                    cases <- cases |>
+                      dplyr::rename(adm0guid = "get(geo)")
+                  },
+                  "prov" = {
+                    cases <- cases |>
+                      dplyr::rename(adm1guid = "get(geo)")
+                  },
+                  "dist" = {
+                    cases <- cases |>
+                      dplyr::rename(adm2guid = "get(geo)")
+                  }
+  )
+
+  case.ind <- switch(spatial.scale,
+                     "ctry" = {
+                       case.ind <-
+                         dplyr::left_join(npafp.output, cases, by = c(
+                           "adm0guid" = "adm0guid",
+                           "year" = "year"
+                         ))
+                     },
+                     "prov" = {
+                       case.ind <- dplyr::full_join(npafp.output,
+                                                    cases,
+                                                    by = c(
+                                                      "adm1guid" = "adm1guid",
+                                                      "year" = "year"
+                                                    )
+                       ) |>
+                         dplyr::select(-"adm1guid")
+                     },
+                     "dist" = {
+                       case.ind <-
+                         dplyr::full_join(npafp.output,
+                                          cases,
+                                          by = c(
+                                            "adm2guid" = "adm2guid",
+                                            "year" = "year"
+                                          )
+                         ) |>
+                         dplyr::select(-"adm1guid", -"adm2guid")
+                     }
+  )
+
+  return(case.ind)
 }
