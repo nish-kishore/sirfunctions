@@ -120,7 +120,7 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
-#' ctry.data$es <- clean_es_data(ctry.data)
+#' ctry.data$es <- clean_es_data(ctry.data$es, ctry.data$dist)
 #'
 #' @export
 clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated()) {
@@ -249,7 +249,7 @@ clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated
 #' ctry.data$es <- clean_es_data(ctry.data)
 #' es.data.long <- generate_es_data_long(ctry.data$es)
 #'
-#' @export
+#' @keywords internal
 generate_es_data_long <- function(es.data) {
   lifecycle::deprecate_warn(
     "1.3.0",
