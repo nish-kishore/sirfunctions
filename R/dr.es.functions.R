@@ -51,30 +51,13 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
     }
   }
 
-  st_sample_modified <- function(x) {
-    tryCatch(
-      expr = sf::st_sample(x, 1),
-      error = {
-        suppressMessages({
-          sf::sf_use_s2(F)
-          result <-  sf::st_centroid(x) |>
-            st_buffer(dist = sf::st_area(x)) |>
-            st_sample(1)
-          sf::sf_use_s2(T)
-
-          return(result)
-        })
-      }
-    )
-  }
-
   missing_coords <- missing_coords |>
     dplyr::left_join(dist.shape, by = c("dist.guid" = "GUID",
                                         "ADM0_NAME")) |>
     # Must filter because st_sample() doesn't work with NULL values
     dplyr::filter(!is.na(.data$dist.guid)) |>
     dplyr::rowwise() |>
-    dplyr::mutate(sampled_point = purrr::map(.data$SHAPE, st_sample_modified)) |>
+    dplyr::mutate(sampled_point = purrr::map(.data$SHAPE, \(x) sf::st_sample(x, 1))) |>
     tidyr::unnest(c("SHAPE", "sampled_point")) |>
     dplyr::mutate(lat = sf::st_coordinates(.data$sampled_point)[,2],
                   lng = sf::st_coordinates(.data$sampled_point)[,1]) |>
