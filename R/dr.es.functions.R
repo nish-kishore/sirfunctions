@@ -129,7 +129,7 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
 clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated()) {
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
-      when = "1.2.0",
+      when = "1.3.0",
       what = "clean_es_data(ctry.data)",
       details = "Please pass ES data directly using the es.data parameter."
     )
