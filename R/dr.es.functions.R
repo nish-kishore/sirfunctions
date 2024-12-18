@@ -57,8 +57,11 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
       error = {
         suppressMessages({
           sf::sf_use_s2(F)
-          result <- sf::st_sample(x, 1)
+          result <-  sf::st_centroid(x) |>
+            st_buffer(dist = sf::st_area(x)) |>
+            st_sample(1)
           sf::sf_use_s2(T)
+
           return(result)
         })
       }
@@ -73,8 +76,8 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
     dplyr::rowwise() |>
     dplyr::mutate(sampled_point = purrr::map(.data$SHAPE, st_sample_modified)) |>
     tidyr::unnest(c("SHAPE", "sampled_point")) |>
-    dplyr::mutate(lat = sf::st_coordinates(.data$sampled_point)[,1],
-                  lng = sf::st_coordinates(.data$sampled_point)[,2]) |>
+    dplyr::mutate(lat = sf::st_coordinates(.data$sampled_point)[,2],
+                  lng = sf::st_coordinates(.data$sampled_point)[,1]) |>
     dplyr::select(dplyr::any_of(names(missing_coords)))
 
   es.data <- es.data |>
