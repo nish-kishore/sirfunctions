@@ -13,9 +13,13 @@ generate_es_data_long(es.data)
 \code{tibble} ES data with viral detection columns.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 The function importantly adds the \code{ed.detect}, \code{all_dets}, and \code{year} columns to the
-environmental surveillance data. However, this function will probably be moved
-as part of the \code{\link[=clean_es_data]{clean_es_data()}} function in the future.
+environmental surveillance data.
+}
+\details{
+This function will is now part of the \code{\link[=clean_es_data]{clean_es_data()}}.
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
