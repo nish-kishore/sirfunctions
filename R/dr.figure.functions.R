@@ -2671,13 +2671,15 @@ generate_timeliness_maps <- function(ctry.data,
 #' @import dplyr ggplot2 ggrepel
 #' @param es.data `tibble` ES data for a country. This is `ctry.data$es`, which is
 #' part of the outputs of [extract_country_data()] and [init_dr()].
-#' @param es.data.long `tibble` ES data summary in long format. This is the output of
-#' [generate_es_data_long()].
 #' @param ctry.shape `sf` Country shapefile in long format.
 #' @param prov.shape `sf` Province shapefile in long format.
 #' @param es_start_date `str` Start date of analysis. Default is one year from the end date.
 #' @param es_end_date `str` End date of analysis.
 #' @param output_path `str` Local path where to save the figure to.
+#' @param es.data.long
+#' `r lifecycle::badge("deprecated")`
+#' `tibble` Please pass the output of [clean_es_data()] into es.data instead. This paramater
+#' is not being used in the function.
 #'
 #' @returns `ggplot` Map of EV detection rates for the environmental surveillance sites.
 #' @examples
@@ -2686,19 +2688,27 @@ generate_timeliness_maps <- function(ctry.data,
 #' es.data.long <- generate_es_data_long(ctry.data$es)
 #' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 #' prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
-#' generate_es_det_map(ctry.data$es, es.data.long, ctry.shape, prov.shape,
+#' generate_es_det_map(ctry.data$es, ctry.shape, prov.shape,
 #'   es_end_date = "2023-01-01"
 #' )
 #' }
 #'
 #' @export
 generate_es_det_map <- function(es.data,
-                                es.data.long,
                                 ctry.shape,
                                 prov.shape,
                                 es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
                                 es_end_date = end_date,
-                                output_path = Sys.getenv("DR_FIGURE_PATH")) {
+                                output_path = Sys.getenv("DR_FIGURE_PATH"),
+                                es.data.long = lifecycle::badge("deprecated")) {
+  if (lifecycle::is_present(es.data.long)) {
+    lifecycle::deprecate_warn(
+      when = "1.3.0",
+      what = "generate_es_det_map(es.data.long)",
+      details = "es.data.long is no longer required as its function has been folded into clean_es_data()"
+    )
+  }
+
   es_start_date <- lubridate::as_date(es_start_date)
   es_end_date <- lubridate::as_date(es_end_date)
 
@@ -2722,20 +2732,17 @@ generate_es_det_map <- function(es.data,
 
   # For this map, use the most recent shapefile
   ctry.shape <- ctry.shape |>
-    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
+    dplyr::filter(.data$active.year.01 == lubridate::year(es_end_date)) |>
     dplyr::mutate(year = .data$active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
+    dplyr::filter(.data$active.year.01 == lubridate::year(es_end_date)) |>
     dplyr::mutate(year = .data$active.year.01)
 
   es.data <- es.data |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
-  es.data.long <- es.data.long |>
-    dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
-
   det.rate <- dplyr::summarise(
-    dplyr::group_by(es.data.long, site.name),
+    dplyr::group_by(es.data, site.name),
     det.rate = 100 * sum(as.numeric(ev.detect), na.rm = TRUE) / dplyr::n(),
     samp.num = dplyr::n()
   )
