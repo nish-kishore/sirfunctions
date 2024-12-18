@@ -329,10 +329,8 @@ generate_afp_prov_year <- function(afp.by.month.prov,
 #' @importFrom ggplot2 aes facet_grid geom_point geom_rect ggplot ggsave label_wrap_gen scale_color_manual scale_fill_manual scale_x_date theme_bw xlab ylab
 #' @importFrom lubridate year years
 #' @importFrom scales brewer_pal
-#' @param ctry.data `list` Large list of polio data for a country. This is the output of either
-#' [extract_country_data()] or [init_dr()].
-#' @param es.data.long `tibble` AFP data with viral detection columns. This is the output of
-#' [generate_es_data_long()].
+#' @param sia.data `tibble` SIA surveillance data.
+#' @param es.data Environmental surveillance data, cleaned using [clean_es_data()] or a cleaned `ctry.data$es`.
 #' @param es_start_date `str` Start date of analysis. By default, it is one year from the end date.
 #' @param es_end_date `str` End date of analysis.
 #' @param vaccine_types `list` A named list with colors assigned names corresponding to vaccine types. By
@@ -342,33 +340,57 @@ generate_afp_prov_year <- function(afp.by.month.prov,
 #' By default, it will use a prefilled list inside the function. However, the function will alert for missing
 #' detection types and the user must pass another list appended by that vaccine type.
 #' @param output_path `str` Local path to output the figure to.
+#' @param ctry.data
+#' `r lifecycle::badge("deprecated")`
+#' Please pass the SIA data directly to sia.data instead of a list containing it.
+#' @param es.data.long
+#' `r lifecycle::badge("deprecated")`
+#' Please pass cleaned ES data instead.
 #'
 #' @returns `ggplot` A dot plot of viral detections per ES sites and SIA campaigns.
 #' @examples
 #' \dontrun{
 #' ctry.data <- init_dr("algeria")
-#' es.data.long <- generate_es_data_long(ctry.data$es)
-#' generate_es_site_det(ctry.data, es.data.long)
+#' es.data <- clean_es_data(ctry.data$es)
+#' generate_es_site_det(ctry.data, es.data)
 #' }
 #' @export
-generate_es_site_det <- function(ctry.data,
-                                 es.data.long,
+generate_es_site_det <- function(sia.data,
+                                 es.data,
                                  es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
                                  es_end_date = end_date,
                                  output_path = Sys.getenv("DR_FIGURE_PATH"),
                                  vaccine_types = NULL,
-                                 detection_types = NULL) {
+                                 detection_types = NULL,
+                                 ctry.data = lifecycle::deprecated(),
+                                 es.data.long = lifecycle::deprecated()) {
+
+  if (lifecycle::is_present(es.data.long)) {
+    lifecycle::deprecate_warn("1.3.0",
+                              "generate_es_site_det(es.data.long)",
+                              "generate_es_site_det(es.data)")
+    es.data <- es.data.long
+  }
+
+  if (lifecycle::is_present(ctry.data)) {
+    lifecycle::deprecate_warn("1.3.0",
+                              "generate_es_site_det(ctry.data)",
+                              "generate_es_site_det(sia.data)")
+    sia.data <- ctry.data$sia
+  }
+
+
   es_start_date <- lubridate::as_date(es_start_date)
   es_end_date <- lubridate::as_date(es_end_date)
 
-  es.data.long <- es.data.long |>
+  es.data <- es.data |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
-  sias <- ctry.data$sia %>%
+  sias <- sia.data %>%
     dplyr::filter(status == "Done") %>%
     dplyr::filter(yr.sia >= lubridate::year(es_start_date) &
       yr.sia <= lubridate::year(es_end_date)) %>%
-    dplyr::filter(province %in% es.data.long$ADM1_NAME)
+    dplyr::filter(province %in% es.data$ADM1_NAME)
 
   sias$activity.start.date <- as.Date(sias$activity.start.date)
   sias$activity.end.date <- as.Date(sias$activity.end.date)
@@ -420,13 +442,13 @@ generate_es_site_det <- function(ctry.data,
     unique() |>
     dplyr::pull()
 
-  es.data.long_all_dets <- es.data.long |>
+  es.data_all_dets <- es.data |>
     dplyr::select("all_dets") |>
     unique() |>
     dplyr::pull()
 
   miss_vaccine <- minsy_vaccine_types[!(minsy_vaccine_types %in% names(default_vaccine_type))]
-  miss_dets <- es.data.long_all_dets[!(es.data.long_all_dets %in% names(default_detections))]
+  miss_dets <- es.data_all_dets[!(es.data_all_dets %in% names(default_detections))]
 
 
   if (length(miss_vaccine > 0)) {
@@ -455,18 +477,18 @@ generate_es_site_det <- function(ctry.data,
 
   ## 22.1 ES sites & detection (es.site.det)
 
-  new.site <- es.data.long %>%
+  new.site <- es.data %>%
     dplyr::filter(early.dat >= min(collect.date) &
       early.dat <= max(collect.date)) %>%
     dplyr::distinct(.data$site.name, .data$early.dat)
 
 
-  minny <- min(es.data.long$collect.date) - 7
-  maxy <- max(es.data.long$collect.date) + 7
+  minny <- min(es.data$collect.date) - 7
+  maxy <- max(es.data$collect.date) + 7
 
   es.site.det <- ggplot2::ggplot() +
     ggplot2::geom_point(
-      data = es.data.long |>
+      data = es.data |>
         dplyr::arrange(ADM1_NAME),
       ggplot2::aes(x = collect.date, y = site.name, col = all_dets),
       pch = 19,
@@ -484,14 +506,14 @@ generate_es_site_det <- function(ctry.data,
       alpha = 0.5
     ) +
     ggplot2::geom_point(
-      data = es.data.long |>
+      data = es.data |>
         dplyr::arrange(ADM1_NAME),
       ggplot2::aes(x = collect.date, y = site.name, col = all_dets),
       pch = 19,
       size = 3
     ) +
     ggplot2::geom_point(
-      data = es.data.long |>
+      data = es.data |>
         dplyr::arrange(ADM1_NAME),
       ggplot2::aes(x = collect.date, y = site.name),
       fill = NA,
