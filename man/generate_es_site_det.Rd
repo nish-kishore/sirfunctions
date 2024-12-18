@@ -5,21 +5,21 @@
 \title{Virus detection in ES sites}
 \usage{
 generate_es_site_det(
-  ctry.data,
-  es.data.long,
+  sia.data,
+  es.data,
   es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
   es_end_date = end_date,
   output_path = Sys.getenv("DR_FIGURE_PATH"),
   vaccine_types = NULL,
-  detection_types = NULL
+  detection_types = NULL,
+  ctry.data = lifecycle::deprecated(),
+  es.data.long = lifecycle::deprecated()
 )
 }
 \arguments{
-\item{ctry.data}{\code{list} Large list of polio data for a country. This is the output of either
-\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
+\item{sia.data}{\code{tibble} SIA surveillance data.}
 
-\item{es.data.long}{\code{tibble} AFP data with viral detection columns. This is the output of
-\code{\link[=generate_es_data_long]{generate_es_data_long()}}.}
+\item{es.data}{Environmental surveillance data, cleaned using \code{\link[=clean_es_data]{clean_es_data()}} or a cleaned \code{ctry.data$es}.}
 
 \item{es_start_date}{\code{str} Start date of analysis. By default, it is one year from the end date.}
 
@@ -34,6 +34,12 @@ vaccine types and the user must pass another list appended by that vaccine type.
 \item{detection_types}{\code{list} A named list with colors assigned names corresponding to viral detection type.
 By default, it will use a prefilled list inside the function. However, the function will alert for missing
 detection types and the user must pass another list appended by that vaccine type.}
+
+\item{ctry.data}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+Please pass the SIA data directly to sia.data instead of a list containing it.}
+
+\item{es.data.long}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+Please pass cleaned ES data instead.}
 }
 \value{
 \code{ggplot} A dot plot of viral detections per ES sites and SIA campaigns.
@@ -45,7 +51,7 @@ overlaid.
 \examples{
 \dontrun{
 ctry.data <- init_dr("algeria")
-es.data.long <- generate_es_data_long(ctry.data$es)
-generate_es_site_det(ctry.data, es.data.long)
+es.data <- clean_es_data(ctry.data$es)
+generate_es_site_det(ctry.data, es.data)
 }
 }

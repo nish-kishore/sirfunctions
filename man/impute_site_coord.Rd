@@ -4,11 +4,12 @@
 \alias{impute_site_coord}
 \title{Imputes missing site coordinates in ES data}
 \usage{
-impute_site_coord(ctry.data)
+impute_site_coord(es.data, dist.shape, ctry.data = lifecycle::deprecated())
 }
 \arguments{
-\item{ctry.data}{\code{list} A list containing polio country data. This is either the output of
-\code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
+\item{ctry.data}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+\code{list} This parameter has been deprecated in favor of explicitly passing dataframes
+into the function. This allows for greater flexibility in the function.}
 }
 \value{
 \code{tibble} ES data with imputed coordinates for sites missing them.
@@ -17,3 +18,4 @@ impute_site_coord(ctry.data)
 Adds coordinates for ES surveillance sites missing them. This function is not meant
 to be exported. This is part of \code{\link[=clean_es_data]{clean_es_data()}}.
 }
+\keyword{internal}
