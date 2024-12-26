@@ -174,9 +174,9 @@ lab_data_errors <- function(lab.data, afp.data,
   lab.data.cols <- names(lab.data)
 
   if ("MasterKey" %in% lab.data.cols) {
-    lab_data_errors_who(lab.data, start.date, end.date)
+    lab_data_errors_who(lab.data, afp.data, ctry_name, start.date, end.date)
   } else {
-    lab_data_errors_region(lab.data, ctry_name, start.date, end.date)
+    lab_data_errors_region(lab.data, afp.data, ctry_name, start.date, end.date)
   }
 }
 
@@ -185,14 +185,7 @@ lab_data_errors <- function(lab.data, afp.data,
 #' Error checking for regional lab data. This is a helper function meant to be used inside
 #' [lab_data_errors()].
 #' @import dplyr stringr cli writexl
-#' @param lab.data `tibble` Regional lab data.
-#' @param ctry_name `str` Name of the country. Defaults to the desk review country.
-#' @param start.date `str` Start date of analysis.
-#' @param end.date `str` End date of analysis.
-#' @param error_path `str` Path to folder to save the error log.
-#' @param ctry.data `list` `r lifecycle::badge("deprecated")` Passing lab data
-#' attached to country data is deprecated. Please pass lab data directly to the
-#' lab.data parameter.
+#' @inheritParams lab_data_errors
 #' @returns None. It outputs an Excel file locally containing the error log.
 #' @examples
 #' \dontrun{
@@ -201,7 +194,9 @@ lab_data_errors <- function(lab.data, afp.data,
 #' lab_data_errors_region(ctry.data$lab.data, "2021-01-01", "2023-12-31")
 #' }
 #' @keywords internal
-lab_data_errors_region <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"),
+lab_data_errors_region <- function(lab.data,
+                                   afp.data,
+                                   ctry_name = Sys.getenv("DR_COUNTRY"),
                                    start.date, end.date,
                                    error_path = Sys.getenv("DR_ERROR_PATH"),
                                    ctry.data = lifecycle::deprecated()) {
@@ -350,7 +345,7 @@ lab_data_errors_region <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"
 
   # Check for missing EPIDs in the AFP linelist
   cli::cli_process_start("Checking for missing EPIDs in the AFP dataset.")
-  missing_epids <- lab.data |> dplyr::filter(!(EPID %in% ctry.data$afp.all.2$epid))
+  missing_epids <- lab.data |> dplyr::filter(!(EPID %in% afp.data$epid))
 
   if (nrow(missing_epids) != 0) {
     cli::cli_alert_warning(paste0("There are ", nrow(missing_epids), " lab cases not in the AFP linelist."))
@@ -375,12 +370,7 @@ lab_data_errors_region <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"
 #' WHO lab data.
 #'
 #' @import dplyr cli writexl
-#' @param lab.data `tibble` Lab data from WHO global.
-#' @param start.date `str` Start date of analysis.
-#' @param end.date `str` End date of analysis.
-#' @param error_path `str` Path to folder to save the error log to.
-#' @param ctry.data `list` `r lifecycle::badge("deprecated")`
-#' Please pass lab.data directly to the lab.data parameter.
+#' @inheritParams lab_data_errors
 #' @examples
 #' \dontrun{
 #' lab_path <- "C:/Users/XRG9/lab_data_who.csv"
@@ -388,7 +378,8 @@ lab_data_errors_region <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"
 #' lab_data_errors_who(ctry.data, "2021-01-01", "2023-12-31")
 #' }
 #' @keywords internal
-lab_data_errors_who <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"),
+lab_data_errors_who <- function(lab.data, afp.data,
+                                ctry_name = Sys.getenv("DR_COUNTRY"),
                                 start.date, end.date,
                                 error_path = Sys.getenv("DR_ERROR_PATH"),
                                 ctry.data = lifecycle::badge("deprecated")) {
@@ -451,7 +442,7 @@ lab_data_errors_who <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"),
   cli::cli_process_done()
 
   cli::cli_process_start("Checking for missing EPIDs in the AFP dataset.")
-  missing_epids <- lab.data |> dplyr::filter(!(EpidNumber %in% ctry.data$afp.all.2$epid))
+  missing_epids <- lab.data |> dplyr::filter(!(EpidNumber %in% afp.data$epid))
 
   if (nrow(missing_epids) != 0) {
     cli::cli_alert_warning(paste0("There are ", nrow(missing_epids), " lab cases not in the AFP linelist."))

@@ -6,8 +6,10 @@
 \usage{
 lab_data_errors(
   lab.data,
+  afp.data,
   start.date = start_date,
   end.date = end_date,
+  ctry_name = Sys.getenv("DR_COUNTRY"),
   error_path = Sys.getenv("DR_ERROR_PATH"),
   ctry.data = lifecycle::deprecated()
 )
@@ -15,14 +17,18 @@ lab_data_errors(
 \arguments{
 \item{lab.data}{\code{tibble} Polio lab data.}
 
+\item{afp.data}{\code{tibble} AFP linelist.}
+
 \item{start.date}{\code{str} Start date of the analysis.}
 
 \item{end.date}{\code{str} End date of the analysis.}
 
+\item{ctry_name}{\code{list} or \code{str} A name of a country or a list of countries.
+Please pass lab data directly into lab.data parameter instead.}
+
 \item{error_path}{\code{str} File path to store the error log.}
 
-\item{ctry.data}{\code{list} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
-Please pass lab data directly into lab.data parameter instead.}
+\item{ctry.data}{\code{list} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 }
 \value{
 None. It outputs locally an Excel file containing the error log.
