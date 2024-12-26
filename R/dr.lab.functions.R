@@ -141,7 +141,7 @@ load_lab_data <- function(lab_data_path, sheet_name = NULL) {
 #' start_date <- "2021-01-01"
 #' end_date <- "2023-12-31"
 #' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-#' lab_data_errors(ctry.data)
+#' lab_data_errors(ctry.data$lab.data, ctry.data$afp.data)
 #' }
 #' @export
 lab_data_errors <- function(lab.data, afp.data,
@@ -191,13 +191,14 @@ lab_data_errors <- function(lab.data, afp.data,
 #' \dontrun{
 #' lab_path <- "C:/Users/XRG9/lab_data_region.csv"
 #' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-#' lab_data_errors_region(ctry.data$lab.data, "2021-01-01", "2023-12-31")
+#' lab_data_errors_region(ctry.data$lab.data, ctry.data$afp.all.2,
+#'                        "2021-01-01", "2023-12-31")
 #' }
 #' @keywords internal
 lab_data_errors_region <- function(lab.data,
                                    afp.data,
-                                   ctry_name = Sys.getenv("DR_COUNTRY"),
                                    start.date, end.date,
+                                   ctry_name = Sys.getenv("DR_COUNTRY"),
                                    error_path = Sys.getenv("DR_ERROR_PATH"),
                                    ctry.data = lifecycle::deprecated()) {
 
@@ -375,12 +376,13 @@ lab_data_errors_region <- function(lab.data,
 #' \dontrun{
 #' lab_path <- "C:/Users/XRG9/lab_data_who.csv"
 #' ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-#' lab_data_errors_who(ctry.data, "2021-01-01", "2023-12-31")
+#' lab_data_errors_who(ctry.data$lab.data, ctry.data$afp.all.2,
+#'                     "2021-01-01", "2023-12-31")
 #' }
 #' @keywords internal
 lab_data_errors_who <- function(lab.data, afp.data,
-                                ctry_name = Sys.getenv("DR_COUNTRY"),
                                 start.date, end.date,
+                                ctry_name = Sys.getenv("DR_COUNTRY"),
                                 error_path = Sys.getenv("DR_ERROR_PATH"),
                                 ctry.data = lifecycle::deprecated()) {
 

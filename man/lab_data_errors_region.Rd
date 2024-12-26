@@ -7,9 +7,9 @@
 lab_data_errors_region(
   lab.data,
   afp.data,
-  ctry_name = Sys.getenv("DR_COUNTRY"),
   start.date,
   end.date,
+  ctry_name = Sys.getenv("DR_COUNTRY"),
   error_path = Sys.getenv("DR_ERROR_PATH"),
   ctry.data = lifecycle::deprecated()
 )
@@ -19,12 +19,12 @@ lab_data_errors_region(
 
 \item{afp.data}{\code{tibble} AFP linelist.}
 
-\item{ctry_name}{\code{list} or \code{str} A name of a country or a list of countries.
-Please pass lab data directly into lab.data parameter instead.}
-
 \item{start.date}{\code{str} Start date of the analysis.}
 
 \item{end.date}{\code{str} End date of the analysis.}
+
+\item{ctry_name}{\code{list} or \code{str} A name of a country or a list of countries.
+Please pass lab data directly into lab.data parameter instead.}
 
 \item{error_path}{\code{str} File path to store the error log.}
 
@@ -41,7 +41,8 @@ Error checking for regional lab data. This is a helper function meant to be used
 \dontrun{
 lab_path <- "C:/Users/XRG9/lab_data_region.csv"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-lab_data_errors_region(ctry.data$lab.data, "2021-01-01", "2023-12-31")
+lab_data_errors_region(ctry.data$lab.data, ctry.data$afp.all.2,
+                       "2021-01-01", "2023-12-31")
 }
 }
 \keyword{internal}

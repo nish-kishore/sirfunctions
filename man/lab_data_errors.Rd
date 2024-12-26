@@ -43,6 +43,6 @@ lab_path <- "C:/Users/ABC1/Desktop/lab_data.xlsx"
 start_date <- "2021-01-01"
 end_date <- "2023-12-31"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-lab_data_errors(ctry.data)
+lab_data_errors(ctry.data$lab.data, ctry.data$afp.data)
 }
 }
