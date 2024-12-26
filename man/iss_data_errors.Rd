@@ -4,15 +4,20 @@
 \alias{iss_data_errors}
 \title{Checks for errors in the ISS data}
 \usage{
-iss_data_errors(ctry.data, error_path = Sys.getenv("DR_ERROR_PATH"))
+iss_data_errors(
+  iss.data,
+  error_path = Sys.getenv("DR_ERROR_PATH"),
+  ctry.data = lifecycle::deprecated()
+)
 }
 \arguments{
-\item{ctry.data}{\code{list} The product of \code{\link[=init_dr]{init_dr()}} with ISS/eSurv data attached.}
-
 \item{error_path}{\code{str} Path to error folder. The function defaults to a global environment
 variable called \code{DR_ERROR_PATH}, as it is assumed ISS data error checking is done as part of
 the desk review template. The setting of desk review environmental variables is automatically
 handled by \code{\link[=init_dr]{init_dr()}}. Otherwise, users should manually specify the error folder.}
+
+\item{ctry.data}{\code{list} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Please pass the ISS
+data directly to the iss.data parameter.}
 }
 \value{
 Status messages on the checks completed and results.
@@ -24,7 +29,7 @@ Currently, the function reports the number of missing priority levels.
 \dontrun{
 iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
 ctry.data <- init_dr("somalia", iss_data_path = iss_path)
-iss_data_errors(ctry.data)
+iss_data_errors(ctry.data$iss.data)
 }
 
 }

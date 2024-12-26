@@ -173,39 +173,48 @@ clean_iss_data <- function(iss.data, start_date, end_date,
 #'
 #' Currently, the function reports the number of missing priority levels.
 #' @import cli dplyr readr
-#' @param ctry.data `list` The product of [init_dr()] with ISS/eSurv data attached.
 #' @param error_path `str` Path to error folder. The function defaults to a global environment
 #' variable called `DR_ERROR_PATH`, as it is assumed ISS data error checking is done as part of
 #' the desk review template. The setting of desk review environmental variables is automatically
 #' handled by [init_dr()]. Otherwise, users should manually specify the error folder.
-#'
+#' @param ctry.data `list` `r lifecycle::badge("deprecated")` Please pass the ISS
+#' data directly to the iss.data parameter.
 #' @return Status messages on the checks completed and results.
 #' @examples
 #' \dontrun{
 #' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
 #' ctry.data <- init_dr("somalia", iss_data_path = iss_path)
-#' iss_data_errors(ctry.data)
+#' iss_data_errors(ctry.data$iss.data)
 #' }
 #'
 #' @export
-iss_data_errors <- function(ctry.data, error_path = Sys.getenv("DR_ERROR_PATH")) {
-  # Check if ISS data is attached
-  if (is.null(ctry.data$iss.data)) {
-    return(message("ISS data not attached to ctry.data. Please attach and try again."))
-  }
+iss_data_errors <- function(iss.data, error_path = Sys.getenv("DR_ERROR_PATH"),
+                            ctry.data = lifecycle::deprecated()) {
 
-  iss.data <- ctry.data$iss.data
+  if (lifecycle::is_present(ctry.data)) {
+    lifecycle::deprecate_warn(
+      when = "1.3.0",
+      what = "iss_data_errors(ctry.data)",
+      details = "Please pass the dataframe directly to iss.data."
+    )
+
+    # Check if ISS data is attached
+    if (is.null(ctry.data$iss.data)) {
+      return(message("ISS data not attached to ctry.data. Please attach and try again."))
+    }
+    iss.data <- ctry.data$iss.data
+  }
   # Check for rows without any priority_levels (N/A)
   cli::cli_process_start("Checking for missing priority levels.")
   total_records <- nrow(iss.data)
   na_priority <- NULL
   if ("priority_level" %in% names(iss.data)) {
     na_priority <- iss.data |>
-      mutate(priority_level = stringr::str_to_lower(.data$priority_level)) |>
+      dplyr::mutate(priority_level = stringr::str_to_lower(.data$priority_level)) |>
       dplyr::filter(priority_level %in% c("na", "n/a", ""))
   } else if ("hf_rating" %in% names(iss.data)) {
     na_priority <- iss.data |>
-      mutate(hf_rating = stringr::str_to_lower(.data$hf_rating)) |>
+      dplyr::mutate(hf_rating = stringr::str_to_lower(.data$hf_rating)) |>
       dplyr::filter(hf_rating %in% c("na", "n/a", ""))
   }
 
