@@ -52,6 +52,10 @@ get_lab_locs <- function(path = NULL) {
 #'
 #' @export
 get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
+
+  # Format country_name
+  country_name <- stringr::str_trim(stringr::str_to_upper(country_name))
+
   # Countries that belong in a region
   emro_ctry <- c(
     "EGYPT", "AFGHANISTAN", "PAKISTAN", "IRAN (ISLAMIC REPUBLIC OF)",
@@ -72,20 +76,12 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
     "ESWATINI", "COTE D'IVOIRE", "COTE D IVOIRE"
   )
 
-
-
-  # Assign the region
-  region <- NULL
-  if (stringr::str_to_upper(country_name) %in% emro_ctry) {
-    region <- "EMRO"
-  } else if (stringr::str_to_upper(country_name) %in% afro_ctry | stringr::str_detect(country_name, "(?i)IVOIRE")) {
-    region <- "AFRO"
-  } else {
-    stop(paste0(
-      "Country does not belong in either AFRO or EMRO. ",
-      "Countries outside these regions are not supported by the cleaning function at this time."
-    ))
-  }
+  region <- dplyr::case_match(
+    country_name,
+    emro_ctry ~ "EMRO",
+    afro_ctry ~ "AFRO",
+    .default = NA
+  )
 
   return(region)
 }
@@ -129,11 +125,14 @@ load_lab_data <- function(lab_data_path, sheet_name = NULL) {
 #'
 #' Checks the loaded lab data for potential issues. The function will detect whether
 #' the lab data loaded either came from the regional office or from global.
+#'
 #' @param lab.data `tibble` Polio lab data.
+#' @param afp.data `tibble` AFP linelist.
 #' @param start.date `str` Start date of the analysis.
 #' @param end.date `str` End date of the analysis.
 #' @param error_path `str` File path to store the error log.
 #' @param ctry.data `list` `r lifecycle::badge("deprecated")`
+#' @param ctry_name `list` or `str` A name of a country or a list of countries.
 #' Please pass lab data directly into lab.data parameter instead.
 #' @returns None. It outputs locally an Excel file containing the error log.
 #' @examples
@@ -145,7 +144,9 @@ load_lab_data <- function(lab_data_path, sheet_name = NULL) {
 #' lab_data_errors(ctry.data)
 #' }
 #' @export
-lab_data_errors <- function(lab.data, start.date = start_date, end.date = end_date,
+lab_data_errors <- function(lab.data, afp.data,
+                            start.date = start_date, end.date = end_date,
+                            ctry_name = Sys.getenv("DR_COUNTRY"),
                             error_path = Sys.getenv("DR_ERROR_PATH"),
                             ctry.data = lifecycle::deprecated()) {
 
@@ -175,7 +176,7 @@ lab_data_errors <- function(lab.data, start.date = start_date, end.date = end_da
   if ("MasterKey" %in% lab.data.cols) {
     lab_data_errors_who(lab.data, start.date, end.date)
   } else {
-    lab_data_errors_region(lab.data, start.date, end.date)
+    lab_data_errors_region(lab.data, ctry_name, start.date, end.date)
   }
 }
 
@@ -203,7 +204,7 @@ lab_data_errors <- function(lab.data, start.date = start_date, end.date = end_da
 lab_data_errors_region <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"),
                                    start.date, end.date,
                                    error_path = Sys.getenv("DR_ERROR_PATH"),
-                                   ctry.data = lifecycle::badge("deprecated")) {
+                                   ctry.data = lifecycle::deprecated()) {
 
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
@@ -374,11 +375,12 @@ lab_data_errors_region <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"
 #' WHO lab data.
 #'
 #' @import dplyr cli writexl
-#' @param ctry.data `list` large list containing polio data from a country. Output of either
-#' [extract_country_data()] or [init_dr()].
+#' @param lab.data `tibble` Lab data from WHO global.
 #' @param start.date `str` Start date of analysis.
 #' @param end.date `str` End date of analysis.
 #' @param error_path `str` Path to folder to save the error log to.
+#' @param ctry.data `list` `r lifecycle::badge("deprecated")`
+#' Please pass lab.data directly to the lab.data parameter.
 #' @examples
 #' \dontrun{
 #' lab_path <- "C:/Users/XRG9/lab_data_who.csv"
@@ -386,15 +388,28 @@ lab_data_errors_region <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"
 #' lab_data_errors_who(ctry.data, "2021-01-01", "2023-12-31")
 #' }
 #' @keywords internal
-lab_data_errors_who <- function(ctry.data, start.date, end.date,
-                                error_path = Sys.getenv("DR_ERROR_PATH")) {
-  if (is.null(ctry.data$lab.data)) {
-    message("No lab data attached.")
-    return(NULL)
+lab_data_errors_who <- function(lab.data, ctry_name = Sys.getenv("DR_COUNTRY"),
+                                start.date, end.date,
+                                error_path = Sys.getenv("DR_ERROR_PATH"),
+                                ctry.data = lifecycle::badge("deprecated")) {
+  if (lifecycle::is_present(ctry.data)) {
+    lifecycle::deprecate_warn(
+      when = "1.3.0",
+      what = "lab_data_errors_who(ctry.data)",
+      details = "Please pass the dataframe directly to lab.data."
+    )
+
+    lab.data <- ctry.data$lab.data
   }
 
-  lab.data <- ctry.data$lab.data |>
-    dplyr::filter(ctry.code2 == ctry.data$ctry$WHO_CODE)
+  start.date <- lubridate::as_date(start.date)
+  end.date <- lubridate::as_date(end.date)
+  ctry_name <- stringr::str_to_upper(ctry_name)
+
+  cli::cli_process_start("Filtering to country of interest")
+  lab.data <- lab.data |>
+    dplyr::filter(stringr::str_to_upper(.data$Name) %in% ctry_name)
+  cli::cli_process_done()
 
   cli::cli_process_start("Checking for invalid dates from cases.")
   invalid_dates <- lab.data |>
@@ -411,7 +426,8 @@ lab_data_errors_who <- function(ctry.data, start.date, end.date,
     )
 
   if (nrow(invalid_dates) != 0) {
-    cli::cli_alert_warning(paste0("There are ", nrow(invalid_dates), " cases with invalid dates."))
+    cli::cli_alert_warning(paste0("There are ", nrow(invalid_dates),
+                                  " cases with invalid dates."))
   } else {
     cli::cli_alert_success("No invalid dates detected.")
   }
@@ -422,12 +438,13 @@ lab_data_errors_who <- function(ctry.data, start.date, end.date,
   missing_years <- lab.data |>
     dplyr::filter(is.na(year)) |>
     dplyr::filter(
-      year >= lubridate::year(start.date) & year <= lubridate::year(end.date),
+      dplyr::between(year, lubridate::year(start.date), lubridate::year(end.date)),
       CaseOrContact == "1-Case"
     )
 
   if (nrow(missing_years) != 0) {
-    cli::cli_alert_warning(paste0("There are ", nrow(missing_years), " cases with missing years."))
+    cli::cli_alert_warning(paste0("There are ", nrow(missing_years),
+                                  " cases with missing years."))
   } else {
     cli::cli_alert_success("No cases with missing years.")
   }
