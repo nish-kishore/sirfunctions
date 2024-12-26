@@ -486,45 +486,7 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
     dplyr::arrange(.data$emg_grp2) |>
     tidyr::drop_na()
 
-  emg_cols <- c(
-    "ANG-LNO-3" = "#68228b",
-    "BOT-FRA-1" = "#458B74",
-    "CAE-EXT-1" = "#fd8d3c",
-    "CAF-BNG-2" = "#d21404",
-    "CAF-BNG-3" = "#00008b",
-    "ETH-TIG-1" = "#CA5621",
-    "EGY-NOR-1" = "#8B2323",
-    "INO-ACE-1" = "#ED7222",
-    "INO-cVDPV2" = "#458B00",
-    "MAD-ANO-2" = "#B254A5",
-    "MOZ-MAN-1" = "#458B00",
-    "MOZ-NPL-2" = "#008B8b",
-    "NIE-KTS-1" = "#68228b",
-    "NIE-ZAS-1" = "#F5191C",
-    "RDC-BUE-1" = "#8B8B83",
-    "RDC-HKA-2" = "#B14A34",
-    "RDC-KOR-1" = "#104E8B",
-    "RDC-MAN-3" = "#556B2F",
-    "RDC-MAN-5" = "#B5651d",
-    "RDC-cVDPV2" = "#000000",
-    "RDC-SKV-1" = "#8B3A3A",
-    "RDC-TAN-1" = "#CA5621",
-    "RDC-TSH-1" = "#AC6A9F",
-    "RDC-TSH-2" = "#F5191C",
-    "RSS-JON-1" = "#fd8d3c",
-    "RSS-UNL-1" = "#2D7E47",
-    "RSS-WEQ-1" = "#8B8B83",
-    "SOM-BAN-1" = "#891171",
-    "SOM-BAY-1" = "#7C68B3",
-    "SUD-RED-1" = "#F28265",
-    "YEM-TAI-1" = "#4A708B",
-    "ZIM-HRE-1" = "#A03E3F",
-    "YB3A" = "#4A708B",
-    "YB3C" = "#A03E3F",
-    "YB3A4A" = "#AC6A9F",
-    "YB3A4A & YB3A4B" = "#fd8d3c",
-    "YB3A4B" = "#2D7E47"
-  )
+  emg_cols <- f.color.schemes("emergence.groups")
 
   unassigned_emergence <- setdiff(emg$emg_grp2, names(emg_cols))
   if (length(unassigned_emergence) == 0) {
