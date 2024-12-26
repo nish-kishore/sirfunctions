@@ -43,7 +43,7 @@ generate_ctry_timeliness_graph <- function(int.data,
 
   timely_nation <- ggplot2::ggplot() +
     ggplot2::geom_bar(
-      data = year.time,
+      data = int.data,
       ggplot2::aes(
         x = labs,
         y = medi,
@@ -53,7 +53,7 @@ generate_ctry_timeliness_graph <- function(int.data,
       stat = "identity"
     ) +
     ggplot2::geom_text(
-      data = year.time,
+      data = int.data,
       ggplot2::aes(
         x = labs,
         y = medi,
@@ -128,7 +128,7 @@ generate_prov_timeliness_graph <- function(int.data,
   int.data <- int.data |>
     dplyr::filter(.data$medi >= 0 | !is.na(.data$medi))
 
-  timely_prov <- ggplot2::ggplot(prov.time.2 |>
+  timely_prov <- ggplot2::ggplot(int.data |>
     dplyr::filter(is.na(medi) == F &
       is.na(prov) == F)) +
     ggplot2::geom_bar(
