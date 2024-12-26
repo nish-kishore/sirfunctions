@@ -2027,6 +2027,24 @@ check_missing_rows <- function(df,
   return(missing)
 }
 
+#' Interactive loading of EDAV data
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' This function is a way to interactively work with files in the EDAV
+#' environment, which is convenient as we don't have to search for files within
+#' Azure Storage Explorer.
+#'
+#' @param path `str` Path to start at initially.
+#'
+#' @return `tibble` Data from the EDAV environment.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' test <- get_edav_data()
+#' }
 get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
 
   pointer <- path
@@ -2039,7 +2057,7 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
                                "3) Load data"))
     response <- stringr::str_trim(readline("Response:"))
     if (!response %in% c("1", "2", "3")) {
-      "Invalid response."
+      cli::cli_alert_warning("Invalid response. Please try again.\n")
     } else if (response == "1") {
       pointer <- gsub("[^/]+$", "", pointer)
     } else if (response == "2") {
@@ -2048,11 +2066,11 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         response <- stringr::str_trim(readline("Response:"))
         response <- tryCatch(as.numeric(response),
                  error = function(e) {
-                   cli::cli_alert("Not a number. Please try again.")
+                   cli::cli_alert_warning("Not a number. Please try again.\n")
                    next
                  })
         if (response > nrow(output)) {
-          cli::cli_alert_info("Invalid response. Please try again:")
+          cli::cli_alert_warning("Invalid response. Please try again:\n")
           print(output)
         } else {
           pointer <- output[response, ]$name
@@ -2065,11 +2083,11 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         response <- stringr::str_trim(readline("Response:"))
         response <- tryCatch(as.numeric(response),
                              error = function(e) {
-                               cli::cli_alert("Not a number. Please try again.")
+                               cli::cli_alert("Not a number. Please try again.\n")
                                next
                              })
         if (response > nrow(output)) {
-          cli::cli_alert_info("Invalid response. Please try again:")
+          cli::cli_alert_info("Invalid response. Please try again:\n")
           print(output)
         } else if (output[response, ]$isdir == TRUE) {
           cli::cli_alert_info(paste0(output[response, ]$name,
