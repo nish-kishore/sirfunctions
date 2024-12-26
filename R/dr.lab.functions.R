@@ -299,6 +299,11 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
+  if (is.na(start_date) | is.na(end_date)) {
+    cli::cli_abort("start_date and end_date must be in YYYY-MM-DD format.")
+    return(lab_data)
+  }
+
   if ("prov" %in% names(lab_data)) {
     cli::cli_alert_warning("Lab data already cleaned.")
     return(lab_data)
@@ -454,6 +459,11 @@ clean_lab_data_regional <- function(lab_data,
   # Static vars
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
+  if (is.na(start_date) | is.na(end_date)) {
+    cli::cli_abort("start_date and end_date must be in YYYY-MM-DD format.")
+    return(lab_data)
+  }
+
   lab_locs <- get_lab_locs(lab_locs_path)
 
   lab_data <- lab_data |>
