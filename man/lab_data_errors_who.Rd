@@ -31,5 +31,5 @@ lab_path <- "C:/Users/XRG9/lab_data_who.csv"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
 lab_data_errors_who(ctry.data, "2021-01-01", "2023-12-31")
 }
-
 }
+\keyword{internal}
