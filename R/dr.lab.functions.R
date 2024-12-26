@@ -261,6 +261,12 @@ impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
     # Message for values without any province or district information
   } else {
     cli::cli_alert_warning("AFP linelist not attached. Geographic columns will be empty.")
+    lab_data$ctry <- NA
+    lab_data$prov <- NA
+    lab_data$dist <- NA
+    lab_data$adm0guid <- NA
+    lab_data$adm1guid <- NA
+    lab_data$adm2guid <- NA
   }
 
   return(lab_data)
