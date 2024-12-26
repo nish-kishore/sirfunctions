@@ -8,10 +8,8 @@
 #' @import ggplot2 forcats
 #'
 #' @param int.data `tibble` Summary table with timeliness intervals at the country level.
-#' @param afp.year.lab `tibble` Summary table of samples sent by year. Output of
-#' [generate_year_lab()].
 #' @param output_path `str` Path where to output the figure.
-#'
+#' @param afp.year.lab `tibble` `r lifecycle::badge("deprecated")`
 #' @returns `ggplot` Plot of timeliness intervals at the country level.
 #'
 #' @examples
@@ -24,18 +22,23 @@
 #'   spatial.scale = "ctry",
 #'   lab.timeliness.ctry
 #' )
-#' afp.year.lab <- generate_year_lab(ctry.data, start_date, end_date)
-#' generate_ctry_timeliness_graph(int.data.ctry, afp.year.lab)
+#' generate_ctry_timeliness_graph(int.data.ctry)
 #' }
-#' @seealso [generate_int_data()], [generate_lab_timeliness()]
+#' @seealso [generate_int_data()]
 #' @export
 generate_ctry_timeliness_graph <- function(int.data,
-                                           afp.year.lab,
-                                           output_path = Sys.getenv("DR_FIGURE_PATH")) {
-  year.time <- dplyr::left_join(
-    int.data,
-    afp.year.lab
-  ) |>
+                                           output_path = Sys.getenv("DR_FIGURE_PATH"),
+                                           afp.year.lab = lifecycle::deprecated()) {
+
+  if (lifecycle::is_present(afp.year.lab)) {
+    lifecycle::deprecate_warn(
+      when = "1.3.0",
+      what = "generate_ctry_timeliness_graph(afp.prov.year.lab)",
+      details = "afp.year.lab is not necessary to run this function."
+    )
+  }
+
+  int.data <- int.data |>
     dplyr::filter(.data$medi >= 0 | !is.na(.data$medi))
 
   timely_nation <- ggplot2::ggplot() +
@@ -93,9 +96,8 @@ generate_ctry_timeliness_graph <- function(int.data,
 #' only the timeliness intervals from the field up to when it was sent to lab will be displayed.
 #' @import ggplot2
 #' @param int.data `tibble` Summary table with timeliness intervals at the province level.
-#' @param afp.prov.year.lab `tibble` Summary table of samples sent by year and province.
-#'  Output of [generate_prov_year_lab()].
 #' @param output_path `str` Path where to output the figure.
+#' @param afp.prov.year.lab `tibble` `r lifecycle::badge("deprecated")`
 #'
 #' @returns `ggplot` Plot of timeliness intervals at the country level.
 #' @examples
@@ -108,23 +110,23 @@ generate_ctry_timeliness_graph <- function(int.data,
 #'   spatial.scale = "prov",
 #'   lab.timeliness.prov
 #' )
-#  afp.prov.year.lab <- generate_prov_year_lab(ctry.data, start_date, end_date)
-#' generate_ctry_timeliness_graph(int.data.prov, afp.prov.year.lab)
+#' generate_ctry_timeliness_graph(int.data.prov)
 #' }
 #' @export
 generate_prov_timeliness_graph <- function(int.data,
-                                           afp.prov.year.lab,
-                                           output_path = Sys.getenv("DR_FIGURE_PATH")) {
-  prov.time.2 <- dplyr::left_join(
-    int.data,
-    afp.prov.year.lab,
-    by = c(
-      "year" = "year",
-      "adm1guid" = "adm1guid",
-      "prov" = "prov"
+                                           output_path = Sys.getenv("DR_FIGURE_PATH"),
+                                           afp.prov.year.lab = lifecycle::deprecated()) {
+
+  if (lifecycle::is_present(afp.prov.year.lab)) {
+    lifecycle::deprecate_warn(
+      when = "1.3.0",
+      what = "generate_prov_timeliness_graph(afp.prov.year.lab)",
+      details = "afp.prov.year.lab is not necessary to run this function."
     )
-  ) |>
-    dplyr::filter(medi >= 0)
+  }
+
+  int.data <- int.data |>
+    dplyr::filter(.data$medi >= 0 | !is.na(.data$medi))
 
   timely_prov <- ggplot2::ggplot(prov.time.2 |>
     dplyr::filter(is.na(medi) == F &

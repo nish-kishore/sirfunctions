@@ -6,17 +6,16 @@
 \usage{
 generate_ctry_timeliness_graph(
   int.data,
-  afp.year.lab,
-  output_path = Sys.getenv("DR_FIGURE_PATH")
+  output_path = Sys.getenv("DR_FIGURE_PATH"),
+  afp.year.lab = lifecycle::deprecated()
 )
 }
 \arguments{
 \item{int.data}{\code{tibble} Summary table with timeliness intervals at the country level.}
 
-\item{afp.year.lab}{\code{tibble} Summary table of samples sent by year. Output of
-\code{\link[=generate_year_lab]{generate_year_lab()}}.}
-
 \item{output_path}{\code{str} Path where to output the figure.}
+
+\item{afp.year.lab}{\code{tibble} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 }
 \value{
 \code{ggplot} Plot of timeliness intervals at the country level.
@@ -36,10 +35,9 @@ int.data.ctry <- generate_int_data(ctry.data, start_date, end_date,
   spatial.scale = "ctry",
   lab.timeliness.ctry
 )
-afp.year.lab <- generate_year_lab(ctry.data, start_date, end_date)
-generate_ctry_timeliness_graph(int.data.ctry, afp.year.lab)
+generate_ctry_timeliness_graph(int.data.ctry)
 }
 }
 \seealso{
-\code{\link[=generate_int_data]{generate_int_data()}}, \code{\link[=generate_lab_timeliness]{generate_lab_timeliness()}}
+\code{\link[=generate_int_data]{generate_int_data()}}
 }
