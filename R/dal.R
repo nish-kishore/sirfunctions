@@ -2027,3 +2027,61 @@ check_missing_rows <- function(df,
   return(missing)
 }
 
+get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
+
+  pointer <- path
+  while (TRUE) {
+    output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+    print(output)
+    cli::cli_alert_info(paste0("Please choose an option (1-3):\n",
+                               "1) Previous directory\n",
+                               "2) Move up one directory\n",
+                               "3) Load data"))
+    response <- stringr::str_trim(readline("Response:"))
+    if (!response %in% c("1", "2", "3")) {
+      "Invalid response."
+    } else if (response == "1") {
+      pointer <- gsub("[^/]+$", "", pointer)
+    } else if (response == "2") {
+      while (TRUE) {
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response:"))
+        response <- tryCatch(as.numeric(response),
+                 error = function(e) {
+                   cli::cli_alert("Not a number. Please try again.")
+                   next
+                 })
+        if (response > nrow(output)) {
+          cli::cli_alert_info("Invalid response. Please try again:")
+          print(output)
+        } else {
+          pointer <- output[response, ]$name
+          break
+        }
+      }
+    } else if (response == "3") {
+      while (TRUE) {
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response:"))
+        response <- tryCatch(as.numeric(response),
+                             error = function(e) {
+                               cli::cli_alert("Not a number. Please try again.")
+                               next
+                             })
+        if (response > nrow(output)) {
+          cli::cli_alert_info("Invalid response. Please try again:")
+          print(output)
+        } else if (output[response, ]$isdir == TRUE) {
+          cli::cli_alert_info(paste0(output[response, ]$name,
+                                     " is a directory. Navigating to it."))
+          pointer <- output[response, ]$name
+          break
+          } else {
+          pointer <- file.path(output[response, ]$name)
+          output <- edav_io("read", default_dir = "", pointer)
+          return(output)
+        }
+      }
+    }
+  }
+}
