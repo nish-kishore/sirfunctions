@@ -772,6 +772,33 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
   int.data <- int.data |>
     dplyr::select(dplyr::where(function(x) !all(is.na(x))))
 
+  labs <- switch(spatial.scale,
+                 "ctry" = {
+                   ctry.data$afp.all.2 |>
+                     dplyr::filter(
+                       dplyr::between(.data$date, start_date, end_date),
+                       cdc.classification.all2 != "NOT-AFP"
+                     ) |>
+                     dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
+                     dplyr::mutate(labs = paste0(
+                       year,
+                       " (N=", n, ")"
+                     ))
+                 },
+                 "prov" = {
+                   ctry.data$afp.all.2 |>
+                     dplyr::filter(
+                       dplyr::between(.data$date, start_date, end_date)
+                       ) |>
+                     dplyr::count(.data$prov, .data$adm1guid, .data$year) |>
+                     dplyr::mutate(labs = paste0(
+                       year,
+                       " (N=", n, ")"
+                     ))
+                 })
+
+  int.data <- suppressMessages(dplyr::left_join(int.data, labs))
+
   return(int.data)
 }
 
