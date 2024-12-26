@@ -15,7 +15,8 @@ generate_prov_timeliness_graph(
 
 \item{output_path}{\code{str} Path where to output the figure.}
 
-\item{afp.prov.year.lab}{\code{tibble} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
+\item{afp.prov.year.lab}{\code{tibble} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+Deprecated since it is not used anymore.}
 }
 \value{
 \code{ggplot} Plot of timeliness intervals at the country level.

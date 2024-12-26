@@ -10,6 +10,7 @@
 #' @param int.data `tibble` Summary table with timeliness intervals at the country level.
 #' @param output_path `str` Path where to output the figure.
 #' @param afp.year.lab `tibble` `r lifecycle::badge("deprecated")`
+#' Deprecated since it is not used anymore.
 #' @returns `ggplot` Plot of timeliness intervals at the country level.
 #'
 #' @examples
@@ -98,6 +99,7 @@ generate_ctry_timeliness_graph <- function(int.data,
 #' @param int.data `tibble` Summary table with timeliness intervals at the province level.
 #' @param output_path `str` Path where to output the figure.
 #' @param afp.prov.year.lab `tibble` `r lifecycle::badge("deprecated")`
+#' Deprecated since it is not used anymore.
 #'
 #' @returns `ggplot` Plot of timeliness intervals at the country level.
 #' @examples
