@@ -8,6 +8,8 @@ load_clean_dist_sp(
   azcontainer = suppressMessages(get_azure_storage_connection()),
   fp = "GID/PEB/SIR/Data/spatial/global.dist.rds",
   dist_guid = NULL,
+  dist_name = NULL,
+  prov_name = NULL,
   ctry_name = NULL,
   end_year = lubridate::year(Sys.Date()),
   st_year = 2000,
@@ -25,6 +27,10 @@ load_clean_dist_sp(
 \item{fp}{\code{str} Location of geodatabase.}
 
 \item{dist_guid}{\verb{str array} Array of all district GUIDS that you want to pull.}
+
+\item{dist_name}{\verb{str array} Array of all dist names that you want to pull.}
+
+\item{prov_name}{\verb{str array} Array of all province names that you want to pull.}
 
 \item{ctry_name}{\verb{str array} Array of all country names that you want to pull.}
 

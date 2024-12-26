@@ -1396,6 +1396,8 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' @param azcontainer Azure validated container object.
 #' @param dist_guid `str array` Array of all district GUIDS that you want to pull.
 #' @param ctry_name `str array` Array of all country names that you want to pull.
+#' @param prov_name `str array` Array of all province names that you want to pull.
+#' @param dist_name `str array` Array of all dist names that you want to pull.
 #' @param end.year `int` Last year you want to pull information for. Default is current year.
 #' @param st.year `int` Earlier year of spatial data you want to pull. Default is 2000.
 #' @param data.only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
@@ -1415,6 +1417,8 @@ duplicate_check <- function(.raw.data = raw.data) {
 load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
                                fp = "GID/PEB/SIR/Data/spatial/global.dist.rds",
                                dist_guid = NULL,
+                               dist_name = NULL,
+                               prov_name = NULL,
                                ctry_name = NULL,
                                end_year = lubridate::year(Sys.Date()),
                                st_year = 2000,
@@ -1485,6 +1489,18 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
         .
       } else {
         dplyr::filter(., ADM0_NAME %in% ctry_name)
+      }
+    } %>% {
+      if (is.null(prov_name)) {
+        .
+      } else {
+        dplyr::filter(., ADM1_NAME %in% prov_name)
+      }
+    } %>% {
+      if (is.null(dist_name)) {
+        .
+      } else {
+        dplyr::filter(., ADM2_NAME %in% dist_name)
       }
     }
 
