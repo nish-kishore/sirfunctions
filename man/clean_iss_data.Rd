@@ -64,7 +64,7 @@ Ensure that priority level column categories have these specification:
 \dontrun{
 iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
 ctry.data <- init_dr("somalia", iss_data_path = iss_path)
-ctry.data$iss.data <- clean_iss_data(ctry.data$iss.data)
+ctry.data$iss.data <- clean_iss_data(ctry.data$iss.data, start_date, end_date)
 }
 
 }

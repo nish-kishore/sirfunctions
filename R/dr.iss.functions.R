@@ -60,7 +60,7 @@ load_iss_data <- function(iss_path, sheet_name = NULL) {
 #' \dontrun{
 #' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
 #' ctry.data <- init_dr("somalia", iss_data_path = iss_path)
-#' ctry.data$iss.data <- clean_iss_data(ctry.data$iss.data)
+#' ctry.data$iss.data <- clean_iss_data(ctry.data$iss.data, start_date, end_date)
 #' }
 #'
 #' @export
@@ -93,7 +93,7 @@ clean_iss_data <- function(iss.data, start_date, end_date,
   # check if already cleaned
   if ("monyear" %in% names(iss.data)) {
     cli::cli_alert_warning("ISS data already cleaned.")
-    return(ctry.data$iss.data)
+    return(iss.data)
   }
 
   cli::cli_process_start("Standardizing priority levels")
