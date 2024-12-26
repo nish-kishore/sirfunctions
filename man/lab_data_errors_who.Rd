@@ -11,7 +11,7 @@ lab_data_errors_who(
   start.date,
   end.date,
   error_path = Sys.getenv("DR_ERROR_PATH"),
-  ctry.data = lifecycle::badge("deprecated")
+  ctry.data = lifecycle::deprecated()
 )
 }
 \arguments{

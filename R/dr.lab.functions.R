@@ -382,7 +382,8 @@ lab_data_errors_who <- function(lab.data, afp.data,
                                 ctry_name = Sys.getenv("DR_COUNTRY"),
                                 start.date, end.date,
                                 error_path = Sys.getenv("DR_ERROR_PATH"),
-                                ctry.data = lifecycle::badge("deprecated")) {
+                                ctry.data = lifecycle::deprecated()) {
+
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -397,9 +398,17 @@ lab_data_errors_who <- function(lab.data, afp.data,
   end.date <- lubridate::as_date(end.date)
   ctry_name <- stringr::str_to_upper(ctry_name)
 
-  cli::cli_process_start("Filtering to country of interest")
+  cli::cli_process_start("Filtering to the country of interest")
+  lab.data <- suppressMessages(impute_missing_lab_geo(lab.data, afp.data))
+  lab.data <- lab.data |> dplyr::filter(.data$ctry %in% ctry_name)
+  cli::cli_process_done()
+
+  cli::cli_process_start("Filtering for years of interest and cases")
   lab.data <- lab.data |>
-    dplyr::filter(stringr::str_to_upper(.data$Name) %in% ctry_name)
+    dplyr::filter(
+      dplyr::between(year, lubridate::year(start.date), lubridate::year(end.date)),
+      CaseOrContact == "1-Case"
+    )
   cli::cli_process_done()
 
   cli::cli_process_start("Checking for invalid dates from cases.")
@@ -410,11 +419,7 @@ lab_data_errors_who <- function(lab.data, afp.data,
       (days.lab.seq < 0) &
       (days.itd.seqres < 0) &
       (days.itd.arriveseq < 0) &
-      (days.seq.rec.res < 0)) |>
-    dplyr::filter(
-      year >= lubridate::year(start.date) & year <= lubridate::year(end.date),
-      CaseOrContact == "1-Case"
-    )
+      (days.seq.rec.res < 0))
 
   if (nrow(invalid_dates) != 0) {
     cli::cli_alert_warning(paste0("There are ", nrow(invalid_dates),
@@ -445,7 +450,8 @@ lab_data_errors_who <- function(lab.data, afp.data,
   missing_epids <- lab.data |> dplyr::filter(!(EpidNumber %in% afp.data$epid))
 
   if (nrow(missing_epids) != 0) {
-    cli::cli_alert_warning(paste0("There are ", nrow(missing_epids), " lab cases not in the AFP linelist."))
+    cli::cli_alert_warning(paste0("There are ", nrow(missing_epids),
+                                  " lab cases not in the AFP linelist."))
   } else {
     cli::cli_alert_success("No lab cases missing in the AFP linelist.")
   }
