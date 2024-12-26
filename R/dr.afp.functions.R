@@ -612,7 +612,8 @@ generate_int_data <- function(ctry.data, start_date, end_date, spatial.scale, la
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
   afp.data <- ctry.data$afp.all.2 |>
-    dplyr::filter(dplyr::between(date, start_date, end_date))
+    dplyr::filter(dplyr::between(date, start_date, end_date),
+                  .data$cdc.classification.all2 != "NOT-AFP")
 
   select_criteria <- NULL
   select_criteria <- switch(spatial.scale,
@@ -945,71 +946,6 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
   return(cases.need60day)
 }
 
-#' Generate a summary of AFP samples by year
-#'
-#' Generates a summary table of the number of AFP cases per country and year.
-#' This function is used primarily with [generate_ctry_timeliness_graph()] as a
-#' label of the y-axis.
-#' @param ctry.data `list` Large list containing country polio data. This is the output
-#' of [init_dr()] or [extract_country_data()].
-#' @param start_date `str` Start date of analysis.
-#' @param end_date `str` End date of analysis.
-#' @returns `tibble` A table containing summary of AFP cases by year and country.
-#' @examples
-#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' ctry.data <- extract_country_data("algeria", raw.data)
-#' ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
-#'
-#' @export
-generate_year_lab <- function(ctry.data, start_date, end_date) {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
-  afp.year.lab <- ctry.data$afp.all.2 |>
-    dplyr::filter(
-      dplyr::between(.data$date, start_date, end_date),
-      cdc.classification.all2 != "NOT-AFP"
-    ) |>
-    dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
-    dplyr::mutate(labs = paste0(
-      year,
-      " (N=", n, ")"
-    ))
-
-  return(afp.year.lab)
-}
-
-#' Generate a summary of samples by year and province
-#'
-#' Generates a summary table of the number of AFP cases per province and year.
-#' This function is used primarily with [generate_prov_timeliness_graph()] as a
-#' label of the y-axis.
-#' @param ctry.data `list` Large list containing country polio data. This is the output
-#' of [init_dr()] or [extract_country_data()].
-#' @param start_date `str` Start date of analysis.
-#' @param end_date `str` End date of analysis.
-#' @returns `tibble` A table containing summary of AFP cases by year and province.
-#' @examples
-#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' ctry.data <- extract_country_data("algeria", raw.data)
-#' prov.labels <- generate_prov_year_lab(ctry.data, "2021-01-01", "2023-12-31")
-#'
-#' @export
-generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
-  afp.prov.year.lab <- ctry.data$afp.all.2 |>
-    dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
-    dplyr::count(prov, adm1guid, year) |>
-    dplyr::mutate(labs = paste0(
-      year,
-      " (N=", n, ")"
-    ))
-
-  return(afp.prov.year.lab)
-}
-
 #' Creating a table of compatible and potentially compatible cases
 #'
 #' Creates a table of compatible and potentially compatible cases, with an
@@ -1289,4 +1225,87 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
     )
 
   return(stool.data)
+}
+
+# Deprecated functions ----
+#' Generate a summary of AFP samples by year
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' Generates a summary table of the number of AFP cases per country and year.
+#' This function is used primarily with [generate_ctry_timeliness_graph()] as a
+#' label of the y-axis. However, as of sirfunctions 1.3.0,
+#' [generate_ctry_timeliness_graph()] now creates its own labels.
+#'
+#' @param ctry.data `list` Large list containing country polio data. This is the output
+#' of [init_dr()] or [extract_country_data()].
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @returns `tibble` A table containing summary of AFP cases by year and country.
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+#'
+#' @keywords internal
+generate_year_lab <- function(ctry.data, start_date, end_date) {
+
+  lifecycle::deprecate_warn("1.0.0", "generate_year_lab()",
+                            details = "This function is not used in the desk review.")
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  afp.year.lab <- ctry.data$afp.all.2 |>
+    dplyr::filter(
+      dplyr::between(.data$date, start_date, end_date),
+      cdc.classification.all2 != "NOT-AFP"
+    ) |>
+    dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
+    dplyr::mutate(labs = paste0(
+      year,
+      " (N=", n, ")"
+    ))
+
+  return(afp.year.lab)
+}
+
+#' Generate a summary of samples by year and province
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' Generates a summary table of the number of AFP cases per province and year.
+#' This function was used primarily with [generate_prov_timeliness_graph()]. However,
+#' [generate_prov_timeliness_graph()] now creates the labels itself so this
+#' function is not used anymore.
+#'
+#' @param ctry.data `list` Large list containing country polio data. This is the output
+#' of [init_dr()] or [extract_country_data()].
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @returns `tibble` A table containing summary of AFP cases by year and province.
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' ctry.data <- extract_country_data("algeria", raw.data)
+#' prov.labels <- generate_prov_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+#'
+#' @keywords internal
+generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
+
+  lifecycle::deprecate_warn("1.3.0", "generate_prov_year_lab()",
+                              details = "This function is not used in the desk review.")
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  afp.prov.year.lab <- ctry.data$afp.all.2 |>
+    dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
+    dplyr::count(prov, adm1guid, year) |>
+    dplyr::mutate(labs = paste0(
+      year,
+      " (N=", n, ")"
+    ))
+
+  return(afp.prov.year.lab)
 }
