@@ -42,7 +42,6 @@ load_iss_data <- function(iss_path, sheet_name = NULL) {
 #'  - `Not Focal Site`: begins with "n" or "x".
 #' @import cli dplyr stringr
 #' @importFrom zoo as.yearmon
-#' @param ctry.data `list` The output of [init_dr()], with ISS data attached.
 #' @param start_date `str` Start date of desk review.
 #' @param end_date `str` End date of desk review.
 #' @param priority_col `str` Column representing priority level.
@@ -53,17 +52,19 @@ load_iss_data <- function(iss_path, sheet_name = NULL) {
 #' @param hf_col `str` Column representing the health facility name.
 #' @param today_col `str` Column representing when info was recorded.
 #' @param date_of_visit_col `str` Column representing date of visit.
+#' @param ctry.data `list` `r lifecycle::badge("deprecated")` Please pass the
+#' ISS data directly to the iss.data parameter.
 #'
 #' @return `tibble` Cleaned eSurv/ISS data.
 #' @examples
 #' \dontrun{
 #' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
 #' ctry.data <- init_dr("somalia", iss_data_path = iss_path)
-#' ctry.data$iss.data <- clean_iss_data(ctry.data)
+#' ctry.data$iss.data <- clean_iss_data(ctry.data$iss.data)
 #' }
 #'
 #' @export
-clean_iss_data <- function(ctry.data, start_date, end_date,
+clean_iss_data <- function(iss.data, start_date, end_date,
                            priority_col = "priority_level",
                            start_time_col = "starttime",
                            unreported_cases_col = "num_unreportedcases",
@@ -71,41 +72,53 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
                            dist_col = "districts",
                            hf_col = "name_of_facility_visited",
                            today_col = "today",
-                           date_of_visit_col = "date_of_visit") {
+                           date_of_visit_col = "date_of_visit",
+                           ctry.data = lifecycle::deprecated()) {
+
+  if (lifecycle::is_present(ctry.data)) {
+    lifecycle::deprecate_warn(
+      when = "1.3.0",
+      what = "clean_iss_data(ctry.data)",
+      details = "Please pass the dataframe directly to iss.data."
+    )
+
+    if (is.null(ctry.data$iss.data)) {
+      message("No ISS data attached.")
+      return(ctry.data)
+    }
+
+    iss.data <- ctry.data$iss.data
+  }
+
   # check if already cleaned
-  if ("monyear" %in% names(ctry.data$iss.data)) {
+  if ("monyear" %in% names(iss.data)) {
     cli::cli_alert_warning("ISS data already cleaned.")
     return(ctry.data$iss.data)
   }
 
-  if (is.null(ctry.data$iss.data)) {
-    message("No ISS data attached.")
-    return(NULL)
-  }
-
   cli::cli_process_start("Standardizing priority levels")
-  iss.02 <- ctry.data$iss.data %>%
-    mutate(priority_level = dplyr::case_when(
+  iss.02 <- iss.data |>
+    dplyr::mutate(priority_level = dplyr::case_when(
       stringr::str_to_lower(substr(get(priority_col), 1, 1)) == "h" ~ "High",
       stringr::str_to_lower(substr(get(priority_col), 1, 1)) == "m" ~ "Medium",
       stringr::str_to_lower(substr(get(priority_col), 1, 1)) == "l" ~ "Low",
       stringr::str_to_lower(substr(get(priority_col), 1, 1)) %in% c("n", "x") ~ "Not Focal Site",
       TRUE ~ get(priority_col)
-    )) %>%
-    mutate(priority_level = factor(.data$priority_level, levels = c(
+    )) |>
+    dplyr::mutate(priority_level = factor(.data$priority_level, levels = c(
       "High", "Medium", "Low", "Not Focal Site"
     ))) |>
-    mutate(priority_level = dplyr::if_else(is.na(.data$priority_level), "Not Focal Site", .data$priority_level))
+    dplyr::mutate(priority_level = dplyr::if_else(is.na(.data$priority_level), "Not Focal Site", .data$priority_level))
   cli::cli_process_done()
 
   cli::cli_process_start("Adding date columns")
   iss.02 <- iss.02 |>
-    mutate(
+    dplyr::mutate(
       monyear = zoo::as.yearmon(as.Date(.data[[start_time_col]])),
       month = lubridate::month(as.Date(.data[[start_time_col]])),
       year = lubridate::year(as.Date(.data[[start_time_col]]))
     ) |>
-    mutate(
+    dplyr::mutate(
       today_date = lubridate::as_date(.data[[today_col]], format = "%m/%d/%Y"),
       date_of_visit = lubridate::as_date(.data[[date_of_visit_col]], format = "%m/%d/%Y")
     )
@@ -116,16 +129,16 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
     message("Column for unreported AFP cases unavailable.")
   } else {
     # Unreported AFP
-    iss.02 <- iss.02 %>%
-      mutate(unrep_afp = as.numeric(.data[[unreported_cases_col]])) |>
+    iss.02 <- iss.02 |>
+      dplyr::mutate(unrep_afp = as.numeric(.data[[unreported_cases_col]])) |>
       suppressWarnings()
   }
   cli::cli_process_done()
 
   # Province and District
   cli::cli_process_start("Standardizing province and district names")
-  iss.02 <- iss.02 %>%
-    mutate(
+  iss.02 <- iss.02 |>
+    dplyr::mutate(
       prov = toupper(.data[[prov_col]]),
       dists = toupper(iconv(.data[[dist_col]], to = "ASCII//TRANSLIT"))
     )
@@ -134,7 +147,7 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
   # Convert "n/a" characters to actual null values
   cli::cli_process_start("Converting n/a characters to actual null values")
   iss.02 <- iss.02 |>
-    mutate(
+    dplyr::mutate(
       dists = dplyr::if_else(.data$dists == "N/A", NA, .data$dists),
       prov = dplyr::if_else(.data$prov == "N/A", NA, .data$prov)
     )
@@ -142,15 +155,15 @@ clean_iss_data <- function(ctry.data, start_date, end_date,
 
   # Remove accents
   cli::cli_process_start("Performing cleaning for names")
-  iss.02 <- iss.02 %>%
-    mutate(facility_name2 = iconv(.data[[hf_col]],
+  iss.02 <- iss.02 |>
+    dplyr::mutate(facility_name2 = iconv(.data[[hf_col]],
       to = "ASCII//TRANSLIT"
     ))
 
   # Make all capital letters and remove extra white space
-  iss.02 <- iss.02 %>%
-    mutate(facility_name2 = toupper(.data$facility_name2)) %>%
-    mutate(facility_name2 = stringr::str_squish(.data$facility_name2))
+  iss.02 <- iss.02 |>
+    dplyr::mutate(facility_name2 = toupper(.data$facility_name2)) |>
+    dplyr::mutate(facility_name2 = stringr::str_squish(.data$facility_name2))
   cli::cli_process_done()
 
   return(iss.02)
