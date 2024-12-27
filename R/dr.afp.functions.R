@@ -459,7 +459,7 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
 #' @param spatial_scale `str` Scale to summarize to. Valid values are: `"ctry" or "prov"`. `"dist"` not available currently.
-#' @param lab_data `tibble` Summarized lab data, if available. This parameter will calculate timeliness intervals in the lab. Otherwise,
+#' @param lab_data_summary `tibble` Summarized lab data, if available. This parameter will calculate timeliness intervals in the lab. Otherwise,
 #' only the field component will be presented. This is the output of [generate_lab_timeliness()].
 #' @param ctry.data `list` `r lifecycle::badge("deprecated") `
 #'
@@ -482,7 +482,7 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
 #' @seealso [clean_ctry_data()]
 #' @export
 generate_int_data <- function(afp_data, pop_data, start_date, end_date,
-                              spatial_scale, lab_data = NULL,
+                              spatial_scale, lab_data_summary = NULL,
                               ctry.data = lifecycle::deprecated(),
                               spatial.scale = lifecycle::deprecated(),
                               lab.data = lifecycle::deprecated()) {
@@ -512,8 +512,8 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 
   if (lifecycle::is_present(lab.data)) {
     lifecycle::deprecate_warn("1.3.0", "generate_int_data(lab.data)",
-                              "generate_int_data(lab_data)")
-    lab_data <- lab.data
+                              "generate_int_data(lab_data_summary)")
+    lab_data_summary <- lab.data
   }
 
   # Ensure that if using raw.data, required renamed columns are present. Borrowed from
@@ -542,7 +542,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     afp_data <- suppressMessages(col_to_datecol(afp_data))
   }
 
-  stool_to_lab_name <- dplyr::if_else(is.null(lab_data), "daysstooltolab", "days.collect.lab")
+  stool_to_lab_name <- dplyr::if_else(is.null(lab_data_summary), "daysstooltolab", "days.collect.lab")
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -619,8 +619,8 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     }
   )
 
-  if (!is.null(lab_data)) {
-    int.data <- dplyr::bind_rows(lab_data, int.data)
+  if (!is.null(lab_data_summary)) {
+    int.data <- dplyr::bind_rows(lab_data_summary, int.data)
   }
 
   if (spatial_scale == "prov") {
@@ -630,7 +630,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
   }
 
   # Filtering based on whether labs are attached
-  if (is.null(lab_data)) {
+  if (is.null(lab_data_summary)) {
     int.data <- int.data |>
       dplyr::filter(type %in% c(
         "ontonot",
