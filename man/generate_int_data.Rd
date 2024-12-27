@@ -46,15 +46,21 @@ by default, the function will return only the timeliness intervals up to when th
 sent to lab.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
-ctry.data <- clean_ctry_data(ctry.data)
-int.data <- generate_int_data(ctry.data, "2021-01-01", "2023-12-31", "ctry") # lab data not attached
-\dontrun{
+# lab data not attached
+int.data <- generate_int_data(raw.data$afp, raw.data$ctry.pop,
+                              "2021-01-01", "2023-12-31", "ctry")
+
 # If lab data is available. Assume ctry.data is loaded.
 lab_path <- "C:/Users/ABC1/Desktop/algeria_lab.csv"
 lab.data <- readr::read_csv(lab_path)
-int.data <- generate_int_data(ctry.data, "2021-01-01", "2023-12-31", "ctry", lab.data)
+lab.data.summary <- generate_lab_timeliness(lab.data, "ctry",
+                                            "2021-01-01", "2023-12-31")
+int.data <- generate_int_data(ctry.data$afp.all.2, ctry.data$ctry.pop,
+                              "2021-01-01", "2023-12-31", "ctry",
+                              lab.data.summary)
 }
 
 }
