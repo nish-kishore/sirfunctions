@@ -100,7 +100,6 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
     summarise(par = sum(.data$weight * .data$u15pop)) |>
     ungroup()
 
-
   # Count the number of NPAFP cases
   int.data <- afp.data |>
     dplyr::group_by(get(geo)) |>
@@ -170,14 +169,19 @@ f.npafp.rate.01 <- function(
     pending = T,
     rolling = F,
     sp_continuity_validation = T) {
+
   # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
   }
 
+  # Local static vars
+  names.ctry <- c("adm0guid", "year", "ctry")
+  names.prov <- c(names.ctry, "adm1guid", "prov")
+  names.dist <- c(names.prov, "adm2guid", "dist")
+
   # Ensure that if using raw.data, required renamed columns are present. Borrowed from
   # extract.country.data()
-
   afp.data <- dplyr::rename_with(afp.data, recode,
     place.admin.0 = "ctry",
     place.admin.1 = "prov",
@@ -196,12 +200,6 @@ f.npafp.rate.01 <- function(
     ADM0_GUID = "adm0guid",
     u15pop.prov = "u15pop"
   )
-
-
-  # Local static vars
-  names.ctry <- c("adm0guid", "year", "ctry")
-  names.prov <- c(names.ctry, "adm1guid", "prov")
-  names.dist <- c(names.prov, "adm2guid", "dist")
 
   # Check data inputs
   # Analysis start and end date as defined by user (as a character)
@@ -280,7 +278,7 @@ f.npafp.rate.01 <- function(
     dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180)
 
   # Only years of analysis
-  pop.data <- pop.data %>%
+  pop.data <- pop.data |>
     dplyr::filter(dplyr::between(
       year,
       lubridate::year(start.date),
