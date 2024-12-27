@@ -2046,7 +2046,8 @@ check_missing_rows <- function(df,
 #' test <- get_edav_data()
 #' }
 get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
-
+  cli::cli_alert_info(paste0("Interactive file selection activated.",
+                             " Use backspace to exit."))
   pointer <- path
   while (TRUE) {
     output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
@@ -2055,7 +2056,7 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
                                "1) Previous directory\n",
                                "2) Move up one directory\n",
                                "3) Load data"))
-    response <- stringr::str_trim(readline("Response:"))
+    response <- stringr::str_trim(readline("Response: "))
     if (!response %in% c("1", "2", "3")) {
       cli::cli_alert_warning("Invalid response. Please try again.\n")
     } else if (response == "1") {
@@ -2063,13 +2064,10 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
     } else if (response == "2") {
       while (TRUE) {
         cli::cli_alert_info("Please input the line number:")
-        response <- stringr::str_trim(readline("Response:"))
-        response <- tryCatch(as.numeric(response),
-                 error = function(e) {
-                   cli::cli_alert_warning("Not a number. Please try again.\n")
-                   next
-                 })
-        if (response > nrow(output)) {
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+                 error = function(e) {NA})
+        if (is.na(response) | response > nrow(output) | response == 0) {
           cli::cli_alert_warning("Invalid response. Please try again:\n")
           print(output)
         } else {
@@ -2080,13 +2078,10 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
     } else if (response == "3") {
       while (TRUE) {
         cli::cli_alert_info("Please input the line number:")
-        response <- stringr::str_trim(readline("Response:"))
-        response <- tryCatch(as.numeric(response),
-                             error = function(e) {
-                               cli::cli_alert("Not a number. Please try again.\n")
-                               next
-                             })
-        if (response > nrow(output)) {
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+                             error = function(e) {NA})
+        if (is.na(response) | response > nrow(output) | response == 0) {
           cli::cli_alert_info("Invalid response. Please try again:\n")
           print(output)
         } else if (output[response, ]$isdir == TRUE) {
