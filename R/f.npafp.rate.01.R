@@ -321,8 +321,8 @@ f.npafp.rate.01 <- function(
 
   numeric_cols <- c("n_npafp", "u15pop", "npafp_rate", "par")
   int.data <- int.data |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols), \(x) tidyr::replace_na(x, 0))) |>
-    tidyr::drop_na(dplyr::any_of(spatial.scale))
+    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols),
+                                \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 }

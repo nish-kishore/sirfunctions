@@ -566,8 +566,7 @@ f.stool.ad.01 <- function(
   }
 
   int.data <- int.data |>
-    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad") |>
-    tidyr::drop_na(dplyr::any_of(spatial.scale))
+    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad")
 
   return(int.data)
 }
