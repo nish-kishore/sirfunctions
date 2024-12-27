@@ -652,7 +652,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
       dplyr::summarise(sum = sum(.data$medi)) |>
       dplyr::pull()
 
-    if (is.na(int.data.filter)) {
+    if (is.na(sum(int.data.filter))) {
       int.data <- int.data |>
         dplyr::filter(!type %in% who.additional.cols)
     } else {
