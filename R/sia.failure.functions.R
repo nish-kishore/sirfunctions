@@ -2797,7 +2797,7 @@ f.sia.donut.ctry.yr <- function(k,
                                                                   paste0("tOPV virus in buffer ", breakthrough_min_date+1," to ",breakthrough_middle_date," days"))),
                 mapping=data.frame(key=names1, values=names2, stringsAsFactors = FALSE), key="key") %>%
     flextable::bg(j = 4:12,
-       flextable::bg = function(x){
+       bg = function(x){
          out <- rep("transparent", length(x))
          out[parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) < 5 &
                parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) > 0 ] <- "#fcbba1"
@@ -2818,13 +2818,13 @@ f.sia.donut.ctry.yr <- function(k,
     flextable::width(j = 1, width=2.2) |>
     flextable::merge_v(j = ~Country) |>
     flextable::merge_v(j = c("Country", "v.dummy"), target = c("Country", "Round")) |>
-    flextable::theme_vanilla |>
+    flextable::theme_vanilla() |>
     flextable::add_footer(Year = "Detections which were not responded to within 60 days of onset/collection") |>
     flextable::merge_at(j = 1:12, part = "footer") |>
     flextable::fontsize(size = 10, part = "all") |>
     flextable::align(align = "center", part = "all") |>
     flextable::align(j = 1:2, align = "left", part = "all") |>
-    flextable::valign(j = 1, valign = "top", part = "body") |>
+    flextable::valign(j = 1, valign = "top", part = "body") %>%
     return()
 
 }
