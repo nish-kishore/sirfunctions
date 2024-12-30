@@ -121,7 +121,9 @@ clean_sia_data <- function(sia.data,
       dplyr::select(sia.sub.activity.code, status, phase, im.loaded, lqas.loaded,
                     vaccine.type, sub.activity.start.date, adm2guid, linked.obx,
                     yr.sia, place.admin.0, place.admin.1, place.admin.2,
-                    sub.activity.end.date, vaccine.type, adm0guid, adm1guid, `admin.coverage.%`)
+                    sub.activity.end.date, vaccine.type, adm0guid, adm1guid,
+                    `admin.coverage.%`, cluster, cluster_method, round.num.sia = cdc.round.num,
+                    max.round = cdc.max.round, last.camp = cdc.last.camp)
 
 
     print("[1/3]-Removing campaigns that did not occur")
@@ -186,7 +188,8 @@ clean_sia_data <- function(sia.data,
                       vaccine.type == "bOPV") |>
       dplyr::select(sia.sub.activity.code, place.admin.0, place.admin.1, place.admin.2,
              sub.activity.start.date, sub.activity.end.date, vaccine.type, adm0guid,
-             adm1guid, adm2guid, yr.sia, `admin.coverage.%`)
+             adm1guid, adm2guid, yr.sia, `admin.coverage.%`, cluster, cluster_method,
+             round.num.sia, max.round, last.camp)
 
     return(sia.reg)
   }
@@ -203,7 +206,9 @@ clean_sia_data <- function(sia.data,
       dplyr::select(sia.sub.activity.code, status, phase, im.loaded, lqas.loaded, vaccine.type,
              sub.activity.start.date, adm2guid, linked.obx, yr.sia, place.admin.0,
              place.admin.1, place.admin.2,sub.activity.end.date,
-             vaccine.type, adm0guid, adm1guid, `admin.coverage.%`)
+             vaccine.type, adm0guid, adm1guid, `admin.coverage.%`, cluster,
+             cluster_method, round.num.sia = cdc.round.num,
+             max.round = cdc.max.round, last.camp = cdc.last.camp)
 
     print("[1/3]- subsetting to planned campaigns")
 
@@ -271,7 +276,8 @@ clean_sia_data <- function(sia.data,
       # filter(vaccine.type=="mOPV2" | vaccine.type=="nOPV2" | (vaccine.type=="tOPV" & sub.activity.start.date>"2017-01-01") | vaccine.type == "bOPV") %>%
       dplyr::select(sia.sub.activity.code, place.admin.0, place.admin.1, place.admin.2,
                     sub.activity.start.date, sub.activity.end.date, vaccine.type,
-                    adm0guid, adm1guid, adm2guid, yr.sia, status, phase, `admin.coverage.%`)
+                    adm0guid, adm1guid, adm2guid, yr.sia, status, phase, `admin.coverage.%`,
+                    cluster, cluster_method, round.num.sia, max.round, last.camp)
 
     return(sia.planned)
   }
@@ -288,7 +294,9 @@ clean_sia_data <- function(sia.data,
       dplyr::select(sia.sub.activity.code, status, phase, im.loaded, lqas.loaded,
                     vaccine.type, sub.activity.start.date, adm2guid, linked.obx,
                     yr.sia, place.admin.0, place.admin.1, place.admin.2,
-                    sub.activity.end.date, vaccine.type, adm0guid, adm1guid, `admin.coverage.%`)
+                    sub.activity.end.date, vaccine.type, adm0guid, adm1guid, `admin.coverage.%`,
+                    cluster, cluster_method, round.num.sia = cdc.round.num,
+                    max.round = cdc.max.round, last.camp = cdc.last.camp)
 
     print("[1/3]-Removing campaigns that did not occur")
 
@@ -353,7 +361,8 @@ clean_sia_data <- function(sia.data,
       dplyr::filter(vaccine.type=="IPV" | vaccine.type=="f-IPV" | vaccine.type=="IPV + bOPV") |>
       dplyr::select(sia.sub.activity.code, place.admin.0, place.admin.1, place.admin.2,
                     sub.activity.start.date, sub.activity.end.date, vaccine.type,
-                    adm0guid, adm1guid, adm2guid, yr.sia, `admin.coverage.%`)
+                    adm0guid, adm1guid, adm2guid, yr.sia, `admin.coverage.%`,
+                    cluster, cluster_method, round.num.sia, max.round, last.camp)
 
     return(sia.ipv)
   }
