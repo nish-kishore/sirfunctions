@@ -2762,14 +2762,17 @@ f.sia.donut.ctry.yr <- function(k,
   names1 <- c("Country",
               "Round",
               "Year",
-              paste0("nOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("bOPV virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
               paste0("mOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("nOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
               paste0("tOPV virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
-              paste0("nOPV2 virus in buffer 0-",breakthrough_min_date," days"),
+              paste0("bOPV virus in buffer 0-",breakthrough_min_date," days"),
               paste0("mOPV2 virus in buffer 0-",breakthrough_min_date," days"),
+              paste0("nOPV2 virus in buffer 0-",breakthrough_min_date," days"),
               paste0("tOPV virus in buffer 0-",breakthrough_min_date," days"),
-              paste0("nOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
+              paste0("bOPV virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
               paste0("mOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
+              paste0("nOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
               paste0("tOPV virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"))
   names2 <- c("",
               "",
@@ -2777,26 +2780,32 @@ f.sia.donut.ctry.yr <- function(k,
               paste0("Virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
               paste0("Virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
               paste0("Virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("Virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("Virus in buffer 0-",breakthrough_min_date," days after SIA"),
               paste0("Virus in buffer 0-",breakthrough_min_date," days after SIA"),
               paste0("Virus in buffer 0-",breakthrough_min_date," days after SIA"),
               paste0("Virus in buffer 0-",breakthrough_min_date," days after SIA"),
               paste0("Virus in buffer ",breakthrough_min_date+1,"-",breakthrough_middle_date," days after SIA"),
               paste("Virus in buffer ",breakthrough_min_date+1,"-",breakthrough_middle_date," days after SIA"),
+              paste0("Virus in buffer ",breakthrough_min_date+1,"-",breakthrough_middle_date," days after SIA"),
               paste0("Virus in buffer ",breakthrough_min_date+1,"-",breakthrough_middle_date," days after SIA"))
 
   flextable::set_header_df(x = flextable::flextable(sia.donut.failure.ctry.01 |>
                               dplyr::filter(WHO_REGION %in% k), col_keys=c("Country", "Round","Year",
-                                                                  paste0("nOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+                                                                  paste0("bOPV virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
                                                                   paste0("mOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+                                                                  paste0("nOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
                                                                   paste0("tOPV virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
-                                                                  paste0("nOPV2 virus in buffer 0-",breakthrough_min_date," days"),
+                                                                  paste0("bOPV virus in buffer 0-",breakthrough_min_date," days"),
                                                                   paste0("mOPV2 virus in buffer 0-",breakthrough_min_date," days"),
+                                                                  paste0("nOPV2 virus in buffer 0-",breakthrough_min_date," days"),
                                                                   paste0("tOPV virus in buffer 0-",breakthrough_min_date," days"),
-                                                                  paste0("nOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
+                                                                  paste0("bOPV virus in buffer ", breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
                                                                   paste0("mOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
+                                                                  paste0("nOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
                                                                   paste0("tOPV virus in buffer ", breakthrough_min_date+1," to ",breakthrough_middle_date," days"))),
-                mapping=data.frame(key=names1, values=names2, stringsAsFactors = FALSE), key="key") %>%
-    flextable::bg(j = 4:12,
+                mapping=data.frame(key=names1, values=names2, stringsAsFactors = FALSE), key="key") |>
+    flextable::bg(j = 4:15,
        bg = function(x){
          out <- rep("transparent", length(x))
          out[parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) < 5 &
@@ -2806,21 +2815,21 @@ f.sia.donut.ctry.yr <- function(k,
          out[parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) >10 ] <- "#ef3b2c"
 
          out
-       }) %>%
-    flextable::merge_at(i = 1, j = 4:6, part = "header") |>
-    flextable::merge_at(i = 1, j = 7:9, part = "header") |>
-    flextable::merge_at(i = 1, j = 10:12, part = "header") |>
+       }) |>
+    flextable::merge_at(i = 1, j = 4:7, part = "header") |>
+    flextable::merge_at(i = 1, j = 8:11, part = "header") |>
+    flextable::merge_at(i = 1, j = 12:15, part = "header") |>
     flextable::add_header_row(
-      values = c("Country", "Round", "Year", "nOPV2", "mOPV2", "tOPV", "nOPV2", "mOPV2", "tOPV", "nOPV2", "mOPV2", "tOPV"), top=F) |>
+      values = c("Country", "Round", "Year", "bOPV", "mOPV2", "nOPV2", "tOPV", "bOPV", "mOPV2", "nOPV2", "tOPV", "bOPV", "mOPV2", "nOPV2", "tOPV"), top=F) |>
     flextable::bold(bold = TRUE, part = "header") |>
-    flextable::width(j = 4:12, width=1.2) |>
+    flextable::width(j = 4:15, width=1.2) |>
     flextable::width(j = 2:3, width=0.8) |>
     flextable::width(j = 1, width=2.2) |>
     flextable::merge_v(j = ~Country) |>
     flextable::merge_v(j = c("Country", "v.dummy"), target = c("Country", "Round")) |>
     flextable::theme_vanilla() |>
     flextable::add_footer(Year = "Detections which were not responded to within 60 days of onset/collection") |>
-    flextable::merge_at(j = 1:12, part = "footer") |>
+    flextable::merge_at(j = 1:15, part = "footer") |>
     flextable::fontsize(size = 10, part = "all") |>
     flextable::align(align = "center", part = "all") |>
     flextable::align(j = 1:2, align = "left", part = "all") |>
