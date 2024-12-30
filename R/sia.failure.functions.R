@@ -2743,3 +2743,88 @@ f.sia.failure.ctry.yr <- function(k,
 
 }
 
+#' Flextable format for breakthrough viruses
+#' @description
+#' a function to create a flextable summarizing SIA performance at country level
+#' @param k str WHO region "AFRO", "EMRO", "SEARO", "WPRO", "EURO", "AMRO"
+#' @param sia.donut.failure.ctry.01 tibble df of country donut failure
+#' @param breakthrough_min_date int minimum days after SIA to be considered breakthrough
+#' @param breakthrough_middle_date int number of days to set cutoff between early and late breakthrough
+#' @param breakthrough_max_date int maximum number of days a case could be considered breakthrough
+#' @param detection_pre_sia_date int used to restrict "Recent SIA with breakthrough transmission" figures to 'recent' SIAs
+f.sia.donut.ctry.yr <- function(k,
+                                sia.donut.failure.ctry.01,
+                                breakthrough_min_date = load_parameters()$breakthrough_min_date,
+                                breakthrough_middle_date =load_parameters()$breakthrough_middle_date,
+                                breakthrough_max_date = load_parameters()$breakthrough_max_date,
+                                detection_pre_sia_date = load_parameters()$detection_pre_sia_date){
+
+  names1 <- c("Country",
+              "Round",
+              "Year",
+              paste0("nOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("mOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("tOPV virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("nOPV2 virus in buffer 0-",breakthrough_min_date," days"),
+              paste0("mOPV2 virus in buffer 0-",breakthrough_min_date," days"),
+              paste0("tOPV virus in buffer 0-",breakthrough_min_date," days"),
+              paste0("nOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
+              paste0("mOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
+              paste0("tOPV virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"))
+  names2 <- c("",
+              "",
+              "",
+              paste0("Virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("Virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("Virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+              paste0("Virus in buffer 0-",breakthrough_min_date," days after SIA"),
+              paste0("Virus in buffer 0-",breakthrough_min_date," days after SIA"),
+              paste0("Virus in buffer 0-",breakthrough_min_date," days after SIA"),
+              paste0("Virus in buffer ",breakthrough_min_date+1,"-",breakthrough_middle_date," days after SIA"),
+              paste("Virus in buffer ",breakthrough_min_date+1,"-",breakthrough_middle_date," days after SIA"),
+              paste0("Virus in buffer ",breakthrough_min_date+1,"-",breakthrough_middle_date," days after SIA"))
+
+  set_header_df(x=flextable(sia.donut.failure.ctry.01 %>%
+                              filter(WHO_REGION%in%k), col_keys=c("Country", "Round","Year",
+                                                                  paste0("nOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+                                                                  paste0("mOPV2 virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+                                                                  paste0("tOPV virus in buffer ",detection_pre_sia_date," to 0 days pre SIA"),
+                                                                  paste0("nOPV2 virus in buffer 0-",breakthrough_min_date," days"),
+                                                                  paste0("mOPV2 virus in buffer 0-",breakthrough_min_date," days"),
+                                                                  paste0("tOPV virus in buffer 0-",breakthrough_min_date," days"),
+                                                                  paste0("nOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
+                                                                  paste0("mOPV2 virus in buffer ",breakthrough_min_date+1," to ",breakthrough_middle_date," days"),
+                                                                  paste0("tOPV virus in buffer ", breakthrough_min_date+1," to ",breakthrough_middle_date," days"))),
+                mapping=data.frame(key=names1, values=names2, stringsAsFactors = FALSE), key="key") %>%
+    bg(j = 4:12,
+       bg = function(x){
+         out <- rep("transparent", length(x))
+         out[parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) < 5 &
+               parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) > 0 ] <- "#fcbba1"
+         out[parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) >= 5 &
+               parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) <= 10 ] <- "#fb6a4a"
+         out[parse_number(gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", x, perl=T)) >10 ] <- "#ef3b2c"
+
+         out
+       }) %>%
+    merge_at(i = 1, j = 4:6, part = "header") %>%
+    merge_at(i = 1, j = 7:9, part = "header") %>%
+    merge_at(i = 1, j = 10:12, part = "header")%>%
+    add_header_row(
+      values = c("Country", "Round", "Year", "nOPV2", "mOPV2", "tOPV", "nOPV2", "mOPV2", "tOPV", "nOPV2", "mOPV2", "tOPV"), top=F) %>%
+    bold(bold = TRUE, part = "header") %>%
+    width(j = 4:12, width=1.2) %>%
+    width(j = 2:3, width=0.8) %>%
+    width(j = 1, width=2.2) %>%
+    merge_v(j = ~Country) %>%
+    merge_v(j = c("Country", "v.dummy"), target = c("Country", "Round")) %>%
+    theme_vanilla %>%
+    add_footer(Year = "Detections which were not responded to within 60 days of onset/collection") %>%
+    merge_at(j = 1:12, part = "footer") %>%
+    fontsize(size = 10, part = "all") %>%
+    flextable::align(align = "center", part = "all") %>%
+    flextable::align(j = 1:2, align = "left", part = "all") %>%
+    valign(j = 1, valign = "top", part = "body") %>%
+    return()
+
+}
