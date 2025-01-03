@@ -2047,17 +2047,18 @@ check_missing_rows <- function(df,
 #' }
 get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
   cli::cli_alert_info(paste0("Interactive file selection activated.",
-                             " Use backspace to exit."))
+                             " Use esc to exit."))
   pointer <- path
   while (TRUE) {
     output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
     print(output)
-    cli::cli_alert_info(paste0("Please choose an option (1-3):\n",
+    cli::cli_alert_info(paste0("\nPlease choose an option (1-3):\n",
                                "1) Previous directory\n",
                                "2) Move up one directory\n",
-                               "3) Load data"))
+                               "3) Load data\n",
+                               "4) Copy file path"))
     response <- stringr::str_trim(readline("Response: "))
-    if (!response %in% c("1", "2", "3")) {
+    if (!response %in% c("1", "2", "3", "4")) {
       cli::cli_alert_warning("Invalid response. Please try again.\n")
     } else if (response == "1") {
       pointer <- gsub("[^/]+$", "", pointer)
@@ -2095,6 +2096,20 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
           return(output)
         }
       }
+    } else if (response == "4") {
+      while (TRUE) {
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+                             error = function(e) {NA})
+        if (is.na(response) | response > nrow(output) | response == 0) {
+          cli::cli_alert_info("Invalid response. Please try again:\n")
+          print(output)
+        } else {
+          path_name <- file.path(output[response, ]$name)
+          return(path_name)
+        }
+    }
     }
   }
 }
