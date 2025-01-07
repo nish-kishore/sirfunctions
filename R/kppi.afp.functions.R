@@ -772,22 +772,33 @@ generate_c3_table <- function(es_data, start_date, end_date,
                                       .data$collect.date, units = "days"),
                   coltoresults = difftime(.data$date.final.culture.result,
                                           .data$collect.date, units = "days"),
-                  timely_ship = dplyr::if_else(
-                    (.data$culture.itd.cat == "In-country culture/ITD" & .data$coltolab <= 3) |
-                    (.data$culture.itd.cat == "International culture/ITD" & .data$coltolab <= 7),
-                    TRUE, FALSE),
-                  timely_det = dplyr::if_else(
-                    (stringr::str_detect(.data$seq.capacity, "[Yy]es") & .data$coltoresults <= 35) |
-                      (.data$seq.capacity == "no" & .data$coltoresults <= 46), TRUE, FALSE),
+                  timely_ship = dplyr::case_when(
+                    (.data$culture.itd.cat == "In-country culture/ITD" & .data$coltolab <= 3) ~ "yes",
+                    (.data$culture.itd.cat == "In-country culture/ITD" & .data$coltolab > 3) ~ "no",
+                    (.data$culture.itd.cat == "International culture/ITD" & .data$coltolab <= 7) ~ "yes",
+                    (.data$culture.itd.cat == "International culture/ITD" & .data$coltolab > 7) ~ "no",
+                    (is.na(.data$culture.itd.cat) | is.na(.data$coltolab)) ~ "unable to assess",
+                    .default = NA),
+                  timely_det = dplyr::case_when(
+                    (stringr::str_detect(.data$seq.capacity, "[Yy]es") & .data$coltoresults <= 35) ~ "yes",
+                    (stringr::str_detect(.data$seq.capacity, "[Yy]es") & .data$coltoresults > 35) ~ "no",
+                    (.data$seq.capacity == "no" & .data$coltoresults <= 46) ~ "yes",
+                    (.data$seq.capacity == "no" & .data$coltoresults > 46) ~ "no",
+                    (is.na(.data$seq.capacity) | is.na(.data$coltoresults)) ~ "unable to assess",
+                    .default = NA),
                   is_target = dplyr::if_else(.data$wpv == 1 | .data$vdpv == 1, TRUE, FALSE)
                   ) |>
+    # !!! At this stage, should we filter out negative intervals?
+    dplyr::filter(.data$coltolab < 0, .data$coltoresults < 0) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by)),
                                   .data$site.id, .data$site.name) |>
     dplyr::summarize(
       ev_rate = sum(.data$ev.detect == 1, na.rm = TRUE) / n() * 100,
       prop_good_es = sum(.data$sample.condition == "Good") / n() * 100,
-      prop_timely_ship = sum(timely_ship) / n() * 100,
-      prop_timely_det_wpv_vdpv = sum(timely_det & is_target, na.rm = TRUE) / sum(is_target) * 100
+      # !!! Do we want to include all ES samples or only those we can assess?
+      prop_timely_ship = sum(timely_ship == "yes") / sum(timely_ship != "unable to assess", na.rm = TRUE) * 100,
+      prop_timely_det_wpv_vdpv = sum(timely_det == "yes" & is_target == TRUE, na.rm = TRUE) /
+        sum(is_target == TRUE & timely_det != "unable to assess", na.rm = TRUE) * 100
     )
 
   return(es_summary)
