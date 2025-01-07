@@ -588,7 +588,6 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
                               .group_by = c("adm0guid", "ctry", "year")) {
-
   # Adjust spatial scale for stool adequacy and NPAFP functions
   .spatial_scale <- dplyr::case_when(
     c("dist", "adm2guid") %in% .group_by ~ "dist",
@@ -605,22 +604,22 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
   afp_data <- dplyr::rename_with(afp_data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
   )
   pop_data <- dplyr::rename_with(pop_data, recode,
-                                 ADM0_NAME = "ctry",
-                                 ADM1_NAME = "prov",
-                                 ADM2_NAME = "dist",
-                                 ADM0_GUID = "adm0guid",
-                                 u15pop.prov = "u15pop"
+    ADM0_NAME = "ctry",
+    ADM1_NAME = "prov",
+    ADM2_NAME = "dist",
+    ADM0_GUID = "adm0guid",
+    u15pop.prov = "u15pop"
   )
 
   # Add required columns
@@ -630,58 +629,68 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 
   # NPAFP
   npafp <- f.npafp.rate.01(afp_data, pop_data, start_date, end_date, .spatial_scale,
-                           pending = TRUE, rolling = FALSE,
-                           sp_continuity_validation = FALSE)
+    pending = TRUE, rolling = FALSE,
+    sp_continuity_validation = FALSE
+  )
   # Stool Adequacy
   stool_ad <- f.stool.ad.01(afp_data, pop_data, start_date, end_date, .spatial_scale,
-                            missing = "good", bad.data = "inadequate",
-                            rolling = FALSE, sp_continuity_validation = FALSE)
+    missing = "good", bad.data = "inadequate",
+    rolling = FALSE, sp_continuity_validation = FALSE
+  )
   # Stool Condition
   stool_condition <- generate_stool_data(afp_data, start_date, end_date,
-                                         missing = "good",
-                                         bad.data = "inadequate") |>
+    missing = "good",
+    bad.data = "inadequate"
+  ) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
-    dplyr::summarize(afp_cases = sum(.data$cdc.classification.all2 != "NOT-AFP"),
-                     good_samples = sum(.data$adequacy.final2 == "Adequate"),
-                     prop_good_condition = good_samples / afp_cases)
+    dplyr::summarize(
+      afp_cases = sum(.data$cdc.classification.all2 != "NOT-AFP"),
+      good_samples = sum(.data$adequacy.final2 == "Adequate"),
+      prop_good_condition = good_samples / afp_cases
+    )
 
   # Completeness of Contact Sampling
   # !!! need to learn how to pull 3 contact samples
 
   # Completeness of 60-day follow-ups
   complete_60_day <- generate_stool_data(afp_data, start_date, end_date,
-                                         missing = "good",
-                                         bad.data = "inadequate") |>
+    missing = "good",
+    bad.data = "inadequate"
+  ) |>
     # Note that this also filters out "NOT-AFP" cases
     generate_60_day_table_data(start_date, end_date) |>
     dplyr::left_join(afp_data |>
-                       dplyr::select(dplyr::all_of(c("epid", "adm0guid")))) |>
+      dplyr::select(dplyr::all_of(c("epid", "adm0guid")))) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(prop_complete_60_day = sum(.data$ontime.60day == 1, na.rm = TRUE) /
-                       sum(adequacy.final2 == "Inadequate"))
+      sum(adequacy.final2 == "Inadequate"))
 
   # Timeliness indicators
   timeliness_summary <- afp_data |>
-    dplyr::filter(.data$cdc.classification.all2 != "NOT-AFP",
-                  dplyr::between(.data$date, start_date, end_date)) |>
+    dplyr::filter(
+      .data$cdc.classification.all2 != "NOT-AFP",
+      dplyr::between(.data$date, start_date, end_date)
+    ) |>
     dplyr::mutate(
       ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
-                               .data$date),
-      ontolab = as.numeric(difftime(lubridate::as_date(.data$stooltolabdate),
-                                    .data$date), units = "days"),
+        .data$date),
+      ontolab = as.numeric(difftime(
+        lubridate::as_date(.data$stooltolabdate),
+        .data$date
+      ), units = "days"),
       timely_cat =
         dplyr::case_when(seq.capacity == "yes" & ontonothq <= 35 ~ "<=35 days from onset",
-                  seq.capacity == "yes" & ontonothq > 35 ~ ">35 days from onset",
-                  seq.capacity == "no" & ontonothq <= 46 ~ "<=46 days from onset",
-                  seq.capacity == "no" & ontonothq > 46 ~ ">46 days from onset",
-                  is.na(ontonothq) | ontonothq < 0 ~ "Missing or bad data",
-                  .default = NA
+          seq.capacity == "yes" & ontonothq > 35 ~ ">35 days from onset",
+          seq.capacity == "no" & ontonothq <= 46 ~ "<=46 days from onset",
+          seq.capacity == "no" & ontonothq > 46 ~ ">46 days from onset",
+          is.na(ontonothq) | ontonothq < 0 ~ "Missing or bad data",
+          .default = NA
         ),
       is_timely = dplyr::if_else(.data$timely_cat %in%
-                                   c(
-                                     "<=35 days from onset",
-                                     "<=46 days from onset"
-                                   ), TRUE, FALSE),
+        c(
+          "<=35 days from onset",
+          "<=46 days from onset"
+        ), TRUE, FALSE),
       is_target = dplyr::if_else(
         stringr::str_detect(.data$cdc.classification.all2, "WILD|VDPV"),
         TRUE, FALSE
@@ -697,10 +706,12 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       timely_not = sum(.data$ontonot <= 7, na.rm = TRUE) / n() * 100,
       timely_inv = sum(.data$ontoinvest <= 2, na.rm = TRUE) / n() * 100,
       timely_field = sum(.data$ontostool1 <= 11 &
-                           .data$stool1tostool2 >= 1, na.rm = TRUE) / n() * 100,
-      timely_stool_shipment = sum((.data$culture.itd.cat == "In-country culture/ITD" & .data$daysstooltolab <= 3) |
-                                  (.data$culture.itd.cat == "International culture/ITD" & .data$daysstooltolab <= 7),
-                                  na.rm = TRUE) / n() * 100,
+        .data$stool1tostool2 >= 1, na.rm = TRUE) / n() * 100,
+      timely_stool_shipment = sum(
+        (.data$culture.itd.cat == "In-country culture/ITD" & .data$daysstooltolab <= 3) |
+          (.data$culture.itd.cat == "International culture/ITD" & .data$daysstooltolab <= 7),
+        na.rm = TRUE
+      ) / n() * 100,
       timely_opt_field_shipment = sum(.data$is_opt_timely) / n() * 100,
       timely_wpv_vdpv = sum(.data$is_timely & .data$is_target, na.rm = TRUE) / sum(.data$is_timely, na.rm = TRUE) * 100
     )
@@ -717,12 +728,13 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 
   # Select only required columns
   results <- results |>
-    dplyr::select(dplyr::any_of(.group_by),
-                  "npafp_rate", "per.stool.ad",
-                  "prop_good_condition":"timely_wpv_vdpv")
+    dplyr::select(
+      dplyr::any_of(.group_by),
+      "npafp_rate", "per.stool.ad",
+      "prop_good_condition":"timely_wpv_vdpv"
+    )
 
   return(results)
-
 }
 
 generate_c2_table_iss <- function() {}
