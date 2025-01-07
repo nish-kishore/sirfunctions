@@ -567,8 +567,39 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
 }
 
+#' AFP surveillance KPI summary
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' This function creates a summary table of AFP surveillance KPIs.
+#'
+#' @param afp_data `tibble` AFP linelist data.
+#' @param pop_data `tibble` Population data.
+#' @param start_date `str` Start date of analysis in YYYY-MM-DD format.
+#' @param end_date `str` End date of analysis in YYYY-MM-DD format.
+#' @param .group_by `list` a list of strings to group the data by. Defaults to
+#' `adm0guid, ctry, year`.
+#'
+#' @return `tibble` Summary table containing AFP KPIs.
+#' @export
+#'
+#' @examples
+#' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
                               .group_by = c("adm0guid", "ctry", "year")) {
+
+  # Adjust spatial scale for stool adequacy and NPAFP functions
+  .spatial_scale <- dplyr::case_when(
+    c("dist", "adm2guid") %in% .group_by ~ "dist",
+    c("prov", "adm1guid") %in% .group_by ~ "prov",
+    c("ctry", "adm0guid") %in% .group_by ~ "ctry"
+  )
+  .spatial_scale <- dplyr::case_when(
+    "dist" %in% .spatial_scale ~ "dist",
+    "prov" %in% .spatial_scale ~ "prov",
+    "ctry" %in% .spatial_scale ~ "ctry"
+  )
 
   # Standardize data
   start_date <- lubridate::as_date(start_date)
@@ -598,11 +629,11 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     col_to_datecol()
 
   # NPAFP
-  npafp <- f.npafp.rate.01(afp_data, pop_data, start_date, end_date, "ctry",
+  npafp <- f.npafp.rate.01(afp_data, pop_data, start_date, end_date, .spatial_scale,
                            pending = TRUE, rolling = FALSE,
                            sp_continuity_validation = FALSE)
   # Stool Adequacy
-  stool_ad <- f.stool.ad.01(afp_data, pop_data, start_date, end_date, "ctry",
+  stool_ad <- f.stool.ad.01(afp_data, pop_data, start_date, end_date, .spatial_scale,
                             missing = "good", bad.data = "inadequate",
                             rolling = FALSE, sp_continuity_validation = FALSE)
   # Stool Condition
