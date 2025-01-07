@@ -195,8 +195,8 @@ generate_wild_vdpv_summary <- function(raw.data, start_date, end_date, risk_tabl
       ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
         .data$dateonset),
       timely_cat =
-        case_when(seq.capacity == "yes" & ontonothq <= 35 ~ "<=35 days from onset",
-          seq.capacity == "yes" & ontonothq > 35 ~ ">35 days from onset",
+        case_when(stringr::str_detect(.data$seq.capacity, "[Yy]es") & ontonothq <= 35 ~ "<=35 days from onset",
+                  stringr::str_detect(.data$seq.capacity, "[Yy]es") & ontonothq > 35 ~ ">35 days from onset",
           seq.capacity == "no" & ontonothq <= 46 ~ "<=46 days from onset",
           seq.capacity == "no" & ontonothq > 46 ~ ">46 days from onset",
           is.na(ontonothq) | ontonothq < 0 ~ "Missing or bad data",
@@ -738,8 +738,61 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 }
 
 generate_c2_table_iss <- function() {}
-generate_c3_table <- function() {}
+
+#' Environmental surveillance KPIs by site
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Environmental surveillance KPIs summarized by site.
+#'
+#'
+#' @param es_data `tibble` Environmental surveillance data.
+#' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
+#' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
+#' @param .group_by `list` How results should be grouped. By default, the summary
+#' is grouped by country, site, and reporting year.
+#'
+#' @return `tibble` A summary table of environmental surveillance KPIs.
+#' @export
+#'
+#' @examples
+#' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
+generate_c3_table <- function(es_data, start_date, end_date,
+                              .group_by = c("ADM0_NAME", "ctry.guid", "reporting.year")) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  es_data <- es_data |>
+    add_seq_capacity("ADM0_NAME")
+
+  es_summary <- es_data |>
+    dplyr::filter(dplyr::between(.data$collect.date, start_date, end_date)) |>
+    dplyr::mutate(coltolab = difftime(.data$date.received.in.lab,
+                                      .data$collect.date, units = "days"),
+                  coltoresults = difftime(.data$date.final.culture.result,
+                                          .data$collect.date, units = "days"),
+                  timely_ship = dplyr::if_else(
+                    (.data$culture.itd.cat == "In-country culture/ITD" & .data$coltolab <= 3) |
+                    (.data$culture.itd.cat == "International culture/ITD" & .data$coltolab <= 7),
+                    TRUE, FALSE),
+                  timely_det = dplyr::if_else(
+                    (stringr::str_detect(.data$seq.capacity, "[Yy]es") & .data$coltoresults <= 35) |
+                      (.data$seq.capacity == "no" & .data$coltoresults <= 46), TRUE, FALSE),
+                  is_target = dplyr::if_else(.data$wpv == 1 | .data$vdpv == 1, TRUE, FALSE)
+                  ) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by)),
+                                  .data$site.id, .data$site.name) |>
+    dplyr::summarize(
+      ev_rate = sum(.data$ev.detect == 1, na.rm = TRUE) / n() * 100,
+      prop_good_es = sum(.data$sample.condition == "Good") / n() * 100,
+      prop_timely_ship = sum(timely_ship) / n() * 100,
+      prop_timely_det_wpv_vdpv = sum(timely_det & is_target, na.rm = TRUE) / sum(is_target) * 100
+    )
+
+  return(es_summary)
+
+}
 generate_c4_table <- function() {}
-generate_c5_table <- function() {}
 
 
