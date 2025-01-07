@@ -567,8 +567,10 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
 }
 
-generate_c2_table <- function(afp_data, pop_data, start_date, end_date) {
+generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
+                              .group_by = c("adm0guid", "ctry", "year")) {
 
+  # Standardize data
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
   afp_data <- dplyr::rename_with(afp_data, recode,
@@ -590,19 +592,24 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date) {
                                  u15pop.prov = "u15pop"
   )
 
+  # Add required columns
+  afp_data <- afp_data |>
+    add_seq_capacity() |>
+    col_to_datecol()
+
   # NPAFP
   npafp <- f.npafp.rate.01(afp_data, pop_data, start_date, end_date, "ctry",
                            pending = TRUE, rolling = FALSE,
                            sp_continuity_validation = FALSE)
   # Stool Adequacy
-  stool.ad <- f.stool.ad.01(afp_data, pop_data, start_date, end_date, "ctry",
+  stool_ad <- f.stool.ad.01(afp_data, pop_data, start_date, end_date, "ctry",
                             missing = "good", bad.data = "inadequate",
                             rolling = FALSE, sp_continuity_validation = FALSE)
   # Stool Condition
   stool_condition <- generate_stool_data(afp_data, start_date, end_date,
                                          missing = "good",
                                          bad.data = "inadequate") |>
-    dplyr::group_by(.data$adm0guid, .data$ctry, .data$year) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(afp_cases = sum(.data$cdc.classification.all2 != "NOT-AFP"),
                      good_samples = sum(.data$adequacy.final2 == "Adequate"),
                      prop_good_condition = good_samples / afp_cases)
@@ -616,33 +623,78 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date) {
                                          bad.data = "inadequate") |>
     # Note that this also filters out "NOT-AFP" cases
     generate_60_day_table_data(start_date, end_date) |>
-    dplyr::group_by(.data$adm0guid, .data$ctry, .data$year) |>
+    dplyr::left_join(afp_data |>
+                       dplyr::select(dplyr::all_of(c("epid", "adm0guid")))) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(prop_complete_60_day = sum(.data$ontime.60day == 1, na.rm = TRUE) /
                        sum(adequacy.final2 == "Inadequate"))
 
   # Timeliness indicators
-  timeliness_summary <- add_seq_capacity(afp_data) |>
-    col_to_datecol() |>
-    dplyr::filter(cdc.classification.all2 != "NOT-AFP") |>
-    dplyr::group_by(.data$adm0guid, .data$ctry, .data$year) |>
+  timeliness_summary <- afp_data |>
+    dplyr::filter(.data$cdc.classification.all2 != "NOT-AFP",
+                  dplyr::between(.data$date, start_date, end_date)) |>
+    dplyr::mutate(
+      ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
+                               .data$date),
+      ontolab = as.numeric(difftime(lubridate::as_date(.data$stooltolabdate),
+                                    .data$date), units = "days"),
+      timely_cat =
+        dplyr::case_when(seq.capacity == "yes" & ontonothq <= 35 ~ "<=35 days from onset",
+                  seq.capacity == "yes" & ontonothq > 35 ~ ">35 days from onset",
+                  seq.capacity == "no" & ontonothq <= 46 ~ "<=46 days from onset",
+                  seq.capacity == "no" & ontonothq > 46 ~ ">46 days from onset",
+                  is.na(ontonothq) | ontonothq < 0 ~ "Missing or bad data",
+                  .default = NA
+        ),
+      is_timely = dplyr::if_else(.data$timely_cat %in%
+                                   c(
+                                     "<=35 days from onset",
+                                     "<=46 days from onset"
+                                   ), TRUE, FALSE),
+      is_target = dplyr::if_else(
+        stringr::str_detect(.data$cdc.classification.all2, "WILD|VDPV"),
+        TRUE, FALSE
+      ),
+      is_opt_timely = dplyr::case_when(
+        (.data$culture.itd.cat == "In-country culture/ITD" & .data$ontolab <= 14) ~ TRUE,
+        (.data$culture.itd.cat == "International culture/ITD" & .data$ontolab <= 18) ~ TRUE,
+        .default = FALSE
+      )
+    ) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(
-      timely_not = sum(.data$ontonot <= 7, na.rm = TRUE) / n(),
-      timely_inv = sum(.data$ontoinvest <= 2, na.rm = TRUE) / n(),
+      timely_not = sum(.data$ontonot <= 7, na.rm = TRUE) / n() * 100,
+      timely_inv = sum(.data$ontoinvest <= 2, na.rm = TRUE) / n() * 100,
       timely_field = sum(.data$ontostool1 <= 11 &
-                           .data$stool1tostool2 >= 1, na.rm = TRUE) / n(),
+                           .data$stool1tostool2 >= 1, na.rm = TRUE) / n() * 100,
       timely_stool_shipment = sum((.data$culture.itd.cat == "In-country culture/ITD" & .data$daysstooltolab <= 3) |
                                   (.data$culture.itd.cat == "International culture/ITD" & .data$daysstooltolab <= 7),
-                                  na.rm = TRUE)
-
+                                  na.rm = TRUE) / n() * 100,
+      timely_opt_field_shipment = sum(.data$is_opt_timely) / n() * 100,
+      timely_wpv_vdpv = sum(.data$is_timely & .data$is_target, na.rm = TRUE) / sum(.data$is_timely, na.rm = TRUE) * 100
     )
-
 
   # Completeness of weekly zero reporting
   # Timeliness of WZR
   # Adequacy of active surveillance sites
   # AFP case encounters
 
+  results <- dplyr::full_join(npafp, stool_ad) |>
+    dplyr::full_join(stool_condition) |>
+    dplyr::full_join(complete_60_day) |>
+    dplyr::full_join(timeliness_summary)
+
+  # Select only required columns
+  results <- results |>
+    dplyr::select(dplyr::any_of(.group_by),
+                  "npafp_rate", "per.stool.ad",
+                  "prop_good_condition":"timely_wpv_vdpv")
+
+  return(results)
+
 }
+
+generate_c2_table_iss <- function() {}
 generate_c3_table <- function() {}
 generate_c4_table <- function() {}
 generate_c5_table <- function() {}
