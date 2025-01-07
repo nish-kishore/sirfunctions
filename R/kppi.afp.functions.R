@@ -1,5 +1,6 @@
 # Private functions ----
-
+#' Add rolling year label for each week number
+#'
 #' @param wk `numeric` Week number.
 #'
 #' @returns `str` The year the week falls into.
@@ -420,6 +421,29 @@ generate_e5_table <- function() {}
 
 # New functions ----
 
+#' GPEI Strategy surveillance KPIs
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Monitoring surveillance KPIs for Certification of Poliomyelitis Eradication at country
+#' regional and global levels.
+#'
+#' @param raw_data `list` Global polio surveillance dataset.
+#' Output of [get_all_polio_data()].
+#' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
+#' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
+#' @param lab_locs `tibble` Summary of the sequencing capacities of labs.
+#' Output of [get_lab_locs()]. Defaults to `NULL`, which will download the information
+#' directly from EDAV.
+#' @param risk_table `tibble` GPSAP risk categorization for each country.
+#' @param rolling `bool` Should the data be summarized for 12-month rolling averages. Defaults to `TRUE`.
+#'
+#' @return `tibble` Summary table of GPSAP KPIs.
+#' @export
+#'
+#' @examples
+#' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
 generate_c1_table <- function(raw_data, start_date, end_date,
                               lab_locs = NULL, risk_table = NULL,
                               rolling = T) {
@@ -484,8 +508,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   timely_det_indicator <- generate_wild_vdpv_summary(raw_data,
                                                      start_date, end_date,
-                                                     risk_table = NULL,
-                                                     lab_locs = NULL)
+                                                     risk_table = risk_table,
+                                                     lab_locs = lab_locs)
 
   # Calculate meeting indicators
   region_lookup_table <- raw.data$ctry.pop |>
@@ -504,6 +528,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                      met_npafp = sum(
                        (par >= 1e5 & npafp_rate >= 2 & whoregion %in% c("AFRO", "EMRO", "SEARO")),
                        (par >= 1e5 & npafp_rate >= 1 & whoregion %in% c("AMRO", "EURO", "WPRO")),
+                       # !!! NEED Endemics and OBX affected logic here
                        na.rm = T),
                      prop_met_npafp = met_npafp / dist_w_100k) |>
     ungroup()
@@ -528,14 +553,96 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                      met_ev = sum(num.samples >= 10 & ev.rate >= 0.5, na.rm = T),
                      prop_met_ev = met_ev / es_sites)
 
-  combine <- left_join(met_npafp, met_stool) |>
-    left_join(met_ev) |>
-    left_join(timely_det_indicator |> rename("ctry" = place.admin.0))
+  combine <- dplyr::full_join(met_npafp, met_stool) |>
+    dplyr::full_join(met_ev) |>
+    dplyr::full_join(timely_det_indicator |>
+                       rename("ctry" = .data$place.admin.0)) |>
+    dplyr::select(dplyr::any_of(c(
+      "year.analysis", "rolling_period", "whoregion", "SG Priority Level", "ctry",
+      "prop_met_npafp", "prop_met_stool", "prop_met_ev",
+      "prop_timely_samples")
+    ))
 
   return(combine)
+
 }
 
-generate_c2_table <- function() {}
+generate_c2_table <- function(afp_data, pop_data, start_date, end_date) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  afp_data <- dplyr::rename_with(afp_data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+  pop_data <- dplyr::rename_with(pop_data, recode,
+                                 ADM0_NAME = "ctry",
+                                 ADM1_NAME = "prov",
+                                 ADM2_NAME = "dist",
+                                 ADM0_GUID = "adm0guid",
+                                 u15pop.prov = "u15pop"
+  )
+
+  # NPAFP
+  npafp <- f.npafp.rate.01(afp_data, pop_data, start_date, end_date, "ctry",
+                           pending = TRUE, rolling = FALSE,
+                           sp_continuity_validation = FALSE)
+  # Stool Adequacy
+  stool.ad <- f.stool.ad.01(afp_data, pop_data, start_date, end_date, "ctry",
+                            missing = "good", bad.data = "inadequate",
+                            rolling = FALSE, sp_continuity_validation = FALSE)
+  # Stool Condition
+  stool_condition <- generate_stool_data(afp_data, start_date, end_date,
+                                         missing = "good",
+                                         bad.data = "inadequate") |>
+    dplyr::group_by(.data$adm0guid, .data$ctry, .data$year) |>
+    dplyr::summarize(afp_cases = sum(.data$cdc.classification.all2 != "NOT-AFP"),
+                     good_samples = sum(.data$adequacy.final2 == "Adequate"),
+                     prop_good_condition = good_samples / afp_cases)
+
+  # Completeness of Contact Sampling
+  # !!! need to learn how to pull 3 contact samples
+
+  # Completeness of 60-day follow-ups
+  complete_60_day <- generate_stool_data(afp_data, start_date, end_date,
+                                         missing = "good",
+                                         bad.data = "inadequate") |>
+    # Note that this also filters out "NOT-AFP" cases
+    generate_60_day_table_data(start_date, end_date) |>
+    dplyr::group_by(.data$adm0guid, .data$ctry, .data$year) |>
+    dplyr::summarize(prop_complete_60_day = sum(.data$ontime.60day == 1, na.rm = TRUE) /
+                       sum(adequacy.final2 == "Inadequate"))
+
+  # Timeliness indicators
+  timeliness_summary <- add_seq_capacity(afp_data) |>
+    col_to_datecol() |>
+    dplyr::filter(cdc.classification.all2 != "NOT-AFP") |>
+    dplyr::group_by(.data$adm0guid, .data$ctry, .data$year) |>
+    dplyr::summarize(
+      timely_not = sum(.data$ontonot <= 7, na.rm = TRUE) / n(),
+      timely_inv = sum(.data$ontoinvest <= 2, na.rm = TRUE) / n(),
+      timely_field = sum(.data$ontostool1 <= 11 &
+                           .data$stool1tostool2 >= 1, na.rm = TRUE) / n(),
+      timely_stool_shipment = sum((.data$culture.itd.cat == "In-country culture/ITD" & .data$daysstooltolab <= 3) |
+                                  (.data$culture.itd.cat == "International culture/ITD" & .data$daysstooltolab <= 7),
+                                  na.rm = TRUE)
+
+    )
+
+
+  # Completeness of weekly zero reporting
+  # Timeliness of WZR
+  # Adequacy of active surveillance sites
+  # AFP case encounters
+
+}
 generate_c3_table <- function() {}
 generate_c4_table <- function() {}
 generate_c5_table <- function() {}
