@@ -2046,17 +2046,38 @@ check_missing_rows <- function(df,
 #' test <- get_edav_data()
 #' }
 get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
-  cli::cli_alert_info(paste0("Interactive file selection activated.",
-                             " Use esc to exit."))
+  cli::cli_alert_info(paste0(
+    "Interactive file selection activated.",
+    " Use esc to exit."
+  ))
   pointer <- path
   while (TRUE) {
-    output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
-    print(output)
-    cli::cli_alert_info(paste0("\nPlease choose an option (1-3):\n",
-                               "1) Previous directory\n",
-                               "2) Move up one directory\n",
-                               "3) Load data\n",
-                               "4) Copy file path"))
+    tryCatch(
+      expr = {
+        output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+        print(
+          output |>
+            dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+          n = nrow(output)
+        )
+      },
+      error = function(e) {
+        print(
+          output |>
+            dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+          n = nrow(output)
+        )
+        cli::cli_alert_warning("\nNot a directory. Please choose a valid option.")
+      }
+    )
+
+    cli::cli_alert_info(paste0(
+      "\nPlease choose an option (1-4):\n",
+      "1) Previous directory\n",
+      "2) Move up one directory\n",
+      "3) Load data\n",
+      "4) Copy absolute file path"
+    ))
     response <- stringr::str_trim(readline("Response: "))
     if (!response %in% c("1", "2", "3", "4")) {
       cli::cli_alert_warning("Invalid response. Please try again.\n")
@@ -2067,10 +2088,18 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         cli::cli_alert_info("Please input the line number:")
         response <- stringr::str_trim(readline("Response: "))
         response <- tryCatch(suppressWarnings(as.numeric(response)),
-                 error = function(e) {NA})
+          error = function(e) {
+            NA
+          }
+        )
         if (is.na(response) | response > nrow(output) | response == 0) {
           cli::cli_alert_warning("Invalid response. Please try again:\n")
-          print(output)
+
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+            n = nrow(output)
+          )
         } else {
           pointer <- output[response, ]$name
           break
@@ -2081,16 +2110,26 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         cli::cli_alert_info("Please input the line number:")
         response <- stringr::str_trim(readline("Response: "))
         response <- tryCatch(suppressWarnings(as.numeric(response)),
-                             error = function(e) {NA})
+          error = function(e) {
+            NA
+          }
+        )
         if (is.na(response) | response > nrow(output) | response == 0) {
           cli::cli_alert_info("Invalid response. Please try again:\n")
-          print(output)
+
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+            n = nrow(output)
+          )
         } else if (output[response, ]$isdir == TRUE) {
-          cli::cli_alert_info(paste0(output[response, ]$name,
-                                     " is a directory. Navigating to it."))
+          cli::cli_alert_info(paste0(
+            output[response, ]$name,
+            " is a directory. Navigating to it."
+          ))
           pointer <- output[response, ]$name
           break
-          } else {
+        } else {
           pointer <- file.path(output[response, ]$name)
           output <- edav_io("read", default_dir = "", pointer)
           return(output)
@@ -2101,15 +2140,18 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         cli::cli_alert_info("Please input the line number:")
         response <- stringr::str_trim(readline("Response: "))
         response <- tryCatch(suppressWarnings(as.numeric(response)),
-                             error = function(e) {NA})
+          error = function(e) {
+            NA
+          }
+        )
         if (is.na(response) | response > nrow(output) | response == 0) {
           cli::cli_alert_info("Invalid response. Please try again:\n")
-          print(output)
+          print(output |> dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")), n = nrow(output))
         } else {
           path_name <- file.path(output[response, ]$name)
           return(path_name)
         }
-    }
+      }
     }
   }
 }
