@@ -2057,17 +2057,21 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
         print(
           output |>
-            dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+            dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
           n = nrow(output)
         )
       },
       error = function(e) {
+        cli::cli_alert_warning("\nAccess denied. Please choose a valid option.")
+        pointer <<- gsub("[^/]+$", "", pointer)
+        pointer <<- sub("/$", "", pointer)
+
+        output <<- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
         print(
           output |>
-            dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+            dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
           n = nrow(output)
         )
-        cli::cli_alert_warning("\nNot a directory. Please choose a valid option.")
       }
     )
 
@@ -2082,9 +2086,19 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
     if (!response %in% c("1", "2", "3", "4")) {
       cli::cli_alert_warning("Invalid response. Please try again.\n")
     } else if (response == "1") {
+      # Special case of navigating back to root
+      if (stringr::str_count(pointer, "/") == 0) {
+        pointer <- ""
+      }
       pointer <- gsub("[^/]+$", "", pointer)
+      pointer <- sub("/$", "", pointer)
     } else if (response == "2") {
       while (TRUE) {
+        if (nrow(output) == 1) {
+          pointer <- output[1, ]$name
+          pointer <- sub("/$", "", pointer)
+          break
+        }
         cli::cli_alert_info("Please input the line number:")
         response <- stringr::str_trim(readline("Response: "))
         response <- tryCatch(suppressWarnings(as.numeric(response)),
@@ -2097,11 +2111,15 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
 
           print(
             output |>
-              dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+              dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
             n = nrow(output)
           )
+        } else if (output[response, ]$isdir == FALSE) {
+          cli::cli_alert_warning("Not a directory. Please try again:\n")
+          break
         } else {
           pointer <- output[response, ]$name
+          pointer <- sub("/$", "", pointer)
           break
         }
       }
@@ -2119,7 +2137,7 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
 
           print(
             output |>
-              dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+              dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
             n = nrow(output)
           )
         } else if (output[response, ]$isdir == TRUE) {
@@ -2146,7 +2164,14 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         )
         if (is.na(response) | response > nrow(output) | response == 0) {
           cli::cli_alert_info("Invalid response. Please try again:\n")
-          print(output |> dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")), n = nrow(output))
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(
+                .data$name,
+                "[^/]+$"
+              )),
+            n = nrow(output)
+          )
         } else {
           path_name <- file.path(output[response, ]$name)
           return(path_name)
