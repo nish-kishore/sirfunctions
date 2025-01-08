@@ -2079,7 +2079,7 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
       "\nPlease choose an option (1-4):\n",
       "1) Previous directory\n",
       "2) Move up one directory\n",
-      "3) Load data\n",
+      "3) Download as an R object\n",
       "4) Copy absolute file path"
     ))
     response <- stringr::str_trim(readline("Response: "))
@@ -2092,11 +2092,13 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
       }
       pointer <- gsub("[^/]+$", "", pointer)
       pointer <- sub("/$", "", pointer)
+      cli::cli_alert_success(paste0("Navigating to: ", pointer))
     } else if (response == "2") {
       while (TRUE) {
         if (nrow(output) == 1) {
           pointer <- output[1, ]$name
           pointer <- sub("/$", "", pointer)
+          cli::cli_alert_success(paste0("Navigating to: ", pointer))
           break
         }
         cli::cli_alert_info("Please input the line number:")
@@ -2120,6 +2122,7 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         } else {
           pointer <- output[response, ]$name
           pointer <- sub("/$", "", pointer)
+          cli::cli_alert_success(paste0("Navigating to: ", pointer))
           break
         }
       }
