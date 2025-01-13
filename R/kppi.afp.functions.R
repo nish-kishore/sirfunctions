@@ -737,8 +737,6 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   return(results)
 }
 
-generate_c2_table_iss <- function() {}
-
 #' Environmental surveillance KPIs by site
 #' @description
 #' `r lifecycle::badge("experimental")`
@@ -804,6 +802,86 @@ generate_c3_table <- function(es_data, start_date, end_date,
   return(es_summary)
 
 }
-generate_c4_table <- function() {}
+
+#' Laboratory surveillance KPIs
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Summarizes the timeliness of samples as it arrives in the lab and to sequencing
+#' results. Samples may come from both AFP and ES samples.
+#'
+#' @param lab_data `tibble` Lab data containing information of ES or AFP samples.
+#' @param afp_data `tibble` AFP surveillance data.
+#' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
+#' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
+#' @param .group_by `str` or `list` What columns to group the results by.
+#'
+#' @return `tibble` A summary of timeliness KPIs for lab data.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' lab_data <- readr::read_csv("C:/Users/ABC1/Desktop/lab_data.csv")
+#' c4 <- generate_c4_table(lab_data, raw_data$afp, "2021-01-01", "2024-12-31")
+#' }
+generate_c4_table <- function(lab_data, afp_data, start_date, end_date, .group_by = "year") {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  lab_data <- clean_lab_data(lab_data, start_date, end_date, afp_data)
+
+  lab_data <- lab_data |>
+    dplyr::mutate(
+      # Timeliness of virus isolation results
+      # Start date: receipt at WHO-accredited lab, end date: culture results
+      # Target: ≤14 days
+      days.lab.culture = .data$DateFinalCellCultureResult - .data$DateStoolReceivedinLab,
+      t1 = dplyr::if_else(!is.na(.data$days.lab.culture) &
+                            (.data$days.lab.culture >= 0 & .data$days.lab.culture <= 365),
+                          TRUE, FALSE),
+      # Timeliness of ITD results (Amanda added this)
+      # Start date: culture results, end date: ITD results
+      # Target: ≤7 days
+      days.culture.itd = .data$DateFinalrRTPCRResults - .data$DateFinalCellCultureResult,
+      t2 = dplyr::if_else(!is.na(.data$days.culture.itd) &
+                            (.data$days.culture.itd >= 0 & .data$days.culture.itd <= 365),
+                          TRUE, FALSE),
+      # Timeliness of shipment for sequencing
+      # Start date: ITD result, end date: arrival at sequencing lab (
+      # (Amanda updated start date here to be consistent with GPSAP 2025-26 indicator)
+      # Target: ≤7 days
+      days.seq.ship = .data$DateIsolateRcvdForSeq - .data$DateFinalrRTPCRResults,
+      t3 = dplyr::if_else(!is.na(.data$days.seq.ship) &
+                            (.data$days.seq.ship >= 0 & .data$days.seq.ship <= 365),
+                          TRUE, FALSE),
+      # Timeliness of sequencing results
+      # Start date: arrival at sequencing lab, end.date: sequencing results
+      days.itd.seqres = .data$DateofSequencing - .data$DateIsolateRcvdForSeq,
+      t4 = dplyr::if_else(!is.na(.data$days.itd.seqres) &
+                            (.data$days.itd.seqres >= 0 & .data$days.itd.seqres <= 365),
+                          TRUE, FALSE)
+    )
+
+  lab_summary <- lab_data |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
+    dplyr::summarize(
+      # Timeliness of virus isolation results
+      timely_isolation = sum(.data$days.lab.culture <= 14 & t1 == TRUE, na.rm = TRUE) /
+        sum(t1 == TRUE) * 100,
+      # Timeliness of ITD results
+      timely_itd = sum(.data$days.culture.itd <= 7 & t2 == TRUE & (!.data$FinalCellCultureResult %in% c(NA, "Negative")), na.rm = TRUE) /
+        sum(t2 == TRUE & (!.data$FinalCellCultureResult %in% c(NA, "Negative"))) * 100,
+      # Timeliness of shipment for sequencing
+      timely_seqship = sum(.data$days.seq.ship <= 7 & t3 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE) /
+        sum(t3 == TRUE & !is.na(.data$FinalITDResult)) * 100,
+      #Timeliness of sequencing results
+      timely_seqres = sum(.data$days.itd.seqres <= 7 & t4 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE) /
+        sum(t4 == TRUE & !is.na(.data$FinalITDResult)) * 100,
+    )
+
+  return(lab_summary)
+
+  }
 
 
