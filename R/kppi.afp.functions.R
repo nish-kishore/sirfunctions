@@ -650,7 +650,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     )
 
   # Completeness of Contact Sampling
-  # !!! need to learn how to pull 3 contact samples
+  # Calculated in future versions
 
   # Completeness of 60-day follow-ups
   complete_60_day <- generate_stool_data(afp_data, start_date, end_date,
@@ -684,7 +684,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
           seq.capacity == "no" & ontonothq <= 46 ~ "<=46 days from onset",
           seq.capacity == "no" & ontonothq > 46 ~ ">46 days from onset",
           is.na(ontonothq) | ontonothq < 0 ~ "Missing or bad data",
-          .default = NA
+          .default = "Missing or bad data"
         ),
       is_timely = dplyr::if_else(.data$timely_cat %in%
         c(
@@ -696,24 +696,27 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
         TRUE, FALSE
       ),
       is_opt_timely = dplyr::case_when(
-        (.data$culture.itd.cat == "In-country culture/ITD" & .data$ontolab <= 14) ~ TRUE,
-        (.data$culture.itd.cat == "International culture/ITD" & .data$ontolab <= 18) ~ TRUE,
-        .default = FALSE
+        (.data$culture.itd.cat == "In-country culture/ITD" & .data$ontolab <= 14) ~ "yes",
+        (.data$culture.itd.cat == "In-country culture/ITD" & .data$ontolab > 14) ~ "no",
+        (.data$culture.itd.cat == "International culture/ITD" & .data$ontolab <= 18) ~ "yes",
+        (.data$culture.itd.cat == "International culture/ITD" & .data$ontolab > 18) ~ "no",
+        .default = "unable to assess"
       )
     ) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(
-      timely_not = sum(.data$ontonot <= 7, na.rm = TRUE) / n() * 100,
-      timely_inv = sum(.data$ontoinvest <= 2, na.rm = TRUE) / n() * 100,
+      timely_not = sum(.data$ontonot <= 7, na.rm = TRUE) / sum(!is.na(.data$ontonot)) * 100,
+      timely_inv = sum(.data$ontoinvest <= 2, na.rm = TRUE) / sum(!is.na(.data$ontoinvest)) * 100,
       timely_field = sum(.data$ontostool1 <= 11 &
-        .data$stool1tostool2 >= 1, na.rm = TRUE) / n() * 100,
+        .data$stool1tostool2 >= 1, na.rm = TRUE) / sum(!is.na(.data$ontostool1) & !is.na(.data$stool1tostool2)) * 100,
       timely_stool_shipment = sum(
         (.data$culture.itd.cat == "In-country culture/ITD" & .data$daysstooltolab <= 3) |
           (.data$culture.itd.cat == "International culture/ITD" & .data$daysstooltolab <= 7),
         na.rm = TRUE
-      ) / n() * 100,
-      timely_opt_field_shipment = sum(.data$is_opt_timely) / n() * 100,
-      timely_wpv_vdpv = sum(.data$is_timely & .data$is_target, na.rm = TRUE) / sum(.data$is_timely, na.rm = TRUE) * 100
+      ) / sum(!is.na(.data$culture.itd.cat) & !is.na(.data$daysstooltolab)) * 100,
+      timely_opt_field_shipment = sum(.data$is_opt_timely == "yes") / sum(.data$is_opt_timely != "unable to assess") * 100,
+      timely_wpv_vdpv = sum(.data$is_timely & .data$is_target & .data$timely_cat != "Missing or bad data", na.rm = TRUE) /
+        sum(.data$is_timely & .data$timely_cat != "Missing or bad data", na.rm = TRUE) * 100
     )
 
   # Completeness of weekly zero reporting
