@@ -139,18 +139,23 @@ add_seq_capacity <- function(df, ctry_col = "ctry", lab_locs = NULL) {
   return(df)
 }
 
-# Public functions ----
-generate_wild_vdpv_summary <- function(raw.data, start_date, end_date, risk_table = NULL, lab_locs = NULL) {
+#' Generates a summary table regarding wild and VDPV cases
+#'
+#' @inheritParams generate_c1_table
+#'
+#' @return `tibble` Summary of wild and VDPV cases
+#' @keywords internal
+generate_wild_vdpv_summary <- function(raw_data, start_date, end_date, risk_table = NULL, lab_locs = NULL) {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   # Filtering
-  afp_data <- raw.data$afp |>
+  afp_data <- raw_data$afp |>
     dplyr::filter(
       dplyr::between(dateonset, start_date, end_date),
       cdc.classification.all2 != "NOT-AFP"
     )
-  es_data <- raw.data$es |>
+  es_data <- raw_data$es |>
     dplyr::filter(
       dplyr::between(collect.date, start_date, end_date),
       ev.detect == 1
@@ -243,183 +248,7 @@ generate_wild_vdpv_summary <- function(raw.data, start_date, end_date, risk_tabl
   return(pos_summary)
 }
 
-generate_e2_table <- function(raw_data, start_date, end_date) {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
-  # Filtering
-  afp_data <- raw_data$afp |>
-    dplyr::filter(
-      dplyr::between(dateonset, start_date, end_date),
-      cdc.classification.all2 != "NOT-AFP"
-    )
-  es_data <- raw_data$es |>
-    dplyr::filter(
-      dplyr::between(collect.date, start_date, end_date),
-      ev.detect == 1
-    )
-
-  # Subsetting
-  afp_data <- afp_data |>
-    dplyr::select(
-      dplyr::any_of(c(
-        "epid", "place.admin.0", "whoregion",
-        "ontonot", "ontoinvest", "nottoinvest", "investtostool1",
-        "stool1tostool2", "year",
-        "adm0guid", "ctry", "timeliness.01",
-        "adequacy.01", "adequacy.02", "adequacy.03"
-      )),
-      dplyr::where(\(x) lubridate::is.Date(x))
-    )
-
-  es_data <- es_data |>
-    dplyr::select(
-      dplyr::any_of(c(
-        "env.sample.id", "ADM0_NAME", "who.region"
-      )),
-      dplyr::contains("date")
-    ) |>
-    dplyr::mutate(across(dplyr::contains("date"), \(x) as.Date(x)))
-
-  # Include required columns
-  afp_data <- col_to_datecol(afp_data)
-  afp_data <- add_risk_category(afp_data, ctry_col = "place.admin.0")
-  afp_data <- add_rolling_date_info(afp_data, start_date, end_date, "dateonset")
-
-  es_data <- add_risk_category(es_data, ctry_col = "ADM0_NAME")
-  es_data <- add_rolling_date_info(es_data, start_date, end_date, "collect.date")
-
-  # Calculate timeliness
-  es_data <- es_data |>
-    dplyr::mutate(
-      collecttolab = as.numeric(.data$date.received.in.lab - .data$collect.date),
-      ship.3d.coll = dplyr::if_else(.data$collecttolab <= 3, TRUE, FALSE)
-    )
-
-  cli::cli_process_start("Generating E2 summary table")
-  # AFP analysis
-  # Calculating additional columns
-  afp_summary <- afp_data |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(c(
-      "whoregion",
-      "SG Priority Level",
-      "place.admin.0",
-      "rolling_period"
-    )))) |>
-    dplyr::summarise(
-      afp_cases = n(),
-      time.notify = sum(.data$noti.7d.on & dplyr::between(ontonot, 0, 365),
-        na.rm = TRUE
-      ),
-      time.invest = sum(.data$inv.2d.noti & dplyr::between(nottoinvest, 0, 365),
-        na.rm = TRUE
-      ),
-      time.field.act = sum(.data$timeliness.01 == "Timely")
-    )
-
-  # ES analysis
-  # Calculating additional columns
-  es_summary <- es_data |>
-    dplyr::filter(!is.na(rolling_period)) |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(c(
-      "who.region",
-      "SG Priority Level",
-      "ADM0_NAME",
-      "rolling_period"
-    )))) |>
-    dplyr::summarise(
-      env_detect = n(),
-      time.es = sum(.data$ship.3d.coll & dplyr::between(.data$collecttolab, 0, 365),
-        na.rm = TRUE
-      )
-    )
-
-  # Combined summary
-  combined_summary <- dplyr::full_join(afp_summary, es_summary,
-    by = c(
-      "place.admin.0" = "ADM0_NAME",
-      "whoregion" = "who.region",
-      "SG Priority Level",
-      "rolling_period"
-    )
-  )
-
-  cli::cli_process_done()
-
-  return(combined_summary)
-}
-
-generate_e4_table <- function(raw_data, start_date, end_date, lab_locs = NULL, risk_table = NULL) {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
-  # Filtering
-  afp_data <- raw_data$afp |>
-    dplyr::filter(
-      dplyr::between(dateonset, start_date, end_date),
-      cdc.classification.all2 != "NOT-AFP"
-    ) |>
-    dplyr::select(-dplyr::starts_with("pons"))
-    # dplyr::select("epid", "cdc.classification.all2",
-    #               dplyr::matches("adm[0-2]guid"),
-    #               dplyr::contains("date"))
-
-  # Include required columns
-  afp_data <- col_to_datecol(afp_data)
-  afp_data <- add_rolling_date_info(afp_data, start_date, end_date, "dateonset")
-
-  # Calculate country indicators
-  indicators <- afp_data |>
-    dplyr::filter(!is.na(rolling_period)) |>
-    dplyr::group_by(.data$year.analysis) |>
-    dplyr::summarise(
-      npafp_ctry = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
-                                         raw.data$ctry.pop,
-                                        min(.data$year.analysis.start),
-                                        max(.data$year.analysis.end),
-                                        "ctry", rolling = TRUE,
-                                        sp_continuity_validation = FALSE)),
-      stoolad_ctry = list(f.stool.ad.01(dplyr::pick(dplyr::everything()),
-                                          raw.data$ctry.pop,
-                                          min(year.analysis.start),
-                                          max(year.analysis.end),
-                                          "ctry", rolling = TRUE,
-                                          sp_continuity_validation = FALSE)),
-      npafp_dist = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
-                                        raw.data$dist.pop,
-                                        min(.data$year.analysis.start),
-                                        max(.data$year.analysis.end),
-                                        "dist", rolling = TRUE,
-                                        sp_continuity_validation = FALSE)),
-      stoolad_dist = list(f.stool.ad.01(dplyr::pick(dplyr::everything()),
-                                         raw.data$dist.pop,
-                                         min(year.analysis.start),
-                                         max(year.analysis.end),
-                                         "dist", rolling = TRUE,
-                                         sp_continuity_validation = FALSE)),
-    ) |>
-    dplyr::rowwise() |>
-    dplyr::mutate(dplyr::across(-dplyr::one_of("year.analysis"),
-                         \(x) list(dplyr::tibble(x) |>
-                                     dplyr::mutate(year.analysis = year.analysis
-                                          )))
-                  )
-
-  # Combine datasets
-  combined_ctry <- full_join(dplyr::bind_rows(indicators$npafp_ctry),
-                             dplyr::bind_rows(indicators$stoolad_ctry)) |>
-    add_risk_category() |> add_seq_capacity()
-  combined_dist <- full_join(dplyr::bind_rows(indicators$npafp_dist),
-                             dplyr::bind_rows(indicators$stoolad_dist)) |>
-    add_risk_category() |> add_seq_capacity()
-
-  # Calculate meeting indicators
-
-}
-generate_e5_table <- function() {}
-
-
-# New functions ----
+# Public functions ----
 
 #' GPEI Strategy surveillance KPIs
 #' @description
