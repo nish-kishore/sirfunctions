@@ -290,7 +290,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   es_data <- raw_data$es |>
     dplyr::filter(dplyr::between(collect.date, start_date, end_date))
 
-  # Ensure that if using raw.data, required renamed columns are present. Borrowed from
+  # Ensure that if using raw_data, required renamed columns are present. Borrowed from
   # extract.country.data()
   afp_data <- dplyr::rename_with(afp_data, recode,
                                  place.admin.0 = "ctry",
@@ -306,7 +306,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   # Include required columns
   afp_data <- col_to_datecol(afp_data)
-  afp_data <- add_rolling_date_info(afp_data, start_date, end_date, "dateonset")
+  afp_data <- add_rolling_date_info(afp_data, start_date, end_date, "date")
   es_data <- add_rolling_date_info(es_data, start_date, end_date, "collect.date")
 
   # Calculate country indicators
@@ -314,13 +314,13 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::group_by(.data$year.analysis, .data$rolling_period) |>
     dplyr::summarise(
       npafp_dist = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
-                                        raw.data$dist.pop,
+                                        raw_data$dist.pop,
                                         min(.data$year.analysis.start),
                                         max(.data$year.analysis.end),
                                         "dist", rolling = TRUE,
                                         sp_continuity_validation = FALSE)),
       stoolad_dist = list(f.stool.ad.01(dplyr::pick(dplyr::everything()),
-                                        raw.data$dist.pop,
+                                        raw_data$dist.pop,
                                         min(year.analysis.start),
                                         max(year.analysis.end),
                                         "dist", rolling = TRUE,
@@ -355,10 +355,10 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                                                      lab_locs = lab_locs)
 
   # Calculate meeting indicators
-  region_lookup_table <- raw.data$ctry.pop |>
+  region_lookup_table <- raw_data$ctry.pop |>
     dplyr::select(ctry = ADM0_NAME, adm0guid, whoregion = WHO_REGION) |>
     dplyr::distinct()
-  dist_lookup_table <- raw.data$dist.pop |>
+  dist_lookup_table <- raw_data$dist.pop |>
     dplyr::select(ctry = ADM0_NAME, prov = ADM1_NAME, dist = ADM2_NAME, adm2guid) |>
     dplyr::distinct()
 
