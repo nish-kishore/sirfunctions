@@ -582,8 +582,26 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 
   # Select only required columns
   results <- results |>
+    dplyr::mutate(
+      npafp_cat = dplyr::case_when(
+        .data$npafp_rate == 0 & .data$u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
+        .data$npafp_rate == 0 & .data$u15pop < 100000 & u15pop > 0 ~ "No cases (u15pop < 100K)",
+        .data$npafp_rate == 0 & (.data$u15pop == 0 | is.na(.daa$u15pop)) ~ "Missing Pop",
+        .data$npafp_rate < 1 & .data$u15pop >= 100000 ~ "< 1",
+        (.data$npafp_rate >= 1 & .data$npafp_rate < 2) & .data$u15pop >= 100000 ~ ">= 1 & <2",
+        (.data$npafp_rate >= 2 & .data$npafp_rate < 3) & .data$u15pop >= 100000 ~ ">= 2 & <3",
+        .data$npafp_rate >= 3 & .data$u15pop >= 100000 ~ ">=3"
+      ),
+      stool_cat = dplyr::case_when(
+        .data$afp.cases == 0 ~ "Zero AFP cases",
+        .data$afp.cases != 0 & .data$per.stool.ad < 50 ~ "<50%",
+        .data$afp.cases != 0 & (.data$per.stool.ad >= 50 & .data$per.stool.ad < 79) ~ "50%-79%",
+        afp.cases != 0 & per.stool.ad >= 80 ~ "80%+"
+      )
+    ) |>
     dplyr::select(
       dplyr::any_of(.group_by),
+      "npafp_cat", "stool_cat",
       "npafp_rate", "per.stool.ad",
       "prop_good_condition":"timely_wpv_vdpv"
     )
