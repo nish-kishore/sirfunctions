@@ -234,8 +234,11 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date, risk_tabl
       timely_cases = sum(source == "AFP" & is_timely),
       timely_env = sum(source == "ENV" & is_timely),
       prop_timely_samples = .data$timely_samples / dplyr::n(),
+      prop_timely_samples_label = paste0(.data$timely_samples, "/", dplyr::n()),
       prop_timely_cases = .data$timely_cases / .data$wild_vdpv_cases,
-      prop_timely_env = .data$timely_env / .data$wild_vdpv_env
+      prop_timely_cases_label = paste0(.data$timely_cases, "/", .data$wild_vdpv_cases),
+      prop_timely_env = .data$timely_env / .data$wild_vdpv_env,
+      prop_timely_env_label = paste0(.data$timely_env, "/", .data$wild_vdpv_env)
     )
 
   pos_summary <- pos_summary |>
@@ -373,7 +376,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                        (par >= 1e5 & npafp_rate >= 1 & whoregion %in% c("AMRO", "EURO", "WPRO")),
                        # !!! NEED Endemics and OBX affected logic here
                        na.rm = T),
-                     prop_met_npafp = met_npafp / dist_w_100k) |>
+                     prop_met_npafp = met_npafp / dist_w_100k,
+                     npafp_label = paste0(met_npafp, "/", dist_w_100k)) |>
     ungroup()
 
   met_stool <- dplyr::bind_rows(afp_indicators$stoolad_dist) |>
@@ -383,7 +387,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
     dplyr::summarise(dist_stool = n(),
                      met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = T),
-                     prop_met_stool = met_stool / dist_stool)
+                     prop_met_stool = met_stool / dist_stool,
+                     stool_label = paste0(met_stool, "/", dist_stool))
 
   met_ev <- dplyr::bind_rows(es_indicators$ev_rate) |>
     dplyr::rename("ctry" = ADM0_NAME,
@@ -394,7 +399,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
     dplyr::summarise(es_sites = sum(num.samples >= 10),
                      met_ev = sum(num.samples >= 10 & ev.rate >= 0.5, na.rm = T),
-                     prop_met_ev = met_ev / es_sites)
+                     prop_met_ev = met_ev / es_sites,
+                     ev_label = paste0(met_ev, "/", es_sites))
 
   combine <- dplyr::full_join(met_npafp, met_stool) |>
     dplyr::full_join(met_ev) |>
@@ -403,7 +409,9 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::select(dplyr::any_of(c(
       "year.analysis", "rolling_period", "whoregion", "SG Priority Level", "ctry",
       "prop_met_npafp", "prop_met_stool", "prop_met_ev",
-      "prop_timely_samples")
+      "prop_timely_samples", "npafp_label", "stool_label", "ev_label",
+      "prop_timely_samples_label", "prop_timely_cases_label",
+      "prop_timely_env_label")
     ))
 
   return(combine)
