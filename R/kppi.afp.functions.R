@@ -290,6 +290,20 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   es_data <- raw_data$es |>
     dplyr::filter(dplyr::between(collect.date, start_date, end_date))
 
+  # Ensure that if using raw.data, required renamed columns are present. Borrowed from
+  # extract.country.data()
+  afp_data <- dplyr::rename_with(afp_data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+
   # Include required columns
   afp_data <- col_to_datecol(afp_data)
   afp_data <- add_rolling_date_info(afp_data, start_date, end_date, "dateonset")
