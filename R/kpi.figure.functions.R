@@ -75,6 +75,9 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 
 #' Generate KPI maps
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' Generalized function to build KPI maps.
 #'
 #' @inheritParams generate_kpi_npafp_map
@@ -82,7 +85,7 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 #' @param color_scheme `list` Named list with color mappings.
 #' @param legend_title `str` Title of the legend.
 #'
-#' @return `ggplot` A ggplot object
+#' @return `ggplot` A ggplot object.
 #' @keywords internal
 generate_kpi_map <- function(c2, ctry_sf, who_region, indicator, .year,
                              color_scheme, legend_title) {
@@ -114,7 +117,8 @@ generate_kpi_map <- function(c2, ctry_sf, who_region, indicator, .year,
     dplyr::filter(.data$`SG Priority Level` == "HIGH")
 
   map <- ggplot2::ggplot() +
-    ggplot2::geom_sf(ggplot2::aes(fill = {{ indicator }}), c2, color = NA) +
+    ggplot2::geom_sf(ggplot2::aes(fill = {{ indicator }}), c2, color = NA,
+                     na.rm = TRUE) +
     ggplot2::scale_fill_manual(values = color_scheme, name = legend_title,
                                na.value = "grey") +
     ggplot2::geom_sf(data = ctry_sf, fill = NA, linewidth = 0.5, size = 0.5,
@@ -131,11 +135,22 @@ generate_kpi_map <- function(c2, ctry_sf, who_region, indicator, .year,
 }
 
 #' Generate district level NPAFP maps by region
+#' @description
+#' `r lifecycle::badge("experimental")`
 #'
-#' @param c2 `tibble` Output of [generate_c2_table()]
+#' Generates a map of district NPAFP rates.
+#'
+#'
+#' @param c2 `tibble` Output of [generate_c2_table()].
 #' @param ctry_sf `sf` Country shapefile in long format.
 #' @param dist_sf `sf` District shapefile in long format.
-#' @param who_region `str` WHO region.
+#' @param who_region `str` WHO region. Valid values are:
+#' - `"AFRO"`: African Region
+#' - `"AMRO"`: Region of the Americas
+#' - `"EMRO"`: Eastern Mediterranean Region
+#' - `"EURO"`: European Region
+#' - `"SEARO"`:South-East Asia Region
+#' - `"WPRO"`:Western Pacific Region
 #' @param .year `num` Numeric year of interest.
 #' @param output_path `str` Where to output the figure to. Defaults to the path
 #' initialized when [init_kpi()] was ran.
@@ -154,8 +169,12 @@ generate_kpi_map <- function(c2, ctry_sf, who_region, indicator, .year,
 #' }
 generate_kpi_npafp_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
                                    output_path = Sys.getenv("KPI_FIGURES")) {
+
+  if (!who_region %in% c("AFRO", "EMRO", "SEARO", "WPRO", "AMRO", "EURO")) {
+    cli::cli_abort("Please enter a valid who_region value.")
+  }
   color.npafp <- c(
-    "Silent (u15pop >=100k)"="#762a83",
+    "Silent (u15pop >= 100K)"="#762a83",
     "No cases (u15pop < 100K)" = "#999999",
     "< 1" = "#d7191c",
     ">= 1 & <2" = "#fdae61",
@@ -188,6 +207,11 @@ generate_kpi_npafp_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
 }
 
 #' Generate district level stool adequacy maps
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Generates a map of district level stool adequacy maps
 #'
 #' @inheritParams generate_kpi_npafp_map
 #'
@@ -446,4 +470,5 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
   return(bar_plot)
 }
 
+# Violin plots ----
 
