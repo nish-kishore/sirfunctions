@@ -786,7 +786,18 @@ generate_c3_table <- function(es_data, start_date, end_date,
                                          timely_det == "yes", na.rm = TRUE),
       prop_timely_det_wpv_vdpv = timely_wpv_vdpv_detections /
         wpv_vdpv_detections * 100
-    )
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::mutate(ev_det_cat = dplyr::case_when(
+      .data$es_samples < 5 ~ "<5 samples collected",
+      .data$ev_rate < 50 & .data$es_samples >= 5 ~ "<50%",
+      .data$ev_rate >= 50 & .data$ev_rate < 80 & es_samples >= 5 ~ "50% to <80%",
+      .data$ev_rate >= 80 & .data$es_samples >= 5 ~ "80-100%",
+      .default = NA
+    )) |>
+    dplyr::mutate(ev_det_cat = factor(.data$ev_det_cat,
+                                      levels = c("<5 samples collected", "<50%",
+                                                 "50% to <80%", "80-100%")))
 
   return(es_summary)
 
