@@ -41,6 +41,8 @@ generate_kpi_map(
 \code{ggplot} A ggplot object.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Generalized function to build KPI maps.
 }
 \keyword{internal}
