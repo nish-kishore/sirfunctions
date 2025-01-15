@@ -139,13 +139,22 @@ add_seq_capacity <- function(df, ctry_col = "ctry", lab_locs = NULL) {
   return(df)
 }
 
-#' Generates a summary table regarding wild and VDPV cases
+#' Generate timeliness columns
 #'
-#' @inheritParams generate_c1_table
+#' @description
+#' `r lifecycle::badge("experimental")`
 #'
-#' @return `tibble` Summary of wild and VDPV cases
+#' The function generates timeliness columns in the positives dataset.
+#' @details
+#' This function is used in [generate_c1_table()] and [generate_timely_det_violin()].
+#'
+#' @inheritParams generate_wild_vdpv_summary
+#'
+#' @return `tibble` Columns added
 #' @keywords internal
-generate_wild_vdpv_summary <- function(raw_data, start_date, end_date, risk_table = NULL, lab_locs = NULL) {
+generate_pos_timeliness <- function(raw_data, start_date, end_date,
+                                        risk_table = NULL, lab_locs = NULL) {
+
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
@@ -179,15 +188,15 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date, risk_tabl
     dplyr::mutate(source = "ENV")
 
   pos <- dplyr::full_join(afp_data, es_data,
-    by = c(
-      "epid" = "env.sample.id",
-      "place.admin.0" = "ADM0_NAME",
-      "whoregion" = "who.region",
-      "cdc.classification.all2" = "virus.type",
-      "dateonset" = "collect.date",
-      "datenotificationtohq" = "date.notification.to.hq",
-      "source"
-    )
+                          by = c(
+                            "epid" = "env.sample.id",
+                            "place.admin.0" = "ADM0_NAME",
+                            "whoregion" = "who.region",
+                            "cdc.classification.all2" = "virus.type",
+                            "dateonset" = "collect.date",
+                            "datenotificationtohq" = "date.notification.to.hq",
+                            "source"
+                          )
   )
 
   # Adding required columns
@@ -196,6 +205,51 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date, risk_tabl
   pos <- add_seq_capacity(pos, ctry_col = "place.admin.0", lab_locs)
 
   pos_summary <- pos |>
+    dplyr::mutate(
+      ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
+                               .data$dateonset),
+      timely_cat =
+        case_when(stringr::str_detect(.data$seq.capacity, "[Yy]es") & ontonothq <= 35 ~ "<=35 days from onset",
+                  stringr::str_detect(.data$seq.capacity, "[Yy]es") & ontonothq > 35 ~ ">35 days from onset",
+                  seq.capacity == "no" & ontonothq <= 46 ~ "<=46 days from onset",
+                  seq.capacity == "no" & ontonothq > 46 ~ ">46 days from onset",
+                  is.na(ontonothq) | ontonothq < 0 ~ "Missing or bad data",
+                  .default = NA
+        ),
+      is_timely = dplyr::if_else(.data$timely_cat %in%
+                                   c(
+                                     "<=35 days from onset",
+                                     "<=46 days from onset"
+                                   ), TRUE, FALSE),
+      is_target = dplyr::if_else(
+        stringr::str_detect(.data$cdc.classification.all2, "WILD|VDPV"),
+        TRUE, FALSE
+      )
+    )
+
+  return(pos_summary)
+
+}
+
+#' Generates a summary table regarding wild and VDPV cases
+#'
+#' @inheritParams generate_c1_table
+#' @param .group_by How to group the results by.
+#'
+#' @return `tibble` Summary of wild and VDPV cases
+#' @keywords internal
+generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
+                                       risk_table = NULL, lab_locs = NULL,
+                                       .group_by = c(
+                                         "whoregion",
+                                         "SG Priority Level",
+                                         "place.admin.0",
+                                         "rolling_period",
+                                         "year.analysis"
+                                       )) {
+  pos <- generate_pos_timeliness(raw_data, start_date, end_date,
+                                             risk_table, lab_locs)
+  pos_summary <- posy |>
     dplyr::mutate(
       ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
         .data$dateonset),
@@ -218,13 +272,7 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date, risk_tabl
       )
     ) |>
     dplyr::filter(!is.na(rolling_period)) |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(c(
-      "whoregion",
-      "SG Priority Level",
-      "place.admin.0",
-      "rolling_period",
-      "year.analysis"
-    )))) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarise(
       afp_cases = sum(.data$source == "AFP", na.rm = TRUE),
       env_detect = sum(.data$source == "ENV", na.rm = TRUE),
@@ -241,7 +289,7 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date, risk_tabl
       prop_timely_cases_label = paste0(.data$timely_cases, "/", .data$wild_vdpv_cases),
       prop_timely_env = .data$timely_env / .data$wild_vdpv_env,
       prop_timely_env_label = paste0(.data$timely_env, "/", .data$wild_vdpv_env),
-      prop_timely_wild_vdpv = .data$timely_wild_vdpv_samples / .data$wild_vpdv_samples,
+      prop_timely_wild_vdpv = .data$timely_wild_vdpv_samples / .data$wild_vdpv_samples,
       prop_timely_wild_vdpv_label = paste0(.data$timely_wild_vdpv_samples, "/", .data$wild_vdpv_samples)
     )
 
@@ -255,6 +303,59 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date, risk_tabl
     dplyr::ungroup()
 
   return(pos_summary)
+}
+
+#' Generate KPI lab intervals
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Generates lab intervals related to the KPI code.
+#' @details
+#' This function is used in both [generate_c4_table] and in the lab timeliness
+#' KPI violin plots.
+#'
+#' @inheritParams generate_c4_table
+#'
+#' @return `tibble` lab data with timeliness columns.
+#'
+#' @keywords internal
+generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data) {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  lab_data <- clean_lab_data(lab_data, start_date, end_date, afp_data)
+
+  lab_data <- lab_data |>
+    dplyr::mutate(
+      # Timeliness of virus isolation results
+      # Start date: receipt at WHO-accredited lab, end date: culture results
+      # Target: ≤14 days
+      days.lab.culture = .data$DateFinalCellCultureResult - .data$DateStoolReceivedinLab,
+      t1 = dplyr::if_else(!is.na(.data$days.lab.culture) &
+                            (.data$days.lab.culture >= 0 & .data$days.lab.culture <= 365),
+                          TRUE, FALSE),
+      # Timeliness of ITD results (Amanda added this)
+      # Start date: culture results, end date: ITD results
+      # Target: ≤7 days
+      days.culture.itd = .data$DateFinalrRTPCRResults - .data$DateFinalCellCultureResult,
+      t2 = dplyr::if_else(!is.na(.data$days.culture.itd) &
+                            (.data$days.culture.itd >= 0 & .data$days.culture.itd <= 365),
+                          TRUE, FALSE),
+      # Timeliness of shipment for sequencing
+      # Start date: ITD result, end date: arrival at sequencing lab (
+      # (Amanda updated start date here to be consistent with GPSAP 2025-26 indicator)
+      # Target: ≤7 days
+      days.seq.ship = .data$DateIsolateRcvdForSeq - .data$DateFinalrRTPCRResults,
+      t3 = dplyr::if_else(!is.na(.data$days.seq.ship) &
+                            (.data$days.seq.ship >= 0 & .data$days.seq.ship <= 365),
+                          TRUE, FALSE),
+      # Timeliness of sequencing results
+      # Start date: arrival at sequencing lab, end.date: sequencing results
+      days.itd.seqres = .data$DateofSequencing - .data$DateIsolateRcvdForSeq,
+      t4 = dplyr::if_else(!is.na(.data$days.itd.seqres) &
+                            (.data$days.itd.seqres >= 0 & .data$days.itd.seqres <= 365),
+                          TRUE, FALSE)
+    )
 }
 
 # Public functions ----
@@ -415,7 +516,9 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::select(dplyr::any_of(c(
       "year.analysis", "rolling_period", "whoregion", "SG Priority Level", "ctry",
       "prop_met_npafp", "prop_met_stool", "prop_met_ev",
-      "prop_timely_samples", "npafp_label", "stool_label", "ev_label",
+      "prop_timely_samples", "prop_timely_wild_vdpv",
+      "npafp_label", "stool_label", "ev_label",
+      "prop_timely_wild_vdpv_label",
       "prop_timely_samples_label", "prop_timely_cases_label",
       "prop_timely_env_label")
     ))
@@ -709,39 +812,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
 generate_c4_table <- function(lab_data, afp_data, start_date, end_date, .group_by = "year") {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
-  lab_data <- clean_lab_data(lab_data, start_date, end_date, afp_data)
-
-  lab_data <- lab_data |>
-    dplyr::mutate(
-      # Timeliness of virus isolation results
-      # Start date: receipt at WHO-accredited lab, end date: culture results
-      # Target: ≤14 days
-      days.lab.culture = .data$DateFinalCellCultureResult - .data$DateStoolReceivedinLab,
-      t1 = dplyr::if_else(!is.na(.data$days.lab.culture) &
-                            (.data$days.lab.culture >= 0 & .data$days.lab.culture <= 365),
-                          TRUE, FALSE),
-      # Timeliness of ITD results (Amanda added this)
-      # Start date: culture results, end date: ITD results
-      # Target: ≤7 days
-      days.culture.itd = .data$DateFinalrRTPCRResults - .data$DateFinalCellCultureResult,
-      t2 = dplyr::if_else(!is.na(.data$days.culture.itd) &
-                            (.data$days.culture.itd >= 0 & .data$days.culture.itd <= 365),
-                          TRUE, FALSE),
-      # Timeliness of shipment for sequencing
-      # Start date: ITD result, end date: arrival at sequencing lab (
-      # (Amanda updated start date here to be consistent with GPSAP 2025-26 indicator)
-      # Target: ≤7 days
-      days.seq.ship = .data$DateIsolateRcvdForSeq - .data$DateFinalrRTPCRResults,
-      t3 = dplyr::if_else(!is.na(.data$days.seq.ship) &
-                            (.data$days.seq.ship >= 0 & .data$days.seq.ship <= 365),
-                          TRUE, FALSE),
-      # Timeliness of sequencing results
-      # Start date: arrival at sequencing lab, end.date: sequencing results
-      days.itd.seqres = .data$DateofSequencing - .data$DateIsolateRcvdForSeq,
-      t4 = dplyr::if_else(!is.na(.data$days.itd.seqres) &
-                            (.data$days.itd.seqres >= 0 & .data$days.itd.seqres <= 365),
-                          TRUE, FALSE)
-    )
+  lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date, afp_data)
 
   lab_summary <- lab_data |>
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
