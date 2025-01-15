@@ -27,6 +27,12 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
     ctry_risk_cat <- edav_io("read", file_loc = get_constant("CTRY_RISK_CAT"))
   }
 
+  ctry_risk_cat <- ctry_risk_cat |>
+    dplyr::mutate(
+      sg_priority_level = factor(.data$`SG Priority Level`, levels = c(
+        "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
+    )
+
   color.risk.cat <- c(
     "HIGH" = "#d73027",
     "MEDIUM" = "orange",
@@ -57,11 +63,11 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 
   map <- ggplot2::ggplot() +
     ggplot2::geom_sf(aes(fill = NULL), ctry_sf, fill = "white", color = "grey") +
-    ggplot2::geom_sf(aes(fill = .data$`SG Priority Level`),
+    ggplot2::geom_sf(aes(fill = .data$sg_priority_level),
                      ctry_sf |>
                        dplyr::filter(.data$ADM0_NAME %in%
                                        ctry_risk_cat$Country,
-                                     .data$`SG Priority Level` != "LOW"),
+                                     .data$sg_priority_level != "LOW"),
                      color = "black") +
     ggplot2::scale_fill_manual(values = color.risk.cat,
                                 name = "Priority Level", na.value = "white") +
@@ -472,56 +478,409 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
 
 # Violin plots ----
 
+#' Generates KPI violin plot
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' This function is generalized to produce violin plots used in the KPI code.
+#'
+#' @param df `tibble` Data to be used.
+#' @param country.label `quoted var` Country label.
+#' @param interval `quoted var` Interval to use.
+#' @param priority_level `quoted var` Priority level column.
+#' @param faceting `ggplot::facet` A faceting object.
+#' @param target `num` Numeric target.
+#' @param y.min `num` Minimum used in the y-axis.
+#' @param y.max `num` Maximum used in the y-axis.
+#'
+#' @return `ggplot` A plot object.
+#' @keywords internal
 generate_kpi_violin <- function(
     df,
     country.label,
     interval,
+    priority_level,
     faceting,
     target,
+    y.min = 0,
     y.max) {
-  map <- ggplot2::ggplot(
-    df |> dplyr::filter({{ interval }} <= y.max, {{ interval }} >= 0),
-    ggplot2::aes(x = {{ country.label }}, y = {{ interval }})
+  map <-   ggplot(
+    df |> filter(!!rlang::sym(interval) <= y.max, !!rlang::sym(interval) >= 0),
+    aes(x = !!rlang::sym(country.label), y = !!rlang::sym(interval), fill = !!rlang::sym(priority_level))
   ) +
-    ggplot2::geom_violin(na.rm = T, aes(color = risk_category, fill = "#fd8d3c")) +
-    ggplot2::stat_summary(
-      fun.y = median, geom = "point", shape = 18,
-      size = 3, color = "black"
+    geom_violin(na.rm = T, scale = "width", linewidth = 0) +
+    stat_summary(
+      fun.y = median, geom = "text",
+      size = 2, color = "black", aes(label = round(after_stat(y)))
     ) +
     faceting +
-    ggplot2::scale_color_manual(values = "#fd8d3c") +
-    ggplot2::geom_hline(yintercept = target, linetype = "dashed", color = "#525252") +
-    ggplot2::scale_y_continuous(
-      limits = c(0, y.max),
+    { if (!is.null(target)) {
+      geom_hline(yintercept = target, linetype = "dashed", color = "#525252")
+    }
+    } +
+    scale_y_continuous(
+      breaks = seq(0, y.max, by = 50),
+      limits = c(y.min, y.max + 5),
       expand = c(0, 0)
     ) +
-    ggplot2::geom_text(ggplot2::aes(label = paste0("n=", ..count..)), y = 55, stat = "count", size = 4) +
-    ggplot2::labs(y = "Days", x = NULL) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(
-      legend.position = "none",
-      panel.grid.major = ggplot2::element_blank(),
-      panel.grid.minor = ggplot2::element_blank(),
+    geom_text(aes(label = paste0("n=", after_stat(count))),
+              y = y.max - 5,
+              stat = "count",
+              size = 2
+    ) +
+    labs(y = "Days", x = NULL) +
+    theme_bw() +
+    theme(
+      legend.position = "top",
+      strip.text = element_text(size = 5),
+      text = element_text(size = 7),
+      legend.text = element_text(size = 10),
+      legend.title = element_text(size = 10),
+      axis.text.x = ggplot2::element_text(angle = 90)
     )
 
   return(map)
 }
 
-generate_timely_det_violin <- function(c1, afp_data,
-                                       output_path = Sys.getenv("KPI_FIGURES")) {
+#' Timely detection of AFP/ES samples
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Generates a violin plot highlighting the median detection time of samples.
+#'
+#' @param raw_data `list` Global polio data. Output of [get_all_polio_data()]
+#' @param start_date `str` Analysis start date formatted as "YYYY-MM-DD".
+#' @param end_date `str` Analysis end date formatted as "YYYY-MM-DD".
+#' @param output_path `str` Where to output the figure to.
+#' @param y_max `num` The maximum y-axis value.
+#'
+#' @return `ggplot` A violin plot showing timeliness of detection.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' generate_timely_det_violin(raw_data, "2021-01-01", "2023-12-31", getwd())
+#' }
+generate_timely_det_violin <- function(raw_data,
+                                       start_date, end_date,
+                                       output_path = Sys.getenv("KPI_FIGURES"),
+                                       y_max = 250) {
 
-  ctry_abbrev <- get_ctry_abbrev(afp_data)
-  exclude_low <- c1 |>
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  pos <- generate_pos_timeliness(raw_data, start_date, end_date)
+  ctry_abbrev <- get_ctry_abbrev(raw_data$afp)
+  color.risk.cat <- c(
+    "HIGH" = "#d73027",
+    "MEDIUM" = "orange",
+    "LOW (WATCHLIST)" = "#9ecae1"
+  )
+
+  exclude_low <- pos |>
     dplyr::filter(.data$`SG Priority Level` != "LOW") |>
     dplyr::left_join(ctry_abbrev,
-                     by = c("ctry" = "place.admin.0", "whoregion")) |>
-    add_seq_capacity() |>
+                     by = c("place.admin.0", "whoregion")) |>
     dplyr::mutate(seq_lab = case_when(
       .data$seq.capacity == "no" ~ "No sequencing capacity",
       .data$seq.capacity == "yes" ~ "Sequencing capacity"
-    ))
+    )) |>
+    dplyr::filter(!is.na(.data$seq_lab)) |>
+    dplyr::mutate(
+      sg_priority_level = factor(.data$`SG Priority Level`, levels = c(
+        "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
+    )
 
 
-  plot <- generate_kpi_violin(exclude_low, ctry.short, )
+  plot <- generate_kpi_violin(exclude_low, "ctry.short", "ontonothq",
+                              "sg_priority_level",
+                              ggh4x::facet_nested(rolling_period~seq_lab+who.region,
+                                                  scales = "free", space = "free",
+                                           labeller = label_wrap_gen(13),
+                                           switch = "y"),
+                              80, y.max = y_max)
+  plot <- plot +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level", na.value = "white")
 
+  ggplot2::ggsave(file.path(output_path, "kpi_wild_vdpv_timely_det.png"),
+                  dpi = 400, height = 5, width = 12, bg = "white")
+
+  return(plot)
+
+}
+
+#' Timeliness of lab samples from collection to virus isolation results
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Shows the timeliness of lab culture results.
+#'
+#' @param lab_data `tibble` Global lab dataset.
+#' @param afp_data `tibble` AFP dataset.
+#' @param start_date `str` Start date of the analysis formatted as "YYYY-MM-DD".
+#' @param end_date `str` End date of the analysis formatted as "YYYY-MM-DD".
+#' @param output_path `str` Where to output the figure to.
+#' @param y_max `num` Maximum value in the y-axis.
+#'
+#' @return `ggplot` A violin plot showing timeliness of lab culture.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' lab_data <- edav_io("read", file_loc = get_constant("CLEANED_LAB_DATA"))
+#' generate_lab_culture_violin(lab_data, raw_data$afp,
+#'                             "2021-01-01", "2023-12-31", getwd())
+#' }
+generate_lab_culture_violin <- function(lab_data, afp_data,
+                                       start_date, end_date,
+                                       output_path = Sys.getenv("KPI_FIGURES"),
+                                       y_max = 250) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  ctry_abbrev <- get_ctry_abbrev(afp_data)
+  color.risk.cat <- c(
+    "HIGH" = "#d73027",
+    "MEDIUM" = "orange",
+    "LOW (WATCHLIST)" = "#9ecae1"
+  )
+
+  lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
+                                          afp_data)
+  lab_filtered <- lab_data |> dplyr::left_join(ctry_abbrev,
+                                           by = c("country" = "place.admin.0")) |>
+    add_risk_category(ctry_col = "country") |>
+    dplyr::mutate(
+      year = lubridate::year(.data$DateStoolCollected)
+    ) |>
+    dplyr::filter(.data$`SG Priority Level` != "LOW" |
+                    !is.na(.data$`SG Priority Level`),
+                  !is.na(.data$culture.itd.cat),
+                  dplyr::between(DateStoolCollected, start_date, end_date)) |>
+    dplyr::mutate(
+    sg_priority_level = factor(.data$`SG Priority Level`, levels = c(
+      "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
+    )
+
+  plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.lab.culture",
+                              "sg_priority_level",
+                              ggh4x::facet_nested(year~whoregion + culture.itd.cat,
+                                                  scales = "free", space = "free",
+                                                  labeller = label_wrap_gen(13),
+                                                  switch = "y"), 14,
+                              y.max = y_max)
+  plot <- plot +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level", na.value = "white")
+  ggplot2::ggsave(file.path(output_path, "kpi_lab_days_lab_culture.png"),
+                  dpi = 400, height = 5, width = 12, bg = "white")
+
+  return(plot)
+}
+
+#' Timeliness of virus isolation to ITD results
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Shows the timeliness of ITD results of specimens that require ITD. The target
+#' is 7 days or less.
+#'
+#' @inheritParams generate_lab_culture_violin
+#'
+#' @return `ggplot` A violin plot showing timeliness of ITD results from lab
+#' culture.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' lab_data <- edav_io("read", file_loc = get_constant("CLEANED_LAB_DATA"))
+#' generate_lab_itd_violin(lab_data, raw_data$afp,
+#'                         "2021-01-01", "2023-12-31", getwd())
+#' }
+generate_lab_itd_violin <- function(lab_data, afp_data,
+                                        start_date, end_date,
+                                        output_path = Sys.getenv("KPI_FIGURES"),
+                                        y_max = 250) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  ctry_abbrev <- get_ctry_abbrev(afp_data)
+  color.risk.cat <- c(
+    "HIGH" = "#d73027",
+    "MEDIUM" = "orange",
+    "LOW (WATCHLIST)" = "#9ecae1"
+  )
+
+  lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
+                                          afp_data)
+  lab_filtered <- lab_data |> dplyr::left_join(ctry_abbrev,
+                                               by = c("country" = "place.admin.0")) |>
+    add_risk_category(ctry_col = "country") |>
+    dplyr::mutate(
+      year = lubridate::year(.data$DateStoolCollected)
+    ) |>
+    dplyr::filter(.data$`SG Priority Level` != "LOW" |
+                    !is.na(.data$`SG Priority Level`),
+                  !is.na(.data$culture.itd.cat),
+                  dplyr::between(DateStoolCollected, start_date, end_date)) |>
+    dplyr::mutate(
+      sg_priority_level = factor(.data$`SG Priority Level`, levels = c(
+        "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
+    )
+
+  plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.culture.itd",
+                              "sg_priority_level",
+                              ggplot2::facet_wrap(~ .data$culture.itd.lab,
+                                                  scales = "free", ncol = 7,
+                                         labeller = label_wrap_gen(20)), 7,
+                              y.max = y_max)
+  plot <- plot +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level", na.value = "white")
+  ggplot2::ggsave(file.path(output_path, "kpi_lab_days_culture_itd.png"),
+                  dpi = 400, height = 5, width = 12, bg = "white")
+
+  return(plot)
+}
+
+#' Timeliness of shipment to sequencing results
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Shows the timeliness of shipment to sequencing results for specimens that
+#' require sequencing. The target is 7 days or less.
+#'
+#' @inheritParams generate_lab_culture_violin
+#'
+#' @return `ggplot` A violin plot showing the timeliness of shipment to
+#' sequencing results.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' lab_data <- edav_io("read", file_loc = get_constant("CLEANED_LAB_DATA"))
+#' generate_lab_seqship_violin(lab_data, raw_data$afp,
+#'                             "2021-01-01", "2023-12-31", getwd())
+#' }
+generate_lab_seqship_violin <- function(lab_data, afp_data,
+                                        start_date, end_date,
+                                        output_path = Sys.getenv("KPI_FIGURES"),
+                                        y_max = 250) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  ctry_abbrev <- get_ctry_abbrev(afp_data)
+  color.risk.cat <- c(
+    "HIGH" = "#d73027",
+    "MEDIUM" = "orange",
+    "LOW (WATCHLIST)" = "#9ecae1"
+  )
+
+  lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
+                                          afp_data)
+  lab_filtered <- lab_data |> dplyr::left_join(ctry_abbrev,
+                                               by = c("country" = "place.admin.0")) |>
+    add_risk_category(ctry_col = "country") |>
+    dplyr::mutate(
+      year = lubridate::year(.data$DateStoolCollected)
+    ) |>
+    dplyr::filter(.data$`SG Priority Level` != "LOW" |
+                    !is.na(.data$`SG Priority Level`),
+                  !is.na(.data$culture.itd.cat),
+                  dplyr::between(DateStoolCollected, start_date, end_date)) |>
+    dplyr::mutate(
+      sg_priority_level = factor(.data$`SG Priority Level`, levels = c(
+        "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
+    )
+
+  plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.seq.ship",
+                              "sg_priority_level",
+                              ggh4x::facet_nested(year ~ seq.cat + seq.lab,
+                                                  scales = "free", space = "free",
+                                                  labeller = label_wrap_gen(13),
+                                                  switch = "y"), 7,
+                              y.max = y_max)
+  plot <- plot +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level", na.value = "white")
+  ggplot2::ggsave(file.path(output_path, "kpi_lab_days_seq_ship.png"),
+                  dpi = 400, height = 5, width = 12, bg = "white")
+
+  return(plot)
+}
+
+#' Timeliness of arrival in sequencing lab to sequencing results
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Shows the timeliness of arrival in the sequencing lab to sequencing results.
+#' The target is 7 days or less for AFP cases and 14 days for ES samples.
+#'
+#' @inheritParams generate_lab_culture_violin
+#'
+#' @return `ggplot` A violin plot showing the timeliness of sequencing results.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' lab_data <- edav_io("read", file_loc = get_constant("CLEANED_LAB_DATA"))
+#' generate_lab_seqres_violin(lab_data, raw_data$afp,
+#'                            "2021-01-01", "2023-12-31", getwd())
+#' }
+generate_lab_seqres_violin <- function(lab_data, afp_data,
+                                        start_date, end_date,
+                                        output_path = Sys.getenv("KPI_FIGURES"),
+                                        y_max = 250) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  ctry_abbrev <- get_ctry_abbrev(afp_data)
+  color.risk.cat <- c(
+    "HIGH" = "#d73027",
+    "MEDIUM" = "orange",
+    "LOW (WATCHLIST)" = "#9ecae1"
+  )
+
+  lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
+                                          afp_data)
+  lab_filtered <- lab_data |> dplyr::left_join(ctry_abbrev,
+                                               by = c("country" = "place.admin.0")) |>
+    add_risk_category(ctry_col = "country") |>
+    dplyr::mutate(
+      year = lubridate::year(.data$DateStoolCollected)
+    ) |>
+    dplyr::filter(.data$`SG Priority Level` != "LOW" |
+                    !is.na(.data$`SG Priority Level`),
+                  !is.na(.data$culture.itd.cat),
+                  dplyr::between(DateStoolCollected, start_date, end_date)) |>
+    dplyr::mutate(
+      sg_priority_level = factor(.data$`SG Priority Level`, levels = c(
+        "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
+    )
+
+  plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.itd.seqres",
+                              "sg_priority_level",
+                              ggh4x::facet_nested(year ~ seq.cat + seq.lab,
+                                                  scales = "free", space = "free",
+                                                  labeller = label_wrap_gen(13),
+                                                  switch = "y"), 7,
+                              y.max = y_max)
+  plot <- plot +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level", na.value = "white")
+  ggplot2::ggsave(file.path(output_path, "kpi_lab_days_itd_seqres.png"),
+                  dpi = 400, height = 5, width = 12, bg = "white")
+
+  return(plot)
 }
