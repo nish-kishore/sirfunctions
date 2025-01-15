@@ -14,13 +14,21 @@ generate_kpi_stool_map(
 )
 }
 \arguments{
-\item{c2}{\code{tibble} Output of \code{\link[=generate_c2_table]{generate_c2_table()}}}
+\item{c2}{\code{tibble} Output of \code{\link[=generate_c2_table]{generate_c2_table()}}.}
 
 \item{ctry_sf}{\code{sf} Country shapefile in long format.}
 
 \item{dist_sf}{\code{sf} District shapefile in long format.}
 
-\item{who_region}{\code{str} WHO region.}
+\item{who_region}{\code{str} WHO region. Valid values are:
+\itemize{
+\item \code{"AFRO"}: African Region
+\item \code{"AMRO"}: Region of the Americas
+\item \code{"EMRO"}: Eastern Mediterranean Region
+\item \code{"EURO"}: European Region
+\item \code{"SEARO"}:South-East Asia Region
+\item \code{"WPRO"}:Western Pacific Region
+}}
 
 \item{.year}{\code{num} Numeric year of interest.}
 
@@ -31,7 +39,9 @@ initialized when \code{\link[=init_kpi]{init_kpi()}} was ran.}
 \code{ggplot} A stool adequacy map.
 }
 \description{
-Generate district level stool adequacy maps
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
+Generates a map of district level stool adequacy maps
 }
 \examples{
 \dontrun{

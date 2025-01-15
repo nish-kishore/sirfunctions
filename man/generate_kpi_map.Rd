@@ -15,11 +15,19 @@ generate_kpi_map(
 )
 }
 \arguments{
-\item{c2}{\code{tibble} Output of \code{\link[=generate_c2_table]{generate_c2_table()}}}
+\item{c2}{\code{tibble} Output of \code{\link[=generate_c2_table]{generate_c2_table()}}.}
 
 \item{ctry_sf}{\code{sf} Country shapefile in long format.}
 
-\item{who_region}{\code{str} WHO region.}
+\item{who_region}{\code{str} WHO region. Valid values are:
+\itemize{
+\item \code{"AFRO"}: African Region
+\item \code{"AMRO"}: Region of the Americas
+\item \code{"EMRO"}: Eastern Mediterranean Region
+\item \code{"EURO"}: European Region
+\item \code{"SEARO"}:South-East Asia Region
+\item \code{"WPRO"}:Western Pacific Region
+}}
 
 \item{indicator}{\verb{quoted var} Indicator variable.}
 
@@ -30,7 +38,7 @@ generate_kpi_map(
 \item{legend_title}{\code{str} Title of the legend.}
 }
 \value{
-\code{ggplot} A ggplot object
+\code{ggplot} A ggplot object.
 }
 \description{
 Generalized function to build KPI maps.
