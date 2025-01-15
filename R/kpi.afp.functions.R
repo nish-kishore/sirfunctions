@@ -775,11 +775,17 @@ generate_c3_table <- function(es_data, start_date, end_date,
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by)),
                                   .data$site.id, .data$site.name) |>
     dplyr::summarize(
-      ev_rate = sum(.data$ev.detect == 1, na.rm = TRUE) / sum(!is.na(.data$ev.detect)) * 100,
+      es_samples = sum(!is.na(.data$ev.detect), na.rm = TRUE),
+      ev_rate = sum(.data$ev.detect == 1, na.rm = TRUE) / es_samples * 100,
       prop_good_es = sum(.data$sample.condition == "Good") / sum(!is.na(.data$sample.condition)) * 100,
-      prop_timely_ship = sum(timely_ship == "yes") / sum(timely_ship != "unable to assess", na.rm = TRUE) * 100,
-      prop_timely_det_wpv_vdpv = sum(timely_det == "yes" & is_target == TRUE, na.rm = TRUE) /
-        sum(is_target == TRUE & timely_det != "unable to assess", na.rm = TRUE) * 100
+      prop_timely_ship = sum(timely_ship == "yes", na.rm = TRUE) /
+        sum(timely_ship != "unable to assess" | !is.na(timely_ship), na.rm = TRUE) * 100,
+      wpv_vdpv_detections = sum(is_target == TRUE & (timely_det != "unable to assess" |
+                                                       !is.na(timely_det)), na.rm = TRUE),
+      timely_wpv_vdpv_detections = sum(is_target == TRUE &
+                                         timely_det == "yes", na.rm = TRUE),
+      prop_timely_det_wpv_vdpv = timely_wpv_vdpv_detections /
+        wpv_vdpv_detections * 100
     )
 
   return(es_summary)
