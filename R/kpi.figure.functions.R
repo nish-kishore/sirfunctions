@@ -472,3 +472,56 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
 
 # Violin plots ----
 
+generate_kpi_violin <- function(
+    df,
+    country.label,
+    interval,
+    faceting,
+    target,
+    y.max) {
+  map <- ggplot2::ggplot(
+    df |> dplyr::filter({{ interval }} <= y.max, {{ interval }} >= 0),
+    ggplot2::aes(x = {{ country.label }}, y = {{ interval }})
+  ) +
+    ggplot2::geom_violin(na.rm = T, aes(color = risk_category, fill = "#fd8d3c")) +
+    ggplot2::stat_summary(
+      fun.y = median, geom = "point", shape = 18,
+      size = 3, color = "black"
+    ) +
+    faceting +
+    ggplot2::scale_color_manual(values = "#fd8d3c") +
+    ggplot2::geom_hline(yintercept = target, linetype = "dashed", color = "#525252") +
+    ggplot2::scale_y_continuous(
+      limits = c(0, y.max),
+      expand = c(0, 0)
+    ) +
+    ggplot2::geom_text(ggplot2::aes(label = paste0("n=", ..count..)), y = 55, stat = "count", size = 4) +
+    ggplot2::labs(y = "Days", x = NULL) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      legend.position = "none",
+      panel.grid.major = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
+    )
+
+  return(map)
+}
+
+generate_timely_det_violin <- function(c1, afp_data,
+                                       output_path = Sys.getenv("KPI_FIGURES")) {
+
+  ctry_abbrev <- get_ctry_abbrev(afp_data)
+  exclude_low <- c1 |>
+    dplyr::filter(.data$`SG Priority Level` != "LOW") |>
+    dplyr::left_join(ctry_abbrev,
+                     by = c("ctry" = "place.admin.0", "whoregion")) |>
+    add_seq_capacity() |>
+    dplyr::mutate(seq_lab = case_when(
+      .data$seq.capacity == "no" ~ "No sequencing capacity",
+      .data$seq.capacity == "yes" ~ "Sequencing capacity"
+    ))
+
+
+  plot <- generate_kpi_violin(exclude_low, ctry.short, )
+
+}
