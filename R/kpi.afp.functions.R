@@ -226,25 +226,31 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date, risk_tabl
       "year.analysis"
     )))) |>
     dplyr::summarise(
-      afp_cases = sum(source == "AFP", na.rm = TRUE),
-      env_detect = sum(source == "ENV", na.rm = TRUE),
-      wild_vdpv_cases = sum(source == "AFP" & is_target, na.rm = TRUE),
-      wild_vdpv_env = sum(source == "ENV" & is_target, na.rm = TRUE),
-      timely_samples = sum(is_timely, na.rm = TRUE),
-      timely_cases = sum(source == "AFP" & is_timely),
-      timely_env = sum(source == "ENV" & is_timely),
+      afp_cases = sum(.data$source == "AFP", na.rm = TRUE),
+      env_detect = sum(.data$source == "ENV", na.rm = TRUE),
+      wild_vdpv_cases = sum(.data$source == "AFP" & .data$is_target, na.rm = TRUE),
+      wild_vdpv_env = sum(.data$source == "ENV" & .data$is_target, na.rm = TRUE),
+      wild_vdpv_samples = sum(.data$is_target, na.rm = TRUE),
+      timely_samples = sum(.data$is_timely, na.rm = TRUE),
+      timely_cases = sum(.data$source == "AFP" & .data$is_timely),
+      timely_env = sum(.data$source == "ENV" & .data$is_timely),
+      timely_wild_vdpv_samples = sum(.data$is_target & .data$is_timely),
       prop_timely_samples = .data$timely_samples / dplyr::n(),
       prop_timely_samples_label = paste0(.data$timely_samples, "/", dplyr::n()),
       prop_timely_cases = .data$timely_cases / .data$wild_vdpv_cases,
       prop_timely_cases_label = paste0(.data$timely_cases, "/", .data$wild_vdpv_cases),
       prop_timely_env = .data$timely_env / .data$wild_vdpv_env,
-      prop_timely_env_label = paste0(.data$timely_env, "/", .data$wild_vdpv_env)
+      prop_timely_env_label = paste0(.data$timely_env, "/", .data$wild_vdpv_env),
+      prop_timely_wild_vdpv = .data$timely_wild_vdpv_samples / .data$wild_vpdv_samples,
+      prop_timely_wild_vdpv_label = paste0(.data$timely_wild_vdpv_samples, "/", .data$wild_vdpv_samples)
     )
 
   pos_summary <- pos_summary |>
     dplyr::mutate(dplyr::across(dplyr::any_of(c(
+      "prop_timely_samples",
       "prop_timely_cases",
-      "prop_timely_env"
+      "prop_timely_env",
+      "prop_timely_wild_vdpv"
     )), \(x) if_else(x %in% c(Inf, NaN), 0, x))) |>
     dplyr::ungroup()
 
