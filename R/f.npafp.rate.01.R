@@ -100,7 +100,6 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
     summarise(par = sum(.data$weight * .data$u15pop)) |>
     ungroup()
 
-
   # Count the number of NPAFP cases
   int.data <- afp.data |>
     dplyr::group_by(get(geo)) |>
@@ -172,14 +171,19 @@ f.npafp.rate.01 <- function(
     missing_agemonths = F,
     rolling = F,
     sp_continuity_validation = T) {
+
   # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
   }
 
+  # Local static vars
+  names.ctry <- c("adm0guid", "year", "ctry")
+  names.prov <- c(names.ctry, "adm1guid", "prov")
+  names.dist <- c(names.prov, "adm2guid", "dist")
+
   # Ensure that if using raw.data, required renamed columns are present. Borrowed from
   # extract.country.data()
-
   afp.data <- dplyr::rename_with(afp.data, recode,
     place.admin.0 = "ctry",
     place.admin.1 = "prov",
@@ -198,12 +202,6 @@ f.npafp.rate.01 <- function(
     ADM0_GUID = "adm0guid",
     u15pop.prov = "u15pop"
   )
-
-
-  # Local static vars
-  names.ctry <- c("adm0guid", "year", "ctry")
-  names.prov <- c(names.ctry, "adm1guid", "prov")
-  names.dist <- c(names.prov, "adm2guid", "dist")
 
   # Check data inputs
   # Analysis start and end date as defined by user (as a character)
@@ -312,7 +310,7 @@ f.npafp.rate.01 <- function(
   }
 
   # Only years of analysis
-  pop.data <- pop.data %>%
+  pop.data <- pop.data |>
     dplyr::filter(dplyr::between(
       year,
       lubridate::year(start.date),
@@ -355,8 +353,8 @@ f.npafp.rate.01 <- function(
 
   numeric_cols <- c("n_npafp", "u15pop", "npafp_rate", "par")
   int.data <- int.data |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols), \(x) tidyr::replace_na(x, 0))) |>
-    tidyr::drop_na(dplyr::any_of(spatial.scale))
+    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols),
+                                \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 }
