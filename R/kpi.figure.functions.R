@@ -93,62 +93,86 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 #'
 #' @return `ggplot` A ggplot object.
 #' @keywords internal
-generate_kpi_map <- function(c2, ctry_sf, who_region, indicator, .year,
-                             color_scheme, legend_title) {
+generate_kpi_map <- function(c2, who_region, indicator, year,
+                             risk_category,
+                             color_scheme, legend_title,
+                             .ctry_sf, .dist_sf) {
 
-  if (!"active.year.01" %in% names(ctry_sf)) {
-    error_message <- paste0(
-      "ctry.shape is not in long format. ",
-      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-      " to download the country shapefile in long format."
-    )
-    cli::cli_abort(error_message)
+  plotlooks02 <- f.plot.looks("02")
+
+  if (is.null(.ctry_sf)) {
+    .ctry_sf <- suppressMessages(load_clean_ctry_sp(
+      st.year = year,
+      end.year = year,
+      type = "long"
+    ))
   }
 
-  plotlooks02 <- list(
-    ggplot2::theme(
-      panel.grid.minor = ggplot2::element_blank(),
-      panel.background = ggplot2::element_rect(fill = "white"),
-      axis.title.x = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_blank(),
-      axis.ticks.x = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.text.x = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank(),
-      legend.position = "bottom",
-      legend.background = ggplot2::element_rect(colour = "black",
-                                                fill = "white",
-                                                linetype = "solid")
-    )
-  )
-
-  ctry_sf <- ctry_sf |>
-    dplyr::filter(.data$WHO_REGION %in% who_region)
+  if (is.null(.dist_sf)) {
+    .dist_sf <- suppressMessages(load_clean_dist_sp(
+      st.year = year,
+      end.year = year,
+      type = "long"
+    ))
+  }
 
   c2 <- c2 |>
     add_risk_category() |>
-    dplyr::filter(.data$year == .year,
-                  .data$Region %in% who_region)
+    dplyr::filter(
+      .data$year == year,
+      .data$Region %in% who_region,
+      !is.na(!!rlang::sym(indicator))
+    ) |>
+    dplyr::left_join(.dist_sf, by = c(
+      "adm2guid" = "GUID",
+      "year" = "active.year.01"
+    )) |>
+    sf::st_as_sf()
 
-  priority_ctry <- c2 |>
-    dplyr::filter(.data$`SG Priority Level` == "HIGH")
+  if (!is.null(risk_category)) {
+    c2 <- c2 |>
+      dplyr::filter(.data$`SG Priority Level` %in% risk_category)
+  }
+
+  .ctry_sf <- .ctry_sf |>
+    dplyr::filter(.data$WHO_REGION %in% who_region)
+  high_risk <- c2 |>
+    dplyr::filter(.data$`SG Priority Level` == "HIGH") |>
+    dplyr::pull(.data$ctry) |>
+    unique()
 
   map <- ggplot2::ggplot() +
-    ggplot2::geom_sf(ggplot2::aes(fill = {{ indicator }}), c2, color = NA,
-                     na.rm = TRUE) +
-    ggplot2::scale_fill_manual(values = color_scheme, name = legend_title,
-                               na.value = "grey") +
-    ggplot2::geom_sf(data = ctry_sf, fill = NA, linewidth = 0.5, size = 0.5,
-                     color  ="grey") +
-    ggplot2::geom_sf(data = ctry_sf |>
-                       filter(.data$ADM0_NAME %in% unique(priority_ctry$ctry)),
-                     fill = NA, linewidth = 0.5, size = 0.5,
-                     color = "black") +
+    ggplot2::geom_sf(ggplot2::aes(fill = !!rlang::sym(indicator)), c2,
+      color = NA,
+      na.rm = TRUE
+    ) +
+    ggplot2::scale_fill_manual(
+      values = color_scheme, name = legend_title
+    ) +
+    ggplot2::geom_sf(
+      data = .ctry_sf, fill = NA, linewidth = 0.5, size = 0.5,
+      color = "grey"
+    ) +
+    ggplot2::geom_sf(
+      data = .ctry_sf |>
+        filter(.data$ADM0_NAME %in% high_risk),
+      fill = NA, linewidth = 0.5, size = 0.5,
+      color = "black"
+    ) +
     ggplot2::labs(caption = "*Countries outlined in black are designated High risk by SG") +
     plotlooks02
 
-  return(map)
+  if ("WPRO" %in% who_region & length(who_region) == 1) {
+    wpro.aoi <- c(
+      "PAPUA NEW GUINEA", "PHILLIPINES", "AUSTRAILIA", "VIETNAM",
+      "LAO PEOPLE'S DEMOCRATIC REPUBLIC"
+    )
+    aoi <- sf::st_bbox(.ctry_sf |> dplyr::filter(.data$ADM0_NAME %in% wpro.aoi))
+    map <- map +
+      ggplot2::coord_sf(xlim = aoi[c("xmin", "xmax")], ylim = aoi[c("ymin", "ymax")])
+  }
 
+  return(map)
 }
 
 #' Generate district level NPAFP maps by region
@@ -159,18 +183,22 @@ generate_kpi_map <- function(c2, ctry_sf, who_region, indicator, .year,
 #'
 #'
 #' @param c2 `tibble` Output of [generate_c2_table()].
-#' @param ctry_sf `sf` Country shapefile in long format.
-#' @param dist_sf `sf` District shapefile in long format.
-#' @param who_region `str` WHO region. Valid values are:
+#' @param year `num` Numeric year of interest.
+#' @param who_region `str` A WHO region or a list of regions. Valid values are:
 #' - `"AFRO"`: African Region
 #' - `"AMRO"`: Region of the Americas
 #' - `"EMRO"`: Eastern Mediterranean Region
 #' - `"EURO"`: European Region
 #' - `"SEARO"`:South-East Asia Region
 #' - `"WPRO"`:Western Pacific Region
-#' @param .year `num` Numeric year of interest.
 #' @param output_path `str` Where to output the figure to. Defaults to the path
 #' initialized when [init_kpi()] was ran.
+#' @param ctry_sf `sf` Country shapefile in long format. Output of
+#' [load_clean_ctry_sp(type = "long")]. Defaults to `NULL`, which will download
+#' the required country shapefile when the function is ran.
+#' @param dist_sf `sf` District shapefile in long format. Output of
+#' [load_clean_dist_sp(type = "long")]. Defaults to `NULL`, which will download
+#' the required district shapefile when the function is ran.
 #'
 #' @return `ggplot` A district NPAFP map.
 #' @export
@@ -180,64 +208,40 @@ generate_kpi_map <- function(c2, ctry_sf, who_region, indicator, .year,
 #' raw_data <- get_all_polio_data()
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$dist, "2021-01-01",
 #' "2023-12-31", c("ctry", "dist", "adm2guid", "year"))
-#' ctry_sf <- load_clean_ctry_sp(type="long")
-#' dist_sf <- load_clean_dist_sp(type="long")
-#' map <- generate_kpi_npafp_map(c2, ctry_sf, dist_sf, "AFRO", 2022, getwd())
+#' map <- generate_kpi_npafp_map(c2, 2023, "AFRO", output_path = getwd())
 #' }
-generate_kpi_npafp_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
-                                   output_path = Sys.getenv("KPI_FIGURES")) {
+generate_kpi_npafp_map <- function(c2, year, who_region = NULL,
+                                   risk_category = NULL,
+                                   output_path = Sys.getenv("KPI_FIGURES"),
+                                   ctry_sf = NULL, dist_sf = NULL) {
 
-  if (!"active.year.01" %in% names(ctry_sf)) {
-    error_message <- paste0(
-      "ctry.shape is not in long format. ",
-      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-      " to download the country shapefile in long format."
-    )
-    cli::cli_abort(error_message)
-  }
-
-  if (!"active.year.01" %in% names(dist_sf)) {
-    error_message <- paste0(
-      "ctry.shape is not in long format. ",
-      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-      " to download the country shapefile in long format."
-    )
-    cli::cli_abort(error_message)
-  }
-
-  if (!who_region %in% c("AFRO", "EMRO", "SEARO", "WPRO", "AMRO", "EURO")) {
-    cli::cli_abort("Please enter a valid who_region value.")
-  }
-  color.npafp <- c(
-    "Silent (u15pop >= 100K)"="#762a83",
+  npafp_col <- c(
+    "Silent (u15pop >= 100K)" = "#762a83",
     "No cases (u15pop < 100K)" = "#999999",
     "< 1" = "#d7191c",
     ">= 1 & <2" = "#fdae61",
     ">= 2 & <3" = "#74c476",
     ">=3" = "#006d2c",
-    "Missing Pop" = "#3182bd")
+    "Missing Pop" = "#3182bd"
+  )
 
-  c2 <- c2 |>
-    dplyr::left_join(dist_sf, by = c("adm2guid" = "GUID",
-                                     "year" = "active.year.01")) |>
-    sf::st_as_sf()
+  c2 <- c2 |> dplyr::filter(!is.na(.data$npafp_cat))
 
-  map <- generate_kpi_map(c2, ctry_sf, who_region, npafp_cat, .year,
-                          color.npafp,
-                          "NPAFP Rate")
+  map <- generate_kpi_map(
+    c2, who_region, "npafp_cat", year, risk_category, npafp_col, "NPAFP Rate",
+    ctry_sf, dist_sf
+  )
 
-  if (who_region == "WPRO") {
-    wpro.aoi <- c("PAPUA NEW GUINEA", "PHILLIPINES", "AUSTRAILIA", "VIETNAM",
-                  "LAO PEOPLE'S DEMOCRATIC REPUBLIC")
-    aoi <- sf::st_bbox(ctry_sf |> dplyr::filter(ADM0_NAME %in% wpro.aoi))
-    map <- map +
-      ggplot2::coord_sf(xlim = aoi[c("xmin", "xmax")], ylim = aoi[c("ymin", "ymax")])
+  if (is.null(who_region)) {
+    file_name <- paste0("npafp_maps_global_", year,".png")
+  } else {
+    file_name <- paste0("npafp_maps_", paste0(who_region, collapse = "_")
+                        ,"_", year,".png")
   }
 
-  file_name <- paste0("npafp_maps_", who_region, "_", .year, ".png")
-
   ggplot2::ggsave(file.path(output_path, file_name),
-                  dpi = 300, height = 12, width = 10, bg="white")
+    dpi = 300, height = 12, width = 10, bg = "white"
+  )
   return(map)
 }
 
@@ -258,30 +262,12 @@ generate_kpi_npafp_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
 #' raw_data <- get_all_polio_data()
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$dist, "2021-01-01",
 #' "2023-12-31", c("ctry", "dist", "adm2guid", "year"))
-#' ctry_sf <- load_clean_ctry_sp(type="long")
-#' dist_sf <- load_clean_dist_sp(type="long")
-#' map <- generate_kpi_stool_map(c2, ctry_sf, dist_sf, "AFRO", 2022, getwd())
+#' map <- generate_kpi_stool_map(c2, 2023, "AFRO", output_path = getwd())
 #' }
-generate_kpi_stool_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
-                                   output_path = Sys.getenv("KPI_FIGURES")) {
-
-  if (!"active.year.01" %in% names(ctry_sf)) {
-    error_message <- paste0(
-      "ctry.shape is not in long format. ",
-      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-      " to download the country shapefile in long format."
-    )
-    cli::cli_abort(error_message)
-  }
-
-  if (!"active.year.01" %in% names(dist_sf)) {
-    error_message <- paste0(
-      "ctry.shape is not in long format. ",
-      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
-      " to download the country shapefile in long format."
-    )
-    cli::cli_abort(error_message)
-  }
+generate_kpi_stool_map <- function(c2, year, who_region = NULL,
+                                   risk_category = NULL,
+                                   output_path = Sys.getenv("KPI_FIGURES"),
+                                   ctry_sf = NULL, dist_sf = NULL) {
 
   stool_color <- c(
     "Zero AFP cases" = "#999999",
@@ -291,27 +277,25 @@ generate_kpi_stool_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
     "80%+" = "#2c7bb6"
   )
 
-  c2 <- c2 |>
-    dplyr::left_join(dist_sf, by = c("adm2guid" = "GUID",
-                                     "year" = "active.year.01")) |>
-    sf::st_as_sf()
+  c2 <- c2 |> dplyr::filter(!is.na("stool_cat"))
 
-  map <- generate_kpi_map(c2, ctry_sf, who_region, stool_cat, .year,
-                          stool_color,
-                          "Stool Adequacy")
+  map <- generate_kpi_map(
+    c2, who_region, "stool_cat", year, risk_category, stool_color,
+    "Stool Adequacy", ctry_sf, dist_sf
+  )
 
-  if (who_region == "WPRO") {
-    wpro.aoi <- c("PAPUA NEW GUINEA", "PHILLIPINES", "AUSTRAILIA", "VIETNAM",
-                  "LAO PEOPLE'S DEMOCRATIC REPUBLIC")
-    aoi <- sf::st_bbox(ctry_sf |> dplyr::filter(ADM0_NAME %in% wpro.aoi))
-    map <- map +
-      ggplot2::coord_sf(xlim = aoi[c("xmin", "xmax")], ylim = aoi[c("ymin", "ymax")])
+  if (is.null(who_region)) {
+    file_name <- paste0("stool_ad_maps_global_", year, ".png")
+  } else {
+    file_name <- paste0(
+      "stool_ad_maps_", paste0(who_region, collapse = "_"),
+      "_", year, ".png"
+    )
   }
 
-  file_name <- paste0("stool_ad_maps_", who_region, "_", .year, ".png")
-
   ggplot2::ggsave(file.path(output_path, file_name),
-                  dpi = 300, height = 12, width = 10, bg = "white")
+    dpi = 300, height = 12, width = 10, bg = "white"
+  )
   return(map)
 }
 
