@@ -738,7 +738,10 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
 generate_c3_table <- function(es_data, start_date, end_date,
-                              .group_by = c("ADM0_NAME", "ctry.guid", "reporting.year")) {
+                              .group_by = c("ADM0_NAME", "ctry.guid",
+                                            "reporting.year",
+                                            "lat", "lng",
+                                            "site.id", "site.name")) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -772,8 +775,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
 
                   is_target = dplyr::if_else(.data$wpv == 1 | .data$vdpv == 1, TRUE, FALSE)
                   ) |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by)),
-                                  .data$site.id, .data$site.name) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(
       es_samples = sum(!is.na(.data$ev.detect), na.rm = TRUE),
       ev_rate = sum(.data$ev.detect == 1, na.rm = TRUE) / es_samples * 100,

@@ -8,7 +8,8 @@ generate_c3_table(
   es_data,
   start_date,
   end_date,
-  .group_by = c("ADM0_NAME", "ctry.guid", "reporting.year")
+  .group_by = c("ADM0_NAME", "ctry.guid", "reporting.year", "lat", "lng", "site.id",
+    "site.name")
 )
 }
 \arguments{
