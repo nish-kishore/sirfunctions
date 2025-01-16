@@ -9,11 +9,11 @@ generate_kpi_barchart(df, indicator, target, label, faceting, y.axis.title)
 \arguments{
 \item{df}{\code{tibble} A KPI table, namely C1-C4.}
 
-\item{indicator}{\verb{quoted var} Name of the indicator within the KPI table.}
+\item{indicator}{\code{str} Name of the indicator within the KPI table.}
 
 \item{target}{\code{num} A numeric target.}
 
-\item{label}{\verb{quoted var} Name of the column containing labels.}
+\item{label}{\code{str} Name of the column containing labels.}
 
 \item{faceting}{\code{ggplot2} A ggplot2 faceting object.
 Either using \code{\link[ggplot2:facet_grid]{ggplot2::facet_grid()}} or \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
