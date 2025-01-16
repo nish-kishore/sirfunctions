@@ -249,7 +249,7 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
                                        )) {
   pos <- generate_pos_timeliness(raw_data, start_date, end_date,
                                              risk_table, lab_locs)
-  pos_summary <- posy |>
+  pos_summary <- pos |>
     dplyr::mutate(
       ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
         .data$dateonset),
