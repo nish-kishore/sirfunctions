@@ -112,6 +112,8 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
 
   geo <- switch(spatial_scale,
     "ctry" = "adm0guid",
@@ -160,7 +162,7 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
   )
 
   int.data <- int.data |>
-    suppressMessages(dplyr::left_join(pop.data))
+    dplyr::left_join(pop.data)
 
   int.data <- int.data |>
     mutate(per.stool.ad = dplyr::if_else(.data$afp.cases == 0, NA, .data$per.stool.ad)) |>
@@ -375,6 +377,12 @@ f.stool.ad.01 <- function(
     bad.data = "inadequate",
     rolling = F,
     sp_continuity_validation = T) {
+
+  # Check if afp.data and pop.data has arguments
+  if (!(hasArg(afp.data) & hasArg(admin.data))) {
+    stop("Please include both afp.data and pop.data as arguments to the function.")
+  }
+
   # Local static vars
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
@@ -382,7 +390,6 @@ f.stool.ad.01 <- function(
 
   # Ensure that if using raw.data, required renamed columns are present. Borrowed from
   # extract.country.data()
-
   afp.data <- dplyr::rename_with(afp.data, recode,
     place.admin.0 = "ctry",
     place.admin.1 = "prov",
@@ -445,23 +452,9 @@ f.stool.ad.01 <- function(
   }
 
   # Perform checks
-  switch(spatial.scale,
-    "ctry" = {
-      check_missing_afp_var(afp.data, "ctry")
-      check_missing_pop_var(admin.data, "ctry")
-      check_spatial_scale(admin.data, "ctry")
-    },
-    "prov" = {
-      check_missing_afp_var(afp.data, "prov")
-      check_missing_pop_var(admin.data, "prov")
-      check_spatial_scale(admin.data, "prov")
-    },
-    "dist" = {
-      check_missing_afp_var(afp.data, "dist")
-      check_missing_pop_var(admin.data, "dist")
-      check_spatial_scale(admin.data, "dist")
-    }
-  )
+  check_missing_afp_var(afp.data, spatial.scale)
+  check_missing_pop_var(admin.data, spatial.scale)
+  check_spatial_scale(admin.data, spatial.scale)
 
   # Get inconsistent GUIDs across temporal scale
   incomplete.adm <- get_incomplete_adm(admin.data, spatial.scale, start.date, end.date)
@@ -505,7 +498,7 @@ f.stool.ad.01 <- function(
       cdc.classification.all2 != "NOT-AFP"
     )
   # Only years of analysis
-  admin.data <- admin.data %>%
+  admin.data <- admin.data |>
     dplyr::filter(dplyr::between(
       year,
       lubridate::year(start.date),
@@ -533,7 +526,6 @@ f.stool.ad.01 <- function(
   # Merge stool data with days in year
   year.pop.data <- suppressMessages(dplyr::left_join(year.data, admin.data))
   stool.data <- suppressMessages(dplyr::full_join(stool.data, year.pop.data))
-
 
   # Select how to treat bad data
   stool.data <- switch(bad.data,
@@ -568,14 +560,13 @@ f.stool.ad.01 <- function(
   # Calculate stool adequacy
   int.data <- NULL
   if (rolling) {
-    int.data <- stool_ad_rolling(stool.data, admin.data, start.date, end.date, spatial.scale)
+    int.data <- suppressMessages(stool_ad_rolling(stool.data, admin.data, start.date, end.date, spatial.scale))
   } else {
-    int.data <- stool_ad_year(stool.data, admin.data, year.data, spatial.scale)
+    int.data <- suppressMessages(stool_ad_year(stool.data, admin.data, year.data, spatial.scale))
   }
 
   int.data <- int.data |>
-    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad") |>
-    tidyr::drop_na(dplyr::any_of(spatial.scale))
+    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad")
 
   return(int.data)
 }
