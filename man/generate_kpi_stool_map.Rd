@@ -6,21 +6,20 @@
 \usage{
 generate_kpi_stool_map(
   c2,
-  ctry_sf,
-  dist_sf,
-  who_region,
-  .year,
-  output_path = Sys.getenv("KPI_FIGURES")
+  year,
+  who_region = NULL,
+  risk_category = NULL,
+  output_path = Sys.getenv("KPI_FIGURES"),
+  ctry_sf = NULL,
+  dist_sf = NULL
 )
 }
 \arguments{
 \item{c2}{\code{tibble} Output of \code{\link[=generate_c2_table]{generate_c2_table()}}.}
 
-\item{ctry_sf}{\code{sf} Country shapefile in long format.}
+\item{year}{\code{num} Numeric year of interest.}
 
-\item{dist_sf}{\code{sf} District shapefile in long format.}
-
-\item{who_region}{\code{str} WHO region. Valid values are:
+\item{who_region}{\code{str} A WHO region or a list of regions. Valid values are:
 \itemize{
 \item \code{"AFRO"}: African Region
 \item \code{"AMRO"}: Region of the Americas
@@ -30,10 +29,16 @@ generate_kpi_stool_map(
 \item \code{"WPRO"}:Western Pacific Region
 }}
 
-\item{.year}{\code{num} Numeric year of interest.}
-
 \item{output_path}{\code{str} Where to output the figure to. Defaults to the path
 initialized when \code{\link[=init_kpi]{init_kpi()}} was ran.}
+
+\item{ctry_sf}{\code{sf} Country shapefile in long format. Output of
+\link{load_clean_ctry_sp(type = "long")}. Defaults to \code{NULL}, which will download
+the required country shapefile when the function is ran.}
+
+\item{dist_sf}{\code{sf} District shapefile in long format. Output of
+\link{load_clean_dist_sp(type = "long")}. Defaults to \code{NULL}, which will download
+the required district shapefile when the function is ran.}
 }
 \value{
 \code{ggplot} A stool adequacy map.
@@ -48,8 +53,6 @@ Generates a map of district level stool adequacy maps
 raw_data <- get_all_polio_data()
 c2 <- generate_c2_table(raw_data$afp, raw_data$dist, "2021-01-01",
 "2023-12-31", c("ctry", "dist", "adm2guid", "year"))
-ctry_sf <- load_clean_ctry_sp(type="long")
-dist_sf <- load_clean_dist_sp(type="long")
-map <- generate_kpi_stool_map(c2, ctry_sf, dist_sf, "AFRO", 2022, getwd())
+map <- generate_kpi_stool_map(c2, 2023, "AFRO", output_path = getwd())
 }
 }

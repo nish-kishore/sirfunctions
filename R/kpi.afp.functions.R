@@ -695,7 +695,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       npafp_cat = dplyr::case_when(
         .data$npafp_rate == 0 & .data$u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
         .data$npafp_rate == 0 & .data$u15pop < 100000 & u15pop > 0 ~ "No cases (u15pop < 100K)",
-        .data$npafp_rate == 0 & (.data$u15pop == 0 | is.na(.daa$u15pop)) ~ "Missing Pop",
+        .data$npafp_rate == 0 & (.data$u15pop == 0 | is.na(.data$u15pop)) ~ "Missing Pop",
         .data$npafp_rate < 1 & .data$u15pop >= 100000 ~ "< 1",
         (.data$npafp_rate >= 1 & .data$npafp_rate < 2) & .data$u15pop >= 100000 ~ ">= 1 & <2",
         (.data$npafp_rate >= 2 & .data$npafp_rate < 3) & .data$u15pop >= 100000 ~ ">= 2 & <3",

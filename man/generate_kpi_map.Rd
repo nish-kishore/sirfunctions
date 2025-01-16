@@ -6,20 +6,20 @@
 \usage{
 generate_kpi_map(
   c2,
-  ctry_sf,
   who_region,
   indicator,
-  .year,
+  year,
+  risk_category,
   color_scheme,
-  legend_title
+  legend_title,
+  .ctry_sf,
+  .dist_sf
 )
 }
 \arguments{
 \item{c2}{\code{tibble} Output of \code{\link[=generate_c2_table]{generate_c2_table()}}.}
 
-\item{ctry_sf}{\code{sf} Country shapefile in long format.}
-
-\item{who_region}{\code{str} WHO region. Valid values are:
+\item{who_region}{\code{str} A WHO region or a list of regions. Valid values are:
 \itemize{
 \item \code{"AFRO"}: African Region
 \item \code{"AMRO"}: Region of the Americas
@@ -31,11 +31,19 @@ generate_kpi_map(
 
 \item{indicator}{\verb{quoted var} Indicator variable.}
 
-\item{.year}{\code{num} Numeric year of interest.}
+\item{year}{\code{num} Numeric year of interest.}
 
 \item{color_scheme}{\code{list} Named list with color mappings.}
 
 \item{legend_title}{\code{str} Title of the legend.}
+
+\item{.ctry_sf}{\code{sf} Country shapefile in long format. Output of
+\link{load_clean_ctry_sp(type = "long")}. Defaults to \code{NULL}, which will download
+the required country shapefile when the function is ran.}
+
+\item{.dist_sf}{\code{sf} District shapefile in long format. Output of
+\link{load_clean_dist_sp(type = "long")}. Defaults to \code{NULL}, which will download
+the required district shapefile when the function is ran.}
 }
 \value{
 \code{ggplot} A ggplot object.
