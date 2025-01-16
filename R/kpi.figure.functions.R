@@ -405,9 +405,9 @@ generate_kpi_ev_map <- function(c3, year, who_region = NULL,
 #'
 #' A generalized function to create bar charts using the KPI tables.
 #' @param df `tibble` A KPI table, namely C1-C4.
-#' @param indicator `quoted var` Name of the indicator within the KPI table.
+#' @param indicator `str` Name of the indicator within the KPI table.
 #' @param target `num` A numeric target.
-#' @param label `quoted var` Name of the column containing labels.
+#' @param label `str` Name of the column containing labels.
 #' @param faceting `ggplot2` A ggplot2 faceting object.
 #' Either using [ggplot2::facet_grid()] or [ggplot2::facet_wrap()].
 #' @param y.axis.title `Str` Title of the y axis.
@@ -438,8 +438,8 @@ generate_kpi_barchart <- function(df, indicator, target, label, faceting,
     ggplot2::geom_bar(
       data = df,
       ggplot2::aes(
-        x = stats::reorder(ctry.short, {{ indicator }}),
-        y = {{ indicator }}
+        x = stats::reorder(ctry.short, !!rlang::sym(indicator)),
+        y = !!rlang::sym(indicator)
       ), fill = "#fd8d3c",
       stat = "identity"
     ) +
@@ -449,9 +449,9 @@ generate_kpi_barchart <- function(df, indicator, target, label, faceting,
     ggplot2::geom_text(
       data = df,
       ggplot2::aes(
-        x = stats::reorder(ctry.short, {{ indicator }}),
-        y = {{ indicator }} / 2 + 5,
-        label = {{ label }}
+        x = stats::reorder(ctry.short, !!rlang::sym(indicator)),
+        y = !!rlang::sym(indicator) / 2 + 5,
+        label = !!rlang::sym(label)
       ),
       size = 2.6
     ) +
@@ -465,6 +465,8 @@ generate_kpi_barchart <- function(df, indicator, target, label, faceting,
       legend.position = "none",
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
     )
+
+  return(bar_plot)
 }
 
 #' Generate KPI NPAFP bar chart summary
@@ -499,9 +501,9 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
     dplyr::mutate(prop_met_npafp = .data$prop_met_npafp * 100)
 
   bar_plot <- generate_kpi_barchart(priority_ctry,
-                        .data$prop_met_npafp,
+                        "prop_met_npafp",
                         80,
-                        .data$npafp_label,
+                        "npafp_label",
                         faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$whoregion,
                                               scales = "free", space = "free",
                                               switch = "y",
@@ -546,9 +548,9 @@ generate_kpi_evdetect_bar <- function(c1, afp_data,
     dplyr::mutate(prop_met_ev = .data$prop_met_ev * 100)
 
   bar_plot <- generate_kpi_barchart(priority_ctry,
-                                    .data$prop_met_ev,
+                                    "prop_met_ev",
                                     80,
-                                    .data$ev_label,
+                                    "ev_label",
                                     faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$whoregion,
                                                                    scales = "free", space = "free",
                                                                    switch = "y",
@@ -591,9 +593,9 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
     dplyr::mutate(prop_met_stool = .data$prop_met_stool * 100)
 
   bar_plot <- generate_kpi_barchart(priority_ctry,
-                                    .data$prop_met_stool,
+                                    "prop_met_stool",
                                     80,
-                                    .data$stool_label,
+                                    "stool_label",
                                     faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$whoregion,
                                                                    scales = "free", space = "free",
                                                                    switch = "y",
