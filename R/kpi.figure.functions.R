@@ -96,18 +96,29 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 generate_kpi_map <- function(c2, ctry_sf, who_region, indicator, .year,
                              color_scheme, legend_title) {
 
+  if (!"active.year.01" %in% names(ctry_sf)) {
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
+    cli::cli_abort(error_message)
+  }
+
   plotlooks02 <- list(
-    theme(
-      panel.grid.minor = element_blank(),
-      panel.background = element_rect(fill = "white"),
-      axis.title.x = element_blank(),
-      axis.title.y = element_blank(),
-      axis.ticks.x = element_blank(),
-      axis.ticks.y = element_blank(),
-      axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.background = ggplot2::element_rect(fill = "white"),
+      axis.title.x = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_blank(),
+      axis.ticks.x = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
       legend.position = "bottom",
-      legend.background = element_rect(colour = "black", fill = "white", linetype = "solid") # add a border to the legend
+      legend.background = ggplot2::element_rect(colour = "black",
+                                                fill = "white",
+                                                linetype = "solid")
     )
   )
 
@@ -176,6 +187,24 @@ generate_kpi_map <- function(c2, ctry_sf, who_region, indicator, .year,
 generate_kpi_npafp_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
                                    output_path = Sys.getenv("KPI_FIGURES")) {
 
+  if (!"active.year.01" %in% names(ctry_sf)) {
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(dist_sf)) {
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
+    cli::cli_abort(error_message)
+  }
+
   if (!who_region %in% c("AFRO", "EMRO", "SEARO", "WPRO", "AMRO", "EURO")) {
     cli::cli_abort("Please enter a valid who_region value.")
   }
@@ -235,6 +264,25 @@ generate_kpi_npafp_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
 #' }
 generate_kpi_stool_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
                                    output_path = Sys.getenv("KPI_FIGURES")) {
+
+  if (!"active.year.01" %in% names(ctry_sf)) {
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
+    cli::cli_abort(error_message)
+  }
+
+  if (!"active.year.01" %in% names(dist_sf)) {
+    error_message <- paste0(
+      "ctry.shape is not in long format. ",
+      "Use: ctry.shape <- load_clean_prov_sp(ctry_name='<ctry name>', type='long')",
+      " to download the country shapefile in long format."
+    )
+    cli::cli_abort(error_message)
+  }
+
   stool_color <- c(
     "Zero AFP cases" = "#999999",
     "Unable to Assess" = "white",
@@ -263,8 +311,105 @@ generate_kpi_stool_map <- function(c2, ctry_sf, dist_sf, who_region, .year,
   file_name <- paste0("stool_ad_maps_", who_region, "_", .year, ".png")
 
   ggplot2::ggsave(file.path(output_path, file_name),
-                  dpi = 300, height = 12, width = 10, bg="white")
+                  dpi = 300, height = 12, width = 10, bg = "white")
   return(map)
+}
+
+
+#' EV detection rate map
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Generates a map of EV detection rates for each environmental surveillance site.
+#'
+#' @param c3 `tibble` Output of [generate_c3_table()]. This must be summarized
+#' at the site level (i.e., use the default `.group_by`) param of the
+#' [generate_c3_table()].
+#' @param year `int` Year to make the map of.
+#' @param who_region `str` Name of the region or a list of regions.
+#' @param output_path `str` Where to output the figure to. Defaults to the
+#' figure path assigned after running [init_kpi()].
+#' @param dot_size `num` Point size.
+#'
+#' @return `ggplot` A map showing EV detection rate by site.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
+#' map <- generate_kpi_ev_map(c3, 2023, "AFRO", getwd())
+#' }
+generate_kpi_ev_map <- function(c3, year, who_region = NULL,
+                                output_path = Sys.getenv("KPI_FIGURES"),
+                                dot_size = 2.3) {
+
+  ev_cols <- c("<50%" = "red", "50% to <80%" = "#f16913",
+               "80-100%" = "#0070c0", "<5 samples collected" = "black"
+               )
+  plotlooks02 <- list(
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.background = ggplot2::element_rect(fill = "white"),
+      axis.title.x = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_blank(),
+      axis.ticks.x = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank(),
+      legend.position = "bottom",
+      legend.background = ggplot2::element_rect(colour = "black",
+                                                fill = "white",
+                                                linetype = "solid")
+    )
+  )
+
+
+  ctry_sf <- suppressMessages(load_clean_ctry_sp(st.year = year,
+                                                 end.year = year,
+                                                 type = "long"))
+  c3 <- c3 |> dplyr::filter(.data$reporting.year == year)
+
+  if (!is.null(who_region)) {
+    c3 <- c3 |>
+      dplyr::mutate(region = get_region(.data$ADM0_NAME)) |>
+      dplyr::filter(.data$region %in% who_region)
+    ctry_sf <- ctry_sf |>
+      dplyr::filter(
+        .data$WHO_REGION %in% who_region
+      )
+  }
+
+  map <- ggplot2::ggplot() +
+    ggplot2::geom_sf(data = ctry_sf, color = "grey", fill = NA, linewidth = 0.5) +
+    ggplot2::geom_point(
+      ggplot2::aes(as.numeric(.data$lng), as.numeric(.data$lat),
+                   color = .data$ev_det_cat),
+      c3, size = dot_size, alpha = 0.7,  stroke = 1) +
+    plotlooks02 +
+    ggplot2::scale_color_manual(values = ev_cols, name = "EV detection rate") +
+    ggplot2::theme(legend.position = "right")
+
+  if ("WPRO" %in% who_region & length(who_region) == 1) {
+    wpro_aoi <- c("PAPUA NEW GUINEA", "PHILLIPINES", "AUSTRAILIA", "VIETNAM",
+                  "LAO PEOPLE'S DEMOCRATIC REPUBLIC")
+    aoi <- sf::st_bbox(ctry_sf |> dplyr::filter(ADM0_NAME %in% wpro_aoi))
+    map <- map +
+      ggplot2::coord_sf(xlim = aoi[c("xmin", "xmax")], ylim = aoi[c("ymin", "ymax")])
+  }
+
+  if (is.null(who_region)) {
+    file_name <- paste0("ev_rate_map_global_", year,".png")
+  } else {
+    file_name <- paste0("ev_rate_map_", paste0(who_region, collapse = "_")
+                        ,"_", year,".png")
+  }
+  ggplot2::ggsave(filename = paste0(file.path(output_path, file_name)),
+         dpi = 300, height = 12, width = 10, bg = "white")
+
+  return(map)
+
 }
 
 # Bar charts ----
