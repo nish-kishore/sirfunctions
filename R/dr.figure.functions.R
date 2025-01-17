@@ -3450,7 +3450,6 @@ generate_pop_tab <- function(prov.case.ind,
 #' ctry.data <- init_dr("algeria")
 #' start_date <- "2021-01-01"
 #' end_date <- "2023-12-31"
-#' stool.data <- generate_stool_data(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
 #' cstool <- f.stool.ad.01(
 #'   afp.data = ctry.data$afp.all.2,
 #'   admin.data = ctry.data$ctry.pop,
@@ -3462,14 +3461,24 @@ generate_pop_tab <- function(prov.case.ind,
 #'   rolling = F,
 #'   sp_continuity_validation = F
 #' )
-#' generate_inad_tab(ctry.data, stool.data, cstool, start_date, end_date)
+#' generate_inad_tab(ctry.data, cstool, start_date, end_date)
 #' }
 #'
 #' @export
 generate_inad_tab <- function(ctry.data,
                               cstool,
                               start_date,
-                              end_date) {
+                              end_date,
+                              stool.data = lifecycle::deprecated()) {
+
+  if (lifecycle::is_present(stool.data)) {
+    lifecycle::deprecate_warn(
+      when = "1.2.0",
+      what = "generate_inad_tab(stool.data)",
+      details = "The argument is not used in the function body and will be dropped in future releases."
+    )
+  }
+
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
