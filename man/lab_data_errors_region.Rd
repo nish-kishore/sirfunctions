@@ -5,25 +5,30 @@
 \title{Check common errors in the regional lab data.}
 \usage{
 lab_data_errors_region(
-  ctry.data,
-  ctry_name = Sys.getenv("DR_COUNTRY"),
+  lab.data,
+  afp.data,
   start.date,
   end.date,
-  error_path = Sys.getenv("DR_ERROR_PATH")
+  ctry_name = Sys.getenv("DR_COUNTRY"),
+  error_path = Sys.getenv("DR_ERROR_PATH"),
+  ctry.data = lifecycle::deprecated()
 )
 }
 \arguments{
-\item{ctry.data}{\code{list} Large list containing polio country data. Output of either
-\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}. Note that lab data must be attached to\code{ctry.data} as
-\code{lab.data}.}
+\item{lab.data}{\code{tibble} Polio lab data.}
 
-\item{ctry_name}{\code{str} Name of the country. Defaults to the desk review country.}
+\item{afp.data}{\code{tibble} AFP linelist.}
 
-\item{start.date}{\code{str} Start date of analysis.}
+\item{start.date}{\code{str} Start date of the analysis.}
 
-\item{end.date}{\code{str} End date of analysis.}
+\item{end.date}{\code{str} End date of the analysis.}
 
-\item{error_path}{\code{str} Path to folder to save the error log.}
+\item{ctry_name}{\code{list} or \code{str} A name of a country or a list of countries.
+Please pass lab data directly into lab.data parameter instead.}
+
+\item{error_path}{\code{str} File path to store the error log.}
+
+\item{ctry.data}{\code{list} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 }
 \value{
 None. It outputs an Excel file locally containing the error log.
@@ -36,7 +41,8 @@ Error checking for regional lab data. This is a helper function meant to be used
 \dontrun{
 lab_path <- "C:/Users/XRG9/lab_data_region.csv"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-lab_data_errors_region(ctry.data, "2021-01-01", "2023-12-31")
+lab_data_errors_region(ctry.data$lab.data, ctry.data$afp.all.2,
+                       "2021-01-01", "2023-12-31")
 }
-
 }
+\keyword{internal}

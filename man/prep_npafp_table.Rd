@@ -21,10 +21,15 @@ prep_npafp_table(npafp.output, afp.data, start_date, end_date, spatial.scale)
 \code{tibble} NPAFP rate table with additional columns related to case counts.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 The function adds additional information to the NPAFP table. In particular,
 the number of AFP cases based on the geographic grouping selected. It also
-adds a column for the number of WPV, VDPV1-3 cases. However, in a future release,
-these columns might be incorporated within the \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}} function.
+adds a column for the number of WPV, VDPV1-3 cases.
+}
+\details{
+This function has been deprecated as the columns are now added
+from \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}} directly.
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
@@ -36,5 +41,5 @@ ctry.ind <- prep_npafp_table(
   ctry.ind, raw.data$afp,
   "2021-01-01", "2023-12-31", "ctry"
 )
-
 }
+\keyword{internal}
