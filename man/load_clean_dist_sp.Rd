@@ -8,12 +8,17 @@ load_clean_dist_sp(
   azcontainer = suppressMessages(get_azure_storage_connection()),
   fp = "GID/PEB/SIR/Data/spatial/global.dist.rds",
   dist_guid = NULL,
+  dist_name = NULL,
+  prov_name = NULL,
   ctry_name = NULL,
-  end.year = lubridate::year(Sys.Date()),
-  st.year = 2000,
-  data.only = F,
+  end_year = lubridate::year(Sys.Date()),
+  st_year = 2000,
+  data_only = FALSE,
   type = NULL,
-  version = "standard"
+  version = "standard",
+  end.year = lifecycle::deprecated(),
+  st.year = lifecycle::deprecated(),
+  data.only = lifecycle::deprecated()
 )
 }
 \arguments{
@@ -23,13 +28,11 @@ load_clean_dist_sp(
 
 \item{dist_guid}{\verb{str array} Array of all district GUIDS that you want to pull.}
 
+\item{dist_name}{\verb{str array} Array of all dist names that you want to pull.}
+
+\item{prov_name}{\verb{str array} Array of all province names that you want to pull.}
+
 \item{ctry_name}{\verb{str array} Array of all country names that you want to pull.}
-
-\item{end.year}{\code{int} Last year you want to pull information for. Default is current year.}
-
-\item{st.year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
-
-\item{data.only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
 
 \item{type}{\code{str} Whether to return a spatial object for every year group. Defaults to \code{NULL}.
 \itemize{
@@ -43,6 +46,12 @@ still under evaluation/development. Default is \code{"standard"}.
 \item \code{"standard"} Standard shapefiles.
 \item \code{"dev"}  New shapefiles still under evaluation/development.
 }}
+
+\item{end.year}{\code{int} Last year you want to pull information for. Default is current year.}
+
+\item{st.year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
+
+\item{data.only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
 }
 \value{
 \code{tibble} or \code{sf} Dataframe containing spatial data.

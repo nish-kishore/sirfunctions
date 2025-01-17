@@ -10,11 +10,14 @@ load_clean_prov_sp(
   prov_guid = NULL,
   prov_name = NULL,
   ctry_name = NULL,
-  end.year = lubridate::year(Sys.Date()),
-  st.year = 2000,
-  data.only = F,
+  end_year = lubridate::year(Sys.Date()),
+  st_year = 2000,
+  data_only = FALSE,
   type = NULL,
-  version = "standard"
+  version = "standard",
+  end.year = lifecycle::deprecated(),
+  st.year = lifecycle::deprecated(),
+  data.only = lifecycle::deprecated()
 )
 }
 \arguments{
@@ -28,11 +31,11 @@ load_clean_prov_sp(
 
 \item{ctry_name}{\verb{str array} Array of all country names that you want to pull.}
 
-\item{end.year}{\code{int} Last year you want to pull information for. Default is current year.}
+\item{end_year}{\code{int} Last year you want to pull information for. Default is current year.}
 
-\item{st.year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
+\item{st_year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
 
-\item{data.only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
+\item{data_only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
 
 \item{type}{\code{str} Whether to return a spatial object for every year group. Defaults to \code{NULL}.
 \itemize{
@@ -55,7 +58,7 @@ Pulls province shapefiles directly from the geodatabase
 }
 \examples{
 \dontrun{
-prov <- load_clean_prov_sp(ctry_name = c("ALGERIA", "NIGERIA"), st.year = 2019)
-prov.long <- load_clean_prov_sp(ctry_name = "ALGERIA", st.year = 2019, type = "long")
+prov <- load_clean_prov_sp(ctry_name = c("ALGERIA", "NIGERIA"), st_year = 2019)
+prov.long <- load_clean_prov_sp(ctry_name = "ALGERIA", st_year = 2019, type = "long")
 }
 }

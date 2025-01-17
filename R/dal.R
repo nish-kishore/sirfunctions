@@ -1396,6 +1396,8 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' @param azcontainer Azure validated container object.
 #' @param dist_guid `str array` Array of all district GUIDS that you want to pull.
 #' @param ctry_name `str array` Array of all country names that you want to pull.
+#' @param prov_name `str array` Array of all province names that you want to pull.
+#' @param dist_name `str array` Array of all dist names that you want to pull.
 #' @param end.year `int` Last year you want to pull information for. Default is current year.
 #' @param st.year `int` Earlier year of spatial data you want to pull. Default is 2000.
 #' @param data.only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
@@ -1415,12 +1417,35 @@ duplicate_check <- function(.raw.data = raw.data) {
 load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
                                fp = "GID/PEB/SIR/Data/spatial/global.dist.rds",
                                dist_guid = NULL,
+                               dist_name = NULL,
+                               prov_name = NULL,
                                ctry_name = NULL,
-                               end.year = lubridate::year(Sys.Date()),
-                               st.year = 2000,
-                               data.only = F,
+                               end_year = lubridate::year(Sys.Date()),
+                               st_year = 2000,
+                               data_only = FALSE,
                                type = NULL,
-                               version = "standard") {
+                               version = "standard",
+                               end.year = lifecycle::deprecated(),
+                               st.year = lifecycle::deprecated(),
+                               data.only = lifecycle::deprecated()) {
+  if (lifecycle::is_present(end.year)) {
+    lifecycle::deprecate_warn("1.3.0", "load_clean_dist_sp(end.year)",
+                              "load_clean_dist_sp(end_year)")
+    end_year <- end.year
+  }
+
+  if (lifecycle::is_present(st.year)) {
+    lifecycle::deprecate_warn("1.3.0", "load_clean_dist_sp(st.year)",
+                              "load_clean_dist_sp(st_year)")
+    st_year <- st.year
+  }
+
+  if (lifecycle::is_present(data.only)) {
+    lifecycle::deprecate_warn("1.3.0", "load_clean_dist_sp(data.only)",
+                              "load_clean_dist_sp(data_only)")
+    data_only <- data.only
+  }
+
   if (version == "dev") {
     fp <- "GID/PEB/SIR/Data/spatial_dev/global.dist.rds"
     cli::cli_alert_info("Loading under development district spatial files")
@@ -1451,7 +1476,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
     # remove the ouad eddahab in Morocco which started and ended the same year and causes overlap
     dplyr::filter(!GUID == "{AE526BC0-8DC3-411C-B82E-75259AD3598C}") %>%
     # this filters based on dates set in RMD
-    dplyr::filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
+    dplyr::filter(yr.st <= end_year & (yr.end >= st_year | yr.end == 9999)) %>%
     {
       if (is.null(dist_guid)) {
         .
@@ -1465,15 +1490,27 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
       } else {
         dplyr::filter(., ADM0_NAME %in% ctry_name)
       }
+    } %>% {
+      if (is.null(prov_name)) {
+        .
+      } else {
+        dplyr::filter(., ADM1_NAME %in% prov_name)
+      }
+    } %>% {
+      if (is.null(dist_name)) {
+        .
+      } else {
+        dplyr::filter(., ADM2_NAME %in% dist_name)
+      }
     }
 
-  if (data.only) {
+  if (data_only) {
     out <- dplyr::as_tibble(out)
     return(out)
   }
 
   if (!is.null(type) && type == "long") {
-    df.list <- lapply(st.year:end.year, function(i) f.yrs.01(out, i))
+    df.list <- lapply(st_year:end_year, function(i) f.yrs.01(out, i))
     out <- do.call(rbind, df.list)
   }
 
@@ -1489,9 +1526,9 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' @param prov_guid `str array` Array of all province GUIDS that you want to pull.
 #' @param prov_name `str array` Array of all province names that you want to pull.
 #' @param ctry_name `str array` Array of all country names that you want to pull.
-#' @param end.year `int` Last year you want to pull information for. Default is current year.
-#' @param st.year `int` Earlier year of spatial data you want to pull. Default is 2000.
-#' @param data.only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
+#' @param end_year `int` Last year you want to pull information for. Default is current year.
+#' @param st_year `int` Earlier year of spatial data you want to pull. Default is 2000.
+#' @param data_only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
 #' @param type `str` Whether to return a spatial object for every year group. Defaults to `NULL`.
 #' - `"long"` Return a dataset for every year group.
 #' - `NULL` Return a dataset only with unique GUIDs and when they were active.
@@ -1502,8 +1539,8 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' @returns `tibble` or `sf` Dataframe containing spatial data.
 #' @examples
 #' \dontrun{
-#' prov <- load_clean_prov_sp(ctry_name = c("ALGERIA", "NIGERIA"), st.year = 2019)
-#' prov.long <- load_clean_prov_sp(ctry_name = "ALGERIA", st.year = 2019, type = "long")
+#' prov <- load_clean_prov_sp(ctry_name = c("ALGERIA", "NIGERIA"), st_year = 2019)
+#' prov.long <- load_clean_prov_sp(ctry_name = "ALGERIA", st_year = 2019, type = "long")
 #' }
 #' @export
 load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
@@ -1511,11 +1548,33 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                prov_guid = NULL,
                                prov_name = NULL,
                                ctry_name = NULL,
-                               end.year = lubridate::year(Sys.Date()),
-                               st.year = 2000,
-                               data.only = F,
+                               end_year = lubridate::year(Sys.Date()),
+                               st_year = 2000,
+                               data_only = FALSE,
                                type = NULL,
-                               version = "standard") {
+                               version = "standard",
+                               end.year = lifecycle::deprecated(),
+                               st.year = lifecycle::deprecated(),
+                               data.only = lifecycle::deprecated()) {
+
+  if (lifecycle::is_present(end.year)) {
+    lifecycle::deprecate_warn("1.3.0", "load_clean_prov_sp(end.year)",
+                              "load_clean_prov_sp(end_year)")
+    end_year <- end.year
+  }
+
+  if (lifecycle::is_present(st.year)) {
+    lifecycle::deprecate_warn("1.3.0", "load_clean_prov_sp(st.year)",
+                              "load_clean_prov_sp(st_year)")
+    st_year <- st.year
+  }
+
+  if (lifecycle::is_present(data.only)) {
+    lifecycle::deprecate_warn("1.3.0", "load_clean_prov_sp(data.only)",
+                              "load_clean_prov_sp(data_only)")
+    data_only <- data.only
+  }
+
   if (version == "dev") {
     fp <- "GID/PEB/SIR/Data/spatial_dev/global.prov.rds"
     cli::cli_alert_info("Loading under development province spatial files")
@@ -1530,7 +1589,7 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
       ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"), "COTE D IVOIRE", ADM0_NAME)
     ) %>%
     # this filters based on dates set in RMD
-    dplyr::filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
+    dplyr::filter(yr.st <= end_year & (yr.end >= st_year | yr.end == 9999)) %>%
     {
       if (is.null(prov_guid)) {
         .
@@ -1553,13 +1612,13 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
       }
     }
 
-  if (data.only) {
+  if (data_only) {
     out <- dplyr::as_tibble(out)
     return(out)
   }
 
   if (!is.null(type) && type == "long") {
-    df.list <- lapply(st.year:end.year, function(i) f.yrs.01(out, i))
+    df.list <- lapply(st_year:end_year, function(i) f.yrs.01(out, i))
     out <- do.call(rbind, df.list)
   }
 
@@ -1574,9 +1633,9 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' @param fp `str` Location of geodatabase.
 #' @param ctry_guid `str array` Array of all country GUIDS that you want to pull.
 #' @param ctry_name `str array` Array of all country names that you want to pull.
-#' @param end.year `int` Last year you want to pull information for. Default is current year.
-#' @param st.year `int` Earlier year of spatial data you want to pull. Default is 2000.
-#' @param data.only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
+#' @param end_year `int` Last year you want to pull information for. Default is current year.
+#' @param st_year `int` Earlier year of spatial data you want to pull. Default is 2000.
+#' @param data_only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
 #' @param type `str` Whether to return a spatial object for every year group. Defaults to `NULL`.
 #' - `"long"` Return a dataset for every year group.
 #' - `NULL` Return a dataset only with unique GUIDs and when they were active.
@@ -1593,11 +1652,33 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
                                ctry_guid = NULL,
                                ctry_name = NULL,
-                               end.year = lubridate::year(Sys.Date()),
-                               st.year = 2000,
-                               data.only = F,
+                               end_year = lubridate::year(Sys.Date()),
+                               st_year = 2000,
+                               data_only = FALSE,
                                type = NULL,
-                               version = "standard") {
+                               version = "standard",
+                               end.year = lifecycle::deprecated(),
+                               st.year = lifecycle::deprecated(),
+                               data.only = lifecycle::deprecated()) {
+
+  if (lifecycle::is_present(end.year)) {
+    lifecycle::deprecate_warn("1.3.0", "load_clean_ctry_sp(end.year)",
+                              "load_clean_ctry_sp(end_year)")
+    end_year <- end.year
+  }
+
+  if (lifecycle::is_present(st.year)) {
+    lifecycle::deprecate_warn("1.3.0", "load_clean_ctry_sp(st.year)",
+                              "load_clean_ctry_sp(st_year)")
+    st_year <- st.year
+  }
+
+  if (lifecycle::is_present(data.only)) {
+    lifecycle::deprecate_warn("1.3.0", "load_clean_ctry_sp(data.only)",
+                              "load_clean_ctry_sp(data_only)")
+    data_only <- data.only
+  }
+
   if (version == "dev") {
     fp <- "GID/PEB/SIR/Data/spatial_dev/global.ctry.rds"
     cli::cli_alert_info("Loading under development country spatial files")
@@ -1612,7 +1693,7 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
       ADM0_NAME = ifelse(stringr::str_detect(ADM0_NAME, "IVOIRE"), "COTE D IVOIRE", ADM0_NAME)
     ) %>%
     # this filters based on dates set in RMD
-    dplyr::filter(yr.st <= end.year & (yr.end >= st.year | yr.end == 9999)) %>%
+    dplyr::filter(yr.st <= end_year & (yr.end >= st_year | yr.end == 9999)) %>%
     {
       if (is.null(ctry_guid)) {
         .
@@ -1628,13 +1709,13 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
       }
     }
 
-  if (data.only) {
+  if (data_only) {
     out <- dplyr::as_tibble(out)
     return(out)
   }
 
   if (!is.null(type) && type == "long") {
-    df.list <- lapply(st.year:end.year, function(i) f.yrs.01(out, i))
+    df.list <- lapply(st_year:end_year, function(i) f.yrs.01(out, i))
     out <- do.call(rbind, df.list)
   }
 
