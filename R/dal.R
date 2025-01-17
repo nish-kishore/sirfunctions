@@ -2108,3 +2108,159 @@ check_missing_rows <- function(df,
   return(missing)
 }
 
+#' Interactive loading of EDAV data
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' This function is a way to interactively work with files in the EDAV
+#' environment, which is convenient as we don't have to search for files within
+#' Azure Storage Explorer.
+#'
+#' @param path `str` Path to start at initially.
+#'
+#' @return `tibble` Data from the EDAV environment.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' test <- get_edav_data()
+#' }
+get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
+  cli::cli_alert_info(paste0(
+    "Interactive file selection activated.",
+    " Use esc to exit."
+  ))
+  pointer <- path
+  while (TRUE) {
+    tryCatch(
+      expr = {
+        output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+        print(
+          output |>
+            dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
+          n = nrow(output)
+        )
+      },
+      error = function(e) {
+        cli::cli_alert_warning("\nAccess denied. Please choose a valid option.")
+        pointer <<- gsub("[^/]+$", "", pointer)
+        pointer <<- sub("/$", "", pointer)
+
+        output <<- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+        print(
+          output |>
+            dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
+          n = nrow(output)
+        )
+      }
+    )
+
+    cli::cli_alert_info(paste0(
+      "\nPlease choose an option (1-4):\n",
+      "1) Previous directory\n",
+      "2) Move up one directory\n",
+      "3) Download as an R object\n",
+      "4) Copy absolute file path"
+    ))
+    response <- stringr::str_trim(readline("Response: "))
+    if (!response %in% c("1", "2", "3", "4")) {
+      cli::cli_alert_warning("Invalid response. Please try again.\n")
+    } else if (response == "1") {
+      # Special case of navigating back to root
+      if (stringr::str_count(pointer, "/") == 0) {
+        pointer <- ""
+      }
+      pointer <- gsub("[^/]+$", "", pointer)
+      pointer <- sub("/$", "", pointer)
+      cli::cli_alert_success(paste0("Navigating to: ", pointer))
+    } else if (response == "2") {
+      while (TRUE) {
+        if (nrow(output) == 1) {
+          pointer <- output[1, ]$name
+          pointer <- sub("/$", "", pointer)
+          cli::cli_alert_success(paste0("Navigating to: ", pointer))
+          break
+        }
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+          error = function(e) {
+            NA
+          }
+        )
+        if (is.na(response) | response > nrow(output) | response == 0) {
+          cli::cli_alert_warning("Invalid response. Please try again:\n")
+
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
+            n = nrow(output)
+          )
+        } else if (output[response, ]$isdir == FALSE) {
+          cli::cli_alert_warning("Not a directory. Please try again:\n")
+          break
+        } else {
+          pointer <- output[response, ]$name
+          pointer <- sub("/$", "", pointer)
+          cli::cli_alert_success(paste0("Navigating to: ", pointer))
+          break
+        }
+      }
+    } else if (response == "3") {
+      while (TRUE) {
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+          error = function(e) {
+            NA
+          }
+        )
+        if (is.na(response) | response > nrow(output) | response == 0) {
+          cli::cli_alert_info("Invalid response. Please try again:\n")
+
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
+            n = nrow(output)
+          )
+        } else if (output[response, ]$isdir == TRUE) {
+          cli::cli_alert_info(paste0(
+            output[response, ]$name,
+            " is a directory. Navigating to it."
+          ))
+          pointer <- output[response, ]$name
+          break
+        } else {
+          pointer <- file.path(output[response, ]$name)
+          output <- edav_io("read", default_dir = "", pointer)
+          return(output)
+        }
+      }
+    } else if (response == "4") {
+      while (TRUE) {
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+          error = function(e) {
+            NA
+          }
+        )
+        if (is.na(response) | response > nrow(output) | response == 0) {
+          cli::cli_alert_info("Invalid response. Please try again:\n")
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(
+                .data$name,
+                "[^/]+$"
+              )),
+            n = nrow(output)
+          )
+        } else {
+          path_name <- file.path(output[response, ]$name)
+          return(path_name)
+        }
+      }
+    }
+  }
+}
