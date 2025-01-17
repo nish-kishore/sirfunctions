@@ -247,11 +247,6 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
     return(lab_data)
   }
 
-  if ("prov" %in% names(lab_data)) {
-    cli::cli_alert_warning("Lab data already cleaned.")
-    return(lab_data)
-  }
-
   if (nrow(lab_data) == 0) {
     message("There are no entries for lab data.")
     return(NULL)
@@ -394,11 +389,6 @@ clean_lab_data_regional <- function(lab_data,
                                     ctry_name = NULL,
                                     lab_locs_path = NULL) {
 
-  if ("country" %in% names(lab_data)) {
-    cli::cli_alert_warning("Lab data already cleaned.")
-    return(lab_data)
-  }
-
   # Static vars
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -409,8 +399,10 @@ clean_lab_data_regional <- function(lab_data,
 
   lab_locs <- get_lab_locs(lab_locs_path)
 
+  lab_data <- dplyr::rename_with(lab_data, recode,
+                                 Name = "country")
+
   lab_data <- lab_data |>
-    dplyr::rename(country = "Name") |>
     dplyr::mutate(country = dplyr::case_match(
       .data$country,
       "AFG" ~ "AFGHANISTAN",
@@ -1116,7 +1108,7 @@ clean_lab_data <- function(lab_data, start_date, end_date,
     lab_data <- add_rolling_date_info(lab_data, start_date, end_date,
                                       "DateOfOnset")
   } else {
-    if ("Province" %in% lab_data_cols) {
+    if ("prov" %in% lab_data_cols) {
       cli::cli_alert_warning("Lab data already cleaned.")
       return(lab_data)
     }

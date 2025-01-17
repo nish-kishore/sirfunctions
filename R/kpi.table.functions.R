@@ -283,13 +283,13 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
       timely_cases = sum(.data$source == "AFP" & .data$is_timely),
       timely_env = sum(.data$source == "ENV" & .data$is_timely),
       timely_wild_vdpv_samples = sum(.data$is_target & .data$is_timely),
-      prop_timely_samples = .data$timely_samples / dplyr::n(),
+      prop_timely_samples = .data$timely_samples / dplyr::n() * 100,
       prop_timely_samples_label = paste0(.data$timely_samples, "/", dplyr::n()),
-      prop_timely_cases = .data$timely_cases / .data$wild_vdpv_cases,
+      prop_timely_cases = .data$timely_cases / .data$wild_vdpv_cases * 100,
       prop_timely_cases_label = paste0(.data$timely_cases, "/", .data$wild_vdpv_cases),
-      prop_timely_env = .data$timely_env / .data$wild_vdpv_env,
+      prop_timely_env = .data$timely_env / .data$wild_vdpv_env * 100,
       prop_timely_env_label = paste0(.data$timely_env, "/", .data$wild_vdpv_env),
-      prop_timely_wild_vdpv = .data$timely_wild_vdpv_samples / .data$wild_vdpv_samples,
+      prop_timely_wild_vdpv = .data$timely_wild_vdpv_samples / .data$wild_vdpv_samples * 100,
       prop_timely_wild_vdpv_label = paste0(.data$timely_wild_vdpv_samples, "/", .data$wild_vdpv_samples)
     )
 
@@ -483,7 +483,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                        (par >= 1e5 & npafp_rate >= 1 & whoregion %in% c("AMRO", "EURO", "WPRO")),
                        # !!! NEED Endemics and OBX affected logic here
                        na.rm = T),
-                     prop_met_npafp = met_npafp / dist_w_100k,
+                     prop_met_npafp = met_npafp / dist_w_100k * 100,
                      npafp_label = paste0(met_npafp, "/", dist_w_100k)) |>
     ungroup()
 
@@ -494,7 +494,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
     dplyr::summarise(dist_stool = n(),
                      met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = T),
-                     prop_met_stool = met_stool / dist_stool,
+                     prop_met_stool = met_stool / dist_stool * 100,
                      stool_label = paste0(met_stool, "/", dist_stool))
 
   met_ev <- dplyr::bind_rows(es_indicators$ev_rate) |>
@@ -506,7 +506,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
     dplyr::summarise(es_sites = sum(num.samples >= 10),
                      met_ev = sum(num.samples >= 10 & ev.rate >= 0.5, na.rm = T),
-                     prop_met_ev = met_ev / es_sites,
+                     prop_met_ev = met_ev / es_sites * 100,
                      ev_label = paste0(met_ev, "/", es_sites))
 
   combine <- dplyr::full_join(met_npafp, met_stool) |>
@@ -606,7 +606,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     dplyr::summarize(
       afp_cases = sum(.data$cdc.classification.all2 != "NOT-AFP"),
       good_samples = sum(.data$adequacy.final2 == "Adequate"),
-      prop_good_condition = good_samples / afp_cases
+      prop_good_condition = good_samples / afp_cases * 100
     )
 
   # Completeness of Contact Sampling
@@ -623,7 +623,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       dplyr::select(dplyr::all_of(c("epid", "adm0guid")))) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(prop_complete_60_day = sum(.data$ontime.60day == 1, na.rm = TRUE) /
-      sum(adequacy.final2 == "Inadequate"))
+      sum(adequacy.final2 == "Inadequate") * 100)
 
   # Timeliness indicators
   timeliness_summary <- afp_data |>
@@ -855,4 +855,65 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date, .group_b
 
   }
 
+#' Export KPI tables
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Performs formatting and export of the C1-C4 KPI tables.
+#'
+#' @param c1 `tibble` Output of [generate_c1_table()]. Defaults to `NULL`.
+#' @param c2 `tibble` Output of [generate_c2_table()]. Defaults to `NULL`.
+#' @param c3 `tibble` Output of [generate_c3_table()]. Defaults to `NULL`.
+#' @param c4 `tibble` Output of [generate_c4_table()]. Defaults to `NULL`.
+#' @param output_path `str` Path to output the table to. Defaults to the path
+#' initiated after running [init_kpi()].
+#' @param drop_label_cols `bool` Keep or discard label columns. Defaults to
+#' `TRUE`.
+#'
+#' @return None.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' init_kpi()
+#' c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
+#' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
+#' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
+#' c4 <- generate_c4_table(lab_data, raw_data$afp, "2021-01-01", "2024-12-31")
+#' }
+export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
+                             output_path = Sys.getenv("KPI_TABLES"),
+                             drop_label_cols = TRUE) {
+  format_table <- function(x) {
+    x <- x |>
+      dplyr::rename_with(\(x) stringr::str_to_lower(x)) |>
+      dplyr::rename_with(\(x) stringr::str_replace_all(x, "[\\. ]", "_")) |>
+      dplyr::mutate(dplyr::across(
+        (dplyr::starts_with("prop") |
+          dplyr::starts_with("timely")) &
+          -dplyr::ends_with("label"),
+        \(x) round(x, 0)
+      ))
+    return(x)
+  }
+
+  drop_labels <- function(x, .drop_label_cols = drop_label_cols) {
+    if (.drop_label_cols) {
+      x <- x |>
+        dplyr::select(-dplyr::ends_with("label"),
+                      -dplyr::ends_with("cat"))
+    }
+    return(x)
+  }
+
+  export_list <- list(c1 = c1, c2 = c2, c3 = c3, c4 = c4)
+  export_list <- export_list |>
+    purrr::keep(\(x) !is.null(x)) |>
+    purrr::map(format_table) |>
+    purrr::map(drop_labels)
+
+  file_name <- paste0("kpi_tables_", Sys.Date(), ".xlsx")
+  writexl::write_xlsx(export_list, file.path(output_path, file_name))
+}
 
