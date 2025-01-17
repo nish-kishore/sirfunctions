@@ -6,20 +6,17 @@
 \usage{
 generate_es_det_map(
   es.data,
-  es.data.long,
   ctry.shape,
   prov.shape,
   es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
   es_end_date = end_date,
-  output_path = Sys.getenv("DR_FIGURE_PATH")
+  output_path = Sys.getenv("DR_FIGURE_PATH"),
+  es.data.long = lifecycle::badge("deprecated")
 )
 }
 \arguments{
 \item{es.data}{\code{tibble} ES data for a country. This is \code{ctry.data$es}, which is
 part of the outputs of \code{\link[=extract_country_data]{extract_country_data()}} and \code{\link[=init_dr]{init_dr()}}.}
-
-\item{es.data.long}{\code{tibble} ES data summary in long format. This is the output of
-\code{\link[=generate_es_data_long]{generate_es_data_long()}}.}
 
 \item{ctry.shape}{\code{sf} Country shapefile in long format.}
 
@@ -30,6 +27,10 @@ part of the outputs of \code{\link[=extract_country_data]{extract_country_data()
 \item{es_end_date}{\code{str} End date of analysis.}
 
 \item{output_path}{\code{str} Local path where to save the figure to.}
+
+\item{es.data.long}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+\code{tibble} Please pass the output of \code{\link[=clean_es_data]{clean_es_data()}} into es.data instead. This paramater
+is not being used in the function.}
 }
 \value{
 \code{ggplot} Map of EV detection rates for the environmental surveillance sites.
@@ -44,7 +45,7 @@ ctry.data <- init_dr("algeria")
 es.data.long <- generate_es_data_long(ctry.data$es)
 ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
 prov.shape <- load_clean_prov_sp(ctry_name = "ALGERIA", type = "long")
-generate_es_det_map(ctry.data$es, es.data.long, ctry.shape, prov.shape,
+generate_es_det_map(ctry.data$es, ctry.shape, prov.shape,
   es_end_date = "2023-01-01"
 )
 }

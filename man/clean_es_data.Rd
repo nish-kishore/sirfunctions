@@ -4,11 +4,16 @@
 \alias{clean_es_data}
 \title{Clean environmental surveillance data}
 \usage{
-clean_es_data(ctry.data)
+clean_es_data(es.data, dist.shape, ctry.data = lifecycle::deprecated())
 }
 \arguments{
-\item{ctry.data}{\code{list} Polio data at the country level. This is either the output
-of \code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
+\item{es.data}{\code{tibble} Environmental surveillance data.}
+
+\item{dist.shape}{\code{sf} District shapefile.}
+
+\item{ctry.data}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+\code{list} This parameter has been deprecated in favor of explicitly passing dataframes
+into the function. This allows for greater flexibility in the function.}
 }
 \value{
 \code{tibble} Cleaned environmental surveillance data.
@@ -20,6 +25,6 @@ standardized columns used in the desk review.
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
-ctry.data$es <- clean_es_data(ctry.data)
+ctry.data$es <- clean_es_data(ctry.data$es, ctry.data$dist)
 
 }
