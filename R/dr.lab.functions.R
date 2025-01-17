@@ -1182,7 +1182,7 @@ clean_lab_data <- function(lab_data, start_date, end_date,
     lab_data <- add_rolling_date_info(lab_data, start_date, end_date,
                                       "DateOfOnset")
   } else {
-    if ("Province" %in% lab_data_cols) {
+    if ("prov" %in% lab_data_cols) {
       cli::cli_alert_warning("Lab data already cleaned.")
       return(lab_data)
     }
