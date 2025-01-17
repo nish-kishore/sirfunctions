@@ -410,27 +410,8 @@ generate_es_site_det <- function(sia.data,
 
   colnames(minsy)[colnames(minsy) == "province"] <- "ADM1_NAME"
 
-  default_vaccine_type <- c(
-    "nOPV2" = "blue",
-    "bOPV" = "coral1",
-    "mOPV2" = "purple"
-  )
-
-  default_detections <- c(
-    "No EV isolated" = "#f2f2f2",
-    "NPEV only" = "darkgrey",
-    "VDPV2" = "darkred",
-    "Sabin 1" = scales::brewer_pal(palette = "Set1")(9)[1],
-    "Sabin 2" = scales::brewer_pal(palette = "Set1")(9)[8],
-    "Sabin 1/Sabin 3" = scales::brewer_pal(palette = "Set1")(9)[2],
-    "Sabin 3" = scales::brewer_pal(palette = "Set1")(9)[3],
-    "Sabin 1/Sabin 3/VDPV2" = scales::brewer_pal(palette = "Set1")(9)[4],
-    "Sabin 1/VDPV2" = scales::brewer_pal(palette = "Set1")(9)[5],
-    "Sabin 3/VDPV2" = scales::brewer_pal(palette = "Set1")(9)[6],
-    "Sabin 1 or Sabin 3" = scales::brewer_pal(palette = "Set1")(9)[6],
-    "Sabin 1/3" = scales::brewer_pal(palette = "Set1")(9)[2],
-    "Sabin 1/3 and VDPV2" = scales::brewer_pal(palette = "Set1")(9)[5]
-  )
+  default_vaccine_type <- f.color.schemes("es.vaccine.types")
+  default_detections <- f.color.schemes("es.detections")
 
   if (is.null(vaccine_types)) {
     vaccine_types <- default_vaccine_type
