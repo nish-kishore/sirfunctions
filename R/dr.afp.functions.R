@@ -291,172 +291,159 @@ add_prov_npafp_table <- function(npafp.output) {
 }
 
 # Exported functions ----
-#' Generate `mon.year` column in the AFP linelist.
-#'
-#' Generates the `mon.year` column in the AFP linelist. This column is used in
-#' subsequent functions summarizing AFP case counts by geography and year. This function
-#' will most likely be moved to `clean_ctry_data()`.
-#' @import tidyr dplyr lubridate
-#' @param afp.data `tibble` Country AFP data (`ctry.data$afp.all.2`).
-#' @param start_date `str` Start date of analysis.
-#' @param end_date  `str` End date of analysis.
-#'
-#' @returns `tibble` AFP case count with.
-#' @examples
-#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' ctry.data <- extract_country_data("algeria", raw.data)
-#' afp.by.month <- generate_afp_by_month(ctry.data$afp.all.2, "2021-01-01", "2023-12-31")
-#' @seealso [generate_afp_by_month_summary]
-#' @export
-generate_afp_by_month <- function(afp.data, start_date, end_date) {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
-  # Ensure that if using raw.data, required renamed columns are present. Borrowed from
-  # extract.country.data()
-
-  afp.data <- dplyr::rename_with(afp.data, recode,
-    place.admin.0 = "ctry",
-    place.admin.1 = "prov",
-    place.admin.2 = "dist",
-    person.sex = "sex",
-    dateonset = "date",
-    yronset = "year",
-    datenotify = "date.notify",
-    dateinvest = "date.invest",
-    cdc.classification.all = "cdc.class"
-  )
-
-  summary <- afp.data |>
-    dplyr::filter(dplyr::between(date, start_date, end_date)) |>
-    dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
-
-  return(summary)
-}
 
 #' Generate AFP case count summary
 #'
 #' Summarize AFP case counts by month and another grouping variable.
+#' `r lifecycle::badge("stable")`
 #' @import dplyr tidyr lubridate
 #' @importFrom zoo as.yearmon
-#' @param afp.by.month `tibble` Output of [generate_afp_by_month()].
-#' @param ctry.data `list` Large list containing polio country data. Either the output of
-#' [init_dr()] or [extract_country_data()].
+#' @param afp_data `tibble` AFP dataset.
+#' @param pop_data `tibble` Population dataset.
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
 #' @param by `str` How to group the data by. Either `"prov"`, `"dist"`, or `"year"`.
+#' @param ctry.data `r lifecycle::badge("deprecated")` `ctry.data` is no longer supported;
+#' the function will explicitly ask for the AFP dataset instead of accessing it from a list.
 #' @returns `tibble` Summary table of AFP cases by month and another grouping variable.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
-#' afp.by.month <- generate_afp_by_month(
-#'   ctry.data$afp.all.2,
-#'   "2021-01-01", "2023-12-31"
-#' )
-#' afp.by.month.prov <- generate_afp_by_month_summary(
-#'   afp.by.month, ctry.data,
-#'   "2021-01-01", "2023-12-31", "prov"
+#' afp.by.month <- generate_afp_by_month_summary(
+#'   raw.data$afp, raw.data$ctry.pop,
+#'   "2021-01-01", "2023-12-31", "ctry"
 #' )
 #'
 #' @export
-generate_afp_by_month_summary <- function(afp.by.month, ctry.data, start_date, end_date, by) {
+generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
+                                          pop_data = NULL,
+                                          ctry.data = lifecycle::deprecated()) {
+  if (lifecycle::is_present(ctry.data)) {
+    lifecycle::deprecate_warn(
+      when = "1.3.0",
+      what = "generate_afp_by_month_summary(ctry.data)",
+      details = "Arguments must be passed to `afp_data` and `pop_data` directly."
+    )
+  }
+
+  # Check if population data is the same
+  switch(by,
+    "ctry" = {
+      if (sum(c("adm0guid") %in% names(pop_data)) != 1) {
+        cli::cli_abort("Please check if the pop data matches the argument passed in the `by` parameter.")
+      }
+    },
+    "prov" = {
+      if (sum(c("adm1guid", "adm2guid") %in% names(pop_data)) != 1) {
+        cli::cli_abort("Please check if the pop data matches the argument passed in the `by` parameter.")
+      }
+    },
+    "dist" = {
+      if (sum(c("adm1guid", "adm2guid") %in% names(pop_data)) != 2) {
+        cli::cli_abort("Please check if the pop data matches the argument passed in the `by` parameter.")
+      }
+    }
+  )
+
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
-  afp.by.month <- afp.by.month |>
-    dplyr::filter(cdc.classification.all2 != "NOT-AFP")
+  afp_data <- dplyr::rename_with(afp_data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
 
+  if (!is.null(pop_data)) {
+    pop_data <- dplyr::rename_with(pop_data, recode,
+                                   u15pop.prov = "u15pop",
+                                   ADM0_NAME = "ctry",
+                                   ADM1_NAME = "prov",
+                                   ADM2_NAME = "dist")
+    pop_data <- pop_data |>
+      dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)))
 
-  afp.by.month.summary <- switch(by,
-    "prov" = {
-      afp.by.month |>
-        dplyr::group_by(adm1guid, mon.year, year) |> # changed to guid
+    mon_year <- dplyr::tibble(
+      mon.year = seq(lubridate::floor_date(start_date, "month"), end_date, by = "month"),
+      year = lubridate::year(.data$mon.year)) |>
+      dplyr::full_join(pop_data)
+  }
+
+  afp_data <- afp_data |>
+    dplyr::filter(cdc.classification.all2 != "NOT-AFP",
+                  # NOTE: this also filters NA values
+                  dplyr::between(date, start_date, end_date)) |>
+    dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
+
+  afp_summary <- switch(by,
+    "ctry" = {
+      afp_data |>
+        dplyr::group_by(adm0guid, mon.year, year) |>
         dplyr::summarize(cases = dplyr::n()) |>
         dplyr::ungroup() |>
-        tidyr::complete(
-          mon.year = seq(lubridate::floor_date(start_date, "month"),
-            end_date,
-            by = "month"
-          ),
-          adm1guid = unique(ctry.data$prov.pop$adm1guid),
-          fill = list(cases = 0)
-        ) |>
+        dplyr::full_join(mon_year |>
+                           dplyr::select("mon.year", "year", "ctry", "adm0guid", "u15pop")) |>
+        tidyr::replace_na(list(cases = 0))
+    },
+    "prov" = {
+      afp_data |>
+        dplyr::group_by(adm1guid, mon.year, year) |>
+        dplyr::summarize(cases = dplyr::n()) |>
         dplyr::ungroup() |>
-        dplyr::mutate(year = lubridate::year(mon.year)) |>
-        # join this to the original  province population dataset
-        dplyr::left_join(ctry.data$prov.pop[, c("adm1guid", "year", "prov", "u15pop")],
-          by = c(
-            "adm1guid" = "adm1guid",
-            "year" = "year"
-          )
-        ) |>
-        dplyr::mutate(cases = dplyr::if_else(is.na(cases), 0, cases)) |>
-        dplyr::mutate(
-          mon.year2 = lubridate::as_date(zoo::as.yearmon(mon.year, "%b-%y")),
-          case.cat = dplyr::case_when(
-            cases == 0 ~ "0",
-            cases == 1 ~ "1",
-            cases > 1 & cases < 6 ~ "2-5",
-            cases >= 6 & cases < 10 ~ "6-9",
-            cases >= 10 ~ "10+"
-          ),
-          year = lubridate::year(mon.year2),
-          mononset = lubridate::month(mon.year2)
-        ) |>
-        dplyr::mutate(case.cat = factor(
-          case.cat,
-          levels = c("0", "1", "2-5", "6-9", "10+"),
-          labels = c("0", "1", "2-5", "6-9", "10+")
-        ))
+        dplyr::full_join(mon_year |>
+                            select("mon.year", "year", "ctry", "prov", "adm1guid", "u15pop")) |>
+        tidyr::replace_na(list(cases = 0))
     },
     "dist" = {
-      afp.by.month |>
-        dplyr::group_by(dist, adm2guid, mon.year) |> # changed to guid
+      afp_data |>
+        dplyr::group_by(adm2guid, mon.year, year) |>
         dplyr::summarize(cases = dplyr::n()) |>
         dplyr::ungroup() |>
-        tidyr::complete(
-          mon.year = seq(lubridate::floor_date(start_date, "month"),
-            end_date,
-            by = "month"
-          ),
-          adm2guid = unique(ctry.data$dist.pop$adm2guid),
-          fill = list(cases = 0)
-        ) |>
-        dplyr::ungroup() |>
-        dplyr::mutate(year = lubridate::year(mon.year)) |>
-        dplyr::left_join(ctry.data$dist.pop[, c("adm2guid", "year", "prov", "u15pop")],
-          by = c(
-            "adm2guid" = "adm2guid",
-            "year" = "year"
-          )
-        ) |>
-        dplyr::mutate(cases = dplyr::if_else(is.na(cases), 0, cases)) |>
-        dplyr::mutate(
-          mon.year2 = lubridate::as_date(zoo::as.yearmon(mon.year, "%b-%y")),
-          case.cat = dplyr::case_when(
-            cases == 0 ~ "0",
-            cases == 1 ~ "1",
-            cases > 1 & cases < 6 ~ "2-5",
-            cases >= 6 & cases < 10 ~ "6-9",
-            cases >= 10 ~ "10+"
-          ),
-          year = lubridate::year(mon.year2),
-          mononset = lubridate::month(mon.year2)
-        ) |>
-        dplyr::mutate(case.cat = factor(
-          case.cat,
-          levels = c("0", "1", "2-5", "6-9", "10+"),
-          labels = c("0", "1", "2-5", "6-9", "10+")
-        ))
+        dplyr::full_join(mon_year |>
+                            select("mon.year", "year", "ctry", "prov", "dist", "adm2guid", "u15pop")) |>
+        tidyr::replace_na(list(cases = 0))
     },
     "year" = {
-      afp.by.month |>
+      afp_data |>
         dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
-        dplyr::group_by(year) |>
-        dplyr::summarize(afp.case = dplyr::n())
+        dplyr::group_by(.data$year) |>
+        dplyr::summarize(afp.case = dplyr::n()) |>
+        dplyr::ungroup() |>
+        dplyr::full_join(dplyr::tibble(year = seq(lubridate::year(start_date),
+                                                  lubridate::year(end_date)))) |>
+        tidyr::replace_na(list(afp.case = 0))
     }
   )
-  return(afp.by.month.summary)
+
+  if (by != "year") {
+    afp_summary <- afp_summary |>
+      dplyr::mutate(
+        mon.year = lubridate::as_date(zoo::as.yearmon(.data$mon.year, "%b-%y")),
+        case.cat = dplyr::case_when(
+          cases == 0 ~ "0",
+          cases == 1 ~ "1",
+          cases > 1 & cases < 6 ~ "2-5",
+          cases >= 6 & cases < 10 ~ "6-9",
+          cases >= 10 ~ "10+"
+        ),
+        year = lubridate::year(.data$mon.year),
+        mononset = lubridate::month(.data$mon.year)
+      ) |>
+      dplyr::mutate(case.cat = factor(
+        .data$case.cat,
+        levels = c("0", "1", "2-5", "6-9", "10+"),
+        labels = c("0", "1", "2-5", "6-9", "10+")
+      )) |>
+      dplyr::filter(!is.na(.data$year))
+  }
+
+  return(afp_summary)
 }
 
 #' Generate a summary table for sample timeliness intervals
@@ -1181,6 +1168,7 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
 
 #Deprecated functions ----
 #' NPAFP indicator tables with additional columns
+
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
@@ -1224,11 +1212,13 @@ prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spati
                 "ctry" = "adm0guid",
                 "prov" = "adm1guid",
                 "dist" = "adm2guid"
+
   )
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   # If using raw.data ensure required columns are present
+
   afp.data <- dplyr::rename_with(afp.data, recode,
                                  place.admin.0 = "ctry",
                                  place.admin.1 = "prov",
@@ -1302,4 +1292,5 @@ prep_npafp_table <- function(npafp.output, afp.data, start_date, end_date, spati
   )
 
   return(case.ind)
+
 }

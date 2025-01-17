@@ -183,6 +183,7 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' - `"dist"` District level.
 #' - `"ctry"` Country level.
 #' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
+#' @param missing_agemonths `bool` Should cases with `NA` values for `age.months` be included? Default `FALSE`.
 #' @param rolling `bool` Should the analysis be performed on a rolling bases? Default `FALSE`.
 #' @param sp_continuity_validation `bool` Should we filter places that are not present
 #' for the entirety of the analysis dates? Default `TRUE`.
@@ -195,16 +196,22 @@ f.npafp.rate.01 <- function(
     end.date,
     spatial.scale,
     pending = T,
+    missing_agemonths = F,
     rolling = F,
     sp_continuity_validation = T) {
+
   # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
   }
 
+  # Local static vars
+  names.ctry <- c("adm0guid", "year", "ctry")
+  names.prov <- c(names.ctry, "adm1guid", "prov")
+  names.dist <- c(names.prov, "adm2guid", "dist")
+
   # Ensure that if using raw.data, required renamed columns are present. Borrowed from
   # extract.country.data()
-
   afp.data <- dplyr::rename_with(afp.data, recode,
     place.admin.0 = "ctry",
     place.admin.1 = "prov",
@@ -223,12 +230,6 @@ f.npafp.rate.01 <- function(
     ADM0_GUID = "adm0guid",
     u15pop.prov = "u15pop"
   )
-
-
-  # Local static vars
-  names.ctry <- c("adm0guid", "year", "ctry")
-  names.prov <- c(names.ctry, "adm1guid", "prov")
-  names.dist <- c(names.prov, "adm2guid", "dist")
 
   # Check data inputs
   # Analysis start and end date as defined by user (as a character)
@@ -266,6 +267,18 @@ f.npafp.rate.01 <- function(
   check_missing_afp_var(afp.data, spatial.scale)
   check_missing_pop_var(pop.data, spatial.scale)
   check_spatial_scale(pop.data, spatial.scale)
+
+  agemonth_summary <- switch(spatial.scale,
+    "ctry" = {
+      check_missing_rows(afp.data, "age.months", names.ctry)
+    },
+    "prov" = {
+      check_missing_rows(afp.data, "age.months", names.prov)
+    },
+    "dist" = {
+      check_missing_rows(afp.data, "age.months", names.dist)
+    }
+  )
 
   # Get inconsistent GUIDs across temporal scale
   incomplete.adm <- get_incomplete_adm(pop.data, spatial.scale, start.date, end.date)
@@ -307,8 +320,9 @@ f.npafp.rate.01 <- function(
     dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180,
                   cdc.classification.all2 != "NOT-AFP")
 
+
   # Only years of analysis
-  pop.data <- pop.data %>%
+  pop.data <- pop.data |>
     dplyr::filter(dplyr::between(
       year,
       lubridate::year(start.date),
@@ -356,8 +370,8 @@ f.npafp.rate.01 <- function(
                     "afp.case", "num.wpv.cases",
                     "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases")
   int.data <- int.data |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols), \(x) tidyr::replace_na(x, 0))) |>
-    tidyr::drop_na(dplyr::any_of(spatial.scale))
+    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols),
+                                \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 }

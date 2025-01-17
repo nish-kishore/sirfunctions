@@ -15,7 +15,7 @@ lab_data_errors_region(
 \arguments{
 \item{ctry.data}{\code{list} Large list containing polio country data. Output of either
 \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}. Note that lab data must be attached to\code{ctry.data} as
-\code{lab.data}.}
+\code{lab_data}.}
 
 \item{ctry_name}{\code{str} Name of the country. Defaults to the desk review country.}
 
