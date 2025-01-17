@@ -43,13 +43,15 @@ formatted as \verb{adm(0,1,2)guid}, onset date as \code{date} and \code{cdc.clas
 
 \item{rolling}{\code{bool} Should the analysis be performed on a rolling bases? Default \code{FALSE}.}
 
-\item{sp_continuity_validation}{Should we filter places that are not present
+\item{sp_continuity_validation}{\code{bool} Should we filter places that are not present
 for the entirety of the analysis dates? Default \code{TRUE}.}
 }
 \value{
 \code{tibble} A table containing NPAFP rates as well as additional information relevant to each location analyzed.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
+
 Calculate the NPAFP rate from POLIS data. Can either pass \code{raw.data} to calculate NPAFP rates
 on the global dataset, or a \code{ctry.data} dataset.
 }
