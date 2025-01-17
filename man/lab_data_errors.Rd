@@ -19,6 +19,10 @@ lab_data_errors(
 
 \item{afp.data}{\code{tibble} AFP linelist.}
 
+\item{ctry.data}{\code{list} Large list containing country polio data. Output of \code{\link[=extract_country_data]{extract_country_data()}} or
+\code{\link[=init_dr]{init_dr()}}. Ensure that the lab data is attached to \code{ctry.data} as \code{lab_data}.}
+
+
 \item{start.date}{\code{str} Start date of the analysis.}
 
 \item{end.date}{\code{str} End date of the analysis.}

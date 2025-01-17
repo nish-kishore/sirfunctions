@@ -4,7 +4,14 @@
 \alias{npafp_rolling}
 \title{Calculate the NPAFP rate on a rolling basis}
 \usage{
-npafp_rolling(afp.data, year.pop.data, start_date, end_date, spatial_scale)
+npafp_rolling(
+  afp.data,
+  year.pop.data,
+  start_date,
+  end_date,
+  spatial_scale,
+  pending
+)
 }
 \arguments{
 \item{afp.data}{\code{tibble} AFP linelist, Either from \code{raw.data$afp} of \code{\link[=get_all_polio_data]{get_all_polio_data()}}
@@ -18,6 +25,8 @@ inside \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}}.}
 \item{end_date}{\code{str} End date to calculate the rolling interval for.}
 
 \item{spatial_scale}{Spatial scale. Valid arguments are: \verb{"ctry", "prov", "dist}.}
+
+\item{pending}{\code{bool} Should cases classified as \code{PENDING} or \verb{LAB PENDING} be included in calculations? Default \code{TRUE}.}
 }
 \value{
 A summary table including NPAFP rates and population data.

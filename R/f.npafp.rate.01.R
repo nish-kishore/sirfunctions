@@ -10,10 +10,11 @@
 #' or `ctry.data${ctry/prov/dist}.pop` of [extract_country_data()].
 #' @param year.data `tibble` Summary table. Created from [generate_year_data()].
 #' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`.
+#' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @keywords internal
 #'
 #' @return `tibble` A summary table including NPAFP rates and population data.
-npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
+npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
@@ -31,11 +32,22 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
     "dist" = names.dist
   )
 
+  if (pending) {
+    npafp_col <- c("NPAFP", "PENDING", "LAB PENDING")
+  } else {
+    npafp_col <- "NPAFP"
+  }
+
   int.data <- afp.data |>
     dplyr::mutate(year = lubridate::year(date)) |>
     dplyr::group_by(get(geo), .data$year) |>
     dplyr::summarise(
-      n_npafp = sum(!is.na(.data$epid))
+      n_npafp = sum(.data$cdc.classification.all2 %in% npafp_col),
+      afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
+      num.wpv.cases = sum(.data$wild.1 == TRUE | .data$wild.3 == TRUE, na.rm = T),
+      num.vdpv1.cases = sum(.data$vdpv.1 == TRUE, na.rm = T),
+      num.vdpv2.cases = sum(.data$vdpv.2 == TRUE, na.rm = T),
+      num.vdpv3.cases = sum(.data$vdpv.3 == TRUE, na.rm = T)
     ) |>
     dplyr::ungroup()
 
@@ -50,6 +62,7 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
     dplyr::mutate(npafp_rate = .data$n_npafp / .data$u15pop * 100000 / .data$weight) |>
     dplyr::select(dplyr::all_of(c(
       "year", "n_npafp", "u15pop",
+      "afp.case", "num.wpv.cases", "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases",
       "n_days", "days_in_year", "weight",
       "earliest_date", "latest_date", "npafp_rate",
       pop_cols
@@ -71,10 +84,11 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale) {
 #' @param start_date `str` Start date to calculate the rolling interval for.
 #' @param end_date `str` End date to calculate the rolling interval for.
 #' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`.
+#' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @keywords internal
 #'
 #' @return A summary table including NPAFP rates and population data.
-npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial_scale) {
+npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial_scale, pending) {
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
@@ -100,14 +114,24 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
     summarise(par = sum(.data$weight * .data$u15pop)) |>
     ungroup()
 
+  if (pending) {
+    npafp_col <- c("NPAFP", "PENDING", "LAB PENDING")
+  } else {
+    npafp_col <- "NPAFP"
+  }
 
   # Count the number of NPAFP cases
   int.data <- afp.data |>
     dplyr::group_by(get(geo)) |>
     dplyr::summarise(
-      n_npafp = sum(!is.na(.data$epid)),
+      n_npafp = sum(.data$cdc.classification.all2 %in% npafp_col),
       earliest_date = min(.data$earliest_date),
-      latest_date = max(.data$latest_date)
+      latest_date = max(.data$latest_date),
+      afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
+      num.wpv.cases = sum(.data$wild.1 == TRUE | .data$wild.3 == TRUE, na.rm = T),
+      num.vdpv1.cases = sum(.data$vdpv.1 == TRUE, na.rm = T),
+      num.vdpv2.cases = sum(.data$vdpv.2 == TRUE, na.rm = T),
+      num.vdpv3.cases = sum(.data$vdpv.3 == TRUE, na.rm = T)
     ) |>
     dplyr::ungroup() |>
     dplyr::mutate(days.at.risk = as.numeric(end_date - start_date + 1))
@@ -136,9 +160,12 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 # Main function ----
 
 #' Calculate non-polio AFP rate
+#' @description
+#' `r lifecycle::badge("stable")`
 #'
 #' Calculate the NPAFP rate from POLIS data. Can either pass `raw.data` to calculate NPAFP rates
 #' on the global dataset, or a `ctry.data` dataset.
+#'
 #' @import dplyr
 #' @import lubridate
 #' @import tidyr
@@ -156,8 +183,9 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' - `"dist"` District level.
 #' - `"ctry"` Country level.
 #' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
+#' @param missing_agemonths `bool` Should cases with `NA` values for `age.months` be included? Default `FALSE`.
 #' @param rolling `bool` Should the analysis be performed on a rolling bases? Default `FALSE`.
-#' @param sp_continuity_validation Should we filter places that are not present
+#' @param sp_continuity_validation `bool` Should we filter places that are not present
 #' for the entirety of the analysis dates? Default `TRUE`.
 #' @returns `tibble` A table containing NPAFP rates as well as additional information relevant to each location analyzed.
 #' @export
@@ -168,16 +196,22 @@ f.npafp.rate.01 <- function(
     end.date,
     spatial.scale,
     pending = T,
+    missing_agemonths = F,
     rolling = F,
     sp_continuity_validation = T) {
+
   # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
   }
 
+  # Local static vars
+  names.ctry <- c("adm0guid", "year", "ctry")
+  names.prov <- c(names.ctry, "adm1guid", "prov")
+  names.dist <- c(names.prov, "adm2guid", "dist")
+
   # Ensure that if using raw.data, required renamed columns are present. Borrowed from
   # extract.country.data()
-
   afp.data <- dplyr::rename_with(afp.data, recode,
     place.admin.0 = "ctry",
     place.admin.1 = "prov",
@@ -196,12 +230,6 @@ f.npafp.rate.01 <- function(
     ADM0_GUID = "adm0guid",
     u15pop.prov = "u15pop"
   )
-
-
-  # Local static vars
-  names.ctry <- c("adm0guid", "year", "ctry")
-  names.prov <- c(names.ctry, "adm1guid", "prov")
-  names.dist <- c(names.prov, "adm2guid", "dist")
 
   # Check data inputs
   # Analysis start and end date as defined by user (as a character)
@@ -240,6 +268,18 @@ f.npafp.rate.01 <- function(
   check_missing_pop_var(pop.data, spatial.scale)
   check_spatial_scale(pop.data, spatial.scale)
 
+  agemonth_summary <- switch(spatial.scale,
+    "ctry" = {
+      check_missing_rows(afp.data, "age.months", names.ctry)
+    },
+    "prov" = {
+      check_missing_rows(afp.data, "age.months", names.prov)
+    },
+    "dist" = {
+      check_missing_rows(afp.data, "age.months", names.dist)
+    }
+  )
+
   # Get inconsistent GUIDs across temporal scale
   incomplete.adm <- get_incomplete_adm(pop.data, spatial.scale, start.date, end.date)
 
@@ -277,10 +317,12 @@ f.npafp.rate.01 <- function(
 
   # Filter AFP and population data based on start and end dates
   afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180)
+    dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180,
+                  cdc.classification.all2 != "NOT-AFP")
+
 
   # Only years of analysis
-  pop.data <- pop.data %>%
+  pop.data <- pop.data |>
     dplyr::filter(dplyr::between(
       year,
       lubridate::year(start.date),
@@ -288,13 +330,13 @@ f.npafp.rate.01 <- function(
     ))
 
   # Filter AFP data based on pending param
-  if (pending) {
-    afp.data <- afp.data |>
-      dplyr::filter(cdc.classification.all2 %in% c("NPAFP", "PENDING", "LAB PENDING"))
-  } else {
-    afp.data <- afp.data |>
-      dplyr::filter(cdc.classification.all2 == "NPAFP")
-  }
+  # if (pending) {
+  #   afp.data <- afp.data |>
+  #     dplyr::filter(cdc.classification.all2 %in% c("NPAFP", "PENDING", "LAB PENDING"))
+  # } else {
+  #   afp.data <- afp.data |>
+  #     dplyr::filter(cdc.classification.all2 == "NPAFP")
+  # }
 
   # Generate days in a year table
   year.data <- generate_year_data(start.date, end.date)
@@ -303,7 +345,10 @@ f.npafp.rate.01 <- function(
   afp.data <- afp.data |>
     dplyr::select(dplyr::any_of(c(
       "epid", "date", "ctry", "adm0guid",
-      "prov", "adm1guid", "dist", "adm2guid"
+      "prov", "adm1guid", "dist", "adm2guid",
+      "cdc.classification.all2",
+      "wild.1", "wild.3", "vdpv.1",
+      "vdpv.2", "vdpv.3"
     ))) |>
     dplyr::mutate(year = lubridate::year(date))
 
@@ -314,17 +359,19 @@ f.npafp.rate.01 <- function(
   # Calculate NPAFP rate
   int.data <- NULL
   if (rolling) {
-    int.data <- suppressMessages(npafp_rolling(afp.data, year.pop.data, start.date, end.date, spatial.scale))
+    int.data <- suppressMessages(npafp_rolling(afp.data, year.pop.data, start.date, end.date, spatial.scale, pending))
   } else {
-    int.data <- suppressMessages(npafp_year(afp.data, pop.data, year.data, spatial.scale))
+    int.data <- suppressMessages(npafp_year(afp.data, pop.data, year.data, spatial.scale, pending))
     int.data <- int.data |>
       dplyr::filter(!is.na(.data$year))
   }
 
-  numeric_cols <- c("n_npafp", "u15pop", "npafp_rate", "par")
+  numeric_cols <- c("n_npafp", "u15pop", "npafp_rate", "par",
+                    "afp.case", "num.wpv.cases",
+                    "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases")
   int.data <- int.data |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols), \(x) tidyr::replace_na(x, 0))) |>
-    tidyr::drop_na(dplyr::any_of(spatial.scale))
+    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols),
+                                \(x) tidyr::replace_na(x, 0)))
 
   return(int.data)
 }

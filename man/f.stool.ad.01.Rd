@@ -6,14 +6,15 @@
 \usage{
 f.stool.ad.01(
   afp.data,
-  admin.data,
+  pop.data,
   start.date,
   end.date,
   spatial.scale,
   missing = "good",
   bad.data = "inadequate",
   rolling = F,
-  sp_continuity_validation = T
+  sp_continuity_validation = T,
+  admin.data = lifecycle::deprecated()
 )
 }
 \arguments{
@@ -21,7 +22,7 @@ f.stool.ad.01(
 formatted as \verb{adm(0,1,2)guid}, onset date as \code{date} and \code{cdc.classification.all2}
 which includes "NOT-AFP".}
 
-\item{admin.data}{\code{tibble} Full list of country administrative units by a given
+\item{pop.data}{\code{tibble} Full list of country administrative units by a given
 spatial scale including \code{year}, \verb{adm(0,1,2)guid}, and \code{ctry/prov/dist} (as appropriate).}
 
 \item{start.date}{\code{str} Starting date for analysis formatted as "YYYY-MM-DD".}

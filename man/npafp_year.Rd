@@ -4,7 +4,7 @@
 \alias{npafp_year}
 \title{Calculate NPAFP by year and geographic level}
 \usage{
-npafp_year(afp.data, pop.data, year.data, spatial_scale)
+npafp_year(afp.data, pop.data, year.data, spatial_scale, pending)
 }
 \arguments{
 \item{afp.data}{\code{tibble} AFP linelist. Either from \code{raw.data$afp} of \code{\link[=get_all_polio_data]{get_all_polio_data()}}
@@ -16,6 +16,8 @@ or \verb{ctry.data$\{ctry/prov/dist\}.pop} of \code{\link[=extract_country_data]
 \item{year.data}{\code{tibble} Summary table. Created from \code{\link[=generate_year_data]{generate_year_data()}}.}
 
 \item{spatial_scale}{Spatial scale. Valid arguments are: \verb{"ctry", "prov", "dist}.}
+
+\item{pending}{\code{bool} Should cases classified as \code{PENDING} or \verb{LAB PENDING} be included in calculations? Default \code{TRUE}.}
 }
 \value{
 \code{tibble} A summary table including NPAFP rates and population data.

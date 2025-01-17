@@ -112,6 +112,8 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
 
   geo <- switch(spatial_scale,
     "ctry" = "adm0guid",
@@ -160,7 +162,7 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
   )
 
   int.data <- int.data |>
-    suppressMessages(dplyr::left_join(pop.data))
+    dplyr::left_join(pop.data)
 
   int.data <- int.data |>
     mutate(per.stool.ad = dplyr::if_else(.data$afp.cases == 0, NA, .data$per.stool.ad)) |>
@@ -336,7 +338,7 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
 #' formatted as `adm(0,1,2)guid`, onset date as `date` and `cdc.classification.all2`
 #' which includes "NOT-AFP".
-#' @param admin.data `tibble` Full list of country administrative units by a given
+#' @param pop.data `tibble` Full list of country administrative units by a given
 #' spatial scale including `year`, `adm(0,1,2)guid`, and `ctry/prov/dist` (as appropriate).
 #' @param start.date `str` Starting date for analysis formatted as "YYYY-MM-DD".
 #' @param end.date `str` Ending date for analysis as "YYYY-MM-DD".
@@ -367,14 +369,27 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 
 f.stool.ad.01 <- function(
     afp.data,
-    admin.data,
+    pop.data,
     start.date,
     end.date,
     spatial.scale,
     missing = "good",
     bad.data = "inadequate",
     rolling = F,
-    sp_continuity_validation = T) {
+    sp_continuity_validation = T,
+    admin.data = lifecycle::deprecated()) {
+
+  if (lifecycle::is_present(admin.data)) {
+    lifecycle::deprecate_warn("1.2.0", "f.stool.ad.01(admin.data)",
+                              "f.stool.ad.01(pop.data)")
+    pop.data <- admin.data
+  }
+
+  # Check if afp.data and pop.data has arguments
+  if (!(hasArg(afp.data) & hasArg(pop.data))) {
+    stop("Please include both afp.data and pop.data as arguments to the function.")
+  }
+
   # Local static vars
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
@@ -382,7 +397,6 @@ f.stool.ad.01 <- function(
 
   # Ensure that if using raw.data, required renamed columns are present. Borrowed from
   # extract.country.data()
-
   afp.data <- dplyr::rename_with(afp.data, recode,
     place.admin.0 = "ctry",
     place.admin.1 = "prov",
@@ -394,7 +408,7 @@ f.stool.ad.01 <- function(
     dateinvest = "date.invest",
     cdc.classification.all = "cdc.class"
   )
-  admin.data <- dplyr::rename_with(admin.data, recode,
+  pop.data <- dplyr::rename_with(pop.data, recode,
     ADM0_NAME = "ctry",
     ADM1_NAME = "prov",
     ADM2_NAME = "dist",
@@ -409,7 +423,7 @@ f.stool.ad.01 <- function(
       start.date <- lubridate::as_date(start.date)
       end.date <- lubridate::as_date(end.date)
       years <- lubridate::year(start.date):year(end.date)
-      ctry.years <- sort(unique(admin.data$year))
+      ctry.years <- sort(unique(pop.data$year))
     },
     error = function(cond) {
       cond$message <- paste0(
@@ -445,26 +459,12 @@ f.stool.ad.01 <- function(
   }
 
   # Perform checks
-  switch(spatial.scale,
-    "ctry" = {
-      check_missing_afp_var(afp.data, "ctry")
-      check_missing_pop_var(admin.data, "ctry")
-      check_spatial_scale(admin.data, "ctry")
-    },
-    "prov" = {
-      check_missing_afp_var(afp.data, "prov")
-      check_missing_pop_var(admin.data, "prov")
-      check_spatial_scale(admin.data, "prov")
-    },
-    "dist" = {
-      check_missing_afp_var(afp.data, "dist")
-      check_missing_pop_var(admin.data, "dist")
-      check_spatial_scale(admin.data, "dist")
-    }
-  )
+  check_missing_afp_var(afp.data, spatial.scale)
+  check_missing_pop_var(pop.data, spatial.scale)
+  check_spatial_scale(pop.data, spatial.scale)
 
   # Get inconsistent GUIDs across temporal scale
-  incomplete.adm <- get_incomplete_adm(admin.data, spatial.scale, start.date, end.date)
+  incomplete.adm <- get_incomplete_adm(pop.data, spatial.scale, start.date, end.date)
 
   # Filter data if spatial validation is true
   if (sp_continuity_validation) {
@@ -479,7 +479,7 @@ f.stool.ad.01 <- function(
     }
 
     guid_col_name <- paste0("adm", match(spatial.scale, c("ctry", "prov", "dist")) - 1, "guid")
-    admin.data <- admin.data |>
+    pop.data <- pop.data |>
       dplyr::filter(!(.data[[guid_col_name]] %in% incomplete.adm))
 
     afp.data <- afp.data |>
@@ -505,7 +505,7 @@ f.stool.ad.01 <- function(
       cdc.classification.all2 != "NOT-AFP"
     )
   # Only years of analysis
-  admin.data <- admin.data %>%
+  pop.data <- pop.data |>
     dplyr::filter(dplyr::between(
       year,
       lubridate::year(start.date),
@@ -531,9 +531,8 @@ f.stool.ad.01 <- function(
     )
 
   # Merge stool data with days in year
-  year.pop.data <- suppressMessages(dplyr::left_join(year.data, admin.data))
+  year.pop.data <- suppressMessages(dplyr::left_join(year.data, pop.data))
   stool.data <- suppressMessages(dplyr::full_join(stool.data, year.pop.data))
-
 
   # Select how to treat bad data
   stool.data <- switch(bad.data,
@@ -568,14 +567,13 @@ f.stool.ad.01 <- function(
   # Calculate stool adequacy
   int.data <- NULL
   if (rolling) {
-    int.data <- stool_ad_rolling(stool.data, admin.data, start.date, end.date, spatial.scale)
+    int.data <- suppressMessages(stool_ad_rolling(stool.data, pop.data, start.date, end.date, spatial.scale))
   } else {
-    int.data <- stool_ad_year(stool.data, admin.data, year.data, spatial.scale)
+    int.data <- suppressMessages(stool_ad_year(stool.data, pop.data, year.data, spatial.scale))
   }
 
   int.data <- int.data |>
-    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad") |>
-    tidyr::drop_na(dplyr::any_of(spatial.scale))
+    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad")
 
   return(int.data)
 }

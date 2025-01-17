@@ -21,7 +21,7 @@ This a function to load lab data that are either CSVs or Excel files.
 \examples{
 \dontrun{
 lab_data_path <- "C:/Users/ABC1/Desktop/lab_data.csv"
-lab.data <- load_lab_data(lab_data_path)
+lab_data <- load_lab_data(lab_data_path)
 }
 
 }
