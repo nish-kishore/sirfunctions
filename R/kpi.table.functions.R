@@ -519,7 +519,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
-                              .group_by = c("adm0guid", "ctry", "year"),
+                              .group_by = c("adm0guid", "ctry", "dist", "adm2guid", "year"),
                               risk_category = NULL) {
   # Adjust spatial scale for stool adequacy and NPAFP functions
   .spatial_scale <- dplyr::case_when(
@@ -888,7 +888,9 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     purrr::map(format_table) |>
     purrr::map(drop_labels)
 
-  file_name <- paste0("kpi_tables_", Sys.Date(), ".xlsx")
+  file_name <- paste0("kpi_tables_",
+                      paste0(names(export_list), collapse = "_"),
+                      "_", Sys.Date(), ".xlsx")
   writexl::write_xlsx(export_list, file.path(output_path, file_name))
 }
 
