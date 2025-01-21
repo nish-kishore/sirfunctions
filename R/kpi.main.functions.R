@@ -21,7 +21,6 @@
 #' init_kpi(name = "kpi_jan_2024")
 #' }
 init_kpi <- function(path = getwd(), name = NULL) {
-
   # Date created
   today <- Sys.Date()
 
@@ -92,7 +91,9 @@ init_kpi <- function(path = getwd(), name = NULL) {
             break
           }
         },
-        error = function(e) {cli::cli_alert_warning("Invalid response.")}
+        error = function(e) {
+          cli::cli_alert_warning("Invalid response.")
+        }
       )
     }
   }
@@ -106,7 +107,6 @@ init_kpi <- function(path = getwd(), name = NULL) {
   } else if (length(lab_files) == 1) {
     lab_data <<- readRDS(file.path(Sys.getenv("KPI_DATA"), lab_files[1]))
   } else {
-
     for (i in 1:length(lab_files)) {
       print(paste0(i, ". ", lab_files[i]))
     }
@@ -125,7 +125,9 @@ init_kpi <- function(path = getwd(), name = NULL) {
             break
           }
         },
-        error = function(e) {cli::cli_alert_warning("Invalid response.")}
+        error = function(e) {
+          cli::cli_alert_warning("Invalid response.")
+        }
       )
     }
   }
@@ -162,7 +164,8 @@ get_ctry_abbrev <- function(afp_data) {
     # fixing bad abbreviation in Gabon and turning all to upper case to eliminate dupes
     dplyr::mutate(
       ctry.short = ifelse(.data$place.admin.0 == "GABON" & .data$ctry.short == "BUU",
-                          "GAB", .data$ctry.short),
+        "GAB", .data$ctry.short
+      ),
       ctry.short = toupper(.data$ctry.short)
     ) |>
     dplyr::distinct() |>
@@ -171,4 +174,54 @@ get_ctry_abbrev <- function(afp_data) {
     )
 
   return(ctry_abbrev)
+}
+
+get_kpi_template <- function(output_path, name) {
+  conn <- file(file.path(output_path, "kpi_template.R"))
+
+  # Initialization path
+  init <- paste0("init_kpi(", '"', output_path, '"', ",\n",
+                 '         "', name, '"', ")")
+
+  # Generate tables
+  c1 <- 'c1 <- generate_c1_table(raw_data, "2022-01-01", "2024-12-31")'
+  c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2022-01-01", "2024-12-31")'
+  c3 <- 'c3 <- generate_c3_table(raw_data$es, "2022-01-01", "2024-12-31")'
+  c4 <- 'c4 <- generate_c4_table(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
+
+  # Generate figures
+  sg_priority_map <- "generate_sg_priority_map()"
+  npafp_kpi_map <- 'generate_kpi_npafp_map(c2, 2024, "AFRO")'
+  stool_kpi_map <- 'generate_kpi_stool_map(c2, 2024, "AFRO")'
+  ev_kpi_map <- 'generate_kpi_ev_map(c3, 2024, "AFRO")'
+
+  npafp_bar <- "generate_kpi_npafp_bar(c1, raw_data$afp)"
+  stool_bar <- "generate_kpi_stoolad_bar(c1, raw_data$afp)"
+  ev_bar <- "generate_kpi_evdetect_bar(c1, raw_data$afp)"
+
+  timely_violin <- 'generate_timely_det_violin(raw_data, "2022-01-01", "2024-12-31")'
+  culture_violin <- 'generate_lab_culture_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
+  itd_violin <- 'generate_lab_itd_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
+  seqship_violin <- 'generate_lab_seqship_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
+  seqres_violin <- 'generate_lab_seqres_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
+
+  export_table <- "export_kpi_table(c1, c2, c3, c4, drop_label_cols = FALSE)"
+
+  # Write template
+  output_string <- c(
+    "# KPI Code Template",
+    paste0("# Downloaded on: ", Sys.Date()), "\n\n\n",
+    init, "\n",
+    "# Generate GPSAP C1-C4 tables ----",
+    c1, c2, c3, c4, "\n",
+    "# Generate figures ----",
+    sg_priority_map, npafp_kpi_map, stool_kpi_map, ev_kpi_map, "\n",
+    npafp_bar, stool_bar, ev_bar, "\n",
+    timely_violin, culture_violin, itd_violin, seqship_violin,
+    seqres_violin, "\n",
+    "# Export GPSAP tables ----",
+    export_table, "\n"
+  )
+
+  writeLines(output_string, conn)
 }
