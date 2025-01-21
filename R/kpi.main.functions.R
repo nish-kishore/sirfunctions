@@ -39,6 +39,15 @@ init_kpi <- function(path = getwd(), name = NULL) {
     analysis_path <- file.path(path, name)
   }
   cli::cli_process_done()
+  cli::cli_alert_success(paste0("KPI analysis folder initialized at: ",
+                                analysis_path))
+
+  # Create KPI template
+  if (!file.exists(file.path(analysis_path, "kpi_template.R"))) {
+    cli::cli_process_start("Generating KPI code template")
+    generate_kpi_template(analysis_path, name)
+    cli::cli_process_done()
+  }
 
   # Path to data
   if (!dir.exists(file.path(analysis_path, "data"))) {
@@ -134,6 +143,8 @@ init_kpi <- function(path = getwd(), name = NULL) {
   cli::cli_process_done()
 
   cli::cli_alert_success("KPI analysis set up complete.")
+  cli::cli_text(paste0("Click here to access the template file: ",
+                       "{.file ", file.path(analysis_path, "kpi_template.R"), "}"))
 }
 
 # Utility functions ----
@@ -176,24 +187,40 @@ get_ctry_abbrev <- function(afp_data) {
   return(ctry_abbrev)
 }
 
-get_kpi_template <- function(output_path, name) {
+#' Create the KPI template
+#'
+#' @param output_path `str` Where to output the script to.
+#' @param name `str` Name of the KPI folder.
+#'
+#' @return None.
+#'
+#' @examples
+#' \dontrun{
+#' generate_kpi_template(getwd(), "test_folder")
+#' }
+#' @keywords internal
+generate_kpi_template <- function(output_path, name) {
   conn <- file(file.path(output_path, "kpi_template.R"))
 
   # Initialization path
   init <- paste0("init_kpi(", '"', output_path, '"', ",\n",
                  '         "', name, '"', ")")
 
+  # Shapefiles
+  ctry_sf <- 'ctry_sf <- load_clean_ctry_sp(st.year = 2022, type = "long")'
+  dist_sf <- 'dist_sf <- load_clean_dist_sp(st.year = 2022, type = "long")'
+
   # Generate tables
   c1 <- 'c1 <- generate_c1_table(raw_data, "2022-01-01", "2024-12-31")'
-  c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2022-01-01", "2024-12-31")'
+  c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$dist.pop, "2022-01-01", "2024-12-31")'
   c3 <- 'c3 <- generate_c3_table(raw_data$es, "2022-01-01", "2024-12-31")'
   c4 <- 'c4 <- generate_c4_table(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
 
   # Generate figures
   sg_priority_map <- "generate_sg_priority_map()"
-  npafp_kpi_map <- 'generate_kpi_npafp_map(c2, 2024, "AFRO")'
-  stool_kpi_map <- 'generate_kpi_stool_map(c2, 2024, "AFRO")'
-  ev_kpi_map <- 'generate_kpi_ev_map(c3, 2024, "AFRO")'
+  npafp_kpi_map <- 'generate_kpi_npafp_map(c2, 2024, "AFRO", ctry_sf = ctry_sf, dist_sf = dist_sf)'
+  stool_kpi_map <- 'generate_kpi_stool_map(c2, 2024, "AFRO", ctry_sf = ctry_sf, dist_sf = dist_sf)'
+  ev_kpi_map <- 'generate_kpi_ev_map(c3, 2024, "AFRO", ctry_sf = ctry_sf)'
 
   npafp_bar <- "generate_kpi_npafp_bar(c1, raw_data$afp)"
   stool_bar <- "generate_kpi_stoolad_bar(c1, raw_data$afp)"
@@ -212,9 +239,16 @@ get_kpi_template <- function(output_path, name) {
     "# KPI Code Template",
     paste0("# Downloaded on: ", Sys.Date()), "\n\n\n",
     init, "\n",
+    "# Obtaining shapefiles in long format ----",
+    "# Ensure st.year is the year of your start date.",
+    ctry_sf, dist_sf, "\n",
+    "# Cleaning lab data ----",
+    'lab_data <- clean_lab_data(lab_data, "2022-01-01", "2024-12-31", raw_data$afp)\n',
     "# Generate GPSAP C1-C4 tables ----",
+    "# Except for c1, every other table can be specified a custom grouping",
     c1, c2, c3, c4, "\n",
     "# Generate figures ----",
+    "# Ensure c2 is grouped at the district level.",
     sg_priority_map, npafp_kpi_map, stool_kpi_map, ev_kpi_map, "\n",
     npafp_bar, stool_bar, ev_bar, "\n",
     timely_violin, culture_violin, itd_violin, seqship_violin,
