@@ -332,7 +332,6 @@ add_rolling_years <- function(df, start_date, date_col, period = months(12, FALS
 #' Output of [get_all_polio_data()].
 #' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
 #' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
-#' @param rolling `bool` Should the data be summarized for 12-month rolling averages. Defaults to `TRUE`.
 #' @param risk_category `str` Risk category or a list of categories.
 #' Defaults to `NULL`. Valid values are: `"LOW, LOW (WATCHLIST), MEDIUM, HIGH`.
 #' @param lab_locs `tibble` Summary of the sequencing capacities of labs.
@@ -348,7 +347,6 @@ add_rolling_years <- function(df, start_date, date_col, period = months(12, FALS
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
 generate_c1_table <- function(raw_data, start_date, end_date,
-                              rolling = TRUE,
                               risk_category = NULL,
                               lab_locs = NULL,
                               risk_table = NULL) {
