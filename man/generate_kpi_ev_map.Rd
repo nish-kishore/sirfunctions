@@ -9,7 +9,8 @@ generate_kpi_ev_map(
   year,
   who_region = NULL,
   output_path = Sys.getenv("KPI_FIGURES"),
-  dot_size = 2.3
+  dot_size = 2.3,
+  ctry_sf = NULL
 )
 }
 \arguments{
