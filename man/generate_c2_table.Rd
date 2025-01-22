@@ -9,7 +9,8 @@ generate_c2_table(
   pop_data,
   start_date,
   end_date,
-  .group_by = c("adm0guid", "ctry", "year")
+  .group_by = c("adm0guid", "ctry", "dist", "adm2guid", "year"),
+  risk_category = NULL
 )
 }
 \arguments{

@@ -8,9 +8,10 @@ generate_c1_table(
   raw_data,
   start_date,
   end_date,
+  rolling = TRUE,
+  risk_category = NULL,
   lab_locs = NULL,
-  risk_table = NULL,
-  rolling = T
+  risk_table = NULL
 )
 }
 \arguments{
@@ -21,13 +22,17 @@ Output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 
 \item{end_date}{\code{str} End date of the analysis in YYYY-MM-DD format.}
 
+\item{rolling}{\code{bool} Should the data be summarized for 12-month rolling averages. Defaults to \code{TRUE}.}
+
+\item{risk_category}{\code{str} Risk category or a list of categories.
+Defaults to \code{NULL}. Valid values are: \verb{"LOW, LOW (WATCHLIST), MEDIUM, HIGH}.}
+
 \item{lab_locs}{\code{tibble} Summary of the sequencing capacities of labs.
 Output of \code{\link[=get_lab_locs]{get_lab_locs()}}. Defaults to \code{NULL}, which will download the information
 directly from EDAV.}
 
-\item{risk_table}{\code{tibble} GPSAP risk categorization for each country.}
-
-\item{rolling}{\code{bool} Should the data be summarized for 12-month rolling averages. Defaults to \code{TRUE}.}
+\item{risk_table}{\code{tibble} GPSAP risk categorization for each country
+.}
 }
 \value{
 \code{tibble} Summary table of GPSAP KPIs.

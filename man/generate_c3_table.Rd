@@ -9,7 +9,8 @@ generate_c3_table(
   start_date,
   end_date,
   .group_by = c("ADM0_NAME", "ctry.guid", "reporting.year", "lat", "lng", "site.id",
-    "site.name")
+    "site.name"),
+  risk_category = NULL
 )
 }
 \arguments{

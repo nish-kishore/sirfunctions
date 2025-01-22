@@ -53,4 +53,3 @@ the required district shapefile when the function is ran.}
 
 Generalized function to build KPI maps.
 }
-\keyword{internal}

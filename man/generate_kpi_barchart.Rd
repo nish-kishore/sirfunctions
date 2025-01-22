@@ -28,4 +28,3 @@ Either using \code{\link[ggplot2:facet_grid]{ggplot2::facet_grid()}} or \code{\l
 
 A generalized function to create bar charts using the KPI tables.
 }
-\keyword{internal}
