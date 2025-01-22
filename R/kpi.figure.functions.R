@@ -92,7 +92,7 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 #' @param legend_title `str` Title of the legend.
 #'
 #' @return `ggplot` A ggplot object.
-#' @keywords internal
+#' @export
 generate_kpi_map <- function(c2, who_region, indicator, year,
                              risk_category,
                              color_scheme, legend_title,
@@ -416,7 +416,7 @@ generate_kpi_ev_map <- function(c3, year, who_region = NULL,
 #' @param y.axis.title `Str` Title of the y axis.
 #'
 #' @return `ggplot2` A bar chart.
-#' @keywords internal
+#' @export
 generate_kpi_barchart <- function(df, indicator, target, label, faceting,
                                   y.axis.title) {
   plotlooks.bar <- list(
@@ -629,7 +629,7 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
 #' @param y.max `num` Maximum used in the y-axis.
 #'
 #' @return `ggplot` A plot object.
-#' @keywords internal
+#' @export
 generate_kpi_violin <- function(
     df,
     country.label,

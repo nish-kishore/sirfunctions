@@ -40,4 +40,3 @@ generate_kpi_violin(
 
 This function is generalized to produce violin plots used in the KPI code.
 }
-\keyword{internal}
