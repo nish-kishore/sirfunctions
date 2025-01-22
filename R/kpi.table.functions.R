@@ -1,56 +1,5 @@
 # Private functions ----
 
-#' Label rolling year periods
-#'
-#' @description
-#' `r lifecycle::badge("experimental")`
-#'
-#' The function labels and categorizes dates based on the rolling period specified.
-#' The start year will always be Year 1 and the rolling period is defined by
-#' the start date and the number of periods to account for in a given rolling year.
-#' For example, if the start date is defined as Jan 1, 2021 and we would like to
-#' calculate a 12-month rolling period, the end date would be Dec 31, 2021.
-#'
-#' @param df `tibble` A dataset containing at least one date column.
-#' @param start_date `str` Start date of Year 1. All years are classified in
-#' reference to this date.
-#' @param date_col `str` The name of the date column.
-#' @param period `period` A [lubridate::period()] object. Defaults to
-#' `months(12, FALSE)`.
-#'
-#' @return `tibble` A tibble with rolling year information.
-#' @export
-#'
-#' @examples
-#' \dontrun {
-#' raw_data <- get_all_polio_data()
-#' afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "dateonset")
-#' }
-add_rolling_years <- function(df, start_date, date_col, period = months(12, FALSE)) {
-  start_date <- lubridate::as_date(start_date)
-
-  df <- df |>
-    dplyr::mutate(
-      date_interval = lubridate::interval(start_date, !!rlang::sym(date_col)),
-      year_num = floor(.data$date_interval / period),
-      year_label = paste0("Year ", year_num + 1),
-      analysis_year_start = start_date %m+% years(.data$year_num),
-      analysis_year_end = .data$analysis_year_start %m+% period %m-% days(1),
-      analysis_year_end = dplyr::if_else(lubridate::leap_year(.data$analysis_year_end) &
-                                           lubridate::month(.data$analysis_year_end) == 2,
-                                         .data$analysis_year_end %m+% days(1),
-                                         .data$analysis_year_end),
-      rolling_period = paste0(lubridate::month(.data$analysis_year_start, label = TRUE, abbr = TRUE),
-                              " ", lubridate::year(.data$analysis_year_start),
-                              " - ",
-                              lubridate::month(.data$analysis_year_end, label = TRUE, abbr = TRUE),
-                              " ", lubridate::year(.data$analysis_year_end))
-    ) |>
-    dplyr::select(-"year_num")
-
-  return(df)
-}
-
 #' Add the risk category based on the country
 #'
 #' @param df `tibble` Dataframe with at least a column for country
@@ -320,6 +269,57 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 }
 
 # Public functions ----
+
+#' Label rolling year periods
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' The function labels and categorizes dates based on the rolling period specified.
+#' The start year will always be Year 1 and the rolling period is defined by
+#' the start date and the number of periods to account for in a given rolling year.
+#' For example, if the start date is defined as Jan 1, 2021 and we would like to
+#' calculate a 12-month rolling period, the end date would be Dec 31, 2021.
+#'
+#' @param df `tibble` A dataset containing at least one date column.
+#' @param start_date `str` Start date of Year 1. All years are classified in
+#' reference to this date.
+#' @param date_col `str` The name of the date column.
+#' @param period `period` A [lubridate::period()] object. Defaults to
+#' `months(12, FALSE)`.
+#'
+#' @return `tibble` A tibble with rolling year information.
+#' @export
+#'
+#' @examples
+#' \dontrun {
+#' raw_data <- get_all_polio_data()
+#' afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "dateonset")
+#' }
+add_rolling_years <- function(df, start_date, date_col, period = months(12, FALSE)) {
+  start_date <- lubridate::as_date(start_date)
+
+  df <- df |>
+    dplyr::mutate(
+      date_interval = lubridate::interval(start_date, !!rlang::sym(date_col)),
+      year_num = floor(.data$date_interval / period),
+      year_label = paste0("Year ", year_num + 1),
+      analysis_year_start = start_date %m+% years(.data$year_num),
+      analysis_year_end = .data$analysis_year_start %m+% period %m-% days(1),
+      analysis_year_end = dplyr::if_else(lubridate::leap_year(.data$analysis_year_end) &
+                                           lubridate::month(.data$analysis_year_end) == 2,
+                                         .data$analysis_year_end %m+% days(1),
+                                         .data$analysis_year_end),
+      rolling_period = paste0(lubridate::month(.data$analysis_year_start, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(.data$analysis_year_start),
+                              " - ",
+                              lubridate::month(.data$analysis_year_end, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(.data$analysis_year_end))
+    ) |>
+    dplyr::select(-"year_num")
+
+  return(df)
+}
 
 #' GPEI Strategy surveillance KPIs
 #' @description
