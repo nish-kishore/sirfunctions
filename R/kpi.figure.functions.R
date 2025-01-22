@@ -92,7 +92,7 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 #' @param legend_title `str` Title of the legend.
 #'
 #' @return `ggplot` A ggplot object.
-#' @keywords internal
+#' @export
 generate_kpi_map <- function(c2, who_region, indicator, year,
                              risk_category,
                              color_scheme, legend_title,
@@ -327,7 +327,8 @@ generate_kpi_stool_map <- function(c2, year, who_region = NULL,
 #' }
 generate_kpi_ev_map <- function(c3, year, who_region = NULL,
                                 output_path = Sys.getenv("KPI_FIGURES"),
-                                dot_size = 2.3) {
+                                dot_size = 2.3,
+                                ctry_sf = NULL) {
 
   ev_cols <- c("<50%" = "red", "50% to <80%" = "#f16913",
                "80-100%" = "#0070c0", "<5 samples collected" = "black"
@@ -350,9 +351,11 @@ generate_kpi_ev_map <- function(c3, year, who_region = NULL,
   )
 
 
-  ctry_sf <- suppressMessages(load_clean_ctry_sp(st.year = year,
-                                                 end.year = year,
-                                                 type = "long"))
+  if (is.null(ctry_sf)) {
+    ctry_sf <- suppressMessages(load_clean_ctry_sp(st.year = year,
+                                                   end.year = year,
+                                                   type = "long"))
+  }
   c3 <- c3 |> dplyr::filter(.data$reporting.year == year)
 
   if (!is.null(who_region)) {
@@ -413,7 +416,7 @@ generate_kpi_ev_map <- function(c3, year, who_region = NULL,
 #' @param y.axis.title `Str` Title of the y axis.
 #'
 #' @return `ggplot2` A bar chart.
-#' @keywords internal
+#' @export
 generate_kpi_barchart <- function(df, indicator, target, label, faceting,
                                   y.axis.title) {
   plotlooks.bar <- list(
@@ -498,7 +501,7 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
     dplyr::left_join(ctry_abbrev,
                      by = c("ctry" = "place.admin.0", "whoregion")) |>
     dplyr::filter(.data$`SG Priority Level` == "HIGH") |>
-    dplyr::mutate(prop_met_npafp = .data$prop_met_npafp * 100)
+    dplyr::mutate(prop_met_npafp = .data$prop_met_npafp)
 
   bar_plot <- generate_kpi_barchart(priority_ctry,
                         "prop_met_npafp",
@@ -545,7 +548,7 @@ generate_kpi_evdetect_bar <- function(c1, afp_data,
     dplyr::left_join(ctry_abbrev,
                      by = c("ctry" = "place.admin.0", "whoregion")) |>
     dplyr::filter(.data$`SG Priority Level` == "HIGH") |>
-    dplyr::mutate(prop_met_ev = .data$prop_met_ev * 100)
+    dplyr::mutate(prop_met_ev = .data$prop_met_ev)
 
   bar_plot <- generate_kpi_barchart(priority_ctry,
                                     "prop_met_ev",
@@ -590,7 +593,7 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
     dplyr::left_join(ctry_abbrev,
                      by = c("ctry" = "place.admin.0", "whoregion")) |>
     dplyr::filter(.data$`SG Priority Level` == "HIGH") |>
-    dplyr::mutate(prop_met_stool = .data$prop_met_stool * 100)
+    dplyr::mutate(prop_met_stool = .data$prop_met_stool)
 
   bar_plot <- generate_kpi_barchart(priority_ctry,
                                     "prop_met_stool",
@@ -626,7 +629,7 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
 #' @param y.max `num` Maximum used in the y-axis.
 #'
 #' @return `ggplot` A plot object.
-#' @keywords internal
+#' @export
 generate_kpi_violin <- function(
     df,
     country.label,
@@ -784,7 +787,8 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
   lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
                                           afp_data)
   lab_filtered <- lab_data |> dplyr::left_join(ctry_abbrev,
-                                           by = c("country" = "place.admin.0")) |>
+                                           by = c("country" = "place.admin.0",
+                                                  "whoregion")) |>
     add_risk_category(ctry_col = "country") |>
     dplyr::mutate(
       year = lubridate::year(.data$DateStoolCollected)
@@ -852,7 +856,8 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
   lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
                                           afp_data)
   lab_filtered <- lab_data |> dplyr::left_join(ctry_abbrev,
-                                               by = c("country" = "place.admin.0")) |>
+                                               by = c("country" = "place.admin.0",
+                                                      "whoregion")) |>
     add_risk_category(ctry_col = "country") |>
     dplyr::mutate(
       year = lubridate::year(.data$DateStoolCollected)
@@ -919,7 +924,8 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
   lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
                                           afp_data)
   lab_filtered <- lab_data |> dplyr::left_join(ctry_abbrev,
-                                               by = c("country" = "place.admin.0")) |>
+                                               by = c("country" = "place.admin.0",
+                                                      "whoregion")) |>
     add_risk_category(ctry_col = "country") |>
     dplyr::mutate(
       year = lubridate::year(.data$DateStoolCollected)
@@ -986,7 +992,8 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
   lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
                                           afp_data)
   lab_filtered <- lab_data |> dplyr::left_join(ctry_abbrev,
-                                               by = c("country" = "place.admin.0")) |>
+                                               by = c("country" = "place.admin.0",
+                                                      "whoregion")) |>
     add_risk_category(ctry_col = "country") |>
     dplyr::mutate(
       year = lubridate::year(.data$DateStoolCollected)

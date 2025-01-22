@@ -1,94 +1,4 @@
 # Private functions ----
-#' Add rolling year label for each week number
-#'
-#' @param wk `numeric` Week number.
-#'
-#' @returns `str` The year the week falls into.
-#'
-#' @examples
-#' f.year.roll(32)
-#' @keywords internal
-f.year.roll <- function(wk) {
-  x <- NA
-  x[wk <= 52.00] <- 1
-  x[wk > 52.00 & wk <= 104.15] <- 2
-  x[wk > 104.15 & wk <= 156] <- 3
-  x[wk > 156 & wk <= 208] <- 4
-  x[wk > 208 & wk <= 260] <- 5
-  x[wk > 260 & wk <= 312] <- 6
-  x[wk > 312 & wk <= 364] <- 7
-  x[wk > 364 & wk <= 416] <- 8
-  x[wk > 416 & wk <= 468] <- 9
-  x[wk > 468 & wk <= 520] <- 10
-
-  x <- factor(x,
-    levels = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-    labels = c("Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10")
-  )
-
-  return(x)
-}
-
-
-#' Adds rolling date information
-#'
-#' @param df `tibble` Dataframe to add rolling date info to.
-#' @param onset_col `str` Column used for the onset date. Mainly used to calculate
-#' `weeks.from.end`.
-#' @param start_date `str` Start date of the analysis.
-#' @param end_date `str` End date of the analysis.
-#'
-#' @returns `tibble` Lab data with rolling date period information added.
-#' @keywords internal
-#'
-add_rolling_date_info <- function(df, start_date, end_date, onset_col = "ParalysisOnsetDate") {
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
-  cli::cli_process_start("Adding rolling period date information")
-  end.year <- lubridate::year(end_date)
-  st.year <- lubridate::year(start_date)
-
-  month.start <- lubridate::month(start_date, label = TRUE, abbr = TRUE)
-  month.end <- lubridate::month(end_date, label = TRUE, abbr = TRUE)
-  # prior_period = paste0(month.start, " ", st.year, " - ", month.end, " ", year(start_date + days(364)) )
-  # current_period = paste0(month.start, " ", st.year + 1, " - ", month.end, " ", end.year)
-
-  # # Calculate prior_period correctly accounting for leap years
-  # prior_year_end <- start_date + lubridate::years(1) - lubridate::days(1)
-  # prior_period <- paste0(
-  #   month.start, " ", st.year,
-  #   " - ", month.end,
-  #   " ", lubridate::year(prior_year_end)
-  # )
-  #
-  # current_period <- paste0(
-  #   month.start,
-  #   " ", st.year + 1,
-  #   " - ", month.end,
-  #   " ", end.year
-  # )
-
-  df <- df |>
-    # renaming culture.itd.lab for Nigeria which has two labs in lab.locs, simply naming Nigeria
-    dplyr::mutate(
-      weeks.analysis = ((end_date - start_date) / 7), # weeks in the analysis
-      weeks.from.end = ((end_date - get(onset_col)) / 7), # weeks from onset to end of analysis
-      case.week = (.data$weeks.analysis - .data$weeks.from.end), # estimating week in the analysis for each case
-      year.analysis = f.year.roll(.data$case.week), # analysis year
-      year.analysis.start = start_date + (365 * (as.integer(.data$year.analysis) - 1)),
-      year.analysis.end = .data$year.analysis.start + 364,
-      rolling_period = paste0(lubridate::month(year.analysis.start, label = TRUE, abbr = TRUE),
-                              " ", lubridate::year(year.analysis.start),
-                              " - ",
-                              lubridate::month(year.analysis.end, label = TRUE, abbr = TRUE),
-                              " ", lubridate::year(year.analysis.end))
-      )
-
-  cli::cli_process_done()
-
-  return(df)
-}
 
 #' Add the risk category based on the country
 #'
@@ -201,7 +111,7 @@ generate_pos_timeliness <- function(raw_data, start_date, end_date,
 
   # Adding required columns
   pos <- add_risk_category(pos, risk_table, ctry_col = "place.admin.0")
-  pos <- add_rolling_date_info(pos, start_date, end_date, "dateonset")
+  pos <- add_rolling_years(pos, start_date, "dateonset")
   pos <- add_seq_capacity(pos, ctry_col = "place.admin.0", lab_locs)
 
   pos_summary <- pos |>
@@ -245,7 +155,7 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
                                          "SG Priority Level",
                                          "place.admin.0",
                                          "rolling_period",
-                                         "year.analysis"
+                                         "year_label"
                                        )) {
   pos <- generate_pos_timeliness(raw_data, start_date, end_date,
                                              risk_table, lab_locs)
@@ -360,6 +270,57 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 
 # Public functions ----
 
+#' Label rolling year periods
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' The function labels and categorizes dates based on the rolling period specified.
+#' The start year will always be Year 1 and the rolling period is defined by
+#' the start date and the number of periods to account for in a given rolling year.
+#' For example, if the start date is defined as Jan 1, 2021 and we would like to
+#' calculate a 12-month rolling period, the end date would be Dec 31, 2021.
+#'
+#' @param df `tibble` A dataset containing at least one date column.
+#' @param start_date `str` Start date of Year 1. All years are classified in
+#' reference to this date.
+#' @param date_col `str` The name of the date column.
+#' @param period `period` A [lubridate::period()] object. Defaults to
+#' `months(12, FALSE)`.
+#'
+#' @return `tibble` A tibble with rolling year information.
+#' @export
+#'
+#' @examples
+#' \dontrun {
+#' raw_data <- get_all_polio_data()
+#' afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "dateonset")
+#' }
+add_rolling_years <- function(df, start_date, date_col, period = months(12, FALSE)) {
+  start_date <- lubridate::as_date(start_date)
+
+  df <- df |>
+    dplyr::mutate(
+      date_interval = lubridate::interval(start_date, !!rlang::sym(date_col)),
+      year_num = floor(.data$date_interval / period),
+      year_label = paste0("Year ", year_num + 1),
+      analysis_year_start = start_date %m+% years(.data$year_num),
+      analysis_year_end = .data$analysis_year_start %m+% period %m-% days(1),
+      analysis_year_end = dplyr::if_else(lubridate::leap_year(.data$analysis_year_end) &
+                                           lubridate::month(.data$analysis_year_end) == 2,
+                                         .data$analysis_year_end %m+% days(1),
+                                         .data$analysis_year_end),
+      rolling_period = paste0(lubridate::month(.data$analysis_year_start, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(.data$analysis_year_start),
+                              " - ",
+                              lubridate::month(.data$analysis_year_end, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(.data$analysis_year_end))
+    ) |>
+    dplyr::select(-"year_num")
+
+  return(df)
+}
+
 #' GPEI Strategy surveillance KPIs
 #' @description
 #' `r lifecycle::badge("experimental")`
@@ -371,21 +332,25 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 #' Output of [get_all_polio_data()].
 #' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
 #' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
+#' @param risk_category `str` Risk category or a list of categories.
+#' Defaults to `NULL`. Valid values are: `"LOW, LOW (WATCHLIST), MEDIUM, HIGH`.
 #' @param lab_locs `tibble` Summary of the sequencing capacities of labs.
 #' Output of [get_lab_locs()]. Defaults to `NULL`, which will download the information
 #' directly from EDAV.
-#' @param risk_table `tibble` GPSAP risk categorization for each country.
-#' @param rolling `bool` Should the data be summarized for 12-month rolling averages. Defaults to `TRUE`.
-#'
+#' @param risk_table `tibble` GPSAP risk categorization for each country
+#' .
 #' @return `tibble` Summary table of GPSAP KPIs.
+#'
 #' @export
 #'
 #' @examples
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
 generate_c1_table <- function(raw_data, start_date, end_date,
-                              lab_locs = NULL, risk_table = NULL,
-                              rolling = T) {
+                              risk_category = NULL,
+                              lab_locs = NULL,
+                              risk_table = NULL) {
+
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
@@ -414,46 +379,55 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                                  cdc.classification.all = "cdc.class"
   )
 
+  if (!is.null(risk_category)) {
+    risk_category <- stringr::str_trim(stringr::str_to_upper(risk_category))
+    afp_data <- suppressMessages(add_risk_category(afp_data)) |>
+      dplyr::filter(.data$`SG Priority Level` %in% risk_category)
+    es_data <- suppressMessages(add_risk_category(es_data,
+                                                  ctry_col = "ADM0_NAME")) |>
+      dplyr::filter(.data$`SG Priority Level` %in% risk_category)
+  }
+
   # Include required columns
   afp_data <- col_to_datecol(afp_data)
-  afp_data <- add_rolling_date_info(afp_data, start_date, end_date, "date")
-  es_data <- add_rolling_date_info(es_data, start_date, end_date, "collect.date")
+  afp_data <- add_rolling_years(afp_data, start_date, "date")
+  es_data <- add_rolling_years(es_data, start_date, "collect.date")
 
   # Calculate country indicators
   afp_indicators <- afp_data |>
-    dplyr::group_by(.data$year.analysis, .data$rolling_period) |>
+    dplyr::group_by(.data$year_label, .data$rolling_period) |>
     dplyr::summarise(
       npafp_dist = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
                                         raw_data$dist.pop,
-                                        min(.data$year.analysis.start),
-                                        max(.data$year.analysis.end),
+                                        min(.data$analysis_year_start),
+                                        max(.data$analysis_year_end),
                                         "dist", rolling = TRUE,
                                         sp_continuity_validation = FALSE)),
       stoolad_dist = list(f.stool.ad.01(dplyr::pick(dplyr::everything()),
                                         raw_data$dist.pop,
-                                        min(year.analysis.start),
-                                        max(year.analysis.end),
+                                        min(.data$analysis_year_start),
+                                        max(.data$analysis_year_end),
                                         "dist", rolling = TRUE,
                                         sp_continuity_validation = FALSE))
     ) |>
     dplyr::rowwise() |>
-    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year.analysis", "rolling.period")),
+    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period")),
                                 \(x) list(dplyr::tibble(x) |>
-                                            dplyr::mutate(year.analysis = year.analysis,
+                                            dplyr::mutate(year_label = year_label,
                                                           rolling_period = rolling_period
                                             )))
     ) |>
     dplyr::ungroup()
 
   es_indicators <- es_data |>
-    dplyr::group_by(.data$year.analysis, .data$rolling_period) |>
+    dplyr::group_by(.data$year_label, .data$rolling_period) |>
     dplyr::summarise(ev_rate = list(f.ev.rate.01(dplyr::pick(dplyr::everything()),
-                                                 min(.data$year.analysis.start),
-                                                 max(.data$year.analysis.end)))) |>
+                                                 min(.data$analysis_year_start),
+                                                 max(.data$analysis_year_end)))) |>
     dplyr::rowwise() |>
-    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year.analysis", "rolling.period")),
+    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period")),
                                 \(x) list(dplyr::tibble(x) |>
-                                            dplyr::mutate(year.analysis = year.analysis,
+                                            dplyr::mutate(year_label = year_label,
                                                           rolling_period = rolling_period
                                             )))
     ) |>
@@ -475,7 +449,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   # Summarise
   met_npafp <- dplyr::bind_rows(afp_indicators$npafp_dist) |>
     dplyr::left_join(region_lookup_table) |>
-    dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
+    dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
     dplyr::summarise(dist_w_100k = sum(par >= 1e5),
                      dist_npafp = n(),
                      met_npafp = sum(
@@ -491,7 +465,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(region_lookup_table) |>
     dplyr::filter(!is.na(ctry)) |>
-    dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
+    dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
     dplyr::summarise(dist_stool = n(),
                      met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = T),
                      prop_met_stool = met_stool / dist_stool * 100,
@@ -503,7 +477,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                   "dist" = ADM2_NAME) |>
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(region_lookup_table) |>
-    dplyr::group_by(year.analysis, rolling_period, whoregion, ctry) |>
+    dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
     dplyr::summarise(es_sites = sum(num.samples >= 10),
                      met_ev = sum(num.samples >= 10 & ev.rate >= 0.5, na.rm = T),
                      prop_met_ev = met_ev / es_sites * 100,
@@ -514,7 +488,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::full_join(timely_det_indicator |>
                        rename("ctry" = .data$place.admin.0)) |>
     dplyr::select(dplyr::any_of(c(
-      "year.analysis", "rolling_period", "whoregion", "SG Priority Level", "ctry",
+      "year_label", "rolling_period", "whoregion", "SG Priority Level", "ctry",
       "prop_met_npafp", "prop_met_stool", "prop_met_ev",
       "prop_timely_samples", "prop_timely_wild_vdpv",
       "npafp_label", "stool_label", "ev_label",
@@ -547,7 +521,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
-                              .group_by = c("adm0guid", "ctry", "year")) {
+                              .group_by = c("adm0guid", "ctry", "dist", "adm2guid", "year"),
+                              risk_category = NULL) {
   # Adjust spatial scale for stool adequacy and NPAFP functions
   .spatial_scale <- dplyr::case_when(
     c("dist", "adm2guid") %in% .group_by ~ "dist",
@@ -742,7 +717,8 @@ generate_c3_table <- function(es_data, start_date, end_date,
                               .group_by = c("ADM0_NAME", "ctry.guid",
                                             "reporting.year",
                                             "lat", "lng",
-                                            "site.id", "site.name")) {
+                                            "site.id", "site.name"),
+                              risk_category = NULL) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -881,6 +857,7 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date, .group_b
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
 #' c4 <- generate_c4_table(lab_data, raw_data$afp, "2021-01-01", "2024-12-31")
+#' export_kpi_table(c1, c2, c3, c4, drop_label_cols = FALSE)
 #' }
 export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                              output_path = Sys.getenv("KPI_TABLES"),
@@ -913,7 +890,104 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     purrr::map(format_table) |>
     purrr::map(drop_labels)
 
-  file_name <- paste0("kpi_tables_", Sys.Date(), ".xlsx")
+  file_name <- paste0("kpi_tables_",
+                      paste0(names(export_list), collapse = "_"),
+                      "_", Sys.Date(), ".xlsx")
   writexl::write_xlsx(export_list, file.path(output_path, file_name))
+}
+
+# Deprecated functions ----
+# These functions have been deprecated in favor of a more flexible and
+# streamlined approach to labeling rolling periods via add_rolling_years().
+
+#' Adds rolling date information
+#'
+#' @param df `tibble` Dataframe to add rolling date info to.
+#' @param onset_col `str` Column used for the onset date. Mainly used to calculate
+#' `weeks.from.end`.
+#' @param start_date `str` Start date of the analysis.
+#' @param end_date `str` End date of the analysis.
+#'
+#' @returns `tibble` Lab data with rolling date period information added.
+#' @keywords internal
+#'
+add_rolling_date_info <- function(df, start_date, end_date, onset_col = "ParalysisOnsetDate") {
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  cli::cli_process_start("Adding rolling period date information")
+  end.year <- lubridate::year(end_date)
+  st.year <- lubridate::year(start_date)
+
+  month.start <- lubridate::month(start_date, label = TRUE, abbr = TRUE)
+  month.end <- lubridate::month(end_date, label = TRUE, abbr = TRUE)
+  # prior_period = paste0(month.start, " ", st.year, " - ", month.end, " ", year(start_date + days(364)) )
+  # current_period = paste0(month.start, " ", st.year + 1, " - ", month.end, " ", end.year)
+
+  # # Calculate prior_period correctly accounting for leap years
+  # prior_year_end <- start_date + lubridate::years(1) - lubridate::days(1)
+  # prior_period <- paste0(
+  #   month.start, " ", st.year,
+  #   " - ", month.end,
+  #   " ", lubridate::year(prior_year_end)
+  # )
+  #
+  # current_period <- paste0(
+  #   month.start,
+  #   " ", st.year + 1,
+  #   " - ", month.end,
+  #   " ", end.year
+  # )
+
+  df <- df |>
+    # renaming culture.itd.lab for Nigeria which has two labs in lab.locs, simply naming Nigeria
+    dplyr::mutate(
+      weeks.analysis = ((end_date - start_date) / 7), # weeks in the analysis
+      weeks.from.end = ((end_date - get(onset_col)) / 7), # weeks from onset to end of analysis
+      case.week = (.data$weeks.analysis - .data$weeks.from.end), # estimating week in the analysis for each case
+      year.analysis = f.year.roll(.data$case.week), # analysis year
+      year.analysis.start = start_date + (365 * (as.integer(.data$year.analysis) - 1)),
+      year.analysis.end = .data$year.analysis.start + 364,
+      rolling_period = paste0(lubridate::month(year.analysis.start, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(year.analysis.start),
+                              " - ",
+                              lubridate::month(year.analysis.end, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(year.analysis.end))
+    )
+
+  cli::cli_process_done()
+
+  return(df)
+}
+#' Add rolling year label for each week number
+#'
+#' @param wk `numeric` Week number.
+#'
+#' @returns `str` The year the week falls into.
+#'
+#' @examples
+#' f.year.roll(32)
+#' @keywords internal
+f.year.roll <- function(wk) {
+  x <- NA
+  # the hardcoded 52 is problematic given some years are 52 weeks and other 53
+  x[wk <= 52.00] <- 1
+  x[wk > 52.00 & wk <= 104.15] <- 2
+  x[wk > 104.15 & wk <= 156] <- 3
+  x[wk > 156 & wk <= 208] <- 4
+  x[wk > 208 & wk <= 260] <- 5
+  x[wk > 260 & wk <= 312] <- 6
+  x[wk > 312 & wk <= 364] <- 7
+  x[wk > 364 & wk <= 416] <- 8
+  x[wk > 416 & wk <= 468] <- 9
+  x[wk > 468 & wk <= 520] <- 10
+
+  x <- factor(x,
+              levels = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+              labels = c("Year 1", "Year 2", "Year 3", "Year 4", "Year 5",
+                         "Year 6", "Year 7", "Year 8", "Year 9", "Year 10")
+  )
+
+  return(x)
 }
 
