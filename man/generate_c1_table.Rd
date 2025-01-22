@@ -8,7 +8,6 @@ generate_c1_table(
   raw_data,
   start_date,
   end_date,
-  rolling = TRUE,
   risk_category = NULL,
   lab_locs = NULL,
   risk_table = NULL
@@ -21,8 +20,6 @@ Output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 \item{start_date}{\code{str} Start date of the analysis in YYYY-MM-DD format.}
 
 \item{end_date}{\code{str} End date of the analysis in YYYY-MM-DD format.}
-
-\item{rolling}{\code{bool} Should the data be summarized for 12-month rolling averages. Defaults to \code{TRUE}.}
 
 \item{risk_category}{\code{str} Risk category or a list of categories.
 Defaults to \code{NULL}. Valid values are: \verb{"LOW, LOW (WATCHLIST), MEDIUM, HIGH}.}
