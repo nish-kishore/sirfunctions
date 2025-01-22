@@ -307,7 +307,8 @@ add_rolling_years <- function(df, start_date, date_col, period = months(12, FALS
       analysis_year_start = start_date %m+% years(.data$year_num),
       analysis_year_end = .data$analysis_year_start %m+% period %m-% days(1),
       analysis_year_end = dplyr::if_else(lubridate::leap_year(.data$analysis_year_end) &
-                                           lubridate::month(.data$analysis_year_end) == 2,
+                                           lubridate::month(.data$analysis_year_end) == 2 &
+                                           lubridate::day(.data$analysis_year_end) == 27,
                                          .data$analysis_year_end %m+% days(1),
                                          .data$analysis_year_end),
       rolling_period = paste0(lubridate::month(.data$analysis_year_start, label = TRUE, abbr = TRUE),
