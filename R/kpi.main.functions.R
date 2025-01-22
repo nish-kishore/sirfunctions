@@ -148,6 +148,7 @@ init_kpi <- function(path = getwd(), name = NULL) {
 }
 
 # Utility functions ----
+
 #' Get country abbreviations
 #' @description
 #' `r lifecycle::badge("experimental")`

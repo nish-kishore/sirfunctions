@@ -1,4 +1,5 @@
 # Maps ----
+
 #' SG Prioritization Map
 #'
 #' @description
@@ -400,6 +401,7 @@ generate_kpi_ev_map <- function(c3, year, who_region = NULL,
 }
 
 # Bar charts ----
+
 ## High priority countries ----
 #' Generate KPI indicator bar charts
 #'
