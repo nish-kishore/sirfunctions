@@ -1,62 +1,5 @@
 # Private functions ----
 
-#' Adds rolling date information
-#'
-#' @inheritParams clean_lab_data
-#'
-#' @returns `tibble` Lab data with rolling date period information added.
-#' @keywords internal
-#'
-add_rolling_date_info <- function(lab_data, start_date, end_date) {
-
-  # Making it work for WHO data
-  if (!"ParalysisOnsetDate" %in% names(lab_data)) {
-    lab_data <- lab_data |>
-      dplyr::mutate(ParalysisOnsetDate = .data$DateOfOnset)
-  }
-
-  start_date <- lubridate::as_date(start_date)
-  end_date <- lubridate::as_date(end_date)
-
-  cli::cli_process_start("Adding rolling period date information")
-  end.year <- lubridate::year(end_date)
-  st.year <- lubridate::year(start_date)
-
-  month.start <- lubridate::month(start_date, label = TRUE, abbr = TRUE)
-  month.end <- lubridate::month(end_date, label = TRUE, abbr = TRUE)
-  # prior_period = paste0(month.start, " ", st.year, " - ", month.end, " ", year(start_date + days(364)) )
-  # current_period = paste0(month.start, " ", st.year + 1, " - ", month.end, " ", end.year)
-
-  # Calculate prior_period correctly accounting for leap years
-  prior_year_end <- start_date + lubridate::years(1) - lubridate::days(1)
-  prior_period = paste0(month.start, " ", st.year,
-                        " - ", month.end,
-                        " ", lubridate::year(prior_year_end))
-
-  current_period = paste0(month.start,
-                          " ", st.year + 1,
-                          " - ", month.end,
-                          " ", end.year)
-
-  lab_data <- lab_data |>
-    #renaming culture.itd.lab for Nigeria which has two labs in lab.locs, simply naming Nigeria
-    dplyr::mutate(
-                  weeks.analysis = ((end_date - start_date) / 7), # weeks in the analysis
-                  weeks.from.end = ((end_date - .data$ParalysisOnsetDate) / 7),  # weeks from onset to end of analysis
-                  case.week = (.data$weeks.analysis - .data$weeks.from.end),  # estimating week in the analysis for each case
-                  year.analysis = f.year.roll(.data$case.week), # analysis year
-                  year.analysis.start = start_date + (365 * (as.integer(.data$year.analysis) - 1)),
-                  year.analysis.end = .data$year.analysis.start + 364,
-                  rolling_period =
-                    case_when(year.analysis == 'Year 1' ~ prior_period,
-                              year.analysis == 'Year 2' ~ current_period
-                    )
-    )
-  cli::cli_process_done()
-
-  return(lab_data)
-}
-
 #' Impute missing geographic information from the AFP linelist
 #'
 #' @param lab_data `tibble` Lab data to clean.
@@ -68,7 +11,7 @@ add_rolling_date_info <- function(lab_data, start_date, end_date) {
 impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
 
   lab_data <- dplyr::rename_with(lab_data, recode,
-    EPID = "EpidNumber"
+                                 EPID = "EpidNumber"
   )
   lab_data <- lab_data |>
     tidyr::separate_wider_regex(
@@ -113,17 +56,17 @@ impute_missing_lab_geo <- function(lab_data, afp_data=NULL) {
           prov = dplyr::if_else(is.na(.data$prov),
                                 afp_data$prov[match(lab_data$Province, afp_data$prov)],
                                 .data$prov)
-          )
+        )
     }
 
     if ("District" %in% names(lab_data)) {
-       lab_data <- lab_data |>
-         dplyr::mutate(
-           dist = dplyr::if_else(is.na(.data$dist),
-                                 afp_data$dist[match(lab_data$District, afp_data$dist)],
-                                 .data$dist)
-         )
-     }
+      lab_data <- lab_data |>
+        dplyr::mutate(
+          dist = dplyr::if_else(is.na(.data$dist),
+                                afp_data$dist[match(lab_data$District, afp_data$dist)],
+                                .data$dist)
+        )
+    }
 
     # Additional data cleaning steps
     geo_lookup_table <- afp_data |>
@@ -304,11 +247,6 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
     return(lab_data)
   }
 
-  if ("prov" %in% names(lab_data)) {
-    cli::cli_alert_warning("Lab data already cleaned.")
-    return(lab_data)
-  }
-
   if (nrow(lab_data) == 0) {
     message("There are no entries for lab data.")
     return(NULL)
@@ -451,11 +389,6 @@ clean_lab_data_regional <- function(lab_data,
                                     ctry_name = NULL,
                                     lab_locs_path = NULL) {
 
-  if ("country" %in% names(lab_data)) {
-    cli::cli_alert_warning("Lab data already cleaned.")
-    return(lab_data)
-  }
-
   # Static vars
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -466,8 +399,10 @@ clean_lab_data_regional <- function(lab_data,
 
   lab_locs <- get_lab_locs(lab_locs_path)
 
+  lab_data <- dplyr::rename_with(lab_data, recode,
+                                 Name = "country")
+
   lab_data <- lab_data |>
-    dplyr::rename(country = "Name") |>
     dplyr::mutate(country = dplyr::case_match(
       .data$country,
       "AFG" ~ "AFGHANISTAN",
@@ -717,14 +652,6 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
   country_name <- stringr::str_trim(stringr::str_to_upper(country_name))
 
   # Countries that belong in a region
-  emro_ctry <- c(
-    "EGYPT", "AFGHANISTAN", "PAKISTAN", "IRAN (ISLAMIC REPUBLIC OF)",
-    "KUWAIT", "SYRIAN ARAB REPUBLIC", "MOROCCO", "IRAQ", "YEMEN",
-    "SOMALIA", "BAHRAIN", "LEBANON",
-    "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM",
-    "QATAR", "SUDAN", "SAUDI ARABIA", "UNITED ARAB EMIRATES",
-    "DJIBOUTI"
-  )
   afro_ctry <- c(
     "CHAD", "ANGOLA", "BENIN", "NIGERIA", "ALGERIA", "GUINEA", "CAMEROON",
     "KENYA", "BURKINA FASO", "MOZAMBIQUE", "ETHIOPIA",
@@ -733,13 +660,64 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
     "MALAWI", "SOUTH SUDAN", "LIBERIA", "TOGO", "UGANDA", "BOTSWANA", "ZAMBIA",
     "MAURITANIA", "GABON", "ERITREA", "GUINEA-BISSAU", "LESOTHO", "NAMIBIA",
     "SIERRA LEONE", "ZIMBABWE", "EQUATORIAL GUINEA", "MAURITIUS", "RWANDA",
-    "ESWATINI", "COTE D'IVOIRE", "COTE D IVOIRE"
+    "ESWATINI", "COTE D'IVOIRE", "COTE D IVOIRE",
+    "DEMOCRATIC REPUBLIC OF THE CONGO", "GHANA", "GAMBIA", "MALI",
+    "SEYCHELLES"
+  )
+
+  amro_ctry <- c(
+    "ARGENTINA", "BOLIVIA (PLURINATIONAL STATE OF)", "BRAZIL", "CUBA",
+    "DOMINICAN REPUBLIC", "EL SALVADOR", "MEXICO", "NICARAGUA", "PERU",
+    "VENEZUELA (BOLIVARIAN REPUBLIC OF)", "CHILE", "HAITI", "HONDURAS",
+    "PARAGUAY", "BARBADOS", "COLOMBIA", "ECUADOR", "UNITED STATES OF AMERICA",
+    "BELIZE", "JAMAICA", "GUATEMALA", "CANADA", "COSTA RICA", "GUYANA", "PANAMA",
+    "URUGUAY", "TURKS AND CAICOS ISLANDS", "SURINAME", "GRENADA",
+    "TRINIDAD AND TOBAGO", "SAINT VINCENT AND THE GRENADINES", "ANGUILLA",
+    "FRENCH GUIANA"
+  )
+
+  emro_ctry <- c(
+    "EGYPT", "AFGHANISTAN", "PAKISTAN", "IRAN (ISLAMIC REPUBLIC OF)",
+    "KUWAIT", "SYRIAN ARAB REPUBLIC", "MOROCCO", "IRAQ", "YEMEN",
+    "SOMALIA", "BAHRAIN", "LEBANON",
+    "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM",
+    "QATAR", "SUDAN", "SAUDI ARABIA", "UNITED ARAB EMIRATES",
+    "DJIBOUTI", "JORDAN"
+  )
+
+  euro_ctry <- c(
+    "SPAIN", "AZERBAIJAN", "ARMENIA", "BELARUS", "GEORGIA", "KYRGYZSTAN",
+    "KAZAKHSTAN", "NORTH MACEDONIA", "POLAND", "RUSSIAN FEDERATION",
+    "TAJIKISTAN", "TURKMENISTAN", "UKRAINE", "UZBEKISTAN", "ISRAEL", "ITALY",
+    "SERBIA", "AUSTRIA", "BOSNIA AND HERZEGOVINA", "CZECHIA", "GREECE", "LATVIA",
+    "SLOVAKIA", "ESTONIA", "SLOVENIA", "NORWAY", "ROMANIA", "CROATIA", "LITHUANIA",
+    "PORTUGAL", "TÜRKIYE", "ALBANIA", "REPUBLIC OF MOLDOVA", "SWITZERLAND",
+    "HUNGARY", "BULGARIA", "MONTENEGRO", "TURKEY",
+    "THE UNITED KINGDOM", "GERMANY", "FINLAND"
+  )
+
+  searo_ctry <- c(
+    "BANGLADESH", "MYANMAR", "BHUTAN", "SRI LANKA", "INDIA",
+    "DEMOCRATIC PEOPLE'S REPUBLIC OF KOREA", "NEPAL", "THAILAND",
+    "TIMOR-LESTE", "INDONESIA", "MALDIVES"
+  )
+
+  wpro_ctry <- c(
+    "AUSTRALIA", "FIJI", "REPUBLIC OF KOREA", "LAO PEOPLE'S DEMOCRATIC REPUBLIC",
+    "MALAYSIA", "PHILIPPINES", "TONGA", "CHINA", "SOLOMON ISLANDS", "CAMBODIA",
+    "NEW ZEALAND", "PAPUA NEW GUINEA", "VIET NAM", "BRUNEI DARUSSALAM",
+    "MONGOLIA", "JAPAN", "SAMOA", "MICRONESIA (FEDERATED STATES OF)", "TUVALU",
+    "SINGAPORE", "NEW CALEDONIA"
   )
 
   region <- dplyr::case_match(
     country_name,
     emro_ctry ~ "EMRO",
     afro_ctry ~ "AFRO",
+    amro_ctry ~ "AMRO",
+    euro_ctry ~ "EURO",
+    wpro_ctry ~ "WPRO",
+    searo_ctry ~ "SEARO",
     .default = NA
   )
 
@@ -767,7 +745,7 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
 load_lab_data <- function(lab_data_path, sheet_name = NULL) {
   if (!requireNamespace("readxl", quietly = TRUE)) {
     stop('Package "readxl" must be installed to use this function.',
-      .call = FALSE
+         .call = FALSE
     )
   }
 
@@ -926,7 +904,7 @@ lab_data_errors_region <- function(lab.data,
     lab.data <- lab.data |>
       dplyr::mutate(country = dplyr::if_else(stringr::str_detect(.data$country,
                                                                  "(?i)IVOIRE"),
-                                          "COTE D'IVOIRE", .data$country
+                                             "COTE D'IVOIRE", .data$country
       ))
   }
 
@@ -995,12 +973,12 @@ lab_data_errors_region <- function(lab.data,
   invalid_intervals <- lab_data |>
     # filtering out negative time intervals
     dplyr::filter((days.collect.lab < 0) |
-      (days.lab.culture < 0) |
-      (days.seq.ship < 0) |
-      (days.lab.seq < 0) |
-      (days.itd.seqres < 0) |
-      (days.itd.arriveseq < 0) |
-      (days.seq.rec.res < 0))
+                    (days.lab.culture < 0) |
+                    (days.seq.ship < 0) |
+                    (days.lab.seq < 0) |
+                    (days.itd.seqres < 0) |
+                    (days.itd.arriveseq < 0) |
+                    (days.seq.rec.res < 0))
 
   if (nrow(invalid_intervals) > 0) {
     cli::cli_alert_warning(paste0("There are ", nrow(invalid_intervals),
@@ -1101,12 +1079,12 @@ lab_data_errors_who <- function(lab.data, afp.data,
   cli::cli_process_start("Checking for invalid dates from cases.")
   invalid_dates <- lab_data |>
     dplyr::filter((days.collect.lab < 0) &
-      (days.lab.culture < 0) &
-      (days.seq.ship < 0) &
-      (days.lab.seq < 0) &
-      (days.itd.seqres < 0) &
-      (days.itd.arriveseq < 0) &
-      (days.seq.rec.res < 0))
+                    (days.lab.culture < 0) &
+                    (days.seq.ship < 0) &
+                    (days.lab.seq < 0) &
+                    (days.itd.seqres < 0) &
+                    (days.itd.arriveseq < 0) &
+                    (days.seq.rec.res < 0))
 
   if (nrow(invalid_dates) != 0) {
     cli::cli_alert_warning(paste0("There are ", nrow(invalid_dates),
@@ -1201,8 +1179,7 @@ clean_lab_data <- function(lab_data, start_date, end_date,
     lab_data <- clean_lab_data_who(lab_data, start_date, end_date,
                                    afp_data, ctry_name
     )
-    # lab_data <- add_rolling_date_info(lab_data, start_date, end_date,
-    #                                   "DateOfOnset")
+    # lab_data <- add_rolling_years(lab_data, start_date, "DateOfOnset")
   } else {
     if ("prov" %in% lab_data_cols) {
       cli::cli_alert_warning("Lab data already cleaned.")
@@ -1210,7 +1187,7 @@ clean_lab_data <- function(lab_data, start_date, end_date,
     }
     lab_data <- clean_lab_data_regional(lab_data, start_date, end_date,
                                         afp_data, ctry_name, lab_locs_path)
-    # lab_data <- add_rolling_date_info(lab_data, start_date, end_date)
+    # lab_data <- add_rolling_years(lab_data, start_date, "CaseDate")
   }
 
   return(lab_data)
@@ -1243,9 +1220,9 @@ generate_lab_timeliness <-
            start.date,
            end.date) {
     geo <- switch(spatial.scale,
-      "ctry" = "adm0guid",
-      "prov" = "adm1guid",
-      "dist" = "adm2guid"
+                  "ctry" = "adm0guid",
+                  "prov" = "adm1guid",
+                  "dist" = "adm2guid"
     )
 
     start.date <- lubridate::as_date(start.date)
@@ -1284,15 +1261,15 @@ generate_lab_timeliness <-
     lab <- lab |> dplyr::filter(!is.na(`get(geo)`))
 
     lab <- switch(spatial.scale,
-      "ctry" = {
-        lab <- lab |> dplyr::rename(adm0guid = "get(geo)")
-      },
-      "prov" = {
-        lab <- lab |> dplyr::rename(adm1guid = "get(geo)")
-      },
-      "dist" = {
-        lab <- lab |> dplyr::rename(adm2guid = "get(geo)")
-      }
+                  "ctry" = {
+                    lab <- lab |> dplyr::rename(adm0guid = "get(geo)")
+                  },
+                  "prov" = {
+                    lab <- lab |> dplyr::rename(adm1guid = "get(geo)")
+                  },
+                  "dist" = {
+                    lab <- lab |> dplyr::rename(adm2guid = "get(geo)")
+                  }
     )
 
     return(lab)
