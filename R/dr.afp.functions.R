@@ -552,7 +552,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
-  afp.data <- ctry.data$afp.all.2 |>
+  afp_data <- afp_data |>
     dplyr::filter(dplyr::between(date, start_date, end_date),
                   .data$cdc.classification.all2 != "NOT-AFP")
 
@@ -715,7 +715,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 
   labs <- switch(spatial.scale,
                  "ctry" = {
-                   ctry.data$afp.all.2 |>
+                   afp_data |>
                      dplyr::filter(
                        dplyr::between(.data$date, start_date, end_date),
                        cdc.classification.all2 != "NOT-AFP"
@@ -727,7 +727,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
                      ))
                  },
                  "prov" = {
-                   ctry.data$afp.all.2 |>
+                   afp_data |>
                      dplyr::filter(
                        dplyr::between(.data$date, start_date, end_date)
                        ) |>
