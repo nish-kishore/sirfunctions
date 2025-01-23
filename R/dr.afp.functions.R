@@ -750,7 +750,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
                  })
 
   int.data <- suppressMessages(dplyr::left_join(int.data, labs))
-  int.data <- int.data |> filter(!is.na(type),
+  int.data <- int.data |> filter(!is.na(.data$type), !is.na(.data$ctry),
                                  dplyr::between(.data$year,
                                                 lubridate::year(start_date),
                                                 lubridate::year(end_date)))
