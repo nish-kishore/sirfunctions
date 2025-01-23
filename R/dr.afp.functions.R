@@ -626,7 +626,18 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
   )
 
   if (!is.null(lab_data_summary)) {
-    int.data <- dplyr::bind_rows(lab_data_summary, int.data)
+
+    tryCatch(
+      {
+        int.data <- dplyr::bind_rows(lab_data_summary, int.data)
+      },
+      error = function(e) {
+        error_message <- paste0("It seems like lab_data_summary have empty ",
+                                "geographies. Make sure to run generate_lab_timeliness() ",
+                                "with cleaned lab data that has geographic info.")
+        cli::cli_abort(error_message)
+      }
+    )
   }
 
   if (spatial_scale == "prov") {
@@ -739,6 +750,10 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
                  })
 
   int.data <- suppressMessages(dplyr::left_join(int.data, labs))
+  int.data <- int.data |> filter(!is.na(type),
+                                 dplyr::between(.data$year,
+                                                lubridate::year(start_date),
+                                                lubridate::year(end_date)))
 
   return(int.data)
 }

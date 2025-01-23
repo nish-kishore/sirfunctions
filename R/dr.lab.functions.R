@@ -1219,11 +1219,11 @@ generate_lab_timeliness <-
            spatial.scale,
            start.date,
            end.date) {
-    geo <- switch(spatial.scale,
-                  "ctry" = "adm0guid",
-                  "prov" = "adm1guid",
-                  "dist" = "adm2guid"
-    )
+
+    spatial_groupby <- switch(spatial.scale,
+                              "ctry" = c("year", "ctry", "adm0guid"),
+                              "prov" = c("year", "ctry", "prov", "adm1guid"))
+
 
     start.date <- lubridate::as_date(start.date)
     end.date <- lubridate::as_date(end.date)
@@ -1233,9 +1233,12 @@ generate_lab_timeliness <-
       stop("Lab data not attached. Please attach and try again.")
     }
 
+    lab_data <-  dplyr::rename_with(lab_data, recode,
+                                    CaseDate = "DateOfOnset")
+
     lab_medians <- lab_data |>
       dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
-      dplyr::group_by(year, get(geo)) |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(spatial_groupby))) |>
       dplyr::summarise(dplyr::across(
         dplyr::starts_with("days."),
         \(x) as.numeric(median(x, na.rm = T))
@@ -1246,7 +1249,7 @@ generate_lab_timeliness <-
       )
     lab_counts <- lab_data |>
       dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
-      dplyr::group_by(year, get(geo)) |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(spatial_groupby))) |>
       dplyr::summarise(dplyr::across(
         dplyr::starts_with("days."),
         \(x) sum(!is.na(x))
@@ -1257,20 +1260,6 @@ generate_lab_timeliness <-
       )
 
     lab <- dplyr::full_join(lab_counts, lab_medians)
-
-    lab <- lab |> dplyr::filter(!is.na(`get(geo)`))
-
-    lab <- switch(spatial.scale,
-                  "ctry" = {
-                    lab <- lab |> dplyr::rename(adm0guid = "get(geo)")
-                  },
-                  "prov" = {
-                    lab <- lab |> dplyr::rename(adm1guid = "get(geo)")
-                  },
-                  "dist" = {
-                    lab <- lab |> dplyr::rename(adm2guid = "get(geo)")
-                  }
-    )
 
     return(lab)
   }
