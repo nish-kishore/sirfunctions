@@ -713,7 +713,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
   int.data <- int.data |>
     dplyr::select(dplyr::where(function(x) !all(is.na(x))))
 
-  labs <- switch(spatial.scale,
+  labs <- switch(spatial_scale,
                  "ctry" = {
                    afp_data |>
                      dplyr::filter(
