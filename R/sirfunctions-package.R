@@ -3,6 +3,8 @@
 
 ## usethis namespace: start
 #' @import rlang
+#' @import dplyr
+#' @import lubridate
 #' @importFrom AzureAuth get_azure_token
 #' @importFrom AzureAuth list_azure_tokens
 #' @importFrom AzureAuth load_azure_token
@@ -33,51 +35,6 @@
 #' @importFrom cli cli_process_start
 #' @importFrom cli cli_progress_done
 #' @importFrom cli cli_progress_step
-#' @importFrom dplyr across
-#' @importFrom dplyr all_of
-#' @importFrom dplyr anti_join
-#' @importFrom dplyr any_of
-#' @importFrom dplyr arrange
-#' @importFrom dplyr as_tibble
-#' @importFrom dplyr between
-#' @importFrom dplyr bind_rows
-#' @importFrom dplyr case_match
-#' @importFrom dplyr case_when
-#' @importFrom dplyr coalesce
-#' @importFrom dplyr contains
-#' @importFrom dplyr count
-#' @importFrom dplyr desc
-#' @importFrom dplyr distinct
-#' @importFrom dplyr ends_with
-#' @importFrom dplyr enquo
-#' @importFrom dplyr everything
-#' @importFrom dplyr filter
-#' @importFrom dplyr full_join
-#' @importFrom dplyr group_by
-#' @importFrom dplyr if_else
-#' @importFrom dplyr inner_join
-#' @importFrom dplyr join_by
-#' @importFrom dplyr lag
-#' @importFrom dplyr last
-#' @importFrom dplyr left_join
-#' @importFrom dplyr matches
-#' @importFrom dplyr mutate
-#' @importFrom dplyr mutate_at
-#' @importFrom dplyr n
-#' @importFrom dplyr pull
-#' @importFrom dplyr reframe
-#' @importFrom dplyr rename
-#' @importFrom dplyr rename_with
-#' @importFrom dplyr rowwise
-#' @importFrom dplyr select
-#' @importFrom dplyr slice
-#' @importFrom dplyr starts_with
-#' @importFrom dplyr summarise
-#' @importFrom dplyr summarize
-#' @importFrom dplyr syms
-#' @importFrom dplyr tibble
-#' @importFrom dplyr ungroup
-#' @importFrom dplyr where
 #' @importFrom flextable add_footer_lines
 #' @importFrom flextable add_footer_row
 #' @importFrom flextable add_header_lines
@@ -166,14 +123,6 @@
 #' @importFrom lifecycle deprecate_warn
 #' @importFrom lifecycle deprecated
 #' @importFrom lifecycle is_present
-#' @importFrom lubridate as_date
-#' @importFrom lubridate epiweek
-#' @importFrom lubridate floor_date
-#' @importFrom lubridate month
-#' @importFrom lubridate today
-#' @importFrom lubridate weeks
-#' @importFrom lubridate year
-#' @importFrom lubridate years
 #' @importFrom magick image_animate
 #' @importFrom magick image_join
 #' @importFrom magick image_read
@@ -260,3 +209,77 @@
 #' @importFrom zoo as.yearmon
 ## usethis namespace: end
 NULL
+
+utils::globalVariables(c(
+  ".", "_gps_ending_latitude", "_gps_ending_longitude", "active.year.01",
+  "activity.end.date", "activity.start.date", "ad.dist.100k.num", "adequacy.01",
+  "adequacy.02", "adequacy.03", "adequacy.final", "adequacy.final2",
+  "ADM0_GUID", "adm0_name", "ADM0_NAME", "ADM0_SOVRN", "adm0guid", "adm0guid.x",
+  "adm0guid.y", "ADM1_GUID", "adm1_name", "ADM1_NAME", "adm1guid", "adm1guid.x",
+  "adm1guid.y", "adm2_name", "ADM2_NAME", "adm2guid", "adm2guid.2",
+  "adm2guid.x", "adm2guid.y", "admin2guid", "afp.cases", "afpes.detection.35d",
+  "afpes.detection.49d", "afpes.pos.spec", "age.group", "age.months",
+  "all_dets", "bad.condition", "bad.data", "badper", "case.cat", "case.num",
+  "CaseOrContact", "cats", "cdc.class", "cdc.classification.all",
+  "cdc.classification.all2", "CITY_NAME", "classification", "clust",
+  "CNTRY_NAME", "coll.3d.inv", "collect.date", "collect.to.enddate",
+  "collect.yr", "collection.date", "column_name", "compatible", "country",
+  "ctime", "ctry", "ctry.x", "ctry.y", "ctryvdist_diff", "ctryvprov_diff",
+  "culture.itd.lab", "datasource", "date.f6.ref.itd",
+  "date.final.combined.result", "date.final.culture.result",
+  "date.final.results.reported", "date.invest", "date.notification.to.hq",
+  "date.notify", "date.onset", "DateFinalCellCultureResult",
+  "DateFinalCellCultureResults", "DateFinalrRTPCRResults", "dateinvest",
+  "DateIsolateRcvdForSeq", "datenotificationtohq", "datenotify",
+  "datenotifytohq", "DateOfOnset", "DateofSequencing", "dateonset",
+  "DateSeqResult", "DateSeqResultsEntered", "datestool1", "datestool2",
+  "DateStoolCollected", "DateStoolReceivedinLab", "DateStoolReceivedNatLevel",
+  "DateStoolSentfromField", "DateStoolSentToLab", "days.collect.lab",
+  "days.itd.arriveseq", "days.itd.seqres", "days.lab.culture", "days.lab.seq",
+  "days.seq.rec.res", "days.seq.ship", "days_in_year", "daysstooltolab",
+  "detect_status", "detect_status2", "diff_per", "dist", "dist.100k.num",
+  "dist.guid", "dist.x", "dist.y", "dists", "dose.cat", "doses.ipv.number",
+  "doses.ipv.routine", "doses.ipv.sia", "doses.opv.routine", "doses.opv.sia",
+  "doses.total", "dpt1", "dpt3", "due.60followup", "e", "earliest_date",
+  "early.dat", "emergence.group", "emergencegroup", "emg_grp2", "end.yr",
+  "end_date", "ENDDATE", "env.sample.id", "epi.week", "epid", "EPID",
+  "epid.in.polis", "epid_comb", "epid_ctry", "epid_dist", "epid_prov",
+  "EpidNumber", "es.data.test", "es.dups", "ev.detect", "ev.rate",
+  "facility_name2", "file_name", "FinalCellCultureResult", "FinalITDResult",
+  "followup.date", "followup.findings", "freq", "geometry", "good.cond.1",
+  "good.cond.1per", "good.cond.2", "good.cond.2per", "got60day", "GUID",
+  "hasArg", "hf_rating", "hot.case", "im.loaded", "imputed_coord", "inadequate",
+  "inadequate.need.60day", "inv.2d.noti", "investtostool1", "iris", "lab_data",
+  "last_sync", "last_user", "lat", "lat.x", "lat.y", "late.collection",
+  "latest_date", "latitude", "len.year", "lng", "lng.x", "lng.y", "lon",
+  "longitude", "lqas.loaded", "mcv1", "measurement", "medi", "median",
+  "median_days", "meet.stool", "meet2", "missing.fu.date", "missingper",
+  "mon.year", "mon.year2", "month_date", "n_days", "n_det", "n_det_cat",
+  "n_npafp", "name", "Name", "need60day.v2", "neg_intervals", "noti.7d.on",
+  "nottoinvest", "npafp_rate", "nt.changes", "ntchanges", "num.ad.plus.inad",
+  "num.adequate", "num.afpes.detect.35d", "num.afpes.detect.49d",
+  "num.ctry.inseq", "num.ctry.outseq", "num.ev.pos", "num.inadequate",
+  "num.meet.stool", "num.meet2", "num.samples", "one.or.no.stool",
+  "ontime.60day", "ontime60day", "ontonot", "ontonothq", "ontostool1",
+  "ontostool2", "par", "paralysis.asymmetric", "paralysis.onset.fever",
+  "paralysis.rapid.progress", "ParalysisOnsetDate", "paths",
+  "pct.afpes.detect.35d", "pct.afpes.detect.49d", "per.got60",
+  "per.ontime60day", "per.stool.ad", "person.sex", "place.admin.0",
+  "place.admin.1", "place.admin.2", "polis.case.id", "pons.epid",
+  "poorper", "pot.compatible", "priority_level", "prop", "prop.cat",
+  "prop.dist.adeq", "prov", "prov.x", "prov.y", "province", "pv", "raw.data",
+  "report_date", "ReportDateSequenceResultSent", "resource", "sample.condition",
+  "sampled_point", "samples", "scope", "seq.capacity", "SHAPE", "ship.3d.coll",
+  "sia.code", "sia.sub.activity.code", "site.id", "site.name", "source_mod",
+  "SpecimenNumber", "start.yr", "start_date", "STARTDATE", "status",
+  "stool.1.condition", "stool.2.condition", "stool.col.int",
+  "stool.date.sent.to.lab", "stool1missing", "stool1tostool2", "stool2missing",
+  "sub.activity.start.date", "surveillancetypename", "t.daysstooltolab",
+  "t.investtostool1", "t.nottoinvest", "t.ontonot", "t.stool1tostool2", "tag",
+  "timely", "timelyper", "today_date", "token", "tot.dist.adeq", "tot.freq.x",
+  "tot.freq.y", "total_rows", "type", "u15pop", "u15pop.prov", "under5_pop",
+  "vaccine.type", "value", "vdpv", "vdpv.1", "vdpv.2", "vdpv.3", "virus.type",
+  "virustype", "vtype_mod", "weight", "who.region", "WHO_CODE", "WHO_REGION",
+  "wild.1", "wild.3", "wpv", "year2", "years_active", "yr.end", "yr.sia",
+  "yr.st", "yronset"
+))
