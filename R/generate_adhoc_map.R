@@ -6,18 +6,13 @@
 #' This is an internal function changes the zoom level of the map depending on the
 #' user specification.
 #'
-#' @importFrom cli cli_alert_info
-#' @importFrom ggplot2 coord_sf
-#' @importFrom stringr str_trim str_to_lower
-#' @importFrom dplyr filter
-#'
 #' @param g1 `ggplot` Original ggplot map.
 #' @param map_ref `ggplot` Reference map.
 #' @param m_base_ctry `sf` Shapefile containing base map of country.
 #' @param country `str` Country or countries to zoom into.
 #' @keywords internal
 #'
-#' @return `ggplot` Map with adjusted zoom level, if specified.
+#' @returns `ggplot` Map with adjusted zoom level, if specified.
 #'
 set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
   # Set up map zoom level
@@ -97,11 +92,8 @@ set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
 #' @param data_r `tibble` Reported detections.
 #' @param .owner `str` Entity that produced the map.
 #'
-#' @importFrom ggplot2 aes geom_sf ggplot alpha element_blank element_rect element_text geom_point geom_sf_text guide_legend guides labs scale_color_manual scale_fill_manual scale_shape_manual theme theme_bw unit
-#' @importFrom ggrepel geom_label_repel
-#' @importFrom dplyr filter
 #' @keywords internal
-#' @return `ggplot` Map of recent detections.
+#' @returns `ggplot` Map of recent detections.
 
 build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
                                 new_detect, virus_type, surv_options, start_date, date_3a,
@@ -244,7 +236,6 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
 #' The function adds new detections as specified by the user when they use
 #' [generate_adhoc_map()]. This function inherits arguments from the parent function.
 #'
-#' @importFrom dplyr filter if_else mutate
 #' @param data_p `tibble` Map data.
 #' @param country `str` or `list` Country or a list of countries.
 #' @param date_3a_a `str` ???
@@ -252,7 +243,7 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
 #' @param date_3b `str` ???
 #' @keywords internal
 #'
-#' @return a dataset containing new detections
+#' @returns a dataset containing new detections
 add_new_detection <- function(data_p, country, date_3a, date_3a_a, date_3b) {
   # initialize variable
   data_r <- NULL
@@ -274,13 +265,12 @@ add_new_detection <- function(data_p, country, date_3a, date_3a_a, date_3b) {
 
 #' Identify last detections at the province level
 #'
-#' @importFrom dplyr arrange group_by summarise mutate case_when last
 #' @param data_p dataset containing epids with cases
 #' @param .start_date `date` Start date.
 #' @param .end_date `date` End date.
 #' @keywords internal
 #'
-#' @return `tibble` Summary table identifying last detections at the province level
+#' @returns `tibble` Summary table identifying last detections at the province level
 last_detections_prov <- function(data_p, .start_date, .end_date) {
   data_prov <- data_p |>
     dplyr::arrange(place.admin.1, dateonset) |>
@@ -307,9 +297,6 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
 #' This function primarily pulls the relevant information to build the map. Inherits
 #' areguments from [generate_adhoc_map()].
 #'
-#' @importFrom dplyr arrange between case_when distinct mutate filter
-#' @importFrom lubridate today
-#'
 #' @param raw.data `list` global polio data output from [get_all_polio_data()]
 #' @param .vdpv `bool` Whether to include VDPV in maps.
 #' @param country `str` or `list` Name of the country or countries.
@@ -319,7 +306,7 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
 #' @param surv `str` or `list` Surveillance type.
 #' @keywords internal
 #'
-#' @return `tibble` Filtered dataset used to build the map.
+#' @returns `tibble` Filtered dataset used to build the map.
 pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_date, .end_date) {
   if (.vdpv == "YES") {
     virus_type_modified <- dplyr::case_when(virus_type == "cVDPV 1" ~ "vtype 1",
@@ -398,12 +385,11 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
 }
 
 #' Load the sharepoint environment
-#' @importFrom Microsoft365R get_sharepoint_site
-#' @importFrom cli cli_alert
+#'
 #' @param raw.data global polio data output by sirfunctions::get_all_polio_data()
 #' @keywords internal
 #'
-#' @return sharepoint path
+#' @returns sharepoint path
 load_sharepoint_env <- function(raw.data) {
   get_sharepoint_site(
     site_url = "https://cdc.sharepoint.com/teams/CGH-GID-PEB",
@@ -429,14 +415,13 @@ load_sharepoint_env <- function(raw.data) {
 #'
 #' Used in conjunction to [generate_adhoc_map()]. The function returns a named
 #' list with emergence names mapped to a color.
-#' @importFrom dplyr filter arrange case_when distinct mutate
-#' @importFrom tidyr drop_na
+#'
 #' @param raw.data `list` Global polio data output of [get_all_polio_data()].
 #' @param country `str` or `list` Countries of interest.
 #' @param start_date `str` Start date of the time span to look for emergences. Defaults to 13 months from the end date.
 #' @param end_date  `str` End date of the time span to look for emergences Defaults to download date of `raw.data`.
 #'
-#' @return `list` A named list containing the mapping of emergence and corresponding colors.
+#' @returns `list` A named list containing the mapping of emergence and corresponding colors.
 #' @examples
 #' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
@@ -513,12 +498,6 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 #'
 #' Creates a map of recent emergences. The default will display outbreaks from the past 13 months.
 #'
-#' @importFrom dplyr filter arrange case_when left_join mutate
-#' @importFrom ggplot2 ggsave coord_sf
-#' @importFrom lubridate as_date days floor_date today
-#' @importFrom stringr regex str_detect str_to_lower str_to_upper str_trim
-#' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning
-#'
 #' @param raw.data `list` Global polio data. The output of [get_all_polio_data()].
 #' Make sure the spatial data is attached, otherwise, it will not work.
 #' @param country `str` or `list` Country name or a list of country names.
@@ -553,7 +532,7 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 #' @param width `numeric` Width of the map. Defaults to `4.5`.
 #' @param scale `numeric` Scale of the map. Defaults to `1.25`.
 #' @param dpi `numeric` DPI of the map. Defaults to `300`.
-#' @return `ggplot` A map of outbreaks.
+#' @returns `ggplot` A map of outbreaks.
 #' @examples
 #' \dontrun{
 #' raw.data <- get_all_polio_data()

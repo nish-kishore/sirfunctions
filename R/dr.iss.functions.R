@@ -2,12 +2,12 @@
 #'
 #' The function is written to assist in load the ISS data from a path specified
 #' by the user during [init_dr()]. This function is not meant to be exported.
-#' @import stringr
+#'
 #' @param iss_path `str` Path to the excel or csv file.
 #' @param sheet_name `str` Optional name of the ISS data. This is mainly used if
 #' the path is to an Excel file and that Excel file has multiple tabs.
 #'
-#' @return `tibble` ISS/eSURV data loaded into a tibble.
+#' @returns `tibble` ISS/eSURV data loaded into a tibble.
 #' @examples
 #' \dontrun{
 #' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
@@ -40,8 +40,7 @@ load_iss_data <- function(iss_path, sheet_name = NULL) {
 #'  - `Medium`: begins with "m".
 #'  - `Low`: begins with "l".
 #'  - `Not Focal Site`: begins with "n" or "x".
-#' @import cli dplyr stringr
-#' @importFrom zoo as.yearmon
+#'
 #' @param start_date `str` Start date of desk review.
 #' @param end_date `str` End date of desk review.
 #' @param priority_col `str` Column representing priority level.
@@ -55,7 +54,7 @@ load_iss_data <- function(iss_path, sheet_name = NULL) {
 #' @param ctry.data `list` `r lifecycle::badge("deprecated")` Please pass the
 #' ISS data directly to the iss.data parameter.
 #'
-#' @return `tibble` Cleaned eSurv/ISS data.
+#' @returns `tibble` Cleaned eSurv/ISS data.
 #' @examples
 #' \dontrun{
 #' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
@@ -74,7 +73,6 @@ clean_iss_data <- function(iss.data, start_date, end_date,
                            today_col = "today",
                            date_of_visit_col = "date_of_visit",
                            ctry.data = lifecycle::deprecated()) {
-
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -172,14 +170,14 @@ clean_iss_data <- function(iss.data, start_date, end_date,
 #' Checks for errors in the ISS data
 #'
 #' Currently, the function reports the number of missing priority levels.
-#' @import cli dplyr readr
+#'
 #' @param error_path `str` Path to error folder. The function defaults to a global environment
 #' variable called `DR_ERROR_PATH`, as it is assumed ISS data error checking is done as part of
 #' the desk review template. The setting of desk review environmental variables is automatically
 #' handled by [init_dr()]. Otherwise, users should manually specify the error folder.
 #' @param ctry.data `list` `r lifecycle::badge("deprecated")` Please pass the ISS
 #' data directly to the iss.data parameter.
-#' @return Status messages on the checks completed and results.
+#' @returns Status messages on the checks completed and results.
 #' @examples
 #' \dontrun{
 #' iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
@@ -190,7 +188,6 @@ clean_iss_data <- function(iss.data, start_date, end_date,
 #' @export
 iss_data_errors <- function(iss.data, error_path = Sys.getenv("DR_ERROR_PATH"),
                             ctry.data = lifecycle::deprecated()) {
-
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",

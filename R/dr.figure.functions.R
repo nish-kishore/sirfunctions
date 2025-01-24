@@ -5,7 +5,6 @@
 #' A stacked horizontal bar graph for timeliness intervals of samples at the country level.
 #' To get the full intervals from field to lab, the lab data needs to be attached. Otherwise,
 #' only the timeliness intervals from the field up to when it was sent to lab will be displayed.
-#' @import ggplot2 forcats
 #'
 #' @param int.data `tibble` Summary table with timeliness intervals at the country level.
 #' @param output_path `str` Path where to output the figure.
@@ -30,7 +29,6 @@
 generate_ctry_timeliness_graph <- function(int.data,
                                            output_path = Sys.getenv("DR_FIGURE_PATH"),
                                            afp.year.lab = lifecycle::deprecated()) {
-
   if (lifecycle::is_present(afp.year.lab)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -95,7 +93,7 @@ generate_ctry_timeliness_graph <- function(int.data,
 #' A stacked horizontal bar graph for timeliness intervals of samples at the province level.
 #' To get the full intervals from field to lab, the lab data needs to be attached. Otherwise,
 #' only the timeliness intervals from the field up to when it was sent to lab will be displayed.
-#' @import ggplot2
+#'
 #' @param int.data `tibble` Summary table with timeliness intervals at the province level.
 #' @param output_path `str` Path where to output the figure.
 #' @param afp.prov.year.lab `tibble` `r lifecycle::badge("deprecated")`
@@ -118,7 +116,6 @@ generate_ctry_timeliness_graph <- function(int.data,
 generate_prov_timeliness_graph <- function(int.data,
                                            output_path = Sys.getenv("DR_FIGURE_PATH"),
                                            afp.prov.year.lab = lifecycle::deprecated()) {
-
   if (lifecycle::is_present(afp.prov.year.lab)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -187,7 +184,6 @@ generate_prov_timeliness_graph <- function(int.data,
 #'
 #' Generates an epicurve line graph of AFP cases by year.
 #'
-#' @import dplyr ggplot2
 #' @param ctry.data `list` Large list containing country polio data. This is the output of either
 #' [extract_country_data()] or [init_dr()].
 #' @param start_date `str` Start date of analysis.
@@ -256,7 +252,6 @@ generate_afp_epicurve <- function(ctry.data,
 #'
 #' Generates a tile plot for the number of AFP cases per month by province.
 #'
-#' @import dplyr lubridate ggplot2 forcats
 #' @param afp.by.month.prov `tibble` Table summarizing AFP cases by month and province. This is the output of
 #' [generate_afp_by_month_summary()].
 #' @param start_date `str` Start date of the analysis.
@@ -328,11 +323,6 @@ generate_afp_prov_year <- function(afp.by.month.prov,
 #' Generates a dot plot for viral detections across ES sites, with SIA dates
 #' overlaid.
 #'
-#' @importFrom cli cli_alert_warning
-#' @importFrom dplyr arrange between count distinct filter pull select
-#' @importFrom ggplot2 aes facet_grid geom_point geom_rect ggplot ggsave label_wrap_gen scale_color_manual scale_fill_manual scale_x_date theme_bw xlab ylab
-#' @importFrom lubridate year years
-#' @importFrom scales brewer_pal
 #' @param sia.data `tibble` SIA surveillance data.
 #' @param es.data Environmental surveillance data, cleaned using [clean_es_data()] or a cleaned `ctry.data$es`.
 #' @param es_start_date `str` Start date of analysis. By default, it is one year from the end date.
@@ -368,18 +358,21 @@ generate_es_site_det <- function(sia.data,
                                  detection_types = NULL,
                                  ctry.data = lifecycle::deprecated(),
                                  es.data.long = lifecycle::deprecated()) {
-
   if (lifecycle::is_present(es.data.long)) {
-    lifecycle::deprecate_warn("1.3.0",
-                              "generate_es_site_det(es.data.long)",
-                              "generate_es_site_det(es.data)")
+    lifecycle::deprecate_warn(
+      "1.3.0",
+      "generate_es_site_det(es.data.long)",
+      "generate_es_site_det(es.data)"
+    )
     es.data <- es.data.long
   }
 
   if (lifecycle::is_present(ctry.data)) {
-    lifecycle::deprecate_warn("1.3.0",
-                              "generate_es_site_det(ctry.data)",
-                              "generate_es_site_det(sia.data)")
+    lifecycle::deprecate_warn(
+      "1.3.0",
+      "generate_es_site_det(ctry.data)",
+      "generate_es_site_det(sia.data)"
+    )
     sia.data <- ctry.data$sia
   }
 
@@ -540,10 +533,6 @@ generate_es_site_det <- function(sia.data,
 #'
 #' Generates a scatterplot of the time it takes for each environmental samples to arrive in lab.
 #'
-#' @importFrom dplyr between count filter rename
-#' @importFrom ggplot2 aes element_text geom_hline geom_point ggplot ggsave labs position_jitter scale_y_continuous theme theme_classic
-#' @importFrom lubridate years
-#' @importFrom scales number_format
 #' @param es.data `tibble` ES data.
 #' @param es_start_date `str` Start date of analysis. By default, this is one year from the end date.
 #' @param es_end_date `str` End date of analysis.
@@ -648,10 +637,6 @@ generate_es_timely <- function(es.data,
 #' Note that this function only graphs immunization rates for children aged 6-59 months that have
 #' the classification of NPAFP.
 #'
-#' @importFrom dplyr group_by filter between n summarize
-#' @importFrom ggplot2 aes geom_bar geom_text ggplot ggsave labs scale_fill_manual scale_y_continuous xlab ylab
-#' @importFrom ggpubr theme_pubr
-#' @importFrom scales percent
 #' @param ctry.data `list` A large list containing polio data of country.
 #' This is the output of [extract_country_data()] or [init_dr()]. Note that `ctry_data` needs to be cleaned
 #' via [clean_ctry_data()] prior to running the function.
@@ -738,7 +723,6 @@ generate_case_num_dose_g <- function(ctry.data,
 #' Generates a bar plot showing the number of visits to health clinics per year
 #' using the ISS/eSURV data.
 #'
-#' @import dplyr ggplot2
 #' @param iss.data `tibble` ISS/eSURV data that has been cleaned via [clean_iss_data()].
 #' @param start_date `str` Start date of the analysis.
 #' @param end_date `str` End date of the analysis.
@@ -853,13 +837,6 @@ generate_iss_barplot <- function(iss.data = NULL,
 #' Country map with province populations
 #'
 #' The map displays the U15 population for each province for a country.
-#'
-#' @importFrom dplyr filter left_join
-#' @importFrom ggplot2 aes element_blank element_text geom_sf ggplot ggsave ggtitle labs scale_fill_distiller scale_size_identity theme
-#' @importFrom ggrepel geom_label_repel
-#' @importFrom lubridate year
-#' @importFrom sf st_crop
-#' @importFrom scales comma
 #'
 #' @param ctry.data `list` Large list containing country polio data. This is the
 #' output of [extract_country_data()] or [init_dr()].
@@ -978,12 +955,6 @@ generate_pop_map <- function(ctry.data,
 #' Map district U15 populations
 #'
 #' Generates a map of U15 district populations, with population centers and roads.
-#'
-#' @importFrom dplyr filter left_join
-#' @importFrom ggplot2 aes element_blank element_text geom_sf ggplot ggsave ggtitle labs scale_fill_distiller scale_size_identity theme
-#' @importFrom ggrepel geom_label_repel
-#' @importFrom lubridate year
-#' @importFrom scales comma
 #'
 #' @param ctry.data `list` Large list of polio country data. This is the output of
 #' either [extract_country_data()] or [init_dr()].
@@ -1118,7 +1089,6 @@ generate_dist_pop_map <- function(ctry.data,
 #'
 #' Generates a map of AFP cases, excluding any with pending classification.
 #'
-#' @import dplyr ggplot2 lubridate
 #' @param afp.all `sf` AFP linelist containing point geometry. This is
 #' `ctry.data$afp.all`, which is an output of either [extract_country_data()] and
 #' [init_dr()].
@@ -1247,8 +1217,6 @@ generate_afp_case_map <- function(afp.all,
 #' Maps of NPAFP rates by province and year
 #'
 #' Generates a map of NPAFP rates for each province per year.
-#'
-#' @import dplyr ggplot2 lubridate sf
 #'
 #' @param prov.extract `tibble` Province NPAFP rate table. This is the output of
 #' [f.npafp.rate.01()] calculated at the province level.
@@ -1466,8 +1434,6 @@ generate_npafp_maps <- function(prov.extract,
 #' Maps of NPAFP rates by district and year
 #'
 #' Generates maps of the NPAFP rates for each district per year.
-#'
-#' @import dplyr ggplot2 sf lubridate
 #'
 #' @param dist.extract `tibble` Province NPAFP rate table. This is the output of
 #' [f.npafp.rate.01()] calculated at the province level.
@@ -1709,8 +1675,6 @@ generate_npafp_maps_dist <- function(dist.extract,
 #'
 #' Generates maps that contain the stool adequacy rate for each province per year.
 #'
-#' @import dplyr ggplot2 sf lubridate
-#'
 #' @param ctry.data `list` Large list containing polio data of a country. This is the output
 #' of either [extract_country_data()] or [init_dr()].
 #' @param pstool `tibble` Stool adequacy table at province level. This is the output of
@@ -1930,8 +1894,6 @@ generate_stool_ad_maps <- function(ctry.data,
 #' Maps of stool adequacy by district and year
 #'
 #' Generates maps of stool adequacy map by district and year.
-#'
-#' @import dplyr ggplot2 sf lubridate
 #'
 #' @param ctry.data `list` Large list containing polio data for a country. This is
 #' the output of [extract_country_data()] or [init_dr()].
@@ -2186,14 +2148,6 @@ generate_stool_ad_maps_dist <- function(ctry.data,
 #' across different timeliness targets. The figure is faceted by the type of
 #' timeliness target, with each facet containing the percentage of samples
 #' from each province that met the targets over the years.
-#'
-#' @importFrom cli cli_alert_success cli_alert_warning
-#' @importFrom forcats fct_na_value_to_level
-#' @importFrom ggplot2 aes element_blank element_text facet_wrap geom_sf ggplot ggsave ggtitle scale_fill_manual theme
-#' @importFrom ggpubr annotate_figure get_legend ggarrange text_grob
-#' @importFrom lubridate year
-#' @importFrom sf sf_use_s2 st_centroid
-#' @importFrom tidyr complete pivot_longer
 #'
 #' @param ctry.data `list` Large list containing polio data for a country. This is the output
 #' of [extract_country_data()] or [init_dr()].
@@ -2675,7 +2629,6 @@ generate_timeliness_maps <- function(ctry.data,
 #' Generates a map showing the detection rate of each ES sites on a rolling period
 #' as defined by the start and end dates of the analysis.
 #'
-#' @import dplyr ggplot2 ggrepel
 #' @param es.data `tibble` ES data for a country. This is `ctry.data$es`, which is
 #' part of the outputs of [extract_country_data()] and [init_dr()].
 #' @param ctry.shape `sf` Country shapefile in long format.
@@ -2853,7 +2806,6 @@ generate_es_det_map <- function(es.data,
 #'
 #' Generates a map of high priority health facilities across years based on ISS/eSURV data.
 #'
-#' @import dplyr sf ggplot2 lubridate
 #' @param iss.data `tibble` ISS/eSurv data. Ensure that the `iss.data` is part of `ctry.data` and
 #' has been cleaned by [clean_iss_data()].
 #' @param ctry.shape `sf` Country shapefile in long format.
@@ -3009,11 +2961,6 @@ generate_iss_map <- function(iss.data,
 #' AFP cases, national NPAFP rate and stool adequacy,percentage of population living in
 #' districts with greater than or equal to 100,000 U15 meeting both indicators.
 #'
-#' @importFrom flextable add_footer_row autofit bold colformat_double flextable set_header_labels theme_booktabs
-#' @importFrom dplyr across case_when group_by left_join mutate n summarize
-#' @importFrom lubridate year
-#' @importFrom stringr str_to_upper
-#' @importFrom tidyr replace_na
 #' @param ctry.data `list` Large list containing polio data of a country.
 #' @param ctry.extract `tibble` Country NPAFP rate. Output of [f.npafp.rate.01()] calculated at the country level.
 #' @param dist.extract `tibble` District NPAFP rate. Output of [f.npafp.rate.01()] calculated at the district level.
@@ -3212,11 +3159,6 @@ generate_surv_ind_tab <- function(ctry.data,
 #'
 #' Generates a table summarizing both NPAFP and stool adequacy rates at the province level and by year.
 #'
-#' @importFrom dplyr across arrange full_join group_by mutate select
-#' @importFrom flextable add_header_row align bg bold color flextable fp_border_default hline set_header_df theme_booktabs vline
-#' @importFrom lubridate year
-#' @importFrom stringr str_replace
-#' @importFrom tidyr pivot_wider replace_na
 #' @param prov.case.ind  `tibble` Case indicator at province level. Output of [prep_npafp_table()] at the province level.
 #' @param pstool `tibble` Stool adequacy at province level. Output of [f.stool.ad.01()] at the province level.
 #' @param start_date `str` Start date of analysis.
@@ -3448,10 +3390,6 @@ generate_pop_tab <- function(prov.case.ind,
 #'
 #' Generates a summary table at the country level highlighting issues around stool adequacy.
 #'
-#' @importFrom dplyr across between case_when count group_by left_join mutate rename select summarize
-#' @importFrom flextable add_footer_row as_grouped_data autofit bold flextable set_header_labels theme_booktabs
-#' @importFrom lubridate year
-#' @importFrom tidyr replace_na
 #' @param ctry.data `list` large list containing polio data for a country. This is the output of
 #' [extract_country_data()] or [init_dr()].
 #' @param cstool `tibble` Stool adequacy at the country level. This is the output of [f.stool.ad.01()].
@@ -3484,7 +3422,6 @@ generate_inad_tab <- function(ctry.data,
                               start_date,
                               end_date,
                               stool.data = lifecycle::deprecated()) {
-
   if (lifecycle::is_present(stool.data)) {
     lifecycle::deprecate_warn(
       when = "1.2.0",
@@ -3638,8 +3575,6 @@ generate_inad_tab <- function(ctry.data,
 #'
 #' Generates a table summarizing the number of inadequate cases that need follow up.
 #'
-#' @importFrom dplyr arrange desc group_by mutate n select summarize
-#' @importFrom flextable align bold flextable fontsize set_header_labels theme_booktabs width
 #' @param cases.need60day `tibble` Summary table containing those that need 60 day follow-up.
 #'  Output of [generate_60_day_table_data()].
 #'
@@ -3755,11 +3690,6 @@ generate_60_day_tab <- function(cases.need60day) {
 #' samples collected, percentage of samples with good condition, and percentage of samples meeting the
 #' timeliness target of arriving to lab within 3 days.
 #'
-#' @importFrom cli cli_alert cli_alert_info
-#' @importFrom dplyr filter arrange between distinct group_by if_else left_join mutate n reframe summarize
-#' @importFrom flextable add_header_lines align bold colformat_double flextable fontsize set_header_labels theme_booktabs width
-#' @importFrom lubridate years
-#' @importFrom readr write_csv
 #' @param es.data `tibble` ES data. This is `ctry.data$es`, which is part of the output of either
 #' [extract_country_data()] or [init_dr()]. Ensure that the `ctry.data` object has been cleaned with
 #' [clean_ctry_data()] first. Otherwise, there will be an error.

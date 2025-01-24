@@ -14,8 +14,6 @@
 #' An equivalent function is [generate_int_data()], which expands and simplifies this
 #' function by also being able to take lab data to calculate lab timeliness intervals.
 #'
-#' @import dplyr
-#' @import lubridate
 #' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
 #' formated as `adm(0,1,2)guid`, onset date as `date`.
 #' @param admin.data `tibble` Full list of country administrative units by a given
@@ -51,7 +49,6 @@ f.timely.01 <- function(
     end.date,
     spatial.scale,
     intervals.manual = F) {
-
   lifecycle::deprecate_warn(
     "1.3.0",
     "f.timely.01()",

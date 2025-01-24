@@ -3,17 +3,14 @@
 #' Adds coordinates for ES surveillance sites missing them. This function is not meant
 #' to be exported. This is part of [clean_es_data()].
 #'
-#' @import cli dplyr sf
-#' @importFrom purrr map
 #' @param ctry.data
 #' `r lifecycle::badge("deprecated")`
 #' `list` This parameter has been deprecated in favor of explicitly passing dataframes
 #' into the function. This allows for greater flexibility in the function.
 #'
-#' @return `tibble` ES data with imputed coordinates for sites missing them.
+#' @returns `tibble` ES data with imputed coordinates for sites missing them.
 #' @keywords internal
 impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated()) {
-
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -24,11 +21,14 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
   # Add column to flag imputed coordinates
   es.data <- es.data |>
     dplyr::mutate(imputed_coord = dplyr::if_else(is.na(.data$lat) | is.na(.data$lng),
-                                                 TRUE, FALSE))
+      TRUE, FALSE
+    ))
   missing_coords <- es.data |>
     dplyr::filter(is.na(lat) | is.na(lng)) |>
-    dplyr::distinct(.data$ADM0_NAME, .data$site.id, .data$site.name, .data$dist.guid,
-                    .data$lat, .data$lng, .data$imputed_coord)
+    dplyr::distinct(
+      .data$ADM0_NAME, .data$site.id, .data$site.name, .data$dist.guid,
+      .data$lat, .data$lng, .data$imputed_coord
+    )
   before <- nrow(missing_coords)
 
   cli::cli_process_start("Imputing missing site coordinates based on district")
@@ -40,8 +40,10 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
   }
 
   dist.shape <- dist.shape |>
-    dplyr::filter(!sf::st_is_empty(.data$SHAPE),
-                  .data$GUID %in% missing_coords$dist.guid)
+    dplyr::filter(
+      !sf::st_is_empty(.data$SHAPE),
+      .data$GUID %in% missing_coords$dist.guid
+    )
   missing_guids <- setdiff(missing_coords$dist.guid, dist.shape$GUID)
 
   if (length(missing_guids) != 0) {
@@ -52,23 +54,33 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
   }
 
   missing_coords <- missing_coords |>
-    dplyr::left_join(dist.shape, by = c("dist.guid" = "GUID",
-                                        "ADM0_NAME")) |>
+    dplyr::left_join(dist.shape, by = c(
+      "dist.guid" = "GUID",
+      "ADM0_NAME"
+    )) |>
     # Must filter because st_sample() doesn't work with NULL values
     dplyr::filter(!is.na(.data$dist.guid)) |>
     dplyr::rowwise() |>
     dplyr::mutate(sampled_point = purrr::map(.data$SHAPE, \(x) sf::st_sample(x, 1))) |>
     tidyr::unnest(c("SHAPE", "sampled_point")) |>
-    dplyr::mutate(lat = sf::st_coordinates(.data$sampled_point)[,2],
-                  lng = sf::st_coordinates(.data$sampled_point)[,1]) |>
+    dplyr::mutate(
+      lat = sf::st_coordinates(.data$sampled_point)[, 2],
+      lng = sf::st_coordinates(.data$sampled_point)[, 1]
+    ) |>
     dplyr::select(dplyr::any_of(names(missing_coords)))
 
   es.data <- es.data |>
-    dplyr::left_join(missing_coords,
-                     dplyr::join_by("site.id", "site.name", "ADM0_NAME",
-                                    "dist.guid", "imputed_coord")) |>
-    dplyr::mutate(lat = dplyr::coalesce(as.numeric(.data$lat.x), .data$lat.y),
-                  lng = dplyr::coalesce(as.numeric(.data$lng.x), .data$lng.y)) |>
+    dplyr::left_join(
+      missing_coords,
+      dplyr::join_by(
+        "site.id", "site.name", "ADM0_NAME",
+        "dist.guid", "imputed_coord"
+      )
+    ) |>
+    dplyr::mutate(
+      lat = dplyr::coalesce(as.numeric(.data$lat.x), .data$lat.y),
+      lng = dplyr::coalesce(as.numeric(.data$lng.x), .data$lng.y)
+    ) |>
     dplyr::select(-dplyr::ends_with(".x"), -dplyr::ends_with(".y"))
 
   # Final check
@@ -78,14 +90,18 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
     dplyr::distinct()
 
   if (nrow(no_coordinates) != 0) {
-    cli::cli_alert_danger(paste0("Imputation failed for these sites:\n",
-                               paste(unique(no_coordinates$site.name), collapse = ",\n")))
+    cli::cli_alert_danger(paste0(
+      "Imputation failed for these sites:\n",
+      paste(unique(no_coordinates$site.name), collapse = ",\n")
+    ))
   }
 
   after <- nrow(no_coordinates)
   cli::cli_process_done()
-  cli::cli_alert_success(paste0("Imputation success rate: ",
-                                round((before - after) / before * 100, 2), "%"))
+  cli::cli_alert_success(paste0(
+    "Imputation success rate: ",
+    round((before - after) / before * 100, 2), "%"
+  ))
 
   return(es.data)
 }
@@ -95,14 +111,13 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
 #' The cleaning step will attempt to impute missing site coordinates and create
 #' standardized columns used in the desk review.
 #'
-#' @import cli dplyr tidyr
 #' @param es.data `tibble` Environmental surveillance data.
 #' @param dist.shape `sf` District shapefile.
 #' @param ctry.data
 #' `r lifecycle::badge("deprecated")`
 #' `list` This parameter has been deprecated in favor of explicitly passing dataframes
 #' into the function. This allows for greater flexibility in the function.
-#' @return `tibble` Cleaned environmental surveillance data.
+#' @returns `tibble` Cleaned environmental surveillance data.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
@@ -225,10 +240,9 @@ clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated
 #' @details
 #' This function will is now part of the [clean_es_data()].
 #'
-#' @import dplyr lubridate
 #' @param es.data `tibble` ES data.
 #'
-#' @return `tibble` ES data with viral detection columns.
+#' @returns `tibble` ES data with viral detection columns.
 #' @examples
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)

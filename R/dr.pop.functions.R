@@ -39,7 +39,7 @@ check_missing_pop <- function(pop.data, spatial.scale) {
 
 #' Check the population data in country data from a roll up in province and
 #' district population data
-#' @import dplyr cli
+#'
 #' @param ctry.data country data to check for
 #' @keywords internal
 #'
@@ -98,7 +98,7 @@ check_pop_rollout <- function(ctry.data) {
 }
 
 #' Check for GUIDs that has changed due to redistricting
-#' @import dplyr cli
+#'
 #' @param pop.data population data
 #' @param spatial.scale spatial scale of the data
 #' @keywords internal
@@ -182,7 +182,6 @@ spatial_validation <- function(pop.data, spatial.scale) {
 #' [load_clean_ctry_sp()], [load_clean_prov_sp()], [load_clean_dist_sp()] with
 #' `type = long` are the longform shapefiles.
 #'
-#' @import dplyr
 #' @param ctry.data `list` List containing country data. Either the result of
 #' [extract_country_data()] or [init_dr()].
 #' @param spatial.scale `str` Either `"ctry", "prov", "dist"`.
@@ -203,11 +202,13 @@ set_shapefiles <- function(ctry.data, spatial.scale) {
   lifecycle::deprecate_warn(
     "1.3.0",
     "set_shapefiles()",
-    details = paste0("This function is not used in any of the analytic pipelines ",
-                     "and was therefore deprecated.",
-                     " Get the current shapefiles by filtering either:\n",
-                     "raw.data$ctry, raw.data$prov, ",
-                     "raw.data$dist with yr.end == max(yr.end)")
+    details = paste0(
+      "This function is not used in any of the analytic pipelines ",
+      "and was therefore deprecated.",
+      " Get the current shapefiles by filtering either:\n",
+      "raw.data$ctry, raw.data$prov, ",
+      "raw.data$dist with yr.end == max(yr.end)"
+    )
   )
 
   valid.spatial.scales <- c("ctry", "prov", "dist")

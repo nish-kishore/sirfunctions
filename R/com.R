@@ -3,8 +3,7 @@
 #' Send a message on Microsoft Teams
 #'
 #' Helper function to send message to validated MS Teams interface.
-#' @import Microsoft365R
-#' @import AzureAuth
+#'
 #' @param msg `str` Message to be sent.
 #' @param team_id `str` Teams ID. Defaults to `"CGH-GID-PEB-SIR"`.
 #' @param channel `str` Channel where message should be sent.
@@ -33,8 +32,7 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #' Upload file to Sharepoint
 #'
 #' Helper function to upload file to MS SharePoint
-#' @import Microsoft365R
-#' @import AzureAuth
+#'
 #' @param file_to_upload `str` Local path of files to be uploaded.
 #' @param sharepoint_file_loc `str` Location in SharePoint to upload file.
 #' @param site `str` SharePoint site location. Defaults to `"CGH-GID-PEB"`

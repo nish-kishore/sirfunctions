@@ -1,6 +1,6 @@
 # Private functions ----
 #' Generate PowerPoint assumptions
-#' @importFrom officer fp_text unordered_list
+#'
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @keywords internal
@@ -73,8 +73,6 @@ get_ppt_template <- function(path = NULL) {
 #' The original function to build the desk review PowerPoint. This function has been
 #' superseded by [generate_dr_ppt2()]. The function outputs images to the PowerPoint
 #' directly from objects, unlike `generate_dr_ppt2()` which uses images saved in a folder.
-#'
-#' @importFrom officer add_slide layout_properties layout_summary ph_location_label ph_location_type ph_with read_pptx
 #'
 #' @param ppt_template_path `str` Sath to the PowerPoint template.
 #' @param ctry.data `list` List containing polio data for a country. Either the output of
@@ -441,9 +439,6 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
 #'
 #' Generating the PowerPoint from the figures folder is generally faster and allows
 #' figures to remain consistent. Tables remain as PowerPoint tables.
-#'
-#' @importFrom lubridate today
-#' @importFrom officer add_slide block_list external_img fp_text fpar ftext layout_properties layout_summary ph_location ph_location_label ph_location_type ph_with read_pptx
 #'
 #' @param ctry.data `list` Country polio data. Either the output of [extract_country_data()] or
 #' [init_dr()].

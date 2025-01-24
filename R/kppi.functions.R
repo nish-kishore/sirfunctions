@@ -21,8 +21,8 @@ f.year.roll <- function(wk) {
   x[wk > 468 & wk <= 520] <- 10
 
   x <- factor(x,
-              levels = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-              labels = c("Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10")
+    levels = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+    labels = c("Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10")
   )
 
   return(x)

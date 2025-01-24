@@ -6,7 +6,7 @@
 #' @param end_date  end date
 #' @keywords internal
 #'
-#' @return a tibble with year data
+#' @returns a tibble with year data
 generate_year_data <- function(start_date, end_date) {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -51,7 +51,7 @@ generate_year_data <- function(start_date, end_date) {
 #' @param afp.data `tibble` AFP dataset. Either `raw.data$afp` from
 #' [get_all_polio_data()] or `ctry.data$afp.all.2` from [extract_country_data()].
 #'
-#' @return `tibble` AFP dataset with `adequacy.final` column
+#' @returns `tibble` AFP dataset with `adequacy.final` column
 #' @examples
 #' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
@@ -106,7 +106,7 @@ generate_ad_final_col <- function(afp.data) {
 #' @param spatial_scale "ctry", "prov", or "dist".
 #' @keywords internal
 #'
-#' @return summary table containing stool adequacy on a rolling basis
+#' @returns summary table containing stool adequacy on a rolling basis
 stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial_scale) {
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
@@ -179,7 +179,7 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
 #' @param spatial_scale "ctry", "prov", or "dist
 #' @keywords internal
 #'
-#' @return summary table of stool adequacy on a yearly basis
+#' @returns summary table of stool adequacy on a yearly basis
 stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
   geo <- switch(spatial_scale,
     "ctry" = "adm0guid",
@@ -311,7 +311,7 @@ check_spatial_scale <- function(admin_data, spatial_scale) {
 #' @param end_date end date
 #' @keywords internal
 #'
-#' @return a list of GUIDs not present in the time period
+#' @returns a list of GUIDs not present in the time period
 get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) {
   guid_col <- paste0("adm", match(spatial_scale, c("ctry", "prov", "dist")) - 1, "guid")
   expected_freq <- length(lubridate::year(start_date):lubridate::year(end_date))
@@ -332,8 +332,6 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #' missing data is treated. `"good"` classifies missing data as good quality
 #' (POLIS method). `"bad"` classifies all missing as bad quality. `"missing"`
 #' excludes missing from the calculations.
-#' @import dplyr
-#' @import lubridate
 #'
 #' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
 #' formatted as `adm(0,1,2)guid`, onset date as `date` and `cdc.classification.all2`
@@ -366,7 +364,6 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #' )
 #'
 #' @export
-
 f.stool.ad.01 <- function(
     afp.data,
     pop.data,
@@ -378,10 +375,11 @@ f.stool.ad.01 <- function(
     rolling = F,
     sp_continuity_validation = T,
     admin.data = lifecycle::deprecated()) {
-
   if (lifecycle::is_present(admin.data)) {
-    lifecycle::deprecate_warn("1.2.0", "f.stool.ad.01(admin.data)",
-                              "f.stool.ad.01(pop.data)")
+    lifecycle::deprecate_warn(
+      "1.2.0", "f.stool.ad.01(admin.data)",
+      "f.stool.ad.01(pop.data)"
+    )
     pop.data <- admin.data
   }
 

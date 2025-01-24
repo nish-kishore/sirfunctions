@@ -13,7 +13,7 @@
 #' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @keywords internal
 #'
-#' @return `tibble` A summary table including NPAFP rates and population data.
+#' @returns `tibble` A summary table including NPAFP rates and population data.
 npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
@@ -87,7 +87,7 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
 #' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @keywords internal
 #'
-#' @return A summary table including NPAFP rates and population data.
+#' @returns A summary table including NPAFP rates and population data.
 npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial_scale, pending) {
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
@@ -166,9 +166,6 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' Calculate the NPAFP rate from POLIS data. Can either pass `raw.data` to calculate NPAFP rates
 #' on the global dataset, or a `ctry.data` dataset.
 #'
-#' @import dplyr
-#' @import lubridate
-#' @import tidyr
 #' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
 #' formatted as `adm(0,1,2)guid`, onset date as `date` and `cdc.classification.all2` which includes
 #' `"NPAFP", "PENDING", "LAB PENDING"`. This is either `ctry.data$afp.all.2` of [extract_country_data()] or
@@ -199,7 +196,6 @@ f.npafp.rate.01 <- function(
     missing_agemonths = F,
     rolling = F,
     sp_continuity_validation = T) {
-
   # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
@@ -317,8 +313,10 @@ f.npafp.rate.01 <- function(
 
   # Filter AFP and population data based on start and end dates
   afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180,
-                  cdc.classification.all2 != "NOT-AFP")
+    dplyr::filter(
+      dplyr::between(date, start.date, end.date), age.months < 180,
+      cdc.classification.all2 != "NOT-AFP"
+    )
 
 
   # Only years of analysis
@@ -366,12 +364,16 @@ f.npafp.rate.01 <- function(
       dplyr::filter(!is.na(.data$year))
   }
 
-  numeric_cols <- c("n_npafp", "u15pop", "npafp_rate", "par",
-                    "afp.case", "num.wpv.cases",
-                    "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases")
+  numeric_cols <- c(
+    "n_npafp", "u15pop", "npafp_rate", "par",
+    "afp.case", "num.wpv.cases",
+    "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases"
+  )
   int.data <- int.data |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols),
-                                \(x) tidyr::replace_na(x, 0)))
+    dplyr::mutate(dplyr::across(
+      dplyr::any_of(numeric_cols),
+      \(x) tidyr::replace_na(x, 0)
+    ))
 
   return(int.data)
 }

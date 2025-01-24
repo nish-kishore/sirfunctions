@@ -43,7 +43,9 @@ ctry.data$lab_data <- clean_lab_data(ctry.data, "2021-01-01", "2023-12-31")
 raw.data <- get_all_polio_data()
 ctry.data <- extract_country_data("algeria", raw.data)
 ctry.data$lab_data <- read_csv(lab_path)
-ctry.data$lab_data <- clean_lab_data(ctry.data$lab.data, "2021-01-01", "2023-12-31",
-ctry.data$afp.all.2, "algeria")
+ctry.data$lab_data <- clean_lab_data(
+  ctry.data$lab.data, "2021-01-01", "2023-12-31",
+  ctry.data$afp.all.2, "algeria"
+)
 }
 }

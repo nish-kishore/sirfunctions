@@ -10,7 +10,6 @@ Authors@R: c(
     person("Elizabeth", "Krow-Lucal", , "yxn9@cdc.gov", role = "aut"),
     person("Smita", "Chavan", , "wsy2@cdc.gov", role = "aut")
   )
-URL: https://github.com/nish-kishore/sirfunctions
 Description: The sirfunctions package contains key functions used by the
     Surveillance, Innovation, and Research (SIR) team within the Polio
     Eradication Branch (PEB) at the Centers for Disease Control and
@@ -23,9 +22,11 @@ Description: The sirfunctions package contains key functions used by the
     there are several functions that also facilitate communication,
     visualize trends, and perform data quality checks.
 License: MIT + file LICENSE
+URL: https://github.com/nish-kishore/sirfunctions
 Imports: 
     AzureAuth,
     AzureStor,
+    blastula,
     cli,
     dplyr,
     flextable,
@@ -33,32 +34,37 @@ Imports:
     ggplot2,
     ggpubr,
     ggrepel,
+    ggspatial,
+    git2r,
+    glue,
     httr,
+    janitor,
+    lifecycle,
     lubridate,
+    magick,
     Microsoft365R,
     officer,
+    prettyunits,
+    purrr,
     readr,
+    readxl,
+    rlang,
+    rvg,
     scales,
     sf,
     stringr,
+    tibble,
     tidyr,
+    utils,
+    vctrs,
+    withr,
     writexl,
     zoo
 Suggests:
-    blastula,
-    ggspatial,
-    git2r,
-    janitor,
+    datasets,
     knitr,
-    magick,
-    prettyunits,
-    purrr,
-    readxl,
     rmarkdown,
-    rvg,
-    testthat (>= 3.0.0),
-    tibble,
-    vctrs
+    testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3

@@ -42,8 +42,10 @@ Error checking for regional lab data. This is a helper function meant to be used
 \dontrun{
 lab_path <- "C:/Users/XRG9/lab_data_region.csv"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-lab_data_errors_region(ctry.data$lab.data, ctry.data$afp.all.2,
-                       "2021-01-01", "2023-12-31")
+lab_data_errors_region(
+  ctry.data$lab.data, ctry.data$afp.all.2,
+  "2021-01-01", "2023-12-31"
+)
 }
 }
 \keyword{internal}
