@@ -72,7 +72,7 @@ f.timely.detection.01 <- function(
 
   # Limit AFP data to the range described by the analysis start and end dates
   afp.data <- afp.data |>
-    dplyr::filter(between(.data$date, start.date, end.date)) |>
+    dplyr::filter(between(date, start.date, end.date)) |>
     dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) lubridate::as_date(x)))
 
   # Warning message about non-overlapping dates
@@ -90,7 +90,7 @@ f.timely.detection.01 <- function(
 
   # Limit ES data to the range described by the analysis start and end dates
   es.data <- es.data |>
-    dplyr::filter(between(.data$collect.date, start.date, end.date)) |>
+    dplyr::filter(between(collect.date, start.date, end.date)) |>
     dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) lubridate::as_date(x)),
       ctry = ADM0_NAME
     )

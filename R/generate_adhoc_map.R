@@ -101,7 +101,7 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
                                 .owner) {
   g1 <- ggplot2::ggplot() +
     ggplot2::geom_sf(data = m_base_region, fill = "grey80", color = "black", lwd = 0.6, show.legend = FALSE) +
-    ggplot2::geom_sf(data = m_base_prov, aes(fill = .data$detect_status2), color = "grey", lwd = 0.5, show.legend = TRUE) +
+    ggplot2::geom_sf(data = m_base_prov, aes(fill = detect_status2), color = "grey", lwd = 0.5, show.legend = TRUE) +
     ggplot2::geom_sf(data = m_base_region, alpha = 0, color = "black", lwd = 0.6, show.legend = FALSE) +
     ggplot2::scale_fill_manual(
       name = "Last detection \nin region:",
@@ -118,10 +118,10 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
     ) +
     ggplot2::geom_point(
       data = data_p, ggplot2::aes(
-        x = as.numeric(.data$longitude),
-        y = as.numeric(.data$latitude),
-        color = .data$emg_grp2,
-        shape = .data$detect_status
+        x = as.numeric(longitude),
+        y = as.numeric(latitude),
+        color = emg_grp2,
+        shape = detect_status
       ),
       size = 3
     ) +
@@ -130,8 +130,8 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
         ggrepel::geom_label_repel(
           data = m_data_prov,
           ggplot2::aes(
-            label = .data$ADM1_NAME,
-            geometry = .data$SHAPE
+            label = ADM1_NAME,
+            geometry = SHAPE
           ),
           stat = "sf_coordinates",
           size = 2,
@@ -144,17 +144,17 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
     } +
     ggplot2::geom_sf_text(
       data = m_base_region |>
-        dplyr::filter(!(.data$ADM0_NAME %in% country | .data$WHO_CODE %in% clean_maps)),
-      ggplot2::aes(label = .data$WHO_CODE),
+        dplyr::filter(!(ADM0_NAME %in% country | WHO_CODE %in% clean_maps)),
+      ggplot2::aes(label = WHO_CODE),
       size = 2, fontface = "bold"
     ) +
     {
       if (new_detect) {
         ggplot2::geom_point(
           data = data_r, ggplot2::aes(
-            x = as.numeric(.data$longitude),
-            y = as.numeric(.data$latitude),
-            shape = .data$measurement
+            x = as.numeric(longitude),
+            y = as.numeric(latitude),
+            shape = measurement
           ),
           size = 4,
           stroke = 1.5
@@ -255,7 +255,7 @@ add_new_detection <- function(data_p, country, date_3a, date_3a_a, date_3b) {
   data_r <- data_p |>
     dplyr::filter(
       place.admin.0 %in% country,
-      dplyr::between(.data$report_date, dplyr::if_else(condition, date_3a_a, date_3a), date_3b)
+      dplyr::between(report_date, dplyr::if_else(condition, date_3a_a, date_3a), date_3b)
     ) |>
     dplyr::mutate(measurement = "Reported detection")
 
@@ -284,8 +284,8 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
         (last_prov_detect <= (.end_date %m-% months(6)) &
           last_prov_detect >= .start_date) ~ "6-13months"
       ),
-      detect_overall = ifelse(!is.na(.data$detect_status), "Y", "N"),
-      detect_status = factor(.data$detect_status, levels = c("6-13months", "<6months"))
+      detect_overall = ifelse(!is.na(detect_status), "Y", "N"),
+      detect_status = factor(detect_status, levels = c("6-13months", "<6months"))
     )
 
   return(data_prov)
@@ -319,30 +319,30 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
     data_p <- raw.data$pos |>
       dplyr::mutate(
         vtype_mod = dplyr::case_when(
-          .data$measurement %in% c("cVDPV 1", "VDPV 1") ~ "vtype 1",
-          .data$measurement %in% c("cVDPV 2", "VDPV 2") ~ "vtype 2",
-          .data$measurement %in% c("cVDPV 3", "VDPV 3") ~ "vtype 3",
-          .data$measurement %in% c("WILD 1") ~ "wtype 1"
+          measurement %in% c("cVDPV 1", "VDPV 1") ~ "vtype 1",
+          measurement %in% c("cVDPV 2", "VDPV 2") ~ "vtype 2",
+          measurement %in% c("cVDPV 3", "VDPV 3") ~ "vtype 3",
+          measurement %in% c("WILD 1") ~ "wtype 1"
         ),
         emg_grp2 = dplyr::case_when(
-          .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3") ~ .data$emergencegroup,
-          .data$measurement == "WILD 1" ~ .data$viruscluster,
-          .data$measurement == "VDPV 1" ~ "VDPV 1",
-          .data$measurement == "VDPV 2" ~ "VDPV 2",
-          .data$measurement == "VDPV 3" ~ "VDPV 3"
+          measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3") ~ emergencegroup,
+          measurement == "WILD 1" ~ viruscluster,
+          measurement == "VDPV 1" ~ "VDPV 1",
+          measurement == "VDPV 2" ~ "VDPV 2",
+          measurement == "VDPV 3" ~ "VDPV 3"
         )
       ) |>
       dplyr::filter(
         place.admin.0 %in% country,
         dplyr::between(dateonset, .start_date, .end_date),
-        .data$vtype_mod %in% virus_type_modified
+        vtype_mod %in% virus_type_modified
       )
   } else {
     data_p <- raw.data$pos |>
       dplyr::filter(
         place.admin.0 %in% country &
-          dplyr::between(.data$dateonset, .start_date, .end_date),
-        .data$measurement %in% virus_type
+          dplyr::between(dateonset, .start_date, .end_date),
+        measurement %in% virus_type
       ) |>
       dplyr::mutate(
         emg_grp2 = dplyr::case_when(
@@ -353,7 +353,7 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
   }
 
   data_p <- data_p |>
-    dplyr::arrange(.data$measurement, .data$place.admin.0, .data$place.admin.1, .data$dateonset) |>
+    dplyr::arrange(measurement, place.admin.0, place.admin.1, dateonset) |>
     dplyr::mutate(
       place.admin.1 = factor(place.admin.1,
         levels = rev(sort(unique(place.admin.1))),
@@ -370,15 +370,15 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
       recent_detect = factor(case_when(
         dateonset >= (today() %m-% months(3)) ~ "Y"
       )),
-      source_mod = factor(.data$source_mod, levels = c("AFP", "OTHER", "ES")),
+      source_mod = factor(source_mod, levels = c("AFP", "OTHER", "ES")),
       detect_status = dplyr::case_when(
         dateonset > (.end_date %m-% months(6)) ~ "<6months",
         (dateonset <= (.end_date %m-% months(6)) &
           dateonset >= .start_date) ~ "6-13months"
       ),
-      detect_status = factor(.data$detect_status, levels = c("6-13months", "<6months"))
+      detect_status = factor(detect_status, levels = c("6-13months", "<6months"))
     ) |>
-    dplyr::filter(.data$source_mod %in% surv) |>
+    dplyr::filter(source_mod %in% surv) |>
     dplyr::distinct(epid, .keep_all = T)
 
   return(data_p)
@@ -459,16 +459,16 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
   emg <- raw.data$pos |>
     dplyr::filter(place.admin.0 %in% country) |>
     dplyr::mutate(emg_grp2 = dplyr::case_when(
-      .data$measurement == "WILD 1" ~ viruscluster,
+      measurement == "WILD 1" ~ viruscluster,
       TRUE ~ emergencegroup
     )) |>
     dplyr::filter(
-      .data$dateonset >= start_date,
-      .data$source %in% c("AFP", "ENV"),
-      .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")
+      dateonset >= start_date,
+      source %in% c("AFP", "ENV"),
+      measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")
     ) |>
-    dplyr::distinct(.data$emg_grp2) |>
-    dplyr::arrange(.data$emg_grp2) |>
+    dplyr::distinct(emg_grp2) |>
+    dplyr::arrange(emg_grp2) |>
     tidyr::drop_na()
 
   emg_cols <- f.color.schemes("emergence.groups")
@@ -738,19 +738,19 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   # Get the corresponding base regions based on WHO region
   if (any(c("EMRO", "EURO") %in% who_region)) {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% region_mapping[["EMRO"]], ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% region_mapping[["EMRO"]], ENDDATE == "9999-12-31")
   } else if ("WPRO" %in% who_region) {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% region_mapping[["WPRO"]], ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% region_mapping[["WPRO"]], ENDDATE == "9999-12-31")
   } else if ("SEARO" %in% who_region) {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% region_mapping[["SEARO"]], ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% region_mapping[["SEARO"]], ENDDATE == "9999-12-31")
   } else if ("AFRO" %in% who_region) {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% region_mapping[["AFRO"]], ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% region_mapping[["AFRO"]], ENDDATE == "9999-12-31")
   } else {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% who_region, ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% who_region, ENDDATE == "9999-12-31")
   }
 
   # Create labels by country
@@ -761,10 +761,10 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
     tibble::rownames_to_column(var = "num_label") |>
     dplyr::mutate(
       detect_status2 = dplyr::case_when(
-        is.na(.data$detect_status) ~ ">13months",
-        TRUE ~ .data$detect_status
+        is.na(detect_status) ~ ">13months",
+        TRUE ~ detect_status
       ),
-      detect_status2 = factor(.data$detect_status2, levels = c(">13months", "6-13months", "<6months"))
+      detect_status2 = factor(detect_status2, levels = c(">13months", "6-13months", "<6months"))
     )
 
   # Filters to impacted regions only

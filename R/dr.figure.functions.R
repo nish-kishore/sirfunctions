@@ -38,7 +38,7 @@ generate_ctry_timeliness_graph <- function(int.data,
   }
 
   int.data <- int.data |>
-    dplyr::filter(.data$medi >= 0 | !is.na(.data$medi))
+    dplyr::filter(medi >= 0 | !is.na(medi))
 
   timely_nation <- ggplot2::ggplot() +
     ggplot2::geom_bar(
@@ -125,7 +125,7 @@ generate_prov_timeliness_graph <- function(int.data,
   }
 
   int.data <- int.data |>
-    dplyr::filter(.data$medi >= 0 | !is.na(.data$medi))
+    dplyr::filter(medi >= 0 | !is.na(medi))
 
   timely_prov <- ggplot2::ggplot(int.data |>
     dplyr::filter(is.na(medi) == F &
@@ -208,12 +208,12 @@ generate_afp_epicurve <- function(ctry.data,
   afp.epi.date.filter <- ctry.data$afp.epi %>%
     dplyr::filter(
       dplyr::between(yronset, as.numeric(lubridate::year(start_date)), as.numeric(lubridate::year(end_date))),
-      .data$cdc.classification.all2 != "NOT-AFP"
+      cdc.classification.all2 != "NOT-AFP"
     )
 
   case.num.labs <- dplyr::reframe(
-    dplyr::group_by(afp.epi.date.filter, .data$yronset),
-    labs = paste0(.data$yronset, " (N = ", sum(.data$afp.cases), ")")
+    dplyr::group_by(afp.epi.date.filter, yronset),
+    labs = paste0(yronset, " (N = ", sum(afp.cases), ")")
   ) %>%
     dplyr::distinct(.)
 
@@ -287,7 +287,7 @@ generate_afp_prov_year <- function(afp.by.month.prov,
 
   afp.dets.prov.year <- ggplot2::ggplot(
     afp.month.prov.g |>
-      dplyr::arrange(.data$u15pop),
+      dplyr::arrange(u15pop),
     ggplot2::aes(
       x = mon.year2,
       y = forcats::fct_inorder(prov),
@@ -394,11 +394,11 @@ generate_es_site_det <- function(sia.data,
 
   minsy <- dplyr::count(
     sias,
-    .data$yr.sia,
-    .data$province,
-    .data$activity.start.date,
-    .data$activity.end.date,
-    .data$vaccine.type
+    yr.sia,
+    province,
+    activity.start.date,
+    activity.end.date,
+    vaccine.type
   )
 
   colnames(minsy)[colnames(minsy) == "province"] <- "ADM1_NAME"
@@ -458,7 +458,7 @@ generate_es_site_det <- function(sia.data,
   new.site <- es.data %>%
     dplyr::filter(early.dat >= min(collect.date) &
       early.dat <= max(collect.date)) %>%
-    dplyr::distinct(.data$site.name, .data$early.dat)
+    dplyr::distinct(site.name, early.dat)
 
 
   minny <- min(es.data$collect.date) - 7
@@ -676,7 +676,7 @@ generate_case_num_dose_g <- function(ctry.data,
       cdc.classification.all2 == "NPAFP",
       dplyr::between(age.months, 6, 59)
     ) |>
-    dplyr::group_by(.data$dose.cat, .data$year, .data$prov) |>
+    dplyr::group_by(dose.cat, year, prov) |>
     dplyr::summarise(freq = dplyr::n())
 
   # case num by year and province by vaccination status
@@ -758,9 +758,9 @@ generate_iss_barplot <- function(iss.data = NULL,
     dplyr::filter(dplyr::between(today_date, start_date, end_date))
 
   iss.data3 <- iss.data2.1 %>%
-    dplyr::group_by(.data$month, .data$year, .data$priority_level) %>%
+    dplyr::group_by(month, year, priority_level) %>%
     dplyr::summarize(freq = dplyr::n()) %>%
-    dplyr::filter(dplyr::between(.data$year, lubridate::year(start_date), lubridate::year(end_date)))
+    dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)))
 
   iss.data3$labs <- month.abb[iss.data3$month] %>%
     factor(
@@ -884,11 +884,11 @@ generate_pop_map <- function(ctry.data,
 
   # Only the most recent shape file
   ctry.shape <- ctry.shape |>
-    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = active.year.01)
 
   # Merge with province
   shape.prov.pop <-
@@ -911,7 +911,7 @@ generate_pop_map <- function(ctry.data,
     ) +
     ggrepel::geom_label_repel(
       data = dplyr::filter(ctry.data$cities, toupper(CNTRY_NAME) == ctry.data$name),
-      ggplot2::aes(label = CITY_NAME, geometry = .data$geometry),
+      ggplot2::aes(label = CITY_NAME, geometry = geometry),
       stat = "sf_coordinates"
     ) +
     ggplot2::scale_fill_distiller(
@@ -1014,14 +1014,14 @@ generate_dist_pop_map <- function(ctry.data,
   }
 
   ctry.shape <- ctry.shape |>
-    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = active.year.01)
   dist.shape <- dist.shape |>
-    dplyr::filter(.data$active.year.01 == lubridate::year(end_date)) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::filter(active.year.01 == lubridate::year(end_date)) |>
+    dplyr::mutate(year = active.year.01)
 
   shape.prov.pop <-
     dplyr::left_join(prov.shape, ctry.data$prov.pop, by = c("GUID" = "adm1guid", "year")) |>
@@ -1047,7 +1047,7 @@ generate_dist_pop_map <- function(ctry.data,
     ) +
     ggrepel::geom_label_repel(
       data = shape.prov.pop,
-      ggplot2::aes(label = ADM1_NAME, geometry = .data$SHAPE),
+      ggplot2::aes(label = ADM1_NAME, geometry = SHAPE),
       stat = "sf_coordinates",
       force = 80
     ) +
@@ -1137,18 +1137,18 @@ generate_afp_case_map <- function(afp.all,
 
   ctry.shape <- ctry.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
 
   afp.case.map.filter <- afp.all |>
     dplyr::filter(dplyr::between(as.Date(date.onset), start_date, end_date)) |>
@@ -1274,18 +1274,18 @@ generate_npafp_maps <- function(prov.extract,
 
   ctry.shape <- ctry.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
 
   provnpafp <- prov.extract |>
     filter(!is.na(prov))
@@ -1298,7 +1298,7 @@ generate_npafp_maps <- function(prov.extract,
   )
 
   prov.cut <- provnpafp %>%
-    dplyr::mutate(cats = as.character(.data$cats)) %>%
+    dplyr::mutate(cats = as.character(cats)) %>%
     dplyr::mutate(
       cats = dplyr::case_when(
         npafp_rate == 0 & u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
@@ -1341,7 +1341,7 @@ generate_npafp_maps <- function(prov.extract,
   # Labels for provinces meeting NPAFP rate
   # How many provinces meet >2 NPAFP?
   prov.2npafp <- provnpafp %>%
-    dplyr::group_by(.data$year, .data$adm1guid, .data$prov) %>%
+    dplyr::group_by(year, adm1guid, prov) %>%
     dplyr::summarize(meet2 = sum(npafp_rate >= 2, na.rm = T)) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(year) %>%
@@ -1351,11 +1351,11 @@ generate_npafp_maps <- function(prov.extract,
     ) %>%
     dplyr::mutate(
       labs = paste0(
-        .data$num.meet2,
+        num.meet2,
         "/",
-        .data$len.year,
+        len.year,
         " (",
-        round(100 * .data$num.meet2 / .data$len.year, 0),
+        round(100 * num.meet2 / len.year, 0),
         "%)",
         " provinces with >= 2 cases of NPAFP \nper 100,000 population"
       )
@@ -1509,25 +1509,25 @@ generate_npafp_maps_dist <- function(dist.extract,
 
   ctry.shape <- ctry.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
   dist.shape <- dist.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
 
   distnpafp <- dist.extract |>
     filter(!is.na(dist))
@@ -1542,7 +1542,7 @@ generate_npafp_maps_dist <- function(dist.extract,
   # For those with no cases --> separate out districts with u15pop >100K and <100K
 
   dist.cut <- distnpafp %>%
-    dplyr::mutate(cats = as.character(.data$cats)) %>%
+    dplyr::mutate(cats = as.character(cats)) %>%
     dplyr::mutate(
       cats = dplyr::case_when(
         npafp_rate == 0 & u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
@@ -1579,7 +1579,7 @@ generate_npafp_maps_dist <- function(dist.extract,
 
   # How many districts meet >2 NPAFP?
   dist.2npafp <- distnpafp %>%
-    dplyr::group_by(.data$year, .data$adm2guid, .data$dist) %>%
+    dplyr::group_by(year, adm2guid, dist) %>%
     dplyr::summarize(meet2 = sum(npafp_rate >= 2, na.rm = T)) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(year) %>%
@@ -1589,11 +1589,11 @@ generate_npafp_maps_dist <- function(dist.extract,
     ) %>%
     dplyr::mutate(
       labs = paste0(
-        .data$num.meet2,
+        num.meet2,
         "/",
-        .data$len.year,
+        len.year,
         " (",
-        round(100 * .data$num.meet2 / .data$len.year, 0),
+        round(100 * num.meet2 / len.year, 0),
         "%)",
         " districts with >= 2 cases of NPAFP \nper 100,000 population"
       )
@@ -1738,37 +1738,37 @@ generate_stool_ad_maps <- function(ctry.data,
 
   ctry.shape <- ctry.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
 
   allafp <- ctry.data$afp.all.2 |>
     dplyr::filter(dplyr::between(date, start_date, end_date)) |>
     dplyr::reframe(
       dplyr::group_by(
         ctry.data$afp.all.2,
-        .data$cdc.classification.all2,
-        .data$adm1guid,
-        .data$year
+        cdc.classification.all2,
+        adm1guid,
+        year
       ),
       freq = dplyr::n()
     ) |>
-    dplyr::filter(.data$cdc.classification.all2 != "NOT-AFP")
+    dplyr::filter(cdc.classification.all2 != "NOT-AFP")
 
   allprov <- ctry.data$prov.pop[, c("adm1guid", "year", "prov")] %>%
     dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)))
 
   all.prov.afp <- dplyr::left_join(allprov, allafp) %>%
-    dplyr::group_by(.data$year, .data$adm1guid, .data$prov) %>%
+    dplyr::group_by(year, adm1guid, prov) %>%
     dplyr::summarize(allafp = sum(freq, na.rm = T))
 
   stoolad.p <- dplyr::left_join(all.prov.afp,
@@ -1795,12 +1795,12 @@ generate_stool_ad_maps <- function(ctry.data,
       )
     ) %>%
     dplyr::mutate(prop.cat = factor(
-      .data$prop.cat,
+      prop.cat,
       levels = c("Zero AFP cases", "<40%", "40-59%", "60-79%", "80%+")
     ))
 
   stoolad.nums.p <- stoolad.p %>%
-    dplyr::group_by(.data$year, .data$adm1guid, .data$prov) %>%
+    dplyr::group_by(year, adm1guid, prov) %>%
     dplyr::summarize(meet.stool = sum(per.stool.ad >= 80, na.rm = T)) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(year) %>%
@@ -1810,11 +1810,11 @@ generate_stool_ad_maps <- function(ctry.data,
     ) %>%
     dplyr::mutate(
       labs = paste0(
-        .data$num.meet.stool,
+        num.meet.stool,
         "/",
-        .data$len.year,
+        len.year,
         " (",
-        round(100 * .data$num.meet.stool / .data$len.year, 0),
+        round(100 * num.meet.stool / len.year, 0),
         "%)",
         " provinces with >= 80% stool adequacy"
       )
@@ -1971,25 +1971,25 @@ generate_stool_ad_maps_dist <- function(ctry.data,
 
   ctry.shape <- ctry.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
   dist.shape <- dist.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
 
 
 
@@ -2003,9 +2003,9 @@ generate_stool_ad_maps_dist <- function(ctry.data,
     dplyr::reframe(
       dplyr::group_by(
         ctry.data$afp.all.2,
-        .data$cdc.classification.all2,
-        .data$adm2guid,
-        .data$year
+        cdc.classification.all2,
+        adm2guid,
+        year
       ),
       freq = dplyr::n()
     ) %>%
@@ -2015,7 +2015,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
     dplyr::filter(year >= lubridate::year(start_date) & year <= lubridate::year(end_date))
 
   all.dist.afp <- dplyr::left_join(alldist, allafp.d) %>%
-    dplyr::group_by(.data$year, .data$adm2guid, .data$prov, .data$dist) %>%
+    dplyr::group_by(year, adm2guid, prov, dist) %>%
     dplyr::summarize(allafp = sum(freq, na.rm = T))
 
   stoolad.d <- dplyr::left_join(
@@ -2044,12 +2044,12 @@ generate_stool_ad_maps_dist <- function(ctry.data,
       )
     ) %>%
     dplyr::mutate(prop.cat = factor(
-      .data$prop.cat,
+      prop.cat,
       levels = c("Zero AFP cases", "<40%", "40-59%", "60-79%", "80%+")
     ))
 
   stoolad.nums.d <- stoolad.d %>%
-    dplyr::group_by(.data$year, .data$adm2guid, .data$dist) %>%
+    dplyr::group_by(year, adm2guid, dist) %>%
     dplyr::summarize(meet.stool = sum(per.stool.ad >= 80, na.rm = T)) %>%
     dplyr::ungroup() %>%
     dplyr::group_by(year) %>%
@@ -2059,11 +2059,11 @@ generate_stool_ad_maps_dist <- function(ctry.data,
     ) %>%
     dplyr::mutate(
       labs = paste0(
-        .data$num.meet.stool,
+        num.meet.stool,
         "/",
-        .data$len.year,
+        len.year,
         " (",
-        round(100 * .data$num.meet.stool / .data$len.year, 0),
+        round(100 * num.meet.stool / len.year, 0),
         "%)",
         " districts with >= 80% stool adequacy"
       )
@@ -2198,18 +2198,18 @@ generate_timeliness_maps <- function(ctry.data,
 
   ctry.shape <- ctry.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
 
   long.timely <- ctry.data$afp.all.2 %>%
     dplyr::select(
@@ -2227,7 +2227,7 @@ generate_timeliness_maps <- function(ctry.data,
       names_to = "type",
       values_to = "value"
     ) %>%
-    dplyr::group_by(.data$year, .data$type, .data$prov, .data$adm1guid) %>%
+    dplyr::group_by(year, type, prov, adm1guid) %>%
     dplyr::summarize(prop = sum(value, na.rm = T) / dplyr::n()) %>%
     dplyr::ungroup() %>%
     dplyr::filter(year >= lubridate::year(start_date) &
@@ -2247,7 +2247,7 @@ generate_timeliness_maps <- function(ctry.data,
     case.num = dplyr::n()
   ) %>%
     dplyr::ungroup() %>%
-    dplyr::filter(.data$year >= lubridate::year(start_date) &
+    dplyr::filter(year >= lubridate::year(start_date) &
       year <= lubridate::year(end_date)) %>%
     tidyr::complete(year, prov, fill = list(case.num = 0))
 
@@ -2271,10 +2271,10 @@ generate_timeliness_maps <- function(ctry.data,
     dplyr::full_join(time.map, all.case, by = c("GUID" = "adm1guid", "year" = "year"))
 
   time.map <- time.map %>%
-    dplyr::mutate(prop = as.character(.data$prop)) %>%
-    dplyr::mutate(prop = ifelse(.data$case.num == 0, "No AFP cases", .data$prop)) %>%
+    dplyr::mutate(prop = as.character(prop)) %>%
+    dplyr::mutate(prop = ifelse(case.num == 0, "No AFP cases", prop)) %>%
     dplyr::mutate(prop = factor(
-      .data$prop,
+      prop,
       levels = c(
         "<20%",
         "20-49%",
@@ -2289,7 +2289,7 @@ generate_timeliness_maps <- function(ctry.data,
 
   # Flag provinces with less than 5 AFP cases reported
   low.case.prov <- time.map %>%
-    dplyr::group_by(.data$year, .data$ADM1_NAME) %>%
+    dplyr::group_by(year, ADM1_NAME) %>%
     dplyr::filter(case.num <= 5)
 
   # noti.7d.on
@@ -2692,11 +2692,11 @@ generate_es_det_map <- function(es.data,
 
   # For this map, use the most recent shapefile
   ctry.shape <- ctry.shape |>
-    dplyr::filter(.data$active.year.01 == lubridate::year(es_end_date)) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::filter(active.year.01 == lubridate::year(es_end_date)) |>
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
-    dplyr::filter(.data$active.year.01 == lubridate::year(es_end_date)) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::filter(active.year.01 == lubridate::year(es_end_date)) |>
+    dplyr::mutate(year = active.year.01)
 
   es.data <- es.data |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
@@ -2720,9 +2720,9 @@ generate_es_det_map <- function(es.data,
     dplyr::mutate(cats = dplyr::case_when(samp.num < 5 ~ "<5 samples", TRUE ~ cats))
 
   site.coord <-
-    dplyr::reframe(dplyr::group_by(es.data, .data$site.name),
-      lat = .data$lat,
-      lng = .data$lng
+    dplyr::reframe(dplyr::group_by(es.data, site.name),
+      lat = lat,
+      lng = lng
     )
   site.coord <- unique(site.coord)
 
@@ -2862,18 +2862,18 @@ generate_iss_map <- function(iss.data,
 
   ctry.shape <- ctry.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
   prov.shape <- prov.shape |>
     dplyr::filter(dplyr::between(
-      .data$active.year.01,
+      active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = .data$active.year.01)
+    dplyr::mutate(year = active.year.01)
 
 
 
@@ -2895,7 +2895,7 @@ generate_iss_map <- function(iss.data,
       dplyr::between(`_gps_ending_latitude`, bbox$ymin, bbox$ymax)
     )
 
-  pryr <- dplyr::count(iss.data, .data$priority_level, .data$year) |>
+  pryr <- dplyr::count(iss.data, priority_level, year) |>
     dplyr::filter(priority_level == "High")
 
   ctry.shape <- dplyr::left_join(ctry.shape, pryr) |>
@@ -3059,7 +3059,7 @@ generate_surv_ind_tab <- function(ctry.data,
     dplyr::mutate(dplyr::across(tot.dist.adeq, ~ tidyr::replace_na(.x, 0)))
 
   meet.ind <- meet.ind |>
-    dplyr::mutate(prop.dist.adeq = .data$tot.dist.adeq / .data$tot.dist.pop * 100)
+    dplyr::mutate(prop.dist.adeq = tot.dist.adeq / tot.dist.pop * 100)
 
   ctry.ind.afp <- dplyr::left_join(ctry.extract, cstool, by = c("year", "adm0guid"))
   ctry.ind.afp <- dplyr::left_join(ctry.ind.afp, afp.case, by = c("year"))
@@ -3073,7 +3073,7 @@ generate_surv_ind_tab <- function(ctry.data,
     dplyr::filter(ctry == stringr::str_to_upper(country_name) &
       u15pop >= 100000) %>%
     unique() %>%
-    dplyr::group_by(.data$year, .data$u15pop, .data$adm2guid) %>%
+    dplyr::group_by(year, u15pop, adm2guid) %>%
     dplyr::filter(u15pop >= 100000) %>%
     dplyr::filter(year >= lubridate::year(start_date) &
       year <= lubridate::year(end_date))
@@ -3095,7 +3095,7 @@ generate_surv_ind_tab <- function(ctry.data,
   adeq.dists <-
     dplyr::left_join(num.dists.100k, ad.dists.100k, by = c("year")) %>%
     dplyr::mutate(dplyr::across(dplyr::everything(), ~ tidyr::replace_na(.x, 0))) %>%
-    dplyr::mutate(prop = paste0(.data$ad.dist.100k.num, "/", .data$dist.100k.num))
+    dplyr::mutate(prop = paste0(ad.dist.100k.num, "/", dist.100k.num))
 
   temp.ind.tab1 <-
     dplyr::left_join(temp.ind.tab, adeq.dists, by = c("year" = "year"))
@@ -3217,16 +3217,16 @@ generate_pop_tab <- function(prov.case.ind,
     dplyr::filter(!is.na(prov))
 
   sub.prov.join <- dplyr::full_join(sub.prov.case.ind, sub.pstool, by = c("year", "prov")) %>%
-    dplyr::arrange(.data$prov, .data$year)
+    dplyr::arrange(prov, year)
 
   sub.prov.join <- sub.prov.join %>%
-    dplyr::group_by(.data$prov) %>%
-    dplyr::mutate(diff = dplyr::lag(.data$n_npafp)) %>%
-    dplyr::mutate(diff_per = round(100 * (.data$n_npafp - dplyr::lag(.data$n_npafp)) /
-      dplyr::lag(.data$n_npafp), 1)) %>%
+    dplyr::group_by(prov) %>%
+    dplyr::mutate(diff = dplyr::lag(n_npafp)) %>%
+    dplyr::mutate(diff_per = round(100 * (n_npafp - dplyr::lag(n_npafp)) /
+      dplyr::lag(n_npafp), 1)) %>%
     dplyr::mutate(dplyr::across(c(per.stool.ad, diff, diff_per, n_npafp), \(x) round(x, 0))) %>%
     dplyr::mutate(dplyr::across(c(npafp_rate), \(x) round(x, 1))) |>
-    dplyr::mutate(u15pop = round(.data$u15pop, 0)) |>
+    dplyr::mutate(u15pop = round(u15pop, 0)) |>
     dplyr::filter(!is.na(prov))
 
   date.analysis <- seq(lubridate::year(start_date), lubridate::year(end_date), 1)
@@ -3454,30 +3454,30 @@ generate_inad_tab <- function(ctry.data,
     dplyr::group_by(year) |>
     dplyr::summarise(
       good.cond.1 = sum(
-        (.data$ontostool1 <= 14 & (.data$stool.1.condition == "Good" | is.na(.data$stool.1.condition))) |
-          (.data$ontostool2 <= 14 & (.data$stool.2.condition == "Good" | is.na(.data$stool.2.condition))),
+        (ontostool1 <= 14 & (stool.1.condition == "Good" | is.na(stool.1.condition))) |
+          (ontostool2 <= 14 & (stool.2.condition == "Good" | is.na(stool.2.condition))),
         na.rm = T
       ),
-      good.cond.2 = sum(.data$stool1missing == 0 &
-        .data$stool2missing == 0 &
-        .data$ontostool1 <= 21 &
-        .data$ontostool2 <= 21 &
-        (.data$stool.1.condition == "Good" | is.na(.data$stool.1.condition)) &
-        (.data$stool.2.condition == "Good" | is.na(.data$stool.2.condition)), na.rm = T),
+      good.cond.2 = sum(stool1missing == 0 &
+        stool2missing == 0 &
+        ontostool1 <= 21 &
+        ontostool2 <= 21 &
+        (stool.1.condition == "Good" | is.na(stool.1.condition)) &
+        (stool.2.condition == "Good" | is.na(stool.2.condition)), na.rm = T),
       afp.cases = n()
     ) |>
     dplyr::mutate(
-      good.cond.1per = round(.data$good.cond.1 / .data$afp.cases * 100, 0),
-      good.cond.2per = round(.data$good.cond.2 / .data$afp.cases * 100, 0)
+      good.cond.1per = round(good.cond.1 / afp.cases * 100, 0),
+      good.cond.2per = round(good.cond.2 / afp.cases * 100, 0)
     ) |>
     dplyr::mutate(
       good.cond.1per = paste0(
-        .data$good.cond.1per,
-        "% (", .data$good.cond.1, "/", .data$afp.cases, " cases)"
+        good.cond.1per,
+        "% (", good.cond.1, "/", afp.cases, " cases)"
       ),
       good.cond.2per = paste0(
-        .data$good.cond.2per,
-        "% (", .data$good.cond.2, "/", .data$afp.cases, " cases)"
+        good.cond.2per,
+        "% (", good.cond.2, "/", afp.cases, " cases)"
       )
     )
 
@@ -3488,16 +3488,16 @@ generate_inad_tab <- function(ctry.data,
   # Create additional columns
   allinadstool <- allinadstool |>
     dplyr::mutate(
-      timelyper = round(.data$late.collection / .data$num.inadequate * 100, 0),
-      missingper = round(.data$one.or.no.stool / .data$num.inadequate * 100, 0),
-      poorper = round(.data$bad.condition / .data$num.inadequate * 100, 0),
-      badper = round(.data$bad.data / .data$num.inadequate * 100, 0)
+      timelyper = round(late.collection / num.inadequate * 100, 0),
+      missingper = round(one.or.no.stool / num.inadequate * 100, 0),
+      poorper = round(bad.condition / num.inadequate * 100, 0),
+      badper = round(bad.data / num.inadequate * 100, 0)
     ) |>
     dplyr::mutate(
-      timelyper = paste0(.data$late.collection, " (", .data$timelyper, "%)"),
-      missingper = paste0(.data$one.or.no.stool, " (", .data$missingper, "%)"),
-      poorper = paste0(.data$bad.condition, " (", .data$poorper, "%)"),
-      badper = paste0(.data$bad.data, " (", .data$badper, "%)")
+      timelyper = paste0(late.collection, " (", timelyper, "%)"),
+      missingper = paste0(one.or.no.stool, " (", missingper, "%)"),
+      poorper = paste0(bad.condition, " (", poorper, "%)"),
+      badper = paste0(bad.data, " (", badper, "%)")
     )
 
   inad.tab <- allinadstool |>
@@ -3599,8 +3599,8 @@ generate_60_day_tab <- function(cases.need60day) {
   comp.by.year <- cases.need60day |>
     dplyr::group_by(year) |>
     dplyr::summarize(
-      inadequate = sum(.data$adequacy.final2 == "Inadequate"),
-      inadequate.need.60day = sum(.data$need60day.v2 == 1 & .data$adequacy.final2 == "Inadequate"),
+      inadequate = sum(adequacy.final2 == "Inadequate"),
+      inadequate.need.60day = sum(need60day.v2 == 1 & adequacy.final2 == "Inadequate"),
       got60day = sum(got60day == 1, na.rm = T),
       ontime60day = sum(ontime.60day == 1, na.rm = T),
       compatible = sum(cdc.classification.all2 == "COMPATIBLE"),
@@ -3608,17 +3608,17 @@ generate_60_day_tab <- function(cases.need60day) {
       missing.fu.date = sum(missing.fu.date == 1, na.rm = T)
     ) |>
     dplyr::mutate(
-      per.got60 = round(.data$got60day / .data$inadequate.need.60day * 100),
-      per.ontime60day = round(.data$ontime60day / .data$inadequate.need.60day * 100),
-      per.comp = round(.data$compatible / .data$inadequate * 100),
-      per.pot.comp = round(.data$pot.compatible / .data$inadequate * 100),
-      per.got60.2 = paste0(.data$got60day, "/", .data$inadequate.need.60day, " (", .data$per.got60, "%)"),
-      per.ontime60day.2 = paste0(.data$ontime60day, "/", .data$inadequate.need.60day, " (", .data$per.ontime60day, "%)"),
-      per.comp.2 = .data$compatible,
-      per.pot.comp.2 = .data$pot.compatible,
+      per.got60 = round(got60day / inadequate.need.60day * 100),
+      per.ontime60day = round(ontime60day / inadequate.need.60day * 100),
+      per.comp = round(compatible / inadequate * 100),
+      per.pot.comp = round(pot.compatible / inadequate * 100),
+      per.got60.2 = paste0(got60day, "/", inadequate.need.60day, " (", per.got60, "%)"),
+      per.ontime60day.2 = paste0(ontime60day, "/", inadequate.need.60day, " (", per.ontime60day, "%)"),
+      per.comp.2 = compatible,
+      per.pot.comp.2 = pot.compatible,
       per.missing.fu.date = paste0(
-        .data$missing.fu.date, "/", .data$inadequate.need.60day, " (",
-        round(.data$missing.fu.date / .data$inadequate.need.60day * 100),
+        missing.fu.date, "/", inadequate.need.60day, " (",
+        round(missing.fu.date / inadequate.need.60day * 100),
         "%)"
       )
     ) |>
@@ -3738,54 +3738,54 @@ generate_es_tab <- function(es.data,
   # get values with negative intervals
   neg_interval_data <- es.data |>
     dplyr::filter(timely < 0 | is.na(timely)) |>
-    dplyr::group_by(.data$ADM1_NAME, .data$ADM2_NAME, .data$site.name) |>
+    dplyr::group_by(ADM1_NAME, ADM2_NAME, site.name) |>
     dplyr::summarize(neg_intervals = dplyr::n())
   # sample summary
   sample_summary <- es.data |>
-    dplyr::group_by(.data$ADM1_NAME, .data$ADM2_NAME, .data$site.name) |>
+    dplyr::group_by(ADM1_NAME, ADM2_NAME, site.name) |>
     dplyr::summarize(samples = dplyr::n())
 
   neg_interval_data <- neg_interval_data |>
     dplyr::left_join(sample_summary)
 
   neg_interval_data <- neg_interval_data |>
-    dplyr::mutate(bad_samples = round(.data$neg_intervals / .data$samples * 100, 2))
+    dplyr::mutate(bad_samples = round(neg_intervals / samples * 100, 2))
 
   # turn negative timely intervals to NA to exclude from calculations
   es.data <- es.data |>
-    dplyr::mutate(timely = dplyr::if_else(.data$timely < 0, NA, .data$timely))
+    dplyr::mutate(timely = dplyr::if_else(timely < 0, NA, timely))
 
   es.tab1 <- es.data %>%
     # dplyr::filter(lubridate::year(collect.date) == lubridate::year(end_date)) %>%
-    dplyr::group_by(.data$site.name, .data$ADM1_NAME, .data$ADM2_NAME) %>%
+    dplyr::group_by(site.name, ADM1_NAME, ADM2_NAME) %>%
     dplyr::reframe(
-      early.dat = format(.data$early.dat, format = "%B %d, %Y"),
+      early.dat = format(early.dat, format = "%B %d, %Y"),
       # earliest report to POLIS
-      ev.pct = 100 * sum(as.numeric(.data$ev.detect), na.rm = TRUE) / dplyr::n(),
+      ev.pct = 100 * sum(as.numeric(ev.detect), na.rm = TRUE) / dplyr::n(),
       # percent EV detected
       num.spec = dplyr::n(),
       # number of specimens
-      num.spec.bad = sum(is.na(.data$timely)),
+      num.spec.bad = sum(is.na(timely)),
       # no of bad specimens excluded
-      condition.pct = 100 * sum(.data$sample.condition == "Good", na.rm = T) / dplyr::n(),
+      condition.pct = 100 * sum(sample.condition == "Good", na.rm = T) / dplyr::n(),
       # specimens in good condition
-      trans.pct = round(100 * sum(as.numeric(.data$timely) <= 3, na.rm = TRUE) / dplyr::n(), 0),
+      trans.pct = round(100 * sum(as.numeric(timely) <= 3, na.rm = TRUE) / dplyr::n(), 0),
       # % timely
       med.trans = paste0(
-        median(as.numeric(.data$timely), na.rm = T),
+        median(as.numeric(timely), na.rm = T),
         " (",
-        min(as.numeric(.data$timely), na.rm = T),
+        min(as.numeric(timely), na.rm = T),
         ", ",
-        max(as.numeric(.data$timely), na.rm = T),
+        max(as.numeric(timely), na.rm = T),
         ")"
       ),
       # med (range)
-      num.wpv.or.vdpv = sum(.data$wpv, na.rm = T) + sum(.data$vdpv, na.rm = T)
+      num.wpv.or.vdpv = sum(wpv, na.rm = T) + sum(vdpv, na.rm = T)
     ) %>% # WPV/VDPV
     dplyr::distinct()
 
   es.tab1 <- es.tab1 %>%
-    dplyr::arrange(.data$ADM1_NAME, .data$ADM2_NAME, .data$site.name)
+    dplyr::arrange(ADM1_NAME, ADM2_NAME, site.name)
 
   es.table <- es.tab1 %>%
     flextable::flextable(

@@ -179,8 +179,8 @@ create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"
                                     excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
   pop.check <-
     dplyr::count(
-      dplyr::ungroup(dplyr::filter(ctry.data$dist.pop, year >= min(year))), .data$prov, .data$dist,
-      .data$adm1guid, .data$adm2guid, .data$year, .data$u15pop
+      dplyr::ungroup(dplyr::filter(ctry.data$dist.pop, year >= min(year))), prov, dist,
+      adm1guid, adm2guid, year, u15pop
     )
 
   pop.check1 <- as.data.frame(tidyr::pivot_wider(pop.check,

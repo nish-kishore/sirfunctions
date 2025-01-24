@@ -20,14 +20,14 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
   }
   # Add column to flag imputed coordinates
   es.data <- es.data |>
-    dplyr::mutate(imputed_coord = dplyr::if_else(is.na(.data$lat) | is.na(.data$lng),
+    dplyr::mutate(imputed_coord = dplyr::if_else(is.na(lat) | is.na(lng),
       TRUE, FALSE
     ))
   missing_coords <- es.data |>
     dplyr::filter(is.na(lat) | is.na(lng)) |>
     dplyr::distinct(
-      .data$ADM0_NAME, .data$site.id, .data$site.name, .data$dist.guid,
-      .data$lat, .data$lng, .data$imputed_coord
+      ADM0_NAME, site.id, site.name, dist.guid,
+      lat, lng, imputed_coord
     )
   before <- nrow(missing_coords)
 
@@ -41,8 +41,8 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
 
   dist.shape <- dist.shape |>
     dplyr::filter(
-      !sf::st_is_empty(.data$SHAPE),
-      .data$GUID %in% missing_coords$dist.guid
+      !sf::st_is_empty(SHAPE),
+      GUID %in% missing_coords$dist.guid
     )
   missing_guids <- setdiff(missing_coords$dist.guid, dist.shape$GUID)
 
@@ -59,13 +59,13 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
       "ADM0_NAME"
     )) |>
     # Must filter because st_sample() doesn't work with NULL values
-    dplyr::filter(!is.na(.data$dist.guid)) |>
+    dplyr::filter(!is.na(dist.guid)) |>
     dplyr::rowwise() |>
-    dplyr::mutate(sampled_point = purrr::map(.data$SHAPE, \(x) sf::st_sample(x, 1))) |>
+    dplyr::mutate(sampled_point = purrr::map(SHAPE, \(x) sf::st_sample(x, 1))) |>
     tidyr::unnest(c("SHAPE", "sampled_point")) |>
     dplyr::mutate(
-      lat = sf::st_coordinates(.data$sampled_point)[, 2],
-      lng = sf::st_coordinates(.data$sampled_point)[, 1]
+      lat = sf::st_coordinates(sampled_point)[, 2],
+      lng = sf::st_coordinates(sampled_point)[, 1]
     ) |>
     dplyr::select(dplyr::any_of(names(missing_coords)))
 
@@ -78,14 +78,14 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
       )
     ) |>
     dplyr::mutate(
-      lat = dplyr::coalesce(as.numeric(.data$lat.x), .data$lat.y),
-      lng = dplyr::coalesce(as.numeric(.data$lng.x), .data$lng.y)
+      lat = dplyr::coalesce(as.numeric(lat.x), lat.y),
+      lng = dplyr::coalesce(as.numeric(lng.x), lng.y)
     ) |>
     dplyr::select(-dplyr::ends_with(".x"), -dplyr::ends_with(".y"))
 
   # Final check
   no_coordinates <- es.data.test |>
-    dplyr::filter(is.na(.data$lat) | is.na(.data$lng)) |>
+    dplyr::filter(is.na(lat) | is.na(lng)) |>
     select(dplyr::any_of(names(missing_coords))) |>
     dplyr::distinct()
 
@@ -137,8 +137,8 @@ clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated
 
   df01 <- es.data |>
     dplyr::distinct(
-      .data$ADM0_NAME, .data$site.name,
-      .data$dist.guid, .data$lat, .data$lng
+      ADM0_NAME, site.name,
+      dist.guid, lat, lng
     ) |>
     dplyr::filter(is.na(lat) | is.na(lng))
 
@@ -157,7 +157,7 @@ clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated
 
   cli::cli_process_start("Cleaning ES data")
   es.data.earlidat <- es.data |>
-    dplyr::group_by(.data$site.name) |>
+    dplyr::group_by(site.name) |>
     dplyr::summarize(early.dat = min(collect.date)) |>
     dplyr::ungroup()
 
@@ -210,7 +210,7 @@ clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated
   es.data <- es.data |>
     dplyr::mutate(all_dets = gsub(
       "Sabin 1/3 and Sabin 1/3", "Sabin 1/3",
-      .data$all_dets
+      all_dets
     ))
 
   es.data <- es.data |>
@@ -220,7 +220,7 @@ clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated
         all_dets == "" & ev.detect == 0 ~ "No EV isolated",
         TRUE ~ all_dets
       ),
-      year = lubridate::year(.data$collect.date)
+      year = lubridate::year(collect.date)
     )
 
   cli::cli_process_done()
@@ -263,7 +263,7 @@ generate_es_data_long <- function(es.data) {
       "early.dat", "ev.detect", "all_dets",
       "npev"
     ) %>%
-    dplyr::mutate(ev.detect = as.character(.data$ev.detect)) %>%
+    dplyr::mutate(ev.detect = as.character(ev.detect)) %>%
     dplyr::mutate(all_dets = dplyr::case_when(
       all_dets == "" & npev == "1" ~ "NPEV only",
       all_dets == "" & ev.detect == "0" ~ "No EV isolated",

@@ -120,36 +120,36 @@ spatial_validation <- function(pop.data, spatial.scale) {
   incomplete.adm <- switch(spatial.scale,
     "ctry" = {
       pop.data |>
-        dplyr::group_by(.data$adm0guid) |>
+        dplyr::group_by(adm0guid) |>
         dplyr::summarize(
           freq = dplyr::n(), years_active = paste0(min(year), "-", max(year)),
           ctry = unique(ctry)
         ) |>
         dplyr::filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
         dplyr::select("ctry", "adm0guid", "years_active") |>
-        dplyr::arrange(.data$ctry, .data$years_active)
+        dplyr::arrange(ctry, years_active)
     },
     "prov" = {
       pop.data |>
-        dplyr::group_by(.data$adm1guid) |>
+        dplyr::group_by(adm1guid) |>
         dplyr::summarize(
           freq = dplyr::n(), years_active = paste0(min(year), "-", max(year)),
           prov = unique(prov)
         ) |>
         dplyr::filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
         dplyr::select("prov", "adm1guid", "years_active") |>
-        dplyr::arrange(.data$prov, .data$years_active)
+        dplyr::arrange(prov, years_active)
     },
     "dist" = {
       pop.data |>
-        dplyr::group_by(.data$adm2guid) |>
+        dplyr::group_by(adm2guid) |>
         dplyr::summarize(
           freq = dplyr::n(), years_active = paste0(min(year), "-", max(year)),
           dist = unique(dist)
         ) |>
         dplyr::filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
         dplyr::select("dist", "adm2guid", "years_active") |>
-        dplyr::arrange(.data$dist, .data$years_active)
+        dplyr::arrange(dist, years_active)
     }
   )
 

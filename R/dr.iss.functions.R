@@ -103,10 +103,10 @@ clean_iss_data <- function(iss.data, start_date, end_date,
       stringr::str_to_lower(substr(get(priority_col), 1, 1)) %in% c("n", "x") ~ "Not Focal Site",
       TRUE ~ get(priority_col)
     )) |>
-    dplyr::mutate(priority_level = factor(.data$priority_level, levels = c(
+    dplyr::mutate(priority_level = factor(priority_level, levels = c(
       "High", "Medium", "Low", "Not Focal Site"
     ))) |>
-    dplyr::mutate(priority_level = dplyr::if_else(is.na(.data$priority_level), "Not Focal Site", .data$priority_level))
+    dplyr::mutate(priority_level = dplyr::if_else(is.na(priority_level), "Not Focal Site", priority_level))
   cli::cli_process_done()
 
   cli::cli_process_start("Adding date columns")
@@ -146,8 +146,8 @@ clean_iss_data <- function(iss.data, start_date, end_date,
   cli::cli_process_start("Converting n/a characters to actual null values")
   iss.02 <- iss.02 |>
     dplyr::mutate(
-      dists = dplyr::if_else(.data$dists == "N/A", NA, .data$dists),
-      prov = dplyr::if_else(.data$prov == "N/A", NA, .data$prov)
+      dists = dplyr::if_else(dists == "N/A", NA, dists),
+      prov = dplyr::if_else(prov == "N/A", NA, prov)
     )
   cli::cli_process_done()
 
@@ -160,8 +160,8 @@ clean_iss_data <- function(iss.data, start_date, end_date,
 
   # Make all capital letters and remove extra white space
   iss.02 <- iss.02 |>
-    dplyr::mutate(facility_name2 = toupper(.data$facility_name2)) |>
-    dplyr::mutate(facility_name2 = stringr::str_squish(.data$facility_name2))
+    dplyr::mutate(facility_name2 = toupper(facility_name2)) |>
+    dplyr::mutate(facility_name2 = stringr::str_squish(facility_name2))
   cli::cli_process_done()
 
   return(iss.02)
@@ -207,11 +207,11 @@ iss_data_errors <- function(iss.data, error_path = Sys.getenv("DR_ERROR_PATH"),
   na_priority <- NULL
   if ("priority_level" %in% names(iss.data)) {
     na_priority <- iss.data |>
-      dplyr::mutate(priority_level = stringr::str_to_lower(.data$priority_level)) |>
+      dplyr::mutate(priority_level = stringr::str_to_lower(priority_level)) |>
       dplyr::filter(priority_level %in% c("na", "n/a", ""))
   } else if ("hf_rating" %in% names(iss.data)) {
     na_priority <- iss.data |>
-      dplyr::mutate(hf_rating = stringr::str_to_lower(.data$hf_rating)) |>
+      dplyr::mutate(hf_rating = stringr::str_to_lower(hf_rating)) |>
       dplyr::filter(hf_rating %in% c("na", "n/a", ""))
   }
 

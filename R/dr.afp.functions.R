@@ -370,7 +370,7 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
 
     mon_year <- dplyr::tibble(
       mon.year = seq(lubridate::floor_date(start_date, "month"), end_date, by = "month"),
-      year = lubridate::year(.data$mon.year)
+      year = lubridate::year(mon.year)
     ) |>
       dplyr::full_join(pop_data)
   }
@@ -413,8 +413,8 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
     },
     "year" = {
       afp_data |>
-        dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
-        dplyr::group_by(.data$year) |>
+        dplyr::filter(dplyr::between(date, start_date, end_date)) |>
+        dplyr::group_by(year) |>
         dplyr::summarize(afp.case = dplyr::n()) |>
         dplyr::ungroup() |>
         dplyr::full_join(dplyr::tibble(year = seq(
@@ -428,7 +428,7 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
   if (by != "year") {
     afp_summary <- afp_summary |>
       dplyr::mutate(
-        mon.year = lubridate::as_date(zoo::as.yearmon(.data$mon.year, "%b-%y")),
+        mon.year = lubridate::as_date(zoo::as.yearmon(mon.year, "%b-%y")),
         case.cat = dplyr::case_when(
           cases == 0 ~ "0",
           cases == 1 ~ "1",
@@ -436,15 +436,15 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
           cases >= 6 & cases < 10 ~ "6-9",
           cases >= 10 ~ "10+"
         ),
-        year = lubridate::year(.data$mon.year),
-        mononset = lubridate::month(.data$mon.year)
+        year = lubridate::year(mon.year),
+        mononset = lubridate::month(mon.year)
       ) |>
       dplyr::mutate(case.cat = factor(
-        .data$case.cat,
+        case.cat,
         levels = c("0", "1", "2-5", "6-9", "10+"),
         labels = c("0", "1", "2-5", "6-9", "10+")
       )) |>
-      dplyr::filter(!is.na(.data$year))
+      dplyr::filter(!is.na(year))
   }
 
   return(afp_summary)
@@ -570,7 +570,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
   afp_data <- afp_data |>
     dplyr::filter(
       dplyr::between(date, start_date, end_date),
-      .data$cdc.classification.all2 != "NOT-AFP"
+      cdc.classification.all2 != "NOT-AFP"
     )
 
   select_criteria <- NULL
@@ -596,7 +596,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     "ctry" = {
       int.data <- afp_data |>
         dplyr::mutate(year = lubridate::year(date)) |>
-        dplyr::group_by(.data$adm0guid, .data$year) |>
+        dplyr::group_by(adm0guid, year) |>
         dplyr::select(any_of(select_criteria)) |>
         dplyr::mutate(dplyr::across(
           dplyr::any_of(as_num_conversion), \(x) as.numeric(x)
@@ -605,7 +605,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     "prov" = {
       int.data <- afp_data |>
         dplyr::mutate(year = lubridate::year(date)) |>
-        dplyr::group_by(.data$adm1guid, .data$year) |>
+        dplyr::group_by(adm1guid, year) |>
         dplyr::select(dplyr::any_of(select_criteria)) |>
         dplyr::mutate(dplyr::across(
           dplyr::any_of(as_num_conversion), \(x) as.numeric(x)
@@ -620,7 +620,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
           names_to = "type",
           values_to = "value"
         ) |>
-        dplyr::group_by(.data$year, .data$type, .data$adm0guid, .data$ctry) |>
+        dplyr::group_by(year, type, adm0guid, ctry) |>
         dplyr::summarize(
           medi = median(value, na.rm = T),
           freq = sum(!is.na(value))
@@ -634,8 +634,8 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
           values_to = "value"
         ) |>
         dplyr::group_by(
-          .data$year, .data$type, .data$adm1guid,
-          .data$prov, .data$ctry
+          year, type, adm1guid,
+          prov, ctry
         ) |>
         dplyr::summarize(
           medi = median(value, na.rm = T),
@@ -686,7 +686,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     )
     int.data.filter <- int.data |>
       dplyr::filter(type %in% who.additional.cols) |>
-      dplyr::summarise(sum = sum(.data$medi)) |>
+      dplyr::summarise(sum = sum(medi)) |>
       dplyr::pull()
 
     if (is.na(sum(int.data.filter))) {
@@ -734,7 +734,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
       "days.itd.arriveseq",
       "days.seq.rec.res"
     )) |>
-    dplyr::mutate(type = ordered(.data$type,
+    dplyr::mutate(type = ordered(type,
       levels = names(levs),
       labels = levs
     )) |>
@@ -748,10 +748,10 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     "ctry" = {
       afp_data |>
         dplyr::filter(
-          dplyr::between(.data$date, start_date, end_date),
+          dplyr::between(date, start_date, end_date),
           cdc.classification.all2 != "NOT-AFP"
         ) |>
-        dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
+        dplyr::count(ctry, adm0guid, year) |>
         dplyr::mutate(labs = paste0(
           year,
           " (N=", n, ")"
@@ -760,9 +760,9 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     "prov" = {
       afp_data |>
         dplyr::filter(
-          dplyr::between(.data$date, start_date, end_date)
+          dplyr::between(date, start_date, end_date)
         ) |>
-        dplyr::count(.data$prov, .data$adm1guid, .data$year) |>
+        dplyr::count(prov, adm1guid, year) |>
         dplyr::mutate(labs = paste0(
           year,
           " (N=", n, ")"
@@ -772,9 +772,9 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 
   int.data <- suppressMessages(dplyr::left_join(int.data, labs))
   int.data <- int.data |> filter(
-    !is.na(.data$type), !is.na(.data$ctry),
+    !is.na(type), !is.na(ctry),
     dplyr::between(
-      .data$year,
+      year,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )
@@ -843,8 +843,8 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
       need60.sys.date = Sys.Date()
     ) |> # needed to record when the table was created
     dplyr::filter(dplyr::between(date, start_date, end_date)) |>
-    dplyr::mutate(need60day.v2 = dplyr::if_else(.data$adequacy.final == "Inadequate" &
-      .data$due.60followup == 1, 1, 0)) |>
+    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final == "Inadequate" &
+      due.60followup == 1, 1, 0)) |>
     # dplyr::filter(need60day.v2 == 1 |
     #   cdc.classification.all2 == "COMPATIBLE") |>
     dplyr::mutate(
@@ -1189,7 +1189,7 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
     },
     "inadequate" = {
       stool.data |>
-        dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 77, 0, .data$adequacy.final))
+        dplyr::mutate(adequacy.final = dplyr::if_else(adequacy.final == 77, 0, adequacy.final))
     }
   )
 
@@ -1198,16 +1198,16 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
   stool.data <- switch(missing,
     "good" = {
       stool.data |>
-        dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.03, .data$adequacy.final))
+        dplyr::mutate(adequacy.final2 = dplyr::if_else(adequacy.final == 99, adequacy.03, adequacy.final))
     },
     "bad" = {
       stool.data |>
-        dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.01, .data$adequacy.final))
+        dplyr::mutate(adequacy.final2 = dplyr::if_else(adequacy.final == 99, adequacy.01, adequacy.final))
     },
     "exclude" = {
       cli::cli_alert_warning("AFP cases with missing adequacy excluded from stool adequacy calculation.")
       stool.data |>
-        dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.02, .data$adequacy.final))
+        dplyr::mutate(adequacy.final2 = dplyr::if_else(adequacy.final == 99, adequacy.02, adequacy.final))
     }
   )
 
@@ -1263,10 +1263,10 @@ generate_year_lab <- function(ctry.data, start_date, end_date) {
 
   afp.year.lab <- ctry.data$afp.all.2 |>
     dplyr::filter(
-      dplyr::between(.data$date, start_date, end_date),
+      dplyr::between(date, start_date, end_date),
       cdc.classification.all2 != "NOT-AFP"
     ) |>
-    dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
+    dplyr::count(ctry, adm0guid, year) |>
     dplyr::mutate(labs = paste0(
       year,
       " (N=", n, ")"
@@ -1304,7 +1304,7 @@ generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
   end_date <- lubridate::as_date(end_date)
 
   afp.prov.year.lab <- ctry.data$afp.all.2 |>
-    dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
+    dplyr::filter(dplyr::between(date, start_date, end_date)) |>
     dplyr::count(prov, adm1guid, year) |>
     dplyr::mutate(labs = paste0(
       year,

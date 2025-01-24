@@ -38,8 +38,8 @@ copy_dr_functions <- function(branch = "main", output_folder = Sys.getenv("DR_FU
 
   # Filter only the relevant files
   file_path <- file_path |>
-    dplyr::filter(stringr::str_starts(.data$paths, "R/dr.")) |>
-    tidyr::separate(.data$paths, into = c("folder", "name"), remove = F, sep = "/")
+    dplyr::filter(stringr::str_starts(paths, "R/dr.")) |>
+    tidyr::separate(paths, into = c("folder", "name"), remove = F, sep = "/")
 
   if (nrow(file_path) == 0) {
     stop("No desk review functions in this branch.")
@@ -375,7 +375,7 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
       country, year
     )
   ) |>
-    dplyr::pull(.data$name)
+    dplyr::pull(name)
 
   file_names <- basename(files)
 

@@ -69,7 +69,7 @@ f.ev.rate.01 <- function(
 
   # Create site-level summary
   es.sum <- es.data |>
-    dplyr::group_by(.data$ADM0_NAME, .data$site.name) |>
+    dplyr::group_by(ADM0_NAME, site.name) |>
     dplyr::summarize(
       num.samples = dplyr::n(),
       num.ev.pos = sum(ev.detect == 1, na.rm = T)

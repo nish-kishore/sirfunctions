@@ -54,9 +54,9 @@ impute_missing_lab_geo <- function(lab_data, afp_data = NULL) {
     if ("Province" %in% names(lab_data)) {
       lab_data <- lab_data |>
         dplyr::mutate(
-          prov = dplyr::if_else(is.na(.data$prov),
+          prov = dplyr::if_else(is.na(prov),
             afp_data$prov[match(lab_data$Province, afp_data$prov)],
-            .data$prov
+            prov
           )
         )
     }
@@ -64,9 +64,9 @@ impute_missing_lab_geo <- function(lab_data, afp_data = NULL) {
     if ("District" %in% names(lab_data)) {
       lab_data <- lab_data |>
         dplyr::mutate(
-          dist = dplyr::if_else(is.na(.data$dist),
+          dist = dplyr::if_else(is.na(dist),
             afp_data$dist[match(lab_data$District, afp_data$dist)],
-            .data$dist
+            dist
           )
         )
     }
@@ -110,7 +110,7 @@ impute_missing_lab_geo <- function(lab_data, afp_data = NULL) {
     # Check look up table for potential duplicated rows
     ctry_lookup_row_dups <- ctry_lookup_table |>
       dplyr::mutate(epid_comb = str_c(epid_ctry, year, sep = "-")) |>
-      dplyr::group_by(.data$epid_comb, .data$epid_ctry, .data$year) |>
+      dplyr::group_by(epid_comb, epid_ctry, year) |>
       dplyr::summarise(n = n()) |>
       dplyr::filter(n > 1) |>
       ungroup()
@@ -125,8 +125,8 @@ impute_missing_lab_geo <- function(lab_data, afp_data = NULL) {
     lab_data <- lab_data |>
       dplyr::left_join(ctry_lookup_table, by = dplyr::join_by(epid_ctry, year)) |>
       dplyr::mutate(
-        ctry = dplyr::coalesce(.data$ctry.x, .data$ctry.y),
-        adm0guid = dplyr::coalesce(.data$adm0guid.x, .data$adm0guid.y)
+        ctry = dplyr::coalesce(ctry.x, ctry.y),
+        adm0guid = dplyr::coalesce(adm0guid.x, adm0guid.y)
       )
     cli::cli_alert_info(paste0("Final records missing ctry: ", sum(is.na(lab_data$ctry))))
     cli::cli_alert_info(paste0("Final records missing adm0guid: ", sum(is.na(lab_data$adm0guid))))
@@ -144,7 +144,7 @@ impute_missing_lab_geo <- function(lab_data, afp_data = NULL) {
     # Check look up table for potential duplicated rows
     prov_lookup_row_dups <- prov_lookup_table |>
       dplyr::mutate(epid_comb = str_c(epid_ctry, epid_prov, ctry, year, sep = "-")) |>
-      dplyr::group_by(.data$epid_comb, .data$epid_ctry, .data$ctry, .data$epid_prov, .data$year) |>
+      dplyr::group_by(epid_comb, epid_ctry, ctry, epid_prov, year) |>
       dplyr::summarise(n = n()) |>
       dplyr::filter(n > 1) |>
       ungroup()
@@ -157,8 +157,8 @@ impute_missing_lab_geo <- function(lab_data, afp_data = NULL) {
     lab_data <- lab_data |>
       dplyr::left_join(prov_lookup_table, by = dplyr::join_by(epid_ctry, ctry, epid_prov, year)) |>
       dplyr::mutate(
-        prov = dplyr::coalesce(.data$prov.x, .data$prov.y),
-        adm1guid = dplyr::coalesce(.data$adm1guid.x, .data$adm1guid.y)
+        prov = dplyr::coalesce(prov.x, prov.y),
+        adm1guid = dplyr::coalesce(adm1guid.x, adm1guid.y)
       )
     cli::cli_alert_info(paste0("Final records missing prov: ", sum(is.na(lab_data$prov))))
     cli::cli_alert_info(paste0("Final records missing adm1guid: ", sum(is.na(lab_data$adm1guid))))
@@ -177,10 +177,10 @@ impute_missing_lab_geo <- function(lab_data, afp_data = NULL) {
     dist_lookup_row_dups <- dist_lookup_table |>
       dplyr::mutate(epid_comb = str_c(epid_ctry, epid_prov, epid_dist, ctry, prov, year, sep = "-")) |>
       dplyr::group_by(
-        .data$epid_comb, .data$epid_ctry, .data$ctry,
-        .data$epid_prov, .data$prov,
-        .data$epid_dist,
-        .data$year
+        epid_comb, epid_ctry, ctry,
+        epid_prov, prov,
+        epid_dist,
+        year
       ) |>
       dplyr::summarise(n = n()) |>
       dplyr::filter(n > 1) |>
@@ -196,8 +196,8 @@ impute_missing_lab_geo <- function(lab_data, afp_data = NULL) {
         by = dplyr::join_by(epid_ctry, epid_prov, ctry, prov, epid_dist, year)
       ) |>
       dplyr::mutate(
-        dist = dplyr::coalesce(.data$dist.x, .data$dist.y),
-        adm2guid = dplyr::coalesce(.data$adm2guid.x, .data$adm2guid.y)
+        dist = dplyr::coalesce(dist.x, dist.y),
+        adm2guid = dplyr::coalesce(adm2guid.x, adm2guid.y)
       ) |>
       dplyr::select(-dplyr::ends_with(".y"), -dplyr::ends_with(".x"))
     cli::cli_alert_info(paste0("Final records missing dist: ", sum(is.na(lab_data$dist))))
@@ -280,26 +280,26 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
     lab_data <- lab_data |>
       dplyr::mutate(
         # Intervals
-        days.collect.lab = .data$DateStoolReceivedinLab - .data$DateStoolCollected,
-        days.lab.culture = .data$DateFinalCellCultureResults - .data$DateStoolReceivedinLab,
-        days.seq.ship = .data$DateIsolateRcvdForSeq - .data$DateSeqResultsEntered,
-        days.lab.seq = .data$DateSeqResult - .data$DateStoolReceivedinLab,
-        days.itd.seqres = .data$DateSeqResult - .data$DateFinalrRTPCRResults,
-        days.itd.arriveseq = .data$DateIsolateRcvdForSeq - .data$DateFinalrRTPCRResults,
-        days.seq.rec.res = .data$DateSeqResult - .data$DateIsolateRcvdForSeq,
+        days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
+        days.lab.culture = DateFinalCellCultureResults - DateStoolReceivedinLab,
+        days.seq.ship = DateIsolateRcvdForSeq - DateSeqResultsEntered,
+        days.lab.seq = DateSeqResult - DateStoolReceivedinLab,
+        days.itd.seqres = DateSeqResult - DateFinalrRTPCRResults,
+        days.itd.arriveseq = DateIsolateRcvdForSeq - DateFinalrRTPCRResults,
+        days.seq.rec.res = DateSeqResult - DateIsolateRcvdForSeq,
 
         # Met target yes/no
-        met.targ.collect.lab = ifelse(.data$days.collect.lab < 3, 1, 0),
-        negative.spec = ifelse(!stringr::str_detect(.data$DateFinalCellCultureResults, "ITD") &
-          .data$FinalITDResult == "NULL", 1, 0),
-        met.lab.culture = ifelse(.data$days.lab.culture < 14, 1, 0),
+        met.targ.collect.lab = ifelse(days.collect.lab < 3, 1, 0),
+        negative.spec = ifelse(!stringr::str_detect(DateFinalCellCultureResults, "ITD") &
+          FinalITDResult == "NULL", 1, 0),
+        met.lab.culture = ifelse(days.lab.culture < 14, 1, 0),
       )
     cli::cli_process_done()
   }
 
   if (!"year" %in% names(lab_data)) {
     lab_data <- lab_data |>
-      dplyr::mutate(year = lubridate::year(.data$DateOfOnset))
+      dplyr::mutate(year = lubridate::year(DateOfOnset))
   }
 
   cli::cli_process_start("Filtering for cases with valid dates")
@@ -313,7 +313,7 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
       (days.seq.rec.res >= 0 | is.na(days.seq.rec.res))) |>
     dplyr::filter(
       dplyr::between(
-        .data$year,
+        year,
         lubridate::year(start_date), lubridate::year(end_date)
       ),
       CaseOrContact == "1-Case"
@@ -324,8 +324,8 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
   miss <- lab_data2 |> dplyr::filter(is.na(year))
 
   miss <- miss |>
-    dplyr::mutate(year2 = substr(.data$EpidNumber, 13, 14)) |>
-    dplyr::mutate(year2 = as.numeric(paste0("20", .data$year2)))
+    dplyr::mutate(year2 = substr(EpidNumber, 13, 14)) |>
+    dplyr::mutate(year2 = as.numeric(paste0("20", year2)))
 
   lab_data2 <- lab_data2 |>
     dplyr::mutate(year = dplyr::case_when(
@@ -343,7 +343,7 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
   # Match province and district by EPID number -
   lab_data2 <- impute_missing_lab_geo(lab_data2, afp_data)
   lab_data2 <- lab_data2 |>
-    dplyr::mutate(whoregion = get_region(.data$ctry))
+    dplyr::mutate(whoregion = get_region(ctry))
 
   if (!is.null(ctry_name)) {
     ctry_name <- stringr::str_to_upper(stringr::str_trim(ctry_name))
@@ -361,11 +361,11 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
   cli::cli_process_start("Adding additional timeliness subintervals")
   lab_data2 <- lab_data2 |>
     dplyr::mutate(
-      days.coll.sent.field = as.numeric(.data$DateStoolSentfromField - .data$DateStoolCollected),
-      days.sent.field.rec.nat = as.numeric(.data$DateStoolReceivedNatLevel - .data$DateStoolSentfromField),
-      days.rec.nat.sent.lab = as.numeric(.data$DateStoolSentToLab - .data$DateStoolReceivedNatLevel),
-      days.sent.lab.rec.lab = as.numeric(.data$DateStoolReceivedinLab - .data$DateStoolSentToLab),
-      days.rec.lab.culture = as.numeric(.data$DateFinalCellCultureResults - .data$DateStoolReceivedinLab),
+      days.coll.sent.field = as.numeric(DateStoolSentfromField - DateStoolCollected),
+      days.sent.field.rec.nat = as.numeric(DateStoolReceivedNatLevel - DateStoolSentfromField),
+      days.rec.nat.sent.lab = as.numeric(DateStoolSentToLab - DateStoolReceivedNatLevel),
+      days.sent.lab.rec.lab = as.numeric(DateStoolReceivedinLab - DateStoolSentToLab),
+      days.rec.lab.culture = as.numeric(DateFinalCellCultureResults - DateStoolReceivedinLab),
     )
   cli::cli_process_done()
 
@@ -418,7 +418,7 @@ clean_lab_data_regional <- function(lab_data,
 
   lab_data <- lab_data |>
     dplyr::mutate(country = dplyr::case_match(
-      .data$country,
+      country,
       "AFG" ~ "AFGHANISTAN",
       "BAH" ~ "BAHRAIN",
       "DJI" ~ "DJIBOUTI",
@@ -441,7 +441,7 @@ clean_lab_data_regional <- function(lab_data,
       "TUN" ~ "TUNISIA",
       "UAE" ~ "UNITED ARAB EMIRATES",
       "YEM" ~ "YEMEN",
-      .default = .data$country
+      .default = country
     ))
 
   cli::cli_process_start("Converting date character columns to date types.")
@@ -474,7 +474,7 @@ clean_lab_data_regional <- function(lab_data,
 
   cli::cli_process_start("Filtering to date range specified")
   lab_data <- lab_data |>
-    dplyr::filter(dplyr::between(.data$ParalysisOnsetDate, start_date, end_date))
+    dplyr::filter(dplyr::between(ParalysisOnsetDate, start_date, end_date))
   cli::cli_process_done()
 
   cli::cli_process_start("Deduplicating data")
@@ -487,27 +487,27 @@ clean_lab_data_regional <- function(lab_data,
     # Dropping rows with Specimen number 0 or >2
     dplyr::filter(SpecimenNumber %in% c(1, 2)) |>
     dplyr::mutate(
-      country = stringr::str_to_upper(.data$country),
-      country = ifelse(stringr::str_detect(.data$country, "IVOIRE"),
-        "COTE D IVOIRE", .data$country
+      country = stringr::str_to_upper(country),
+      country = ifelse(stringr::str_detect(country, "IVOIRE"),
+        "COTE D IVOIRE", country
       ),
-      year = lubridate::year(.data$ParalysisOnsetDate),
-      whoregion = get_region(.data$country)
+      year = lubridate::year(ParalysisOnsetDate),
+      whoregion = get_region(country)
     )
 
   lab_data4 <- lab_data3 |>
     dplyr::left_join(
       lab_locs |> dplyr::select("country":"num.ship.seq.samples")
     ) |>
-    dplyr::group_by(.data$EPID, .data$SpecimenNumber) %>%
+    dplyr::group_by(EPID, SpecimenNumber) %>%
     dplyr::mutate(n = dplyr::n()) %>%
     dplyr::ungroup()
 
   lab_data4 <- lab_data4 |>
     dplyr::mutate(culture.itd.lab = dplyr::case_when(
-      .data$country == "NIGERIA" ~ "Nigeria",
-      .data$culture.itd.lab == "NOGUCHI- Ghana" ~ "NOGUCHI-Ghana",
-      .default = .data$culture.itd.lab
+      country == "NIGERIA" ~ "Nigeria",
+      culture.itd.lab == "NOGUCHI- Ghana" ~ "NOGUCHI-Ghana",
+      .default = culture.itd.lab
     ))
 
   # Seperate blank epids from rest of lab_data4 in order to de-dupe
@@ -527,19 +527,19 @@ clean_lab_data_regional <- function(lab_data,
   lab_data5 <- lab_data4 |>
     dplyr::mutate(
       # Intervals
-      days.collect.lab = .data$DateStoolReceivedinLab - .data$DateStoolCollected,
-      days.lab.culture = .data$DateFinalCellCultureResult - .data$DateStoolReceivedinLab,
-      days.seq.ship = .data$DateIsolateRcvdForSeq - .data$ReportDateSequenceResultSent,
-      days.lab.seq = .data$DateofSequencing - .data$DateStoolReceivedinLab,
-      days.itd.seqres = .data$DateofSequencing - .data$DateFinalrRTPCRResults,
-      days.itd.arriveseq = .data$DateIsolateRcvdForSeq - .data$DateFinalrRTPCRResults,
-      days.seq.rec.res = .data$DateofSequencing - .data$DateIsolateRcvdForSeq,
+      days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
+      days.lab.culture = DateFinalCellCultureResult - DateStoolReceivedinLab,
+      days.seq.ship = DateIsolateRcvdForSeq - ReportDateSequenceResultSent,
+      days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
+      days.itd.seqres = DateofSequencing - DateFinalrRTPCRResults,
+      days.itd.arriveseq = DateIsolateRcvdForSeq - DateFinalrRTPCRResults,
+      days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,
 
       # Met target yes/no
-      met.targ.collect.lab = ifelse(.data$days.collect.lab < 3, 1, 0),
-      negative.spec = ifelse(!str_detect(.data$FinalCellCultureResult, "ITD") &
-        .data$FinalITDResult == "NULL", 1, 0),
-      met.lab.culture = ifelse(.data$days.lab.culture < 14, 1, 0),
+      met.targ.collect.lab = ifelse(days.collect.lab < 3, 1, 0),
+      negative.spec = ifelse(!str_detect(FinalCellCultureResult, "ITD") &
+        FinalITDResult == "NULL", 1, 0),
+      met.lab.culture = ifelse(days.lab.culture < 14, 1, 0),
     )
   cli::cli_process_done()
 
@@ -564,12 +564,12 @@ clean_lab_data_regional <- function(lab_data,
       !is.na(EPID)
     ) |>
     dplyr::mutate(
-      seq.capacity = ifelse(.data$seq.capacity == "yes",
+      seq.capacity = ifelse(seq.capacity == "yes",
         "Sequencing capacity",
         "No sequencing capacity"
       ),
-      culture.itd.lab = ifelse(.data$country == "NIGERIA",
-        "Nigeria", .data$culture.itd.lab
+      culture.itd.lab = ifelse(country == "NIGERIA",
+        "Nigeria", culture.itd.lab
       ),
     ) |>
     dplyr::select(-dplyr::contains("cIntratypeIs"))
@@ -649,7 +649,7 @@ get_lab_locs <- function(path = NULL) {
   } else {
     lab.locs <- readr::read_csv(path)
     lab.locs <- lab.locs |>
-      dplyr::mutate(country = stringr::str_to_upper(.data$country))
+      dplyr::mutate(country = stringr::str_to_upper(country))
   }
 
   return(lab.locs)
@@ -892,7 +892,7 @@ lab_data_errors_region <- function(lab.data,
   # Cleaning for Cote D'Ivoire
   if (stringr::str_detect(ctry_name, "(?i)IVIORE")) {
     lab_data <- lab_data |>
-      dplyr::mutate(Name = dplyr::if_else(stringr::str_detect(.data$Name, "(?i)IVOIRE"), "COTE D'IVIORE", .data$Name))
+      dplyr::mutate(Name = dplyr::if_else(stringr::str_detect(Name, "(?i)IVOIRE"), "COTE D'IVIORE", Name))
   }
 
   # Converting character dates to date columns
@@ -921,10 +921,10 @@ lab_data_errors_region <- function(lab.data,
   ) {
     lab.data <- lab.data |>
       dplyr::mutate(country = dplyr::if_else(stringr::str_detect(
-        .data$country,
+        country,
         "(?i)IVOIRE"
       ),
-      "COTE D'IVOIRE", .data$country
+      "COTE D'IVOIRE", country
       ))
   }
 
@@ -948,16 +948,16 @@ lab_data_errors_region <- function(lab.data,
     # replacing "NULL" with NA
     # dplyr::mutate_at(vars(DateStoolCollected:VDPV3), ~na_if(., "NULL")) %>%
     dplyr::mutate(
-      country = stringr::str_to_upper(.data$country),
-      year = lubridate::year(.data$ParalysisOnsetDate),
-      whoregion = get_region(.data$country)
+      country = stringr::str_to_upper(country),
+      year = lubridate::year(ParalysisOnsetDate),
+      whoregion = get_region(country)
     )
 
   # Join lab locations
   duplicate.04 <- duplicate.03 |>
     # count duplicates with same EPID and specimen number
     # there should be 2 records for each EPID, specimen 1 and 2
-    dplyr::group_by(.data$EPID, .data$SpecimenNumber) |>
+    dplyr::group_by(EPID, SpecimenNumber) |>
     dplyr::mutate(n = dplyr::n()) |>
     dplyr::ungroup()
 
@@ -976,18 +976,18 @@ lab_data_errors_region <- function(lab.data,
   lab_data <- lab_data |>
     dplyr::mutate(
       # Intervals
-      days.collect.lab = .data$DateStoolReceivedinLab - .data$DateStoolCollected,
-      days.lab.culture = .data$DateFinalCellCultureResult - .data$DateStoolReceivedinLab,
-      days.seq.ship = .data$DateIsolateRcvdForSeq - .data$ReportDateSequenceResultSent,
-      days.lab.seq = .data$DateofSequencing - .data$DateStoolReceivedinLab,
-      days.itd.seqres = .data$DateofSequencing - .data$DateFinalrRTPCRResults,
-      days.itd.arriveseq = .data$DateIsolateRcvdForSeq - .data$DateFinalrRTPCRResults,
-      days.seq.rec.res = .data$DateofSequencing - .data$DateIsolateRcvdForSeq,
+      days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
+      days.lab.culture = DateFinalCellCultureResult - DateStoolReceivedinLab,
+      days.seq.ship = DateIsolateRcvdForSeq - ReportDateSequenceResultSent,
+      days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
+      days.itd.seqres = DateofSequencing - DateFinalrRTPCRResults,
+      days.itd.arriveseq = DateIsolateRcvdForSeq - DateFinalrRTPCRResults,
+      days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,
 
       # Met target yes/no
-      met.targ.collect.lab = ifelse(.data$days.collect.lab < 3, 1, 0),
-      negative.spec = ifelse(!str_detect(.data$FinalCellCultureResult, "ITD") & .data$FinalITDResult == "NULL", 1, 0),
-      met.lab.culture = ifelse(.data$days.lab.culture < 14, 1, 0),
+      met.targ.collect.lab = ifelse(days.collect.lab < 3, 1, 0),
+      negative.spec = ifelse(!str_detect(FinalCellCultureResult, "ITD") & FinalITDResult == "NULL", 1, 0),
+      met.lab.culture = ifelse(days.lab.culture < 14, 1, 0),
     )
 
   invalid_intervals <- lab_data |>
@@ -1086,7 +1086,7 @@ lab_data_errors_who <- function(lab.data, afp.data,
 
   cli::cli_process_start("Filtering to the country of interest")
   lab.data <- suppressMessages(impute_missing_lab_geo(lab.data, afp.data))
-  lab.data <- lab.data |> dplyr::filter(.data$ctry %in% ctry_name)
+  lab.data <- lab.data |> dplyr::filter(ctry %in% ctry_name)
   cli::cli_process_done()
 
   cli::cli_process_start("Filtering for years of interest and cases")
