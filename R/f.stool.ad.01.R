@@ -353,7 +353,7 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #' `"inadequate"` treats samples with bad data as inadequate.
 #' @param rolling `bool` Should data be analyzed on a rolling bases? Defaults to `FALSE`.
 #' @param sp_continuity_validation `bool` Should GUIDs not present in all years of the dataset be excluded? Default `TRUE`.
-#'
+#' @param admin.data `tibble` Population data. Renamed in favor of `pop.data`.
 #' @returns `tibble` Long format stool adequacy evaluations.
 #' @examples
 #' raw.data <- get_all_polio_data()
@@ -571,7 +571,9 @@ f.stool.ad.01 <- function(
   }
 
   int.data <- int.data |>
-    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad")
+    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad") |>
+    # in rare cases of duplicate pop records
+    dplyr::distinct()
 
   return(int.data)
 }

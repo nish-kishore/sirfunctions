@@ -373,7 +373,9 @@ f.npafp.rate.01 <- function(
     dplyr::mutate(dplyr::across(
       dplyr::any_of(numeric_cols),
       \(x) tidyr::replace_na(x, 0)
-    ))
+    )) |>
+    # in rare cases of duplicate pop records
+    dplyr::distinct()
 
   return(int.data)
 }

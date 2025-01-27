@@ -49,6 +49,15 @@ still under evaluation/development. Default is \code{"standard"}.
 \item \code{"standard"} Standard shapefiles.
 \item \code{"dev"}  New shapefiles still under evaluation/development.
 }}
+
+\item{end.year}{\code{int} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{end_year}.}
+
+\item{st.year}{\code{int} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{st_year}.}
+
+\item{data.only}{\code{bool} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{data_only}.}
 }
 \value{
 \code{tibble} or \code{sf} Dataframe containing spatial data.

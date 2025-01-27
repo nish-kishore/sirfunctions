@@ -34,6 +34,12 @@ load_clean_dist_sp(
 
 \item{ctry_name}{\verb{str array} Array of all country names that you want to pull.}
 
+\item{end_year}{\code{int} Last year you want to pull information for. Default is current year.}
+
+\item{st_year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
+
+\item{data_only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
+
 \item{type}{\code{str} Whether to return a spatial object for every year group. Defaults to \code{NULL}.
 \itemize{
 \item \code{"long"} Return a dataset for every year group.
@@ -47,11 +53,14 @@ still under evaluation/development. Default is \code{"standard"}.
 \item \code{"dev"}  New shapefiles still under evaluation/development.
 }}
 
-\item{end.year}{\code{int} Last year you want to pull information for. Default is current year.}
+\item{end.year}{\code{int} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{end_year}.}
 
-\item{st.year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
+\item{st.year}{\code{int} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{st_year}.}
 
-\item{data.only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
+\item{data.only}{\code{bool} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{data_only}.}
 }
 \value{
 \code{tibble} or \code{sf} Dataframe containing spatial data.

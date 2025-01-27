@@ -3159,10 +3159,12 @@ generate_surv_ind_tab <- function(ctry.data,
 #'
 #' Generates a table summarizing both NPAFP and stool adequacy rates at the province level and by year.
 #'
-#' @param prov.case.ind  `tibble` Case indicator at province level. Output of [prep_npafp_table()] at the province level.
+#' @param pnpafp  `tibble` NPAFP table. Output of [f.npafp.rate.01()] at the province level.
 #' @param pstool `tibble` Stool adequacy at province level. Output of [f.stool.ad.01()] at the province level.
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
+#' @param prov.case.ind  `tibble` `r lifecycle::badge("deprecated")`
+#' Deprecated in favor of the more informative pnpafp param name.
 #'
 #' @returns `flextable` Summary table of province NPAFP and stool adequacy rates per year.
 #' @examples
@@ -3180,7 +3182,6 @@ generate_surv_ind_tab <- function(ctry.data,
 #'   rolling = F,
 #'   sp_continuity_validation = F
 #' )
-#' prov.case.ind <- prep_npafp_table(prov.extract, ctry.data$afp.all.2, start_date, end_date, "prov")
 #' pstool <- f.stool.ad.01(
 #'   afp.data = ctry.data$afp.all.2,
 #'   admin.data = ctry.data$prov.pop,
@@ -3192,32 +3193,44 @@ generate_surv_ind_tab <- function(ctry.data,
 #'   rolling = F,
 #'   sp_continuity_validation = F
 #' )
-#' generate_pop_tab(prov.case.ind, pstool, start_date, end_date)
+#' generate_pop_tab(prov.extract, pstool, start_date, end_date)
 #' }
 #'
 #' @export
-generate_pop_tab <- function(prov.case.ind,
+generate_pop_tab <- function(pnpafp,
                              pstool,
                              start_date,
-                             end_date) {
+                             end_date,
+                             prov.case.ind = lifecycle::deprecated()) {
+
+  if (lifecycle::is_present(prov.case.ind)) {
+    lifecycle::deprecate_warn("1.3.0",
+                              "sirfunctions::generate_pop_tab(prov.case.ind = )",
+                              "sirfunctions::generate_pop_tab(pnpafp = )")
+
+    pnpafp <- prov.case.ind
+  }
+
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
-  sub.prov.case.ind <- prov.case.ind %>%
+  sub.prov.case.ind <- pnpafp %>%
     dplyr::select(
       "year",
       "n_npafp",
       "u15pop",
+      "adm1guid",
       "prov",
       "npafp_rate"
     )
 
   sub.pstool <- pstool %>%
-    dplyr::select("year", "per.stool.ad", "prov") |>
+    dplyr::select("year", "per.stool.ad", "adm1guid", "prov") |>
     dplyr::filter(!is.na(prov))
 
-  sub.prov.join <- dplyr::full_join(sub.prov.case.ind, sub.pstool, by = c("year", "prov")) %>%
-    dplyr::arrange(prov, year)
+  sub.prov.join <- dplyr::full_join(sub.prov.case.ind, sub.pstool) %>%
+    dplyr::arrange(prov, year) |>
+    ungroup()
 
   sub.prov.join <- sub.prov.join %>%
     dplyr::group_by(prov) %>%
@@ -3420,15 +3433,7 @@ generate_pop_tab <- function(prov.case.ind,
 generate_inad_tab <- function(ctry.data,
                               cstool,
                               start_date,
-                              end_date,
-                              stool.data = lifecycle::deprecated()) {
-  if (lifecycle::is_present(stool.data)) {
-    lifecycle::deprecate_warn(
-      when = "1.2.0",
-      what = "generate_inad_tab(stool.data)",
-      details = "The argument is not used in the function body and will be dropped in future releases."
-    )
-  }
+                              end_date) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)

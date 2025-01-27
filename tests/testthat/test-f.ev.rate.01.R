@@ -4,7 +4,7 @@ library(lubridate)
 
 test_that("Testing function to calculate enterovirus rate", {
   # initialize test variables
-  sample_data <- tibble(
+  sample_data <- dplyr::tibble(
     collect.date = c("2022-01-01", "2022-01-01", "2022-01-01", "2022-01-01", "2022-01-01", "2022-01-01"),
     ADM0_NAME = c("country A", "country A", "country A", "country B", "country B", "country B"),
     site.name = c("site A", "site A", "site A", "site B", "site B", "site B"),
@@ -13,7 +13,9 @@ test_that("Testing function to calculate enterovirus rate", {
     ADM2_NAME = c("dist 1", "dist 1", "dist 1", "dist 1", "dist 1", "dist 1"),
     lat = c(1, 1, 1, 1, 1, 1),
     lng = c(1, 1, 1, 1, 1, 1)
-  )
+  ) |>
+    dplyr::mutate(collect.date = lubridate::as_date(collect.date))
+
   start_date <- "2022-01-01"
   end_date <- "2022-01-20"
 

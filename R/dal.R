@@ -1401,9 +1401,9 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' @param ctry_name `str array` Array of all country names that you want to pull.
 #' @param prov_name `str array` Array of all province names that you want to pull.
 #' @param dist_name `str array` Array of all dist names that you want to pull.
-#' @param end.year `int` Last year you want to pull information for. Default is current year.
-#' @param st.year `int` Earlier year of spatial data you want to pull. Default is 2000.
-#' @param data.only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
+#' @param end_year `int` Last year you want to pull information for. Default is current year.
+#' @param st_year `int` Earlier year of spatial data you want to pull. Default is 2000.
+#' @param data_only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
 #' @param type `str` Whether to return a spatial object for every year group. Defaults to `NULL`.
 #' - `"long"` Return a dataset for every year group.
 #' - `NULL` Return a dataset only with unique GUIDs and when they were active.
@@ -1411,6 +1411,13 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
+#' @param end.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `end_year`.
+#' @param st.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `st_year`.
+#' @param data.only `bool` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `data_only`.
+#'
 #' @returns `tibble` or `sf` Dataframe containing spatial data.
 #' @examples
 #' dist <- load_clean_dist_sp(ctry_name = c("ALGERIA", "NIGERIA"), st.year = 2019)
@@ -1547,6 +1554,13 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
+#' @param end.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `end_year`.
+#' @param st.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `st_year`.
+#' @param data.only `bool` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `data_only`.
+#'
 #' @returns `tibble` or `sf` Dataframe containing spatial data.
 #' @examples
 #' \dontrun{
@@ -1659,6 +1673,13 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
+#' @param end.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `end_year`.
+#' @param st.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `st_year`.
+#' @param data.only `bool` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `data_only`.
+#'
 #' @returns `tibble` or `sf` Dataframe containing spatial data.
 #' @examples
 #' ctry <- load_clean_ctry_sp(ctry_name = "ALGERIA")

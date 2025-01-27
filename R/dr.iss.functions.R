@@ -40,7 +40,7 @@ load_iss_data <- function(iss_path, sheet_name = NULL) {
 #'  - `Medium`: begins with "m".
 #'  - `Low`: begins with "l".
 #'  - `Not Focal Site`: begins with "n" or "x".
-#'
+#' @param iss_data `tibble` ISS data.
 #' @param start_date `str` Start date of desk review.
 #' @param end_date `str` End date of desk review.
 #' @param priority_col `str` Column representing priority level.
@@ -63,7 +63,7 @@ load_iss_data <- function(iss_path, sheet_name = NULL) {
 #' }
 #'
 #' @export
-clean_iss_data <- function(iss.data, start_date, end_date,
+clean_iss_data <- function(iss_data, start_date, end_date,
                            priority_col = "priority_level",
                            start_time_col = "starttime",
                            unreported_cases_col = "num_unreportedcases",
@@ -77,7 +77,7 @@ clean_iss_data <- function(iss.data, start_date, end_date,
     lifecycle::deprecate_warn(
       when = "1.3.0",
       what = "clean_iss_data(ctry.data)",
-      details = "Please pass the dataframe directly to iss.data."
+      details = "Please pass the dataframe directly to iss_data."
     )
 
     if (is.null(ctry.data$iss.data)) {
@@ -85,17 +85,17 @@ clean_iss_data <- function(iss.data, start_date, end_date,
       return(ctry.data)
     }
 
-    iss.data <- ctry.data$iss.data
+    iss_data <- ctry.data$iss.data
   }
 
   # check if already cleaned
-  if ("monyear" %in% names(iss.data)) {
+  if ("monyear" %in% names(iss_data)) {
     cli::cli_alert_warning("ISS data already cleaned.")
-    return(iss.data)
+    return(iss_data)
   }
 
   cli::cli_process_start("Standardizing priority levels")
-  iss.02 <- iss.data |>
+  iss.02 <- iss_data |>
     dplyr::mutate(priority_level = dplyr::case_when(
       stringr::str_to_lower(substr(get(priority_col), 1, 1)) == "h" ~ "High",
       stringr::str_to_lower(substr(get(priority_col), 1, 1)) == "m" ~ "Medium",
@@ -171,6 +171,7 @@ clean_iss_data <- function(iss.data, start_date, end_date,
 #'
 #' Currently, the function reports the number of missing priority levels.
 #'
+#' @param iss_data `tibble` ISS data.
 #' @param error_path `str` Path to error folder. The function defaults to a global environment
 #' variable called `DR_ERROR_PATH`, as it is assumed ISS data error checking is done as part of
 #' the desk review template. The setting of desk review environmental variables is automatically
@@ -186,31 +187,31 @@ clean_iss_data <- function(iss.data, start_date, end_date,
 #' }
 #'
 #' @export
-iss_data_errors <- function(iss.data, error_path = Sys.getenv("DR_ERROR_PATH"),
+iss_data_errors <- function(iss_data, error_path = Sys.getenv("DR_ERROR_PATH"),
                             ctry.data = lifecycle::deprecated()) {
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
       what = "iss_data_errors(ctry.data)",
-      details = "Please pass the dataframe directly to iss.data."
+      details = "Please pass the dataframe directly to iss_data."
     )
 
     # Check if ISS data is attached
     if (is.null(ctry.data$iss.data)) {
       return(message("ISS data not attached to ctry.data. Please attach and try again."))
     }
-    iss.data <- ctry.data$iss.data
+    iss_data <- ctry.data$iss.data
   }
   # Check for rows without any priority_levels (N/A)
   cli::cli_process_start("Checking for missing priority levels.")
-  total_records <- nrow(iss.data)
+  total_records <- nrow(iss_data)
   na_priority <- NULL
-  if ("priority_level" %in% names(iss.data)) {
-    na_priority <- iss.data |>
+  if ("priority_level" %in% names(iss_data)) {
+    na_priority <- iss_data |>
       dplyr::mutate(priority_level = stringr::str_to_lower(priority_level)) |>
       dplyr::filter(priority_level %in% c("na", "n/a", ""))
-  } else if ("hf_rating" %in% names(iss.data)) {
-    na_priority <- iss.data |>
+  } else if ("hf_rating" %in% names(iss_data)) {
+    na_priority <- iss_data |>
       dplyr::mutate(hf_rating = stringr::str_to_lower(hf_rating)) |>
       dplyr::filter(hf_rating %in% c("na", "n/a", ""))
   }

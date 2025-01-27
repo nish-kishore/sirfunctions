@@ -31,6 +31,7 @@
 #' this parameter is set to `TRUE`.
 #' @returns `tibble` A summary table of timeliness of stool collection.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data()
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' stool.summary <- f.timely.01(
@@ -39,6 +40,7 @@
 #'   lubridate::as_date("2023-12-31"),
 #'   "ctry"
 #' )
+#' }
 #'
 #' @keywords internal
 

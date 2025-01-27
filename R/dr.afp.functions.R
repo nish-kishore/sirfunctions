@@ -465,6 +465,10 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
 #' @param lab_data_summary `tibble` Summarized lab data, if available. This parameter will calculate timeliness intervals in the lab. Otherwise,
 #' only the field component will be presented. This is the output of [generate_lab_timeliness()].
 #' @param ctry.data `list` `r lifecycle::badge("deprecated") `
+#' @param spatial.scale `str` `r lifecycle::badge("deprecated")` Renamed in favor
+#' of `spatial_scale`.
+#' @param lab.data `tibble` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `lab_data_summary`.
 #'
 #' Passing ctry.data has been deprecated in favor of independently assigning the AFP dataset to
 #' afp.data and the population dataset to pop.data. This allows the function to run either on

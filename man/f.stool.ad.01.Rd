@@ -50,6 +50,8 @@ When calculating the \code{adequacy.final} column:
 \item{rolling}{\code{bool} Should data be analyzed on a rolling bases? Defaults to \code{FALSE}.}
 
 \item{sp_continuity_validation}{\code{bool} Should GUIDs not present in all years of the dataset be excluded? Default \code{TRUE}.}
+
+\item{admin.data}{\code{tibble} Population data. Renamed in favor of \code{pop.data}.}
 }
 \value{
 \code{tibble} Long format stool adequacy evaluations.
