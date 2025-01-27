@@ -23,6 +23,14 @@
 #'
 #' @export
 create_afp_export <- function(stool.data, country = Sys.getenv("DR_COUNTRY"), excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }  
+  
   stool.data.export <- stool.data |>
     dplyr::mutate(nvaccine.2 = NA) |>
     dplyr::select(c(
@@ -106,6 +114,14 @@ create_afp_export <- function(stool.data, country = Sys.getenv("DR_COUNTRY"), ex
 #'
 #' @export
 create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }  
+
   sheets <- list(
     "country_npafp" = cstool,
     "province_npafp" = pstool,
@@ -147,6 +163,14 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
 #'
 #' @export
 create_npafp_export <- function(ctry.case.ind, prov.case.ind, dist.case.ind, excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }  
+  
   sheets <- list(
     "country_npafp" = ctry.case.ind,
     "province_npafp" = prov.case.ind,
@@ -177,6 +201,14 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dist.case.ind, exc
 #' @export
 create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"),
                                     excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }  
+
   pop.check <-
     dplyr::count(
       dplyr::ungroup(dplyr::filter(ctry.data$dist.pop, year >= min(year))), prov, dist,
@@ -273,6 +305,14 @@ create_60_day_export <- function(cases.need60day, country = Sys.getenv("DR_COUNT
 create_pot_comp_clust_export <- function(pot.c.clust,
                                          country = Sys.getenv("DR_COUNTRY"),
                                          excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }  
+  
   writexl::write_xlsx(
     pot.c.clust,
     file.path(

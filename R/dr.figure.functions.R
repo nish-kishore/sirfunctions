@@ -29,6 +29,14 @@
 generate_ctry_timeliness_graph <- function(int.data,
                                            output_path = Sys.getenv("DR_FIGURE_PATH"),
                                            afp.year.lab = lifecycle::deprecated()) {
+
+  if (!requireNamespace("forcats", quietly = TRUE)) {
+    stop(
+      'Package "forcats" must be installed to use this function.',
+      call. = FALSE
+    )
+  } 
+
   if (lifecycle::is_present(afp.year.lab)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -116,6 +124,14 @@ generate_ctry_timeliness_graph <- function(int.data,
 generate_prov_timeliness_graph <- function(int.data,
                                            output_path = Sys.getenv("DR_FIGURE_PATH"),
                                            afp.prov.year.lab = lifecycle::deprecated()) {
+
+  if (!requireNamespace("forcats", quietly = TRUE)) {
+    stop(
+      'Package "forcats" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   if (lifecycle::is_present(afp.prov.year.lab)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -275,6 +291,14 @@ generate_afp_prov_year <- function(afp.by.month.prov,
                                    start_date,
                                    end_date = lubridate::today(),
                                    output_path = Sys.getenv("DR_FIGURE_PATH")) {
+
+  if (!requireNamespace("forcats", quietly = TRUE)) {
+    stop(
+      'Package "forcats" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
@@ -657,6 +681,14 @@ generate_case_num_dose_g <- function(ctry.data,
                                      start_date,
                                      end_date,
                                      output_path = Sys.getenv("DR_FIGURE_PATH")) {
+
+  if (!requireNamespace("ggpubr", quietly = TRUE)) {
+    stop(
+      'Package "ggpubr" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
@@ -864,6 +896,13 @@ generate_pop_map <- function(ctry.data,
                              caption_size = 11) {
   end_date <- lubridate::as_date(end_date)
 
+  if (!requireNamespace("ggrepel", quietly = TRUE)) {
+    stop(
+      'Package "ggrepel" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0(
       "ctry.shape is not in long format. ",
@@ -985,6 +1024,13 @@ generate_dist_pop_map <- function(ctry.data,
                                   output_path = Sys.getenv("DR_FIGURE_PATH"),
                                   caption_size = 11) {
   end_date <- lubridate::as_date(end_date)
+
+  if (!requireNamespace("ggrepel", quietly = TRUE)) {
+    stop(
+      'Package "ggrepel" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
 
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0(
@@ -2178,6 +2224,21 @@ generate_timeliness_maps <- function(ctry.data,
                                      mark_x = T,
                                      pt_size = 4,
                                      output_path = Sys.getenv("DR_FIGURE_PATH")) {
+
+  if (!requireNamespace("forcats", quietly = TRUE)) {
+    stop(
+      'Package "forcats" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
+  if (!requireNamespace("ggpubr", quietly = TRUE)) {
+    stop(
+      'Package "ggpubr" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0(
       "ctry.shape is not in long format. ",
@@ -2661,6 +2722,15 @@ generate_es_det_map <- function(es.data,
                                 es_end_date = end_date,
                                 output_path = Sys.getenv("DR_FIGURE_PATH"),
                                 es.data.long = lifecycle::badge("deprecated")) {
+
+
+  if (!requireNamespace("ggrepel", quietly = TRUE)) {
+    stop(
+      'Package "ggrepel" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   if (lifecycle::is_present(es.data.long)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -3027,6 +3097,7 @@ generate_surv_ind_tab <- function(ctry.data,
                                   dstool,
                                   afp.case,
                                   country_name = Sys.getenv("DR_COUNTRY")) {
+  
   if (!requireNamespace("janitor", quietly = TRUE)) {
     stop('Package "janitor" must be installed to use this function.',
       .call = FALSE

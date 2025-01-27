@@ -18,6 +18,14 @@
 #'
 #' @export
 send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL, type = "text") {
+  
+  if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
+    stop(
+      'Package "Microsoft365R" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+  
   team <- Microsoft365R::get_team(team_id)
 
   channel <- team$get_channel(channel)
@@ -48,6 +56,14 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #'
 #' @export
 upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283", drive = "Documents") {
+  
+  if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
+    stop(
+      'Package "Microsoft365R" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   tokens <- AzureAuth::list_azure_tokens()
 
   token_hash_names <- tokens |> names()
@@ -100,6 +116,13 @@ send_outlook_email <- function(title, body, recipient, attachment = NULL) {
   if (!requireNamespace("blastula", quietly = TRUE)) {
     stop('Package "blastula" must be installed to use this function.',
       .call = FALSE
+    )
+  }
+
+  if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
+    stop(
+      'Package "Microsoft365R" must be installed to use this function.',
+      call. = FALSE
     )
   }
 

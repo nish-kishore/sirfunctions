@@ -73,6 +73,14 @@ clean_iss_data <- function(iss_data, start_date, end_date,
                            today_col = "today",
                            date_of_visit_col = "date_of_visit",
                            ctry.data = lifecycle::deprecated()) {
+
+  if (!requireNamespace("zoo", quietly = TRUE)) {
+    stop(
+      'Package "zoo" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+  
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",

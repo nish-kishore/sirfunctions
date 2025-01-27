@@ -99,6 +99,21 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
                                 new_detect, virus_type, surv_options, start_date, date_3a,
                                 download_date, emg_cols, country, labels, clean_maps, data_r,
                                 .owner) {
+
+    if (!requireNamespace("ggspatial", quietly = TRUE)) {
+    stop(
+      'Package "ggspatial" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
+  if (!requireNamespace("ggrepel", quietly = TRUE)) {
+    stop(
+      'Package "ggrepel" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   g1 <- ggplot2::ggplot() +
     ggplot2::geom_sf(data = m_base_region, fill = "grey80", color = "black", lwd = 0.6, show.legend = FALSE) +
     ggplot2::geom_sf(data = m_base_prov, aes(fill = detect_status2), color = "grey", lwd = 0.5, show.legend = TRUE) +
@@ -391,7 +406,15 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
 #'
 #' @returns sharepoint path
 load_sharepoint_env <- function(raw.data) {
-  get_sharepoint_site(
+
+  if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
+    stop(
+      'Package "Microsoft365R" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
+  Microsoft365R::get_sharepoint_site(
     site_url = "https://cdc.sharepoint.com/teams/CGH-GID-PEB",
     tenant = Sys.getenv("CLIMICROSOFT365_TENANT", "common"),
     app = Sys.getenv("CLIMICROSOFT365_AADAPPID"),
@@ -557,6 +580,7 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
                                width = 4.5,
                                scale = 1.25,
                                dpi = 300) {
+
   if (!requireNamespace("ggspatial", quietly = TRUE)) {
     stop('Package "ggspatial" must be installed to use this function.',
       .call = FALSE

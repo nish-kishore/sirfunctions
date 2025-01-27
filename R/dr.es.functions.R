@@ -11,6 +11,14 @@
 #' @returns `tibble` ES data with imputed coordinates for sites missing them.
 #' @keywords internal
 impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated()) {
+
+  if (!requireNamespace("purrr", quietly = TRUE)) {
+    stop(
+      'Package "purrr" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",

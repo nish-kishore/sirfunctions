@@ -29,6 +29,13 @@ copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
 #'
 #' @export
 copy_dr_functions <- function(branch = "main", output_folder = Sys.getenv("DR_FUNC_PATH")) {
+
+  if (!requireNamespace("httr", quietly = TRUE)) {
+    stop(
+      'Package "httr" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
   repo <- "nish-kishore/sirfunctions"
   github_raw_url <- "https://raw.githubusercontent.com"
   github_folder_url <- "https://api.github.com/repos/nish-kishore/sirfunctions/git/trees"

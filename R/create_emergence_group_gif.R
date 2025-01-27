@@ -46,6 +46,13 @@ create_emergence_group_gif <- function(
     )
   }
 
+  if (!requireNamespace("ggpubr", quietly = TRUE)) {
+    stop(
+      'Package "ggpubr" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   cli::cli_process_start("Setting up data structures")
 
   # set up data structures

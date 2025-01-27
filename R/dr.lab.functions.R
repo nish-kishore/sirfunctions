@@ -870,6 +870,14 @@ lab_data_errors_region <- function(lab.data,
                                    ctry_name = Sys.getenv("DR_COUNTRY"),
                                    error_path = Sys.getenv("DR_ERROR_PATH"),
                                    ctry.data = lifecycle::deprecated()) {
+
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }  
+
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -1071,6 +1079,14 @@ lab_data_errors_who <- function(lab.data, afp.data,
                                 ctry_name = Sys.getenv("DR_COUNTRY"),
                                 error_path = Sys.getenv("DR_ERROR_PATH"),
                                 ctry.data = lifecycle::deprecated()) {
+
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }  
+                                    
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",

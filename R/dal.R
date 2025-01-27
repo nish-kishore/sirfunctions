@@ -2089,7 +2089,7 @@ compress_png <- function(img, pngquant_path = NULL, suffix = "") {
 #'
 #' @returns `tibble` A tibble showing the columns where duplicates differ.
 #' @examples
-#' df1 <- tibble::tibble(col1 = c(1, 1, 2), col2 = c("a", "b", "c"), col3 = c(1, 1, 3))
+#' df1 <- dplyr::tibble(col1 = c(1, 1, 2), col2 = c("a", "b", "c"), col3 = c(1, 1, 3))
 #' diff_cols <- get_diff_cols(df1, "col1")
 #'
 #' @export
