@@ -244,10 +244,12 @@ clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated
 #'
 #' @returns `tibble` ES data with viral detection columns.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
-#' ctry.data$es <- clean_es_data(ctry.data)
+#' ctry.data$es <- clean_es_data(ctry.data$es, ctry.data$dist)
 #' es.data.long <- generate_es_data_long(ctry.data$es)
+#' }
 #'
 #' @keywords internal
 generate_es_data_long <- function(es.data) {

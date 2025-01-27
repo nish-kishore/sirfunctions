@@ -26,9 +26,11 @@ label of the y-axis. However, as of sirfunctions 1.3.0,
 \code{\link[=generate_ctry_timeliness_graph]{generate_ctry_timeliness_graph()}} now creates its own labels.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
 ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+}
 
 }
 \keyword{internal}

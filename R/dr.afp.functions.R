@@ -308,9 +308,8 @@ add_prov_npafp_table <- function(npafp.output) {
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' afp.by.month <- generate_afp_by_month_summary(
-#'   raw.data$afp, raw.data$ctry.pop,
-#'   "2021-01-01", "2023-12-31", "ctry"
-#' )
+#'   raw.data$afp, "2021-01-01", "2023-12-31", "ctry",
+#'   raw.data$ctry.pop)
 #'
 #' @export
 generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
@@ -1252,9 +1251,11 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
 #' @param end_date `str` End date of analysis.
 #' @returns `tibble` A table containing summary of AFP cases by year and country.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+#' }
 #'
 #' @keywords internal
 generate_year_lab <- function(ctry.data, start_date, end_date) {
@@ -1294,9 +1295,11 @@ generate_year_lab <- function(ctry.data, start_date, end_date) {
 #' @param end_date `str` End date of analysis.
 #' @returns `tibble` A table containing summary of AFP cases by year and province.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' prov.labels <- generate_prov_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+#' }
 #'
 #' @keywords internal
 generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
