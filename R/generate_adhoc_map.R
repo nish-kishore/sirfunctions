@@ -99,8 +99,7 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
                                 new_detect, virus_type, surv_options, start_date, date_3a,
                                 download_date, emg_cols, country, labels, clean_maps, data_r,
                                 .owner) {
-
-    if (!requireNamespace("ggspatial", quietly = TRUE)) {
+  if (!requireNamespace("ggspatial", quietly = TRUE)) {
     stop(
       'Package "ggspatial" must be installed to use this function.',
       call. = FALSE
@@ -406,7 +405,6 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
 #'
 #' @returns sharepoint path
 load_sharepoint_env <- function(raw.data) {
-
   if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
     stop(
       'Package "Microsoft365R" must be installed to use this function.',
@@ -580,7 +578,6 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
                                width = 4.5,
                                scale = 1.25,
                                dpi = 300) {
-
   if (!requireNamespace("ggspatial", quietly = TRUE)) {
     stop('Package "ggspatial" must be installed to use this function.',
       .call = FALSE

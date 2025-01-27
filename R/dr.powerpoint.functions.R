@@ -7,13 +7,12 @@
 #'
 #' @returns list of strings
 generate_pptx_assumptions <- function(start_date, end_date) {
-
   if (!requireNamespace("officer", quietly = TRUE)) {
     stop(
       'Package "officer" must be installed to use this function.',
       call. = FALSE
     )
-  }  
+  }
 
   pptx.assumptions <- c(
     "Data sources:",
@@ -138,7 +137,6 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
                             es.table,
                             country = Sys.getenv("DR_COUNTRY"),
                             ppt_output_path = Sys.getenv("DR_POWERPOINT_PATH")) {
-  
   if (!requireNamespace("rvg", quietly = TRUE)) {
     stop('Package "rvg" must be installed to use this function.',
       .call = FALSE
@@ -150,7 +148,7 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
       'Package "officer" must be installed to use this function.',
       call. = FALSE
     )
-  } 
+  }
 
   assump <- generate_pptx_assumptions(start_date, end_date)
 
@@ -493,13 +491,12 @@ generate_dr_ppt2 <- function(ctry.data,
                              fig.path = Sys.getenv("DR_FIGURE_PATH"),
                              country = Sys.getenv("DR_COUNTRY"),
                              ppt_output_path = Sys.getenv("DR_POWERPOINT_PATH")) {
-
   if (!requireNamespace("officer", quietly = TRUE)) {
     stop(
       'Package "officer" must be installed to use this function.',
       call. = FALSE
     )
-  } 
+  }
 
   ppt_template_path <- get_ppt_template(ppt_template_path)
   assump <- generate_pptx_assumptions(start_date, end_date)

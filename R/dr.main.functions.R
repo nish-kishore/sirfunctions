@@ -29,7 +29,6 @@ copy_dr_template_code <- function(output_path = Sys.getenv("DR_PATH")) {
 #'
 #' @export
 copy_dr_functions <- function(branch = "main", output_folder = Sys.getenv("DR_FUNC_PATH")) {
-
   if (!requireNamespace("httr", quietly = TRUE)) {
     stop(
       'Package "httr" must be installed to use this function.',

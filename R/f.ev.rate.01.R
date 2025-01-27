@@ -21,7 +21,6 @@ f.ev.rate.01 <- function(
     es.data,
     start.date,
     end.date) {
-      
   if (!requireNamespace("purrr", quietly = TRUE)) {
     stop('Package "purrr" must be installed to use this function.',
       .call = FALSE

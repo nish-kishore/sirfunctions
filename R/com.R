@@ -18,14 +18,13 @@
 #'
 #' @export
 send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL, type = "text") {
-  
   if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
     stop(
       'Package "Microsoft365R" must be installed to use this function.',
       call. = FALSE
     )
   }
-  
+
   team <- Microsoft365R::get_team(team_id)
 
   channel <- team$get_channel(channel)
@@ -56,7 +55,6 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #'
 #' @export
 upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283", drive = "Documents") {
-  
   if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
     stop(
       'Package "Microsoft365R" must be installed to use this function.',

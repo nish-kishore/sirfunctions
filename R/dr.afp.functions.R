@@ -179,8 +179,7 @@ col_to_datecol <- function(afp.data) {
 #' @keywords internal
 #' @returns tibble with AFP data with columns for number of doses and dose category
 add_zero_dose_col <- function(afp.data) {
-
-    if (!requireNamespace("forcats", quietly = TRUE)) {
+  if (!requireNamespace("forcats", quietly = TRUE)) {
     stop(
       'Package "forcats" must be installed to use this function.',
       call. = FALSE
@@ -316,20 +315,20 @@ add_prov_npafp_table <- function(npafp.output) {
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' afp.by.month <- generate_afp_by_month_summary(
 #'   raw.data$afp, "2021-01-01", "2023-12-31", "ctry",
-#'   raw.data$ctry.pop)
+#'   raw.data$ctry.pop
+#' )
 #'
 #' @export
 generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
                                           pop_data = NULL,
                                           ctry.data = lifecycle::deprecated()) {
-  
-    if (!requireNamespace("zoo", quietly = TRUE)) {
+  if (!requireNamespace("zoo", quietly = TRUE)) {
     stop(
       'Package "zoo" must be installed to use this function.',
       call. = FALSE
     )
   }
-  
+
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -994,7 +993,6 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #'
 #' @export
 generate_potentially_compatibles_cluster <- function(cases.need60day, create_cluster = F) {
-
   if (!requireNamespace("vctrs", quietly = TRUE)) {
     stop(
       'Package "vctrs" must be installed to use this function.',
@@ -1069,14 +1067,13 @@ generate_potentially_compatibles_cluster <- function(cases.need60day, create_clu
 #' @export
 ctry_data_errors <- function(ctry.data,
                              error_path = Sys.getenv("DR_ERROR_PATH")) {
-
   if (!requireNamespace("writexl", quietly = TRUE)) {
     stop(
       'Package "writexl" must be installed to use this function.',
       call. = FALSE
     )
-  }    
-                          
+  }
+
   message("Checking for data quality issues")
 
   # afp.all.2
