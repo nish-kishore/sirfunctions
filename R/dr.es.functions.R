@@ -91,7 +91,7 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
     dplyr::select(-dplyr::ends_with(".x"), -dplyr::ends_with(".y"))
 
   # Final check
-  no_coordinates <- es.data.test |>
+  no_coordinates <- es.data |>
     dplyr::filter(is.na(lat) | is.na(lng)) |>
     select(dplyr::any_of(names(missing_coords))) |>
     dplyr::distinct()
