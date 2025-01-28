@@ -299,8 +299,10 @@ add_prov_npafp_table <- function(npafp.output) {
 
 #' Generate AFP case count summary
 #'
-#' Summarize AFP case counts by month and another grouping variable.
+#' @description
 #' `r lifecycle::badge("stable")`
+#'
+#' Summarize AFP case counts by month and another grouping variable.
 #'
 #' @param afp_data `tibble` AFP dataset.
 #' @param pop_data `tibble` Population dataset.
