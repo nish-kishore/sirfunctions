@@ -894,17 +894,17 @@ lab_data_errors_region <- function(lab.data,
 
 
   # Filter to only the country of interest
-  lab_data <- lab_data |>
+  lab.data <- lab.data |>
     dplyr::filter(Name == ctry_name)
 
   # Cleaning for Cote D'Ivoire
   if (stringr::str_detect(ctry_name, "(?i)IVIORE")) {
-    lab_data <- lab_data |>
+    lab.data <- lab.data |>
       dplyr::mutate(Name = dplyr::if_else(stringr::str_detect(Name, "(?i)IVOIRE"), "COTE D'IVIORE", Name))
   }
 
   # Converting character dates to date columns
-  lab_data <- lab_data |>
+  lab.data <- lab.data |>
     dplyr::rename("country" = "Name") |>
     dplyr::mutate(
       dplyr::across(dplyr::any_of(c(
@@ -981,7 +981,7 @@ lab_data_errors_region <- function(lab.data,
 
   # Check for invalid dates
   cli::cli_process_start("Checking for negative time and N/A intervals")
-  lab_data <- lab_data |>
+  lab.data <- lab.data |>
     dplyr::mutate(
       # Intervals
       days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
@@ -998,7 +998,7 @@ lab_data_errors_region <- function(lab.data,
       met.lab.culture = ifelse(days.lab.culture < 14, 1, 0),
     )
 
-  invalid_intervals <- lab_data |>
+  invalid_intervals <- lab.data |>
     # filtering out negative time intervals
     dplyr::filter((days.collect.lab < 0) |
       (days.lab.culture < 0) |
@@ -1020,7 +1020,7 @@ lab_data_errors_region <- function(lab.data,
   cli::cli_process_done()
 
   cli::cli_process_start("Checking records where stool collection date is before paralysis.")
-  collection_before_paralysis <- lab_data |>
+  collection_before_paralysis <- lab.data |>
     dplyr::filter((DateStoolCollected < ParalysisOnsetDate))
 
   if (nrow(collection_before_paralysis) > 0) {
@@ -1114,7 +1114,7 @@ lab_data_errors_who <- function(lab.data, afp.data,
 
 
   cli::cli_process_start("Checking for invalid dates from cases.")
-  invalid_dates <- lab_data |>
+  invalid_dates <- lab.data |>
     dplyr::filter((days.collect.lab < 0) &
       (days.lab.culture < 0) &
       (days.seq.ship < 0) &
@@ -1135,7 +1135,7 @@ lab_data_errors_who <- function(lab.data, afp.data,
   cli::cli_process_done()
 
   cli::cli_process_start("Checking for missing years")
-  missing_years <- lab_data |>
+  missing_years <- lab.data |>
     dplyr::filter(is.na(year)) |>
     dplyr::filter(
       dplyr::between(year, lubridate::year(start.date), lubridate::year(end.date)),
