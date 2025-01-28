@@ -310,7 +310,7 @@ generate_afp_prov_year <- function(afp.by.month.prov,
     afp.month.prov.g |>
       dplyr::arrange(u15pop),
     ggplot2::aes(
-      x = mon.year2,
+      x = mon.year,
       y = forcats::fct_inorder(prov),
       fill = case.cat
     )
@@ -1177,33 +1177,42 @@ generate_afp_case_map <- function(afp.all,
     cli::cli_abort(error_message)
   }
 
+  afp.case.map.filter <- afp.all |>
+    dplyr::filter(dplyr::between(as.Date(date.onset), start_date, end_date)) |>
+    dplyr::filter(cdc.classification.all2 %in% names(f.color.schemes("para.case")))
+
+  if (nrow(afp.case.map.filter) == 0) {
+    cli::cli_abort("No data available for the specified date range.")
+  }
+
+  if (max(afp.case.map.filter$year) < year(end_date)) {
+    cli::cli_alert_warning(paste0(
+      "End year of ", year(end_date), " specified. However, filtered cases only ",
+      "goes up to ", max(afp.case.map.filter$year), ". Maps will not display ",
+      "the specified end year."
+    ))
+  }
+
   ctry.shape <- ctry.shape |>
     dplyr::filter(dplyr::between(
       active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = active.year.01)
+    dplyr::mutate(year = active.year.01) |>
+    dplyr::filter(year <= max(afp.case.map.filter$year))
+
   prov.shape <- prov.shape |>
     dplyr::filter(dplyr::between(
       active.year.01,
       lubridate::year(start_date),
       lubridate::year(end_date)
     )) |>
-    dplyr::mutate(year = active.year.01)
-
-  afp.case.map.filter <- afp.all |>
-    dplyr::filter(dplyr::between(as.Date(date.onset), start_date, end_date)) |>
-    dplyr::mutate(year = as.factor(year))
-
-  if (nrow(afp.case.map.filter) == 0) {
-    cli::cli_abort("No data available for the specified date range.")
-  }
+    dplyr::mutate(year = active.year.01) |>
+    dplyr::filter(year <= max(afp.case.map.filter$year))
 
   afp.case.map.filter <- afp.case.map.filter |>
-    dplyr::filter(!(
-      cdc.class %in% c("PENDING", "NPAFP", "UNKNOWN", "NOT-AFP", "LAB PENDING")
-    ))
+    dplyr::mutate(year = as.factor(year))
 
   afp.case.map <- ggplot2::ggplot() +
     ggplot2::geom_sf(
@@ -1225,7 +1234,9 @@ generate_afp_case_map <- function(afp.all,
       ggplot2::aes(color = cdc.classification.all2),
       size = 1
     ) +
-    ggplot2::facet_wrap(~year, ncol = 4) +
+    ggplot2::facet_wrap(ggplot2::vars(year),
+                        ncol = length(unique(afp.case.map.filter$year))
+                        ) +
     ggplot2::scale_color_manual(
       values = sirfunctions::f.color.schemes("para.case"),
       name = "Case type",
@@ -2322,9 +2333,9 @@ generate_timeliness_maps <- function(ctry.data,
   long.timely$prop <- forcats::fct_na_value_to_level(long.timely$prop, "Missing") # missing date data
 
   time.map <-
-    dplyr::left_join(prov.shape, long.timely, by = c("GUID" = "adm1guid", "year" = "year"))
+    dplyr::left_join(prov.shape, long.timely, by = c("GUID" = "adm1guid", "active.year.01" = "year"))
   time.map <-
-    dplyr::full_join(time.map, all.case, by = c("GUID" = "adm1guid", "year" = "year"))
+    dplyr::full_join(time.map, all.case, by = c("GUID" = "adm1guid", "active.year.01" = "year"))
 
   time.map <- time.map %>%
     dplyr::mutate(prop = as.character(prop)) %>%
