@@ -1156,8 +1156,10 @@ generate_afp_case_map <- function(afp.all,
                                   start_date,
                                   end_date = lubridate::today(),
                                   output_path = Sys.getenv("DR_FIGURE_PATH")) {
+
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
+  para_colors <- sirfunctions::f.color.schemes("para.case")
 
   if (!"active.year.01" %in% names(ctry.shape)) {
     error_message <- paste0(
@@ -1179,16 +1181,55 @@ generate_afp_case_map <- function(afp.all,
 
   afp.case.map.filter <- afp.all |>
     dplyr::filter(dplyr::between(as.Date(date.onset), start_date, end_date)) |>
-    dplyr::filter(cdc.classification.all2 %in% names(f.color.schemes("para.case")))
+    dplyr::filter(cdc.classification.all2 %in% names(f.color.schemes("para.case")) |
+                    stringr::str_count(cdc.classification.all2,
+                                       paste("WILD 1", "cVDPV 2", "VDPV 2",
+                                             "cVDPV 1", "VDPV 1", "cVDPV1",
+                                             "cVDPV2", "VDPV1", "VDPV2",
+                                             "Wild1", sep = "|")) >= 2)
+
+  # Add color schemes in instances of coinfections
+  no_col_maps <- setdiff(unique(afp.case.map.filter$cdc.classification.all2),
+                         names(para_colors))
+
+  if (length(no_col_maps) > 0) {
+    for (i in no_col_maps) {
+      para_colors[i] = "purple"
+    }
+  }
 
   if (nrow(afp.case.map.filter) == 0) {
     cli::cli_abort("No data available for the specified date range.")
+  }
+
+  if (min(afp.case.map.filter$year) > year(start_date)) {
+    cli::cli_alert_warning(paste0(
+      "Start year of ", year(start_date), " specified. However, filtered cases only ",
+      "start from ", min(afp.case.map.filter$year), ". Maps will not display ",
+      "the specified start year."
+    ))
+  }
+
+  if (min(prov.shape$active.year.01) > year(start_date)) {
+    cli::cli_alert_warning(paste0(
+      "Start year of ", year(start_date), " specified. However, the province shapefile ",
+      "starts at ", min(prov.shape$active.year.01), ". Maps will not display ",
+      "the specified start year."
+    ))
   }
 
   if (max(afp.case.map.filter$year) < year(end_date)) {
     cli::cli_alert_warning(paste0(
       "End year of ", year(end_date), " specified. However, filtered cases only ",
       "goes up to ", max(afp.case.map.filter$year), ". Maps will not display ",
+      "the specified end year."
+    ))
+  }
+
+  if (max(prov.shape$active.year.01) < year(end_date)) {
+    cli::cli_alert_warning(paste0(
+      "End year of ", year(end_date), " specified. However, the province shapefile",
+      "goes up to ", max(prov.shape$active.year.01), ". Maps will not display ",
       "the specified end year."
     ))
   }
@@ -1238,15 +1279,15 @@ generate_afp_case_map <- function(afp.all,
                         ncol = length(unique(afp.case.map.filter$year))
                         ) +
     ggplot2::scale_color_manual(
-      values = sirfunctions::f.color.schemes("para.case"),
+      values = para_colors,
       name = "Case type",
       drop = F
     ) +
     ggplot2::ggtitle(paste(
       "Paralytic Polio and Compatible Cases",
-      lubridate::year(start_date),
+      lubridate::year(min(as.numeric(afp.case.map.filter$year))),
       "-",
-      lubridate::year(end_date)
+      lubridate::year(max(as.numeric(afp.case.map.filter$year)))
     )) +
     # NOTE: IF THERE ARE NONE IT NEEDS TO THROW AN ERROR
     sirfunctions::f.plot.looks("epicurve") +
