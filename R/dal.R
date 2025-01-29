@@ -72,6 +72,7 @@ get_azure_storage_connection <- function(
 #' @param force_delete `bool` Use delete io without verification in the command line.
 #' @param local_path `str` Local file pathway to upload a file to EDAV. Default is `NULL`.
 #' This parameter is only required when passing `"upload"` in the `io` parameter.
+#' @param ... Optional parameters that work with [readr::read_delim()].
 #' @returns Output dependent on argument passed in the `io` parameter.
 #' @examples
 #' \dontrun{
@@ -179,7 +180,7 @@ edav_io <- function(
     }
 
     if (endsWith(file_loc, ".csv")) {
-      return(suppressWarnings(AzureStor::storage_read_csv(azcontainer, file_loc, guess_max = ...)))
+      return(suppressWarnings(AzureStor::storage_read_csv(azcontainer, file_loc, ...)))
     }
 
     if (endsWith(file_loc, ".rda")) {
