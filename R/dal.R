@@ -91,7 +91,8 @@ edav_io <- function(
     obj = NULL,
     azcontainer = suppressMessages(get_azure_storage_connection()),
     force_delete = F,
-    local_path = NULL) {
+    local_path = NULL,
+    ...) {
   if (!is.null(file_loc)) {
     if (is.null(default_dir)) {
       file_loc <- file_loc
@@ -178,7 +179,7 @@ edav_io <- function(
     }
 
     if (endsWith(file_loc, ".csv")) {
-      return(suppressWarnings(AzureStor::storage_read_csv(azcontainer, file_loc)))
+      return(suppressWarnings(AzureStor::storage_read_csv(azcontainer, file_loc, guess_max = ...)))
     }
 
     if (endsWith(file_loc, ".rda")) {
