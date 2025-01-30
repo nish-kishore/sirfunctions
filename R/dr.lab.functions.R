@@ -893,9 +893,12 @@ lab_data_errors_region <- function(lab.data,
   ctry_name <- stringr::str_to_upper(ctry_name)
 
 
+  lab.data <- dplyr::rename_with(lab.data, recode,
+                                 Name = "country"
+  )
   # Filter to only the country of interest
   lab.data <- lab.data |>
-    dplyr::filter(Name == ctry_name)
+    dplyr::filter(country == ctry_name)
 
   # Cleaning for Cote D'Ivoire
   if (stringr::str_detect(ctry_name, "(?i)IVIORE")) {
