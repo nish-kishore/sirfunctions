@@ -288,14 +288,14 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 #' @param period `period` A [lubridate::period()] object. Defaults to
 #' `months(12, FALSE)`.
 #'
-#' @return `tibble` A tibble with rolling year information.
-#' @export
+#' @returns `tibble` A tibble with rolling year information.
 #'
 #' @examples
 #' \dontrun{
 #' raw_data <- get_all_polio_data()
 #' afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "dateonset")
 #' }
+#' @export
 add_rolling_years <- function(df, start_date, date_col, period = months(12, FALSE)) {
   start_date <- lubridate::as_date(start_date)
 
