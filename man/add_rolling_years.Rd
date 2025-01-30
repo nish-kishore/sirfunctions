@@ -30,7 +30,7 @@ For example, if the start date is defined as Jan 1, 2021 and we would like to
 calculate a 12-month rolling period, the end date would be Dec 31, 2021.
 }
 \examples{
-\dontrun {
+\dontrun{
 raw_data <- get_all_polio_data()
 afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "dateonset")
 }
