@@ -292,7 +292,7 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 #' @export
 #'
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #' raw_data <- get_all_polio_data()
 #' afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "dateonset")
 #' }
