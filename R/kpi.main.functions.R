@@ -201,6 +201,8 @@ get_ctry_abbrev <- function(afp_data) {
 #' }
 #' @keywords internal
 generate_kpi_template <- function(output_path, name) {
+
+  file.create(file.path(output_path, "kpi_template.R"))
   conn <- file(file.path(output_path, "kpi_template.R"))
 
   # Initialization path
