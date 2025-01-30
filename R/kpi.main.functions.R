@@ -38,16 +38,6 @@ init_kpi <- function(path = getwd(), name = NULL) {
   } else {
     analysis_path <- file.path(path, name)
   }
-  cli::cli_process_done()
-  cli::cli_alert_success(paste0("KPI analysis folder initialized at: ",
-                                analysis_path))
-
-  # Create KPI template
-  if (!file.exists(file.path(analysis_path, "kpi_template.R"))) {
-    cli::cli_process_start("Generating KPI code template")
-    generate_kpi_template(analysis_path, name)
-    cli::cli_process_done()
-  }
 
   # Path to data
   if (!dir.exists(file.path(analysis_path, "data"))) {
@@ -62,6 +52,17 @@ init_kpi <- function(path = getwd(), name = NULL) {
   # Path to figures
   if (!dir.exists(file.path(analysis_path, "figures"))) {
     dir.create(file.path(analysis_path, "figures"), recursive = T)
+  }
+
+  cli::cli_process_done()
+  cli::cli_alert_success(paste0("KPI analysis folder initialized at: ",
+                                analysis_path))
+
+  # Create KPI template
+  if (!file.exists(file.path(analysis_path, "kpi_template.R"))) {
+    cli::cli_process_start("Generating KPI code template")
+    generate_kpi_template(path, name)
+    cli::cli_process_done()
   }
 
   # Set environment variables
@@ -202,8 +203,7 @@ get_ctry_abbrev <- function(afp_data) {
 #' @keywords internal
 generate_kpi_template <- function(output_path, name) {
 
-  file.create(file.path(output_path, "kpi_template.R"))
-  conn <- file(file.path(output_path, "kpi_template.R"))
+  conn <- file(file.path(output_path, name, "kpi_template.R"))
 
   # Initialization path
   init <- paste0("init_kpi(", '"', output_path, '"', ",\n",
