@@ -903,12 +903,12 @@ lab_data_errors_region <- function(lab.data,
   # Cleaning for Cote D'Ivoire
   if (stringr::str_detect(ctry_name, "(?i)IVIORE")) {
     lab.data <- lab.data |>
-      dplyr::mutate(Name = dplyr::if_else(stringr::str_detect(Name, "(?i)IVOIRE"), "COTE D'IVIORE", Name))
+      dplyr::mutate(country = dplyr::if_else(stringr::str_detect(country, "(?i)IVOIRE"),
+                                             "COTE D'IVIORE", country))
   }
 
   # Converting character dates to date columns
   lab.data <- lab.data |>
-    dplyr::rename("country" = "Name") |>
     dplyr::mutate(
       dplyr::across(dplyr::any_of(c(
         "CaseDate",
