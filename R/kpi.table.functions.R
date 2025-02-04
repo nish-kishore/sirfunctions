@@ -507,7 +507,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     ))
 
   # Clean up
-  combine_test <- combine |>
+  combine <- combine |>
     dplyr::filter(!is.na(ctry)) |>
     # If no priority level, default to low
     dplyr::mutate(`SG Priority Level` = dplyr::if_else(is.na(`SG Priority Level`),
@@ -546,6 +546,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
                               .group_by = c("adm0guid", "ctry", "dist", "adm2guid", "year"),
                               risk_category = NULL) {
+
+  cli::cli_progress_bar("Creating C2 table", total = 5)
   # Adjust spatial scale for stool adequacy and NPAFP functions
   .spatial_scale <- dplyr::case_when(
     c("dist", "adm2guid") %in% .group_by ~ "dist",
@@ -579,11 +581,13 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     ADM0_GUID = "adm0guid",
     u15pop.prov = "u15pop"
   )
+  cli::cli_progress_update()
 
   # Add required columns
   afp_data <- afp_data |>
     add_seq_capacity() |>
     col_to_datecol()
+  cli::cli_progress_update()
 
   # NPAFP
   npafp <- f.npafp.rate.01(afp_data, pop_data, start_date, end_date, .spatial_scale,
@@ -606,6 +610,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       good_samples = sum(.data$adequacy.final2 == "Adequate"),
       prop_good_condition = good_samples / afp_cases * 100
     )
+  cli::cli_progress_update()
 
   # Completeness of Contact Sampling
   # Calculated in future versions
@@ -622,7 +627,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(prop_complete_60_day = sum(.data$ontime.60day == 1, na.rm = TRUE) /
       sum(adequacy.final2 == "Inadequate") * 100)
-
+  cli::cli_progress_update()
   # Timeliness indicators
   timeliness_summary <- afp_data |>
     dplyr::filter(
@@ -676,6 +681,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       timely_wpv_vdpv = sum(.data$is_timely & .data$is_target & .data$timely_cat != "Missing or bad data", na.rm = TRUE) /
         sum(.data$is_timely & .data$timely_cat != "Missing or bad data", na.rm = TRUE) * 100
     )
+  cli::cli_progress_update()
 
   # Completeness of weekly zero reporting
   # Timeliness of WZR
@@ -713,6 +719,8 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       "npafp_rate", "per.stool.ad",
       "prop_good_condition":"timely_wpv_vdpv"
     )
+
+  cli::cli_progress_done()
 
   return(results)
 }
