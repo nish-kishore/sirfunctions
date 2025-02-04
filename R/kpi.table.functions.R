@@ -352,6 +352,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                               lab_locs = NULL,
                               risk_table = NULL) {
 
+  cli::cli_progress_bar("Creating C1 table", total = 8)
+
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
@@ -365,6 +367,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   es_data <- raw_data$es |>
     dplyr::filter(dplyr::between(collect.date, start_date, end_date))
+  cli::cli_progress_update()
 
   # Ensure that if using raw_data, required renamed columns are present. Borrowed from
   # extract.country.data()
@@ -388,11 +391,12 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                                                   ctry_col = "ADM0_NAME")) |>
       dplyr::filter(.data$`SG Priority Level` %in% risk_category)
   }
-
+  cli::cli_progress_update()
   # Include required columns
-  afp_data <- col_to_datecol(afp_data)
+  afp_data <- suppressMessages(col_to_datecol(afp_data))
   afp_data <- add_rolling_years(afp_data, start_date, "date")
   es_data <- add_rolling_years(es_data, start_date, "collect.date")
+  cli::cli_progress_update()
 
   # Calculate country indicators
   afp_indicators <- afp_data |>
@@ -419,6 +423,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                                             )))
     ) |>
     dplyr::ungroup()
+  cli::cli_progress_update()
 
   es_indicators <- es_data |>
     dplyr::group_by(.data$year_label, .data$rolling_period) |>
@@ -433,11 +438,13 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                                             )))
     ) |>
     dplyr::ungroup()
+  cli::cli_progress_update()
 
   timely_det_indicator <- generate_wild_vdpv_summary(raw_data,
                                                      start_date, end_date,
                                                      risk_table = risk_table,
                                                      lab_locs = lab_locs)
+  cli::cli_progress_update()
 
   # Calculate meeting indicators
   region_lookup_table <- raw_data$ctry.pop |>
@@ -452,7 +459,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::left_join(region_lookup_table) |>
     dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
     dplyr::summarise(dist_w_100k = sum(par >= 1e5),
-                     dist_npafp = n(),
+                     dist_npafp = sum(par != 0), # remove districts without populations
                      met_npafp = sum(
                        (par >= 1e5 & npafp_rate >= 2 & whoregion %in% c("AFRO", "EMRO", "SEARO")),
                        (par >= 1e5 & npafp_rate >= 1 & whoregion %in% c("AMRO", "EURO", "WPRO")),
@@ -483,11 +490,12 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                      met_ev = sum(num.samples >= 10 & ev.rate >= 0.5, na.rm = T),
                      prop_met_ev = met_ev / es_sites * 100,
                      ev_label = paste0(met_ev, "/", es_sites))
+  cli::cli_progress_update()
 
   combine <- dplyr::full_join(met_npafp, met_stool) |>
     dplyr::full_join(met_ev) |>
     dplyr::full_join(timely_det_indicator |>
-                       rename("ctry" = .data$place.admin.0)) |>
+                       rename("ctry" = "place.admin.0")) |>
     dplyr::select(dplyr::any_of(c(
       "year_label", "rolling_period", "whoregion", "SG Priority Level", "ctry",
       "prop_met_npafp", "prop_met_stool", "prop_met_ev",
@@ -497,6 +505,20 @@ generate_c1_table <- function(raw_data, start_date, end_date,
       "prop_timely_samples_label", "prop_timely_cases_label",
       "prop_timely_env_label")
     ))
+
+  # Clean up
+  combine_test <- combine |>
+    dplyr::filter(!is.na(ctry)) |>
+    # If no priority level, default to low
+    dplyr::mutate(`SG Priority Level` = dplyr::if_else(is.na(`SG Priority Level`),
+                                                       "LOW", `SG Priority Level`)
+                  ) |>
+    # NAs should be replace with NaNs and not be empty
+    dplyr::mutate(dplyr::across(dplyr::starts_with("prop") & !dplyr::ends_with("label"), \(x) round(tidyr::replace_na(x, NaN), 2))) |>
+    dplyr::mutate(dplyr::across(dplyr::ends_with("label"), \(x) tidyr::replace_na(x, "0/0")))
+
+  cli::cli_progress_update()
+  cli::cli_progress_done()
 
   return(combine)
 
