@@ -392,11 +392,10 @@ f.npafp.rate.01 <- function(
       dplyr::filter(!is.na(year))
   }
 
-  numeric_cols <- c(
-    "n_npafp", "u15pop", "npafp_rate", "par",
-    "afp.case", "num.wpv.cases",
-    "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases"
-  )
+  numeric_cols <- c("n_npafp",
+                    # "u15pop", "npafp_rate", "par", making sure these are NaNs
+                    "afp.case", "num.wpv.cases",
+                    "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases")
   int.data <- int.data |>
     dplyr::mutate(dplyr::across(
       dplyr::any_of(numeric_cols),
