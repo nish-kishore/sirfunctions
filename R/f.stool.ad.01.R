@@ -573,7 +573,18 @@ f.stool.ad.01 <- function(
   }
 
   int.data <- int.data |>
-    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad")
+    dplyr::rename("adequacy.denominator" = "num.ad.plus.inad") |>
+    dplyr::select(dplyr::any_of(c(
+      "year", "days_in_year", "earliest_date", "latest_date",
+      "u15pop", "pop.cat", "days.at.risk", "weight",
+      "adm0guid", "adm1guid", "adm2guid",
+      "ctry", "prov", "dist",
+      "afp.cases", "adequacy.denominator", "num.adequate", "num.inadequate",
+      "bad.data", "same.day.stool.collection", "late.collection", "bad.condition",
+      "missing.condition", "missing.stool1.condition", "missing.stool2.condition",
+      "missing.stool1", "missing.stool2", "one.or.no.stool", "per.stool.ad"
+    ))) |>
+    dplyr::distinct()
 
   return(int.data)
 }
