@@ -210,8 +210,8 @@ generate_kpi_template <- function(output_path, name) {
                  '         "', name, '"', ")")
 
   # Shapefiles
-  ctry_sf <- 'ctry_sf <- load_clean_ctry_sp(st.year = 2022, type = "long")'
-  dist_sf <- 'dist_sf <- load_clean_dist_sp(st.year = 2022, type = "long")'
+  ctry_sf <- 'ctry_sf <- load_clean_ctry_sp(st_year = 2022, type = "long")'
+  dist_sf <- 'dist_sf <- load_clean_dist_sp(st_year = 2022, type = "long")'
 
   # Generate tables
   c1 <- 'c1 <- generate_c1_table(raw_data, "2022-01-01", "2024-12-31")'
