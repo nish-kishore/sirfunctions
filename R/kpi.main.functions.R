@@ -249,6 +249,7 @@ generate_kpi_template <- function(output_path, name) {
     'lab_data <- clean_lab_data(lab_data, "2022-01-01", "2024-12-31", raw_data$afp)\n',
     "# Generate GPSAP C1-C4 tables ----",
     "# Except for c1, every other table can be specified a custom grouping",
+    "# You may also specify and filter countries based on risk category ",
     c1, c2, c3, c4, "\n",
     "# Generate figures ----",
     "# Ensure c2 is grouped at the district level.",
