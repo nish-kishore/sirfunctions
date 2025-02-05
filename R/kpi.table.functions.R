@@ -729,7 +729,9 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 
   # Formatting
   results <- results |>
-    dplyr::mutate(dplyr::across("npafp_rate":"timely_wpv_vdpv", \(x) tidyr::replace_na(x, NaN)))
+    dplyr::mutate(dplyr::across("npafp_rate":"timely_wpv_vdpv", \(x) tidyr::replace_na(x, NaN))) |>
+    # NPAFP is only NA if it's missing population
+    dplyr::mutate(npafp_rate = dplyr::if_else(npafp_cat != "Missing Pop" & is.nan(npafp_rate), 0, npafp_rate))
 
   cli::cli_progress_done()
 
@@ -825,6 +827,10 @@ generate_c3_table <- function(es_data, start_date, end_date,
                                                        "LOW", `SG Priority Level`))
 
   return(es_summary)
+
+}
+
+generate_c3_rollup <- function(c3) {
 
 }
 
