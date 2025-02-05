@@ -1,5 +1,11 @@
 # Private functions ----
 
+established_es_sites <- function(es, start_date) {
+
+}
+
+
+
 #' Add the risk category based on the country
 #'
 #' @param df `tibble` Dataframe with at least a column for country
@@ -800,7 +806,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
     dplyr::summarize(
       es_samples = sum(!is.na(.data$ev.detect), na.rm = TRUE),
       ev_rate = sum(.data$ev.detect == 1, na.rm = TRUE) / es_samples * 100,
-      prop_good_es = sum(.data$sample.condition == "Good") / sum(!is.na(.data$sample.condition)) * 100,
+      prop_good_es = sum(.data$sample.condition == "Good", na.rm = TRUE) / sum(!is.na(.data$sample.condition)) * 100,
       prop_timely_ship = sum(timely_ship == "yes", na.rm = TRUE) /
         sum(timely_ship != "unable to assess" | !is.na(timely_ship), na.rm = TRUE) * 100,
       wpv_vdpv_detections = sum(is_target == TRUE & (timely_det != "unable to assess" |
@@ -830,7 +836,57 @@ generate_c3_table <- function(es_data, start_date, end_date,
 
 }
 
-generate_c3_rollup <- function(c3) {
+#' Create a country level rollup of the C3 label
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Create a country level summary of ES site performance with respect to
+#' meeting established targets for EV detection rates, good samples,
+#'
+#'
+#' @param c3 `tibble` Output of [generate_c3_table()].
+#' @param include_labels `bool` Include columns for the labels? Default TRUE.
+#' @param sample_threshold `num` Only consider sites with at least this number
+#' of ES samples. Default is `10`.
+#'
+#' @return `tibble` A summary of the c3 table at the country level
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
+#' c3_rollup <- generate_c3_rollup(c3)
+#' }
+generate_c3_rollup <- function(c3, include_labels = TRUE, sample_threshold = 10) {
+
+  if (!"site.id" %in% names(c3)) {
+    cli::cli_abort("Please summarize c3 at the site level and try again.")
+  }
+
+  c3_rollup <- c3 |>
+    dplyr::rename(ctry = "ADM0_NAME",
+                  adm0guid = "ctry.guid",
+                  year = "reporting.year") |>
+    dplyr::filter(es_samples >= sample_threshold) |>
+    dplyr::group_by(year, ctry, adm0guid, `SG Priority Level`, Region, ) |>
+    dplyr::summarize(
+      met_ev = sum(ev_rate >= 50, na.rm = TRUE),
+      met_good_samples = sum(prop_good_es >= 80, na.rm = TRUE),
+      met_timely_wpv_vdpv_det = sum(prop_timely_det_wpv_vdpv >= 80, na.rm = TRUE),
+      median_timely_shipment_per_site = median(prop_timely_ship, na.rm = TRUE),
+      es_sites = n(),
+      prop_met_ev = met_ev / es_sites,
+      prop_met_good_samples = met_good_samples / es_sites,
+      prop_met_timely_wpv_vdpv_det = met_timely_wpv_vdpv_det / es_sites,
+      prop_met_ev_label = paste0(met_ev, "/", es_sites),
+      prop_met_good_samples_label = paste0(met_good_samples, "/", es_sites),
+      prop_met_timely_wpv_vdpv_det_label = paste0(met_timely_wpv_vdpv_det, "/", es_sites)
+    ) |>
+    dplyr::select(-dplyr::starts_with("met_"), "es_sites")
+
+  return(c3_rollup)
 
 }
 
