@@ -1871,6 +1871,127 @@ split_concat_raw_data <- function(
   }
 }
 
+
+#' Check whether the AFP geography matches those of the population dataset
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' In rare cases, the GUIDs assigned for a case may be incorrect. For example,
+#' it may have a GUID that is incorrect for a specific year. This function checks
+#' each AFP record for such instances.
+#'
+#' @param afp_data `tibble` AFP dataset
+#' @param pop_data `tibble` Population dataset
+#' @param spatial_scale `str` Any of the following: `"ctry", "prov", "dist`
+#'
+#' @return `tibble` Tibble with a column used for checking accuracy
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' check_afp <- check_afp_geographies(raw_data$afp, raw_data$ctry.pop, "ctry")
+#' }
+check_afp_geographies <- function(afp_data, pop_data, spatial_scale, fix_afp=FALSE) {
+
+  afp_data <- dplyr::rename_with(afp_data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+  pop_data <- dplyr::rename_with(pop_data, recode,
+                                 ADM0_NAME = "ctry",
+                                 ADM1_NAME = "prov",
+                                 ADM2_NAME = "dist",
+                                 ADM0_GUID = "adm0guid",
+                                 u15pop.prov = "u15pop"
+  )
+
+  check_spatial_scale(pop_data, spatial_scale)
+
+  if (!fix_afp) {
+    afp_data <- afp_data |>
+      dplyr::select(dplyr::any_of(c("epid", "year", "ctry", "prov", "dist",
+                                    "adm0guid", "adm1guid", "adm2guid")))
+  }
+
+  pop_data <- pop_data |>
+    dplyr::select(dplyr::any_of(c("adm0guid", "adm1guid", "adm2guid", "year",
+                                  "ctry", "prov", "dist")))
+
+  cols_to_join <- switch(
+    spatial_scale,
+    "ctry" = c("ctry", "year"),
+    "prov" = c("ctry", "prov", "year", "adm0guid"),
+    "dist" = c("ctry", "prov", "dist", "year", "adm0guid", "adm1guid")
+  )
+
+  joined <- dplyr::left_join(afp_data, pop_data,
+                             by = cols_to_join,
+                             suffix = c("_afp", "_pop"))
+  summary <- switch(
+    spatial_scale,
+    "ctry" = {
+      joined |>
+        dplyr::mutate(correct_adm0guid = dplyr::if_else(adm0guid_afp == adm0guid_pop, TRUE, FALSE))
+    },
+    "prov" = {
+      joined |>
+        dplyr::mutate(correct_adm1guid = dplyr::if_else(adm1guid_afp == adm1guid_pop, TRUE, FALSE))
+    },
+    "dist" = {
+      joined |>
+        dplyr::mutate(correct_adm2guid = dplyr::if_else(adm2guid_afp == adm2guid_pop, TRUE, FALSE))
+    }
+  )
+
+  if (fix_afp) {
+    cli::cli_process_start(paste0("Fixing GUIDs at the ", spatial_scale, " level."))
+    summary <- switch(
+      spatial_scale,
+      "ctry" = {
+        summary |>
+          dplyr::select(-adm0guid_afp) |>
+          dplyr::rename(adm0guid = "adm0guid_pop")
+        },
+      "prov" = {
+        summary |>
+          dplyr::select(-adm1guid_afp) |>
+          dplyr::rename(adm1guid = "adm1guid_pop")
+      },
+      "dist" = {
+        summary |>
+          dplyr::select(-adm2guid_afp) |>
+          dplyr::rename(adm2guid = "adm2guid_pop")
+      }
+    )
+    cli::cli_process_done()
+
+    cli::cli_alert_info(paste(
+      "Please note the following column name changes if running global AFP (i.e., raw_data$afp):",
+      'place.admin.0 -> "ctry"',
+      'place.admin.1 -> "prov"',
+      'place.admin.2 -> "dist"',
+      'person.sex -> "sex"',
+      'dateonset -> "date"',
+      'yronset -> "year"',
+      'datenotify -> "date.notify"',
+      'dateinvest -> "date.invest"',
+      'cdc.classification.all -> "cdc.class"',
+      sep = "\n"
+    ))
+  }
+
+  return(summary)
+}
+
 #' Check GUIDs present in the AFP linelist but not in the pop files
 #'
 #' The function will run a check in the AFP linelist for GUIDs that are not part
