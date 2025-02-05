@@ -1,8 +1,40 @@
 # Private functions ----
 
-established_es_sites <- function(es, start_date) {
+#' Find established sites
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Finds established ES sites defined as those that has been active for for
+#' at least 12 months since the end date with at least 10 collections.
+#'
+#'
+#' @param es_data `tibble` ES data
+#' @param end_date `str` End date to anchor analysis to
+#' @param sample_threshold `int` Threshold of sample number to be established.
+#'
+#' @return `tibble` A summary of established ES sites
+#' @keywords internal
+established_es_sites <- function(es_data, end_date, sample_threshold = 10) {
+  end_date <- lubridate::as_date(end_date)
 
-}
+  established_sites <- es_data |>
+    dplyr::filter(collect.date <= end_date) |>
+    dplyr::group_by(site.name, site.id) |>
+    dplyr::summarize(n_samples_12_mo = sum(dplyr::between(collect.date,
+                                                          end_date %m-% months(12, FALSE),
+                                                          end_date)),
+                     age_interval = lubridate::interval(min(collect.date),
+                                                    max(collect.date)),
+                     site_age = sample_interval / months(1, FALSE)
+                     ) |>
+    dplyr::ungroup() |>
+    dplyr::filter(n_samples_12_mo >= sample_threshold,
+                  site_age >= 12)
+
+  return(established_sites)
+
+  }
 
 
 
@@ -371,8 +403,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     ) |>
     dplyr::select(-dplyr::starts_with("pons"))
 
-  es_data <- raw_data$es |>
-    dplyr::filter(dplyr::between(collect.date, start_date, end_date))
+  es_data <- raw_data$es
   cli::cli_progress_update()
 
   # Ensure that if using raw_data, required renamed columns are present. Borrowed from
@@ -431,19 +462,32 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::ungroup()
   cli::cli_progress_update()
 
-  es_indicators <- es_data |>
+  # Get established ES sites first and then filter to appropriate start and end dates
+  es_end_dates <- es_data |>
+    dplyr::select(year_label, rolling_period, analysis_year_end) |>
+    dplyr::distinct() |>
+    dplyr::filter(between(analysis_year_end, start_date, end_date)) |>
+    dplyr::group_by(year_label, rolling_period, analysis_year_end) |>
+    dplyr::summarize(established_sites = list(established_es_sites(es_data, analysis_year_end)))
+
+
+
+  eses_indicators <- es_data |>
     dplyr::group_by(.data$year_label, .data$rolling_period) |>
     dplyr::summarise(ev_rate = list(f.ev.rate.01(dplyr::pick(dplyr::everything()),
                                                  min(.data$analysis_year_start),
-                                                 max(.data$analysis_year_end)))) |>
+                                                 max(.data$analysis_year_end))),
+                     established_sites = list(established_es_sites(dplyr::pick(dplyr::everything()),
+                                                                   max(.data$analysis_year_end)))
+                     ) |>
     dplyr::rowwise() |>
     dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period")),
                                 \(x) list(dplyr::tibble(x) |>
                                             dplyr::mutate(year_label = year_label,
                                                           rolling_period = rolling_period
-                                            )))
-    ) |>
+                                            )))) |>
     dplyr::ungroup()
+
   cli::cli_progress_update()
 
   timely_det_indicator <- generate_wild_vdpv_summary(raw_data,
@@ -467,9 +511,13 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::summarise(dist_w_100k = sum(par >= 1e5, na.rm = TRUE),
                      dist_npafp = sum(par != 0, na.rm = TRUE), # remove districts without populations
                      met_npafp = sum(
-                       (par >= 1e5 & npafp_rate >= 2 & whoregion %in% c("AFRO", "EMRO", "SEARO")),
-                       (par >= 1e5 & npafp_rate >= 1 & whoregion %in% c("AMRO", "EURO", "WPRO")),
-                       # !!! NEED Endemics and OBX affected logic here
+                       (par >= 1e5 & npafp_rate >= 3 &
+                          ctry %in% c("AFGHANISTAN", "PAKISTAN")),
+                       (par >= 1e5 & npafp_rate >= 2 &
+                          whoregion %in% c("AFRO", "EMRO", "SEARO") &
+                          !ctry %in% c("AFGHANISTAN", "PAKISTAN")),
+                       (par >= 1e5 & npafp_rate >= 1 &
+                          whoregion %in% c("AMRO", "EURO", "WPRO")),
                        na.rm = T),
                      prop_met_npafp = met_npafp / dist_w_100k * 100,
                      npafp_label = paste0(met_npafp, "/", dist_w_100k)) |>
