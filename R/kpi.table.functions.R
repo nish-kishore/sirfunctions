@@ -458,8 +458,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   met_npafp <- dplyr::bind_rows(afp_indicators$npafp_dist) |>
     dplyr::left_join(region_lookup_table) |>
     dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
-    dplyr::summarise(dist_w_100k = sum(par >= 1e5),
-                     dist_npafp = sum(par != 0), # remove districts without populations
+    dplyr::summarise(dist_w_100k = sum(par >= 1e5, na.rm = TRUE),
+                     dist_npafp = sum(par != 0, na.rm = TRUE), # remove districts without populations
                      met_npafp = sum(
                        (par >= 1e5 & npafp_rate >= 2 & whoregion %in% c("AFRO", "EMRO", "SEARO")),
                        (par >= 1e5 & npafp_rate >= 1 & whoregion %in% c("AMRO", "EURO", "WPRO")),
@@ -486,7 +486,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(region_lookup_table) |>
     dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
-    dplyr::summarise(es_sites = sum(num.samples >= 10),
+    dplyr::summarise(es_sites = sum(num.samples >= 10, na.rm = T),
                      met_ev = sum(num.samples >= 10 & ev.rate >= 0.5, na.rm = T),
                      prop_met_ev = met_ev / es_sites * 100,
                      ev_label = paste0(met_ev, "/", es_sites))
@@ -589,11 +589,17 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     col_to_datecol()
   cli::cli_progress_update()
 
+  # AFP geo lookup table
+  # afp_geo_lookup <- afp_data |>
+  #   dplyr::select("adm0guid", "ctry", "dist", "adm2guid", "year") |>
+  #   dplyr::distinct()
+
   # NPAFP
   npafp <- f.npafp.rate.01(afp_data, pop_data, start_date, end_date, .spatial_scale,
     pending = TRUE, rolling = FALSE,
     sp_continuity_validation = FALSE
   )
+
   # Stool Adequacy
   stool_ad <- f.stool.ad.01(afp_data, pop_data, start_date, end_date, .spatial_scale,
     missing = "good", bad.data = "inadequate",
@@ -689,6 +695,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   # AFP case encounters
 
   results <- dplyr::full_join(npafp, stool_ad) |>
+    dplyr::distinct() |>
     dplyr::full_join(stool_condition) |>
     dplyr::full_join(complete_60_day) |>
     dplyr::full_join(timeliness_summary)
@@ -697,9 +704,9 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   results <- results |>
     dplyr::mutate(
       npafp_cat = dplyr::case_when(
-        .data$npafp_rate == 0 & .data$u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
-        (.data$npafp_rate == 0 | is.na(.data$npafp_rate)) & (.data$u15pop > 0 & .data$u15pop < 100000) ~ "No cases (u15pop < 100K)",
-        (.data$npafp_rate == 0 | is.na(.data$npafp_rate)) & (.data$u15pop == 0 | is.na(.data$u15pop)) ~ "Missing Pop",
+        (.data$n_npafp == 0) & .data$u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
+        (.data$n_npafp == 0) & (.data$u15pop > 0 & .data$u15pop < 100000) ~ "No cases (u15pop < 100K)",
+        (.data$u15pop == 0 | is.na(.data$u15pop)) ~ "Missing Pop",
         # Calculate regardless of population size
         .data$npafp_rate < 1 ~ "< 1",
         (.data$npafp_rate >= 1 & .data$npafp_rate < 2) ~ ">= 1 & <2",
@@ -763,9 +770,9 @@ generate_c3_table <- function(es_data, start_date, end_date,
   es_summary <- es_data |>
     dplyr::filter(dplyr::between(.data$collect.date, start_date, end_date)) |>
     dplyr::mutate(coltolab = difftime(.data$date.received.in.lab,
-                                      .data$collect.date, units = "days"),
-                  coltoresults = difftime(.data$date.final.culture.result,
-                                          .data$collect.date, units = "days"),
+                                      .data$collect.date, units = "day"),
+                  coltoresults = difftime(.data$date.notification.to.hq,
+                                          .data$date.received.in.lab, units = "days"),
 
                   timely_ship = dplyr::case_when(
                     (is.na(.data$culture.itd.cat) | is.na(.data$coltolab) |
@@ -812,6 +819,10 @@ generate_c3_table <- function(es_data, start_date, end_date,
     dplyr::mutate(ev_det_cat = factor(.data$ev_det_cat,
                                       levels = c("<5 samples collected", "<50%",
                                                  "50% to <80%", "80-100%")))
+
+  es_summary <- add_risk_category(es_summary, ctry_col = "ADM0_NAME") |>
+    dplyr::mutate(`SG Priority Level` = dplyr::if_else(is.na(`SG Priority Level`),
+                                                       "LOW", `SG Priority Level`))
 
   return(es_summary)
 
