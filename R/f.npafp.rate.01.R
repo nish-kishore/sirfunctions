@@ -42,8 +42,8 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
     dplyr::mutate(year = lubridate::year(date)) |>
     dplyr::group_by(get(geo), .data$year) |>
     dplyr::summarise(
-      n_npafp = sum(.data$cdc.classification.all2 %in% npafp_col),
-      afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
+      n_npafp = sum(.data$cdc.classification.all2 %in% npafp_col & age.months < 180),
+      afp.case = sum(cdc.classification.all2 != "NOT-AFP", na.rm = T),
       num.wpv.cases = sum(.data$wild.1 == TRUE | .data$wild.3 == TRUE, na.rm = T),
       num.vdpv1.cases = sum(.data$vdpv.1 == TRUE, na.rm = T),
       num.vdpv2.cases = sum(.data$vdpv.2 == TRUE, na.rm = T),
@@ -124,7 +124,7 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
   int.data <- afp.data |>
     dplyr::group_by(get(geo)) |>
     dplyr::summarise(
-      n_npafp = sum(.data$cdc.classification.all2 %in% npafp_col),
+      n_npafp = sum(.data$cdc.classification.all2 %in% npafp_col & age.months < 180),
       earliest_date = min(.data$earliest_date),
       latest_date = max(.data$latest_date),
       afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
@@ -317,7 +317,7 @@ f.npafp.rate.01 <- function(
 
   # Filter AFP and population data based on start and end dates
   afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180,
+    dplyr::filter(dplyr::between(date, start.date, end.date),
                   cdc.classification.all2 != "NOT-AFP")
 
 
@@ -348,7 +348,7 @@ f.npafp.rate.01 <- function(
       "prov", "adm1guid", "dist", "adm2guid",
       "cdc.classification.all2",
       "wild.1", "wild.3", "vdpv.1",
-      "vdpv.2", "vdpv.3"
+      "vdpv.2", "vdpv.3", "age.months"
     ))) |>
     dplyr::mutate(year = lubridate::year(date))
 

@@ -134,7 +134,7 @@ stool_ad_rolling <- function(stool.data, pop.data, start_date, end_date, spatial
   int.data <- stool.data |>
     dplyr::group_by(get(geo)) |>
     summarize(
-      afp.cases = sum(!is.na(cdc.classification.all2)),
+      afp.cases = sum(cdc.classification.all2 != "NOT-AFP"),
       num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
       num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
@@ -190,7 +190,7 @@ stool_ad_year <- function(stool.data, pop.data, year.data, spatial_scale) {
   int.data <- stool.data |>
     dplyr::group_by(get(geo), .data$year) |>
     summarize(
-      afp.cases = sum(!is.na(cdc.classification.all2)),
+      afp.cases = sum(cdc.classification.all2 != "NOT-AFP"),
       num.ad.plus.inad = sum(.data$adequacy.final == 1 | adequacy.final == 0, na.rm = T),
       num.adequate = sum(.data$adequacy.final == 1, na.rm = T),
       num.inadequate = sum(.data$adequacy.final == 0, na.rm = T),
