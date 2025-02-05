@@ -374,7 +374,7 @@ f.npafp.rate.01 <- function(
       "prov", "adm1guid", "dist", "adm2guid",
       "cdc.classification.all2",
       "wild.1", "wild.3", "vdpv.1",
-      "vdpv.2", "vdpv.3"
+      "vdpv.2", "vdpv.3", "age.months"
     ))) |>
     dplyr::mutate(year = lubridate::year(date))
 
