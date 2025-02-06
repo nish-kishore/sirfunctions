@@ -604,8 +604,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' @param pop_data `tibble` Population data.
 #' @param start_date `str` Start date of analysis in YYYY-MM-DD format.
 #' @param end_date `str` End date of analysis in YYYY-MM-DD format.
-#' @param .group_by `list` a list of strings to group the data by. Defaults to
-#' `adm0guid, ctry, year`.
+#' @param spatial_scale `str` Either `"ctry", "prov", "dist"`
 #'
 #' @return `tibble` Summary table containing AFP KPIs.
 #' @export
@@ -614,21 +613,12 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
-                              .group_by = c("adm0guid", "ctry", "dist", "adm2guid", "year"),
+                              spatial_scale,
                               risk_category = NULL) {
 
+  check_spatial_scale(pop_data, spatial_scale)
+
   cli::cli_progress_bar("Creating C2 table", total = 5)
-  # Adjust spatial scale for stool adequacy and NPAFP functions
-  .spatial_scale <- dplyr::case_when(
-    c("dist", "adm2guid") %in% .group_by ~ "dist",
-    c("prov", "adm1guid") %in% .group_by ~ "prov",
-    c("ctry", "adm0guid") %in% .group_by ~ "ctry"
-  )
-  .spatial_scale <- dplyr::case_when(
-    "dist" %in% .spatial_scale ~ "dist",
-    "prov" %in% .spatial_scale ~ "prov",
-    "ctry" %in% .spatial_scale ~ "ctry"
-  )
 
   # Standardize data
   start_date <- lubridate::as_date(start_date)
@@ -654,55 +644,108 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   cli::cli_progress_update()
 
   # Add required columns
+  # NOTE: NAs are removed from rolling calculations as they can't be tagged
   afp_data <- afp_data |>
     add_seq_capacity() |>
-    col_to_datecol()
+    col_to_datecol() |>
+    add_rolling_years(start_date, "date") |>
+    dplyr::filter(dplyr::between(analysis_year_end, start_date,
+                                 max(analysis_year_end, na.rm = TRUE)))
+
+  # Defaults to missing = good, bad.data = inadequate
+  # Start and end dates only filter afp_data and isn't used in calculations
+  # inside the function
+  afp_data <- generate_stool_data(afp_data, start_date, end_date)
+
   cli::cli_progress_update()
 
-  # AFP geo lookup table
-  # afp_geo_lookup <- afp_data |>
-  #   dplyr::select("adm0guid", "ctry", "dist", "adm2guid", "year") |>
-  #   dplyr::distinct()
-
-  # NPAFP
-  npafp <- f.npafp.rate.01(afp_data, pop_data, start_date, end_date, .spatial_scale,
-    pending = TRUE, rolling = FALSE,
-    sp_continuity_validation = FALSE
-  )
-
-  # Stool Adequacy
-  stool_ad <- f.stool.ad.01(afp_data, pop_data, start_date, end_date, .spatial_scale,
-    missing = "good", bad.data = "inadequate",
-    rolling = FALSE, sp_continuity_validation = FALSE
-  )
+  # NPAFP and Stool Adequacy
+  afp_indicators <- afp_data |>
+    dplyr::group_by(year_label, analysis_year_start, analysis_year_end,
+                    rolling_period) |>
+    dplyr::summarize(
+      npafp = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
+                                        pop_data,
+                                        min(.data$analysis_year_start),
+                                        max(.data$analysis_year_end),
+                                        spatial_scale, rolling = TRUE,
+                                        sp_continuity_validation = FALSE)),
+      stoolad = list(f.stool.ad.01(dplyr::pick(dplyr::everything()),
+                                        pop_data,
+                                        min(.data$analysis_year_start),
+                                        max(.data$analysis_year_end),
+                                        spatial_scale, rolling = TRUE,
+                                        sp_continuity_validation = FALSE))
+    ) |>
+    dplyr::rowwise() |>
+    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period",
+                                                 "analysis_year_start",
+                                                 "analysis_year_end")),
+                                \(x) list(dplyr::tibble(x) |>
+                                            dplyr::mutate(year_label = year_label,
+                                                          rolling_period = rolling_period,
+                                                          analysis_year_start = analysis_year_start,
+                                                          analysis_year_end = analysis_year_end
+                                            )))
+    ) |>
+    dplyr::ungroup()
   # Stool Condition
-  stool_condition <- generate_stool_data(afp_data, start_date, end_date,
-    missing = "good",
-    bad.data = "inadequate"
-  ) |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
+  group_stool_cond <- switch(spatial_scale,
+                             "ctry" = c("year_label", "analysis_year_start",
+                                        "analysis_year_end", "rolling_period",
+                                        "ctry", "adm0guid"),
+                             "prov" = c("year_label", "analysis_year_start",
+                                        "analysis_year_end", "rolling_period",
+                                        "ctry", "adm0guid",
+                                        "prov", "adm1guid"),
+                             "dist" = c("year_label", "analysis_year_start",
+                                        "analysis_year_end", "rolling_period",
+                                        "ctry", "adm0guid",
+                                        "prov", "adm1guid", "dist", "adm2guid"))
+  stool_condition <- afp_data |>
+    dplyr::group_by(dplyr::across(dplyr::any_of(group_stool_cond))) |>
     dplyr::summarize(
       afp_cases = sum(.data$cdc.classification.all2 != "NOT-AFP"),
-      good_samples = sum(.data$adequacy.final2 == "Adequate"),
+      good_samples = sum(.data$cdc.classification.all2 != "NOT-AFP" &
+                           .data$adequacy.final2 == "Adequate"),
       prop_good_condition = good_samples / afp_cases * 100
     )
   cli::cli_progress_update()
 
   # Completeness of Contact Sampling
   # Calculated in future versions
+  group_60_day <- switch(spatial_scale,
+                         "ctry" = c("year_label",
+                                    "analysis_year_start",
+                                    "analysis_year_end",
+                                    "rolling_period",
+                                    "epid", "adm0guid", "ctry"),
+                         "prov" = c("year_label",
+                                    "analysis_year_start",
+                                    "analysis_year_end",
+                                    "rolling_period",
+                                    "epid", "adm0guid", "adm1guid", "ctry",
+                                    "prov"
+                                    ),
+                         "dist" = c("year_label",
+                                    "analysis_year_start",
+                                    "analysis_year_end",
+                                    "rolling_period",
+                                    "epid", "adm0guid", "adm1guid", "adm2guid",
+                                    "ctry", "prov", "dist"))
 
   # Completeness of 60-day follow-ups
-  complete_60_day <- generate_stool_data(afp_data, start_date, end_date,
-    missing = "good",
-    bad.data = "inadequate"
-  ) |>
+  complete_60_day <- afp_data |>
     # Note that this also filters out "NOT-AFP" cases
+    # Start and end dates also just filters dates and not used in calculations
     generate_60_day_table_data(start_date, end_date) |>
     dplyr::left_join(afp_data |>
-      dplyr::select(dplyr::all_of(c("epid", "adm0guid")))) |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
+      dplyr::select(dplyr::all_of(group_60_day))) |>
+    dplyr::select(-"epid") |>
+    dplyr::group_by(dplyr::across(dplyr::any_of(group_60_day))) |>
     dplyr::summarize(prop_complete_60_day = sum(.data$ontime.60day == 1, na.rm = TRUE) /
-      sum(adequacy.final2 == "Inadequate") * 100)
+      sum(adequacy.final2 == "Inadequate") * 100) |>
+    ungroup()
   cli::cli_progress_update()
   # Timeliness indicators
   timeliness_summary <- afp_data |>
@@ -742,7 +785,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
         .default = "unable to assess"
       )
     ) |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
+    dplyr::group_by(dplyr::across(dplyr::any_of(group_stool_cond))) |>
     dplyr::summarize(
       timely_not = sum(.data$ontonot <= 7, na.rm = TRUE) / sum(!is.na(.data$ontonot)) * 100,
       timely_inv = sum(.data$ontoinvest <= 2, na.rm = TRUE) / sum(!is.na(.data$ontoinvest)) * 100,
@@ -764,8 +807,8 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   # Adequacy of active surveillance sites
   # AFP case encounters
 
-  results <- dplyr::full_join(npafp, stool_ad) |>
-    dplyr::distinct() |>
+  results <- dplyr::full_join(dplyr::bind_rows(afp_indicators$npafp),
+                              dplyr::bind_rows(afp_indicators$stoolad)) |>
     dplyr::full_join(stool_condition) |>
     dplyr::full_join(complete_60_day) |>
     dplyr::full_join(timeliness_summary)
@@ -774,9 +817,9 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   results <- results |>
     dplyr::mutate(
       npafp_cat = dplyr::case_when(
-        (.data$n_npafp == 0) & .data$u15pop >= 100000 ~ "Silent (u15pop >= 100K)",
-        (.data$n_npafp == 0) & (.data$u15pop > 0 & .data$u15pop < 100000) ~ "No cases (u15pop < 100K)",
-        (.data$u15pop == 0 | is.na(.data$u15pop)) ~ "Missing Pop",
+        (.data$n_npafp == 0) & .data$par >= 100000 ~ "Silent (u15pop >= 100K)",
+        (.data$n_npafp == 0) & (.data$par > 0 & .data$par < 100000) ~ "No cases (u15pop < 100K)",
+        (.data$par == 0 | is.na(.data$par)) ~ "Missing Pop",
         # Calculate regardless of population size
         .data$npafp_rate < 1 ~ "< 1",
         (.data$npafp_rate >= 1 & .data$npafp_rate < 2) ~ ">= 1 & <2",
@@ -791,7 +834,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       )
     ) |>
     dplyr::select(
-      dplyr::any_of(.group_by),
+      dplyr::any_of(group_stool_cond),
       "npafp_cat", "stool_cat",
       "npafp_rate", "per.stool.ad",
       "prop_good_condition":"timely_wpv_vdpv"
