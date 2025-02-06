@@ -34,5 +34,5 @@ This function creates a summary table of AFP surveillance KPIs.
 }
 \examples{
 raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
-c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
+c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31", "ctry")
 }

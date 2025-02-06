@@ -611,7 +611,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #'
 #' @examples
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
-#' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
+#' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31", "ctry")
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
                               spatial_scale,
                               risk_category = NULL) {
