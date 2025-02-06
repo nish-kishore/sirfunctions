@@ -22,7 +22,7 @@ generate_c2_table(
 
 \item{end_date}{\code{str} End date of analysis in YYYY-MM-DD format.}
 
-\item{spatial_scale}{\code{str} Either \verb{"ctry", "prov", "dist"}}
+\item{spatial_scale}{\code{str} Either \verb{"ctry", "prov", "dist"}.}
 }
 \value{
 \code{tibble} Summary table containing AFP KPIs.
