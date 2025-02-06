@@ -9,7 +9,7 @@ generate_c2_table(
   pop_data,
   start_date,
   end_date,
-  .group_by = c("adm0guid", "ctry", "dist", "adm2guid", "year"),
+  spatial_scale,
   risk_category = NULL
 )
 }
@@ -22,8 +22,7 @@ generate_c2_table(
 
 \item{end_date}{\code{str} End date of analysis in YYYY-MM-DD format.}
 
-\item{.group_by}{\code{list} a list of strings to group the data by. Defaults to
-\verb{adm0guid, ctry, year}.}
+\item{spatial_scale}{\code{str} Either \verb{"ctry", "prov", "dist"}}
 }
 \value{
 \code{tibble} Summary table containing AFP KPIs.

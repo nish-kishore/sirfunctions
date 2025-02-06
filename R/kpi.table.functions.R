@@ -604,7 +604,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' @param pop_data `tibble` Population data.
 #' @param start_date `str` Start date of analysis in YYYY-MM-DD format.
 #' @param end_date `str` End date of analysis in YYYY-MM-DD format.
-#' @param spatial_scale `str` Either `"ctry", "prov", "dist"`
+#' @param spatial_scale `str` Either `"ctry", "prov", "dist"`.
 #'
 #' @return `tibble` Summary table containing AFP KPIs.
 #' @export
