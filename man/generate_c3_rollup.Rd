@@ -4,14 +4,14 @@
 \alias{generate_c3_rollup}
 \title{Create a country level rollup of the C3 label}
 \usage{
-generate_c3_rollup(c3, include_labels = TRUE, sample_threshold = 10)
+generate_c3_rollup(c3, include_labels = TRUE, min_sample = 10)
 }
 \arguments{
 \item{c3}{\code{tibble} Output of \code{\link[=generate_c3_table]{generate_c3_table()}}.}
 
 \item{include_labels}{\code{bool} Include columns for the labels? Default TRUE.}
 
-\item{sample_threshold}{\code{num} Only consider sites with at least this number
+\item{min_sample}{\code{num} Only consider sites with at least this number
 of ES samples. Default is \code{10}.}
 }
 \value{
@@ -21,7 +21,10 @@ of ES samples. Default is \code{10}.}
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 
 Create a country level summary of ES site performance with respect to
-meeting established targets for EV detection rates, good samples,
+meeting established targets for EV detection rates, good samples. Note, this
+country roll up will only consider sites that have at least 10 collections
+and open for at least 12 months, consistent with guidelines in the 2025-2026
+GPSAP indicators.
 }
 \examples{
 \dontrun{

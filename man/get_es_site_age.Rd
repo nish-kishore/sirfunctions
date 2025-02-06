@@ -4,14 +4,12 @@
 \alias{get_es_site_age}
 \title{Find established sites}
 \usage{
-get_es_site_age(es_data, end_date, sample_threshold = 10)
+get_es_site_age(es_data, end_date)
 }
 \arguments{
 \item{es_data}{\code{tibble} ES data}
 
 \item{end_date}{\code{str} End date to anchor analysis to}
-
-\item{sample_threshold}{\code{int} Threshold of sample number to be established.}
 }
 \value{
 \code{tibble} A summary of established ES sites
