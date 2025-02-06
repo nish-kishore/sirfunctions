@@ -15,22 +15,28 @@
 #'
 #' @return `tibble` A summary of established ES sites
 #' @keywords internal
-established_es_sites <- function(es_data, end_date, sample_threshold = 10) {
+get_es_site_age <- function(es_data, end_date, sample_threshold = 10) {
   end_date <- lubridate::as_date(end_date)
 
   established_sites <- es_data |>
+    dplyr::select(ADM0_NAME, collect.date, site.name) |>
     dplyr::filter(collect.date <= end_date) |>
-    dplyr::group_by(site.name, site.id) |>
+    dplyr::group_by(ADM0_NAME, site.name) |>
+    # n_samples_12_mo is strictly looking at samples collected in the past 12 months
+    # this will be different from num.samples in the f.ev.rate.01() calculation
+    # if that calculation does not analyze a 12 month rolling period
     dplyr::summarize(n_samples_12_mo = sum(dplyr::between(collect.date,
-                                                          end_date %m-% months(12, FALSE),
+                                                          end_date %m-% months(12, FALSE) %m+% days(1),
                                                           end_date)),
-                     age_interval = lubridate::interval(min(collect.date),
+                     sampling_interval = lubridate::interval(min(collect.date),
                                                     max(collect.date)),
-                     site_age = sample_interval / months(1, FALSE)
+                     site_age = sampling_interval / months(1, FALSE)
                      ) |>
     dplyr::ungroup() |>
-    dplyr::filter(n_samples_12_mo >= sample_threshold,
-                  site_age >= 12)
+    # don't filter
+    # dplyr::filter(n_samples_12_mo >= sample_threshold,
+    #               site_age >= 12) |>
+    dplyr::arrange(ADM0_NAME, site.name)
 
   return(established_sites)
 
@@ -463,22 +469,30 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   cli::cli_progress_update()
 
   # Get established ES sites first and then filter to appropriate start and end dates
+  # Have to do this outside of es_indicators because grouping by year also
+  # effectively filter data belonging to that year label
   es_end_dates <- es_data |>
-    dplyr::select(year_label, rolling_period, analysis_year_end) |>
+    dplyr::select(year_label, rolling_period,
+                  analysis_year_start, analysis_year_end) |>
     dplyr::distinct() |>
+    dplyr::filter(dplyr::between(analysis_year_end, start_date, max(analysis_year_end)))
+  # this does NOT filter to established sites, it will list the number of samples
+  # in the past 12 months since the end date and the age of the site from
+  # the very first collection in the ES dataset to the latest collection
+  # available that may or may not be the end date but not go beyond that
+  es_site_age <- es_end_dates |>
+    dplyr::group_by(year_label, rolling_period) |>
+    dplyr::mutate(es_sites_w_age = list(get_es_site_age(es_data, max(analysis_year_end)))) |>
+    dplyr::ungroup() |>
+    # not necessary anymore
+    dplyr::select(-analysis_year_start, -analysis_year_end)
+
+  es_indicators <- es_data |>
     dplyr::filter(between(analysis_year_end, start_date, end_date)) |>
-    dplyr::group_by(year_label, rolling_period, analysis_year_end) |>
-    dplyr::summarize(established_sites = list(established_es_sites(es_data, analysis_year_end)))
-
-
-
-  eses_indicators <- es_data |>
     dplyr::group_by(.data$year_label, .data$rolling_period) |>
-    dplyr::summarise(ev_rate = list(f.ev.rate.01(dplyr::pick(dplyr::everything()),
+    dplyr::summarize(ev_rate = list(f.ev.rate.01(dplyr::pick(dplyr::everything()),
                                                  min(.data$analysis_year_start),
-                                                 max(.data$analysis_year_end))),
-                     established_sites = list(established_es_sites(dplyr::pick(dplyr::everything()),
-                                                                   max(.data$analysis_year_end)))
+                                                 max(.data$analysis_year_end)))
                      ) |>
     dplyr::rowwise() |>
     dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period")),
@@ -487,6 +501,13 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                                                           rolling_period = rolling_period
                                             )))) |>
     dplyr::ungroup()
+
+  # Combine both, then able to do an inner join for the final dataset
+  # This makes sure for each rolling year, that only the sites selected
+  # are in the final ES dataset
+  es_indicators <- dplyr::left_join(es_indicators, es_site_age) |>
+    dplyr::mutate(final_es_dataset = purrr::map2(ev_rate, es_sites_w_age,
+                                                 \(x, y) dplyr::left_join(x, y)))
 
   cli::cli_progress_update()
 
@@ -533,15 +554,15 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                      prop_met_stool = met_stool / dist_stool * 100,
                      stool_label = paste0(met_stool, "/", dist_stool))
 
-  met_ev <- dplyr::bind_rows(es_indicators$ev_rate) |>
+  met_ev <- dplyr::bind_rows(es_indicators$final_es_dataset) |>
     dplyr::rename("ctry" = ADM0_NAME,
                   "prov" = ADM1_NAME,
                   "dist" = ADM2_NAME) |>
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(region_lookup_table) |>
     dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
-    dplyr::summarise(es_sites = sum(num.samples >= 10, na.rm = T),
-                     met_ev = sum(num.samples >= 10 & ev.rate >= 0.5, na.rm = T),
+    dplyr::summarise(es_sites = sum(n_samples_12_mo >= 10 & site_age >= 12, na.rm = T),
+                     met_ev = sum(num.samples >= 10 & site_age >= 12 & ev.rate >= 0.5, na.rm = T),
                      prop_met_ev = met_ev / es_sites * 100,
                      ev_label = paste0(met_ev, "/", es_sites))
   cli::cli_progress_update()
@@ -802,8 +823,6 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 #' @param es_data `tibble` Environmental surveillance data.
 #' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
 #' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
-#' @param .group_by `list` How results should be grouped. By default, the summary
-#' is grouped by country, site, and reporting year.
 #'
 #' @return `tibble` A summary table of environmental surveillance KPIs.
 #' @export
@@ -812,24 +831,47 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
 generate_c3_table <- function(es_data, start_date, end_date,
-                              .group_by = c("ADM0_NAME", "ctry.guid",
-                                            "reporting.year",
-                                            "lat", "lng",
-                                            "site.id", "site.name"),
                               risk_category = NULL) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
   es_data <- es_data |>
-    add_seq_capacity("ADM0_NAME")
+    add_seq_capacity("ADM0_NAME") |>
+    add_rolling_years(start_date, "collect.date")
 
-  es_summary <- es_data |>
-    dplyr::filter(dplyr::between(.data$collect.date, start_date, end_date)) |>
+  # Get established ES sites first and then filter to appropriate start and end dates
+  # Have to do this outside of es_indicators because grouping by year also
+  # effectively filter data belonging to that year label
+  es_end_dates <- es_data |>
+    dplyr::select(year_label, rolling_period,
+                  analysis_year_start, analysis_year_end) |>
+    dplyr::distinct() |>
+    dplyr::filter(dplyr::between(analysis_year_end, start_date, max(analysis_year_end)))
+  # this does NOT filter to established sites, it will list the number of samples
+  # in the past 12 months since the end date and the age of the site from
+  # the very first collection in the ES dataset to the latest collection
+  # available that may or may not be the end date but not go beyond that
+  es_site_age <- es_end_dates |>
+    dplyr::group_by(year_label, rolling_period) |>
+    dplyr::mutate(es_sites_w_age = list(get_es_site_age(es_data, max(analysis_year_end)))) |>
+    dplyr::ungroup() |>
+    # not necessary anymore
+    dplyr::select(-analysis_year_start, -analysis_year_end) |>
+    dplyr::rowwise() |>
+    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period")),
+                                \(x) list(dplyr::tibble(x) |>
+                                            dplyr::mutate(year_label = year_label,
+                                                          rolling_period = rolling_period
+                                            ))))
+  # Ages based on rolling years
+  es_site_age_long <- dplyr::bind_rows(es_site_age$es_sites_w_age)
+
+  # Add additional timeliness columns
+  es_data <- es_data |>
     dplyr::mutate(coltolab = difftime(.data$date.received.in.lab,
                                       .data$collect.date, units = "day"),
                   coltoresults = difftime(.data$date.notification.to.hq,
                                           .data$date.received.in.lab, units = "days"),
-
                   timely_ship = dplyr::case_when(
                     (is.na(.data$culture.itd.cat) | is.na(.data$coltolab) |
                        .data$coltolab < 0 | .data$coltolab > 365) ~ "unable to assess",
@@ -849,8 +891,11 @@ generate_c3_table <- function(es_data, start_date, end_date,
                     .default = NA),
 
                   is_target = dplyr::if_else(.data$wpv == 1 | .data$vdpv == 1, TRUE, FALSE)
-                  ) |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
+                  )
+
+  es_summary <- es_data |>
+    dplyr::filter(dplyr::between(analysis_year_end, start_date, max(analysis_year_end))) |>
+    dplyr::group_by(year_label, rolling_period, ADM0_NAME, site.name) |>
     dplyr::summarize(
       es_samples = sum(!is.na(.data$ev.detect), na.rm = TRUE),
       ev_rate = sum(.data$ev.detect == 1, na.rm = TRUE) / es_samples * 100,

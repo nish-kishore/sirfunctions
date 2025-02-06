@@ -4,14 +4,7 @@
 \alias{generate_c3_table}
 \title{Environmental surveillance KPIs by site}
 \usage{
-generate_c3_table(
-  es_data,
-  start_date,
-  end_date,
-  .group_by = c("ADM0_NAME", "ctry.guid", "reporting.year", "lat", "lng", "site.id",
-    "site.name"),
-  risk_category = NULL
-)
+generate_c3_table(es_data, start_date, end_date, risk_category = NULL)
 }
 \arguments{
 \item{es_data}{\code{tibble} Environmental surveillance data.}
@@ -19,9 +12,6 @@ generate_c3_table(
 \item{start_date}{\code{str} Start date of the analysis in YYYY-MM-DD format.}
 
 \item{end_date}{\code{str} End date of the analysis in YYYY-MM-DD format.}
-
-\item{.group_by}{\code{list} How results should be grouped. By default, the summary
-is grouped by country, site, and reporting year.}
 }
 \value{
 \code{tibble} A summary table of environmental surveillance KPIs.
