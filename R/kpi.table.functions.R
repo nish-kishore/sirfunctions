@@ -11,11 +11,9 @@
 #'
 #' @param es_data `tibble` ES data
 #' @param end_date `str` End date to anchor analysis to
-#' @param sample_threshold `int` Threshold of sample number to be established.
-#'
 #' @return `tibble` A summary of established ES sites
 #' @keywords internal
-get_es_site_age <- function(es_data, end_date, sample_threshold = 10) {
+get_es_site_age <- function(es_data, end_date) {
   end_date <- lubridate::as_date(end_date)
 
   established_sites <- es_data |>
@@ -33,9 +31,6 @@ get_es_site_age <- function(es_data, end_date, sample_threshold = 10) {
                      site_age = sampling_interval / months(1, FALSE)
                      ) |>
     dplyr::ungroup() |>
-    # don't filter
-    # dplyr::filter(n_samples_12_mo >= sample_threshold,
-    #               site_age >= 12) |>
     dplyr::arrange(ADM0_NAME, site.name)
 
   return(established_sites)
@@ -923,7 +918,10 @@ generate_c3_table <- function(es_data, start_date, end_date,
 
   es_summary <- add_risk_category(es_summary, ctry_col = "ADM0_NAME") |>
     dplyr::mutate(`SG Priority Level` = dplyr::if_else(is.na(`SG Priority Level`),
-                                                       "LOW", `SG Priority Level`))
+                                                       "LOW", `SG Priority Level`),
+                  Region = get_region(ADM0_NAME))
+
+  es_summary <- dplyr::left_join(es_summary, es_site_age_long)
 
   return(es_summary)
 
@@ -935,12 +933,15 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #' `r lifecycle::badge("experimental")`
 #'
 #' Create a country level summary of ES site performance with respect to
-#' meeting established targets for EV detection rates, good samples,
+#' meeting established targets for EV detection rates, good samples. Note, this
+#' country roll up will only consider sites that have at least 10 collections
+#' and open for at least 12 months, consistent with guidelines in the 2025-2026
+#' GPSAP indicators.
 #'
 #'
 #' @param c3 `tibble` Output of [generate_c3_table()].
 #' @param include_labels `bool` Include columns for the labels? Default TRUE.
-#' @param sample_threshold `num` Only consider sites with at least this number
+#' @param min_sample `num` Only consider sites with at least this number
 #' of ES samples. Default is `10`.
 #'
 #' @return `tibble` A summary of the c3 table at the country level
@@ -952,18 +953,18 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
 #' c3_rollup <- generate_c3_rollup(c3)
 #' }
-generate_c3_rollup <- function(c3, include_labels = TRUE, sample_threshold = 10) {
+generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
 
-  if (!"site.id" %in% names(c3)) {
+  if (!"site.name" %in% names(c3)) {
     cli::cli_abort("Please summarize c3 at the site level and try again.")
   }
 
   c3_rollup <- c3 |>
     dplyr::rename(ctry = "ADM0_NAME",
-                  adm0guid = "ctry.guid",
-                  year = "reporting.year") |>
-    dplyr::filter(es_samples >= sample_threshold) |>
-    dplyr::group_by(year, ctry, adm0guid, `SG Priority Level`, Region, ) |>
+                  priority_level = "SG Priority Level",
+                  who_region = "Region") |>
+    dplyr::group_by(year_label, rolling_period, ctry, who_region, priority_level) |>
+    dplyr::filter(n_samples_12_mo >= min_sample, site_age >= 12) |>
     dplyr::summarize(
       met_ev = sum(ev_rate >= 50, na.rm = TRUE),
       met_good_samples = sum(prop_good_es >= 80, na.rm = TRUE),
