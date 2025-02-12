@@ -530,9 +530,45 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::select(ctry = ADM0_NAME, prov = ADM1_NAME, dist = ADM2_NAME, adm2guid) |>
     dplyr::distinct()
 
+  # Flag any inconsistent GUIDs to say any calculations are invalid
+  # get_incomplete_adm() is a borrowed function from f.stool.ad.01()
+  inconsistent_guids <- es_end_dates |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end) |>
+    # Filter only GUIDs relevant for the start date
+    dplyr::mutate(adm2guid = list(get_incomplete_adm(raw_data$dist.pop |>
+                                                       dplyr::filter(dplyr::between(year,
+                                                                                    lubridate::year(analysis_year_start),
+                                                                                    lubridate::year(analysis_year_end))),
+                                                          "dist",
+                                                          min(.data$analysis_year_start),
+                                                          max(.data$analysis_year_end)))) |>
+    dplyr::rowwise() |>
+    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period",
+                                                 "analysis_year_start", "analysis_year_end")),
+                                \(x) list(dplyr::tibble(x) |>
+                                            dplyr::mutate(year_label = year_label,
+                                                          rolling_period = rolling_period,
+                                                          analysis_year_start = analysis_year_start,
+                                                          analysis_year_end = analysis_year_end,
+                                                          consistent_guid = FALSE
+                                            )))) |>
+    dplyr::ungroup()
+
+  # This creates a long version of GUIDs with invalid rates due to them not
+  # existing for the entirety of their rolling period. We combine this to
+  # met_npafp, met_stool, etc... and then perform a filter so they are excluded
+  # in summary calculations
+  inconsistent_guids <- dplyr::bind_rows(inconsistent_guids$adm2guid) |>
+    dplyr::mutate(consistent_guid = dplyr::if_else(is.na(consistent_guid), TRUE, consistent_guid))
+
   # Summarise
   met_npafp <- dplyr::bind_rows(afp_indicators$npafp_dist) |>
     dplyr::left_join(region_lookup_table) |>
+    # invalid GUIDS will have consistnet_guid = FALSE while
+    # valid ones will be TRUE
+    dplyr::left_join(inconsistent_guids) |>
+    dplyr::filter(consistent_guid == FALSE) |>
     dplyr::group_by(year_label, rolling_period,
                     analysis_year_start, analysis_year_end,
                     whoregion, ctry) |>
@@ -587,10 +623,12 @@ generate_c1_table <- function(raw_data, start_date, end_date,
       "analysis_year_start", "analysis_year_end",
       "whoregion", "SG Priority Level", "ctry",
       "prop_met_npafp", "prop_met_stool", "prop_met_ev",
-      "prop_timely_samples", "prop_timely_wild_vdpv",
+      # "prop_timely_samples",
+      "prop_timely_wild_vdpv",
       "npafp_label", "stool_label", "ev_label",
       "prop_timely_wild_vdpv_label",
-      "prop_timely_samples_label", "prop_timely_cases_label",
+      # "prop_timely_samples_label",
+      "prop_timely_cases_label",
       "prop_timely_env_label")
     ))
 
