@@ -679,8 +679,8 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 
   # NPAFP and Stool Adequacy
   afp_indicators <- afp_data |>
-    dplyr::group_by(year_label, analysis_year_start, analysis_year_end,
-                    rolling_period) |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end) |>
     dplyr::summarize(
       npafp = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
                                         pop_data,
@@ -951,7 +951,9 @@ generate_c3_table <- function(es_data, start_date, end_date,
 
   es_summary <- es_data |>
     dplyr::filter(dplyr::between(analysis_year_end, start_date, max(analysis_year_end))) |>
-    dplyr::group_by(year_label, rolling_period, ADM0_NAME, site.name) |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end,
+                    ADM0_NAME, site.name) |>
     dplyr::summarize(
       es_samples = sum(!is.na(.data$ev.detect), na.rm = TRUE),
       ev_rate = sum(.data$ev.detect == 1, na.rm = TRUE) / es_samples * 100,
