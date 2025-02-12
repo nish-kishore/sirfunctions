@@ -953,7 +953,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
     dplyr::filter(dplyr::between(analysis_year_end, start_date, max(analysis_year_end))) |>
     dplyr::group_by(year_label, rolling_period,
                     analysis_year_start, analysis_year_end,
-                    ADM0_NAME, site.name) |>
+                    ADM0_NAME, site.name, lat, lng) |>
     dplyr::summarize(
       es_samples = sum(!is.na(.data$ev.detect), na.rm = TRUE),
       ev_rate = sum(.data$ev.detect == 1, na.rm = TRUE) / es_samples * 100,

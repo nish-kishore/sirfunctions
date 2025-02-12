@@ -91,15 +91,29 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 #' @param indicator `quoted var` Indicator variable.
 #' @param color_scheme `list` Named list with color mappings.
 #' @param legend_title `str` Title of the legend.
+#' @param .year_label `str` Year of the rollup.
+#' @param .ctry_sf `sf` Country shapefile.
+#' @param .dist_sf `sf` District shapefile.
 #'
 #' @return `ggplot` A ggplot object.
 #' @export
-generate_kpi_map <- function(c2, who_region, indicator, year,
+generate_kpi_map <- function(c2, who_region, indicator, .year_label,
                              risk_category,
                              color_scheme, legend_title,
                              .ctry_sf, .dist_sf) {
 
   plotlooks02 <- f.plot.looks("02")
+
+  # Calculate the end date year
+  year <- c2 |>
+    dplyr::filter(year_label == .year_label) |>
+    dplyr::pull(analysis_year_end) |>
+    unique() |>
+    lubridate::year()
+
+  if (length(year) == 0) {
+    cli::cli_abort(paste0(.year_label, " is not a valid year_label. Try again."))
+  }
 
   if (is.null(.ctry_sf)) {
     .ctry_sf <- suppressMessages(load_clean_ctry_sp(
@@ -118,9 +132,10 @@ generate_kpi_map <- function(c2, who_region, indicator, year,
   }
 
   c2 <- c2 |>
+    dplyr::mutate(year = lubridate::year(analysis_year_end)) |>
     add_risk_category() |>
     dplyr::filter(
-      .data$year == year,
+      .data$year_label == .year_label,
       .data$Region %in% who_region,
       !is.na(!!rlang::sym(indicator))
     ) |>
@@ -184,7 +199,7 @@ generate_kpi_map <- function(c2, who_region, indicator, year,
 #'
 #'
 #' @param c2 `tibble` Output of [generate_c2_table()].
-#' @param year `num` Numeric year of interest.
+#' @param year_label `str` Roll up year (i.e., `"Year 1", "Year 2", ...`).
 #' @param who_region `str` A WHO region or a list of regions. Valid values are:
 #' - `"AFRO"`: African Region
 #' - `"AMRO"`: Region of the Americas
@@ -209,9 +224,9 @@ generate_kpi_map <- function(c2, who_region, indicator, year,
 #' raw_data <- get_all_polio_data()
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$dist, "2021-01-01",
 #' "2023-12-31", c("ctry", "dist", "adm2guid", "year"))
-#' map <- generate_kpi_npafp_map(c2, 2023, "AFRO", output_path = getwd())
+#' map <- generate_kpi_npafp_map(c2, "Year 1", "AFRO", output_path = getwd())
 #' }
-generate_kpi_npafp_map <- function(c2, year, who_region = NULL,
+generate_kpi_npafp_map <- function(c2, year_label, who_region = NULL,
                                    risk_category = NULL,
                                    output_path = Sys.getenv("KPI_FIGURES"),
                                    ctry_sf = NULL, dist_sf = NULL) {
@@ -229,15 +244,15 @@ generate_kpi_npafp_map <- function(c2, year, who_region = NULL,
   c2 <- c2 |> dplyr::filter(!is.na(.data$npafp_cat))
 
   map <- generate_kpi_map(
-    c2, who_region, "npafp_cat", year, risk_category, npafp_col, "NPAFP Rate",
+    c2, who_region, "npafp_cat", year_label, risk_category, npafp_col, "NPAFP Rate",
     ctry_sf, dist_sf
   )
 
   if (is.null(who_region)) {
-    file_name <- paste0("npafp_maps_global_", year,".png")
+    file_name <- paste0("npafp_maps_global_", year_label,".png")
   } else {
     file_name <- paste0("npafp_maps_", paste0(who_region, collapse = "_")
-                        ,"_", year,".png")
+                        ,"_", year_label,".png")
   }
 
   ggplot2::ggsave(file.path(output_path, file_name),
@@ -263,9 +278,9 @@ generate_kpi_npafp_map <- function(c2, year, who_region = NULL,
 #' raw_data <- get_all_polio_data()
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$dist, "2021-01-01",
 #' "2023-12-31", c("ctry", "dist", "adm2guid", "year"))
-#' map <- generate_kpi_stool_map(c2, 2023, "AFRO", output_path = getwd())
+#' map <- generate_kpi_stool_map(c2, "Year 1", "AFRO", output_path = getwd())
 #' }
-generate_kpi_stool_map <- function(c2, year, who_region = NULL,
+generate_kpi_stool_map <- function(c2, year_label, who_region = NULL,
                                    risk_category = NULL,
                                    output_path = Sys.getenv("KPI_FIGURES"),
                                    ctry_sf = NULL, dist_sf = NULL) {
@@ -281,16 +296,16 @@ generate_kpi_stool_map <- function(c2, year, who_region = NULL,
   c2 <- c2 |> dplyr::filter(!is.na("stool_cat"))
 
   map <- generate_kpi_map(
-    c2, who_region, "stool_cat", year, risk_category, stool_color,
+    c2, who_region, "stool_cat", year_label, risk_category, stool_color,
     "Stool Adequacy", ctry_sf, dist_sf
   )
 
   if (is.null(who_region)) {
-    file_name <- paste0("stool_ad_maps_global_", year, ".png")
+    file_name <- paste0("stool_ad_maps_global_", year_label, ".png")
   } else {
     file_name <- paste0(
       "stool_ad_maps_", paste0(who_region, collapse = "_"),
-      "_", year, ".png"
+      "_", year_label, ".png"
     )
   }
 
@@ -311,7 +326,7 @@ generate_kpi_stool_map <- function(c2, year, who_region = NULL,
 #' @param c3 `tibble` Output of [generate_c3_table()]. This must be summarized
 #' at the site level (i.e., use the default `.group_by`) param of the
 #' [generate_c3_table()].
-#' @param year `int` Year to make the map of.
+#' @param .year_label `str` Roll up year (i.e., `"Year 1", "Year 2", ...`).
 #' @param who_region `str` Name of the region or a list of regions.
 #' @param output_path `str` Where to output the figure to. Defaults to the
 #' figure path assigned after running [init_kpi()].
@@ -324,9 +339,9 @@ generate_kpi_stool_map <- function(c2, year, who_region = NULL,
 #' \dontrun{
 #' raw_data <- get_all_polio_data()
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
-#' map <- generate_kpi_ev_map(c3, 2023, "AFRO", getwd())
+#' map <- generate_kpi_ev_map(c3, "Year 1", "AFRO", getwd())
 #' }
-generate_kpi_ev_map <- function(c3, year, who_region = NULL,
+generate_kpi_ev_map <- function(c3, .year_label, who_region = NULL,
                                 output_path = Sys.getenv("KPI_FIGURES"),
                                 dot_size = 2.3,
                                 ctry_sf = NULL) {
@@ -351,13 +366,23 @@ generate_kpi_ev_map <- function(c3, year, who_region = NULL,
     )
   )
 
+  year <- c3 |>
+    dplyr::filter(year_label == .year_label) |>
+    dplyr::pull(analysis_year_end) |>
+    unique() |>
+    lubridate::year()
+
+  if (length(year) == 0) {
+    cli::cli_abort(paste0(.year_label, " is not a valid year_label. Try again."))
+  }
 
   if (is.null(ctry_sf)) {
     ctry_sf <- suppressMessages(load_clean_ctry_sp(st.year = year,
                                                    end.year = year,
                                                    type = "long"))
   }
-  c3 <- c3 |> dplyr::filter(.data$reporting.year == year)
+
+  c3 <- c3 |> dplyr::filter(year_label == .year_label)
 
   if (!is.null(who_region)) {
     c3 <- c3 |>
