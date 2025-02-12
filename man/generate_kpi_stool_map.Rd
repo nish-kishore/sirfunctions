@@ -6,7 +6,7 @@
 \usage{
 generate_kpi_stool_map(
   c2,
-  year,
+  year_label,
   who_region = NULL,
   risk_category = NULL,
   output_path = Sys.getenv("KPI_FIGURES"),
@@ -17,7 +17,7 @@ generate_kpi_stool_map(
 \arguments{
 \item{c2}{\code{tibble} Output of \code{\link[=generate_c2_table]{generate_c2_table()}}.}
 
-\item{year}{\code{num} Numeric year of interest.}
+\item{year_label}{\code{str} Roll up year (i.e., \verb{"Year 1", "Year 2", ...}).}
 
 \item{who_region}{\code{str} A WHO region or a list of regions. Valid values are:
 \itemize{
@@ -53,6 +53,6 @@ Generates a map of district level stool adequacy maps
 raw_data <- get_all_polio_data()
 c2 <- generate_c2_table(raw_data$afp, raw_data$dist, "2021-01-01",
 "2023-12-31", c("ctry", "dist", "adm2guid", "year"))
-map <- generate_kpi_stool_map(c2, 2023, "AFRO", output_path = getwd())
+map <- generate_kpi_stool_map(c2, "Year 1", "AFRO", output_path = getwd())
 }
 }

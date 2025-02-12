@@ -6,7 +6,7 @@
 \usage{
 generate_kpi_ev_map(
   c3,
-  year,
+  .year_label,
   who_region = NULL,
   output_path = Sys.getenv("KPI_FIGURES"),
   dot_size = 2.3,
@@ -18,7 +18,7 @@ generate_kpi_ev_map(
 at the site level (i.e., use the default \code{.group_by}) param of the
 \code{\link[=generate_c3_table]{generate_c3_table()}}.}
 
-\item{year}{\code{int} Year to make the map of.}
+\item{.year_label}{\code{str} Roll up year (i.e., \verb{"Year 1", "Year 2", ...}).}
 
 \item{who_region}{\code{str} Name of the region or a list of regions.}
 
@@ -39,6 +39,6 @@ Generates a map of EV detection rates for each environmental surveillance site.
 \dontrun{
 raw_data <- get_all_polio_data()
 c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
-map <- generate_kpi_ev_map(c3, 2023, "AFRO", getwd())
+map <- generate_kpi_ev_map(c3, "Year 1", "AFRO", getwd())
 }
 }

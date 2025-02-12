@@ -8,7 +8,7 @@ generate_kpi_map(
   c2,
   who_region,
   indicator,
-  year,
+  .year_label,
   risk_category,
   color_scheme,
   legend_title,
@@ -31,19 +31,15 @@ generate_kpi_map(
 
 \item{indicator}{\verb{quoted var} Indicator variable.}
 
-\item{year}{\code{num} Numeric year of interest.}
+\item{.year_label}{\code{str} Year of the rollup.}
 
 \item{color_scheme}{\code{list} Named list with color mappings.}
 
 \item{legend_title}{\code{str} Title of the legend.}
 
-\item{.ctry_sf}{\code{sf} Country shapefile in long format. Output of
-\link{load_clean_ctry_sp(type = "long")}. Defaults to \code{NULL}, which will download
-the required country shapefile when the function is ran.}
+\item{.ctry_sf}{\code{sf} Country shapefile.}
 
-\item{.dist_sf}{\code{sf} District shapefile in long format. Output of
-\link{load_clean_dist_sp(type = "long")}. Defaults to \code{NULL}, which will download
-the required district shapefile when the function is ran.}
+\item{.dist_sf}{\code{sf} District shapefile.}
 }
 \value{
 \code{ggplot} A ggplot object.
