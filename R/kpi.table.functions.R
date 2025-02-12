@@ -1026,7 +1026,9 @@ generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
     dplyr::rename(ctry = "ADM0_NAME",
                   priority_level = "SG Priority Level",
                   who_region = "Region") |>
-    dplyr::group_by(year_label, rolling_period, ctry, who_region, priority_level) |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end,
+                    ctry, who_region, priority_level) |>
     dplyr::filter(n_samples_12_mo >= min_sample, site_age >= 12) |>
     dplyr::summarize(
       met_ev = sum(ev_rate >= 50, na.rm = TRUE),
