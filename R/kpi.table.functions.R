@@ -194,7 +194,9 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
                                          "SG Priority Level",
                                          "place.admin.0",
                                          "rolling_period",
-                                         "year_label"
+                                         "year_label",
+                                         "analysis_year_start",
+                                         "analysis_year_end"
                                        )) {
   pos <- generate_pos_timeliness(raw_data, start_date, end_date,
                                              risk_table, lab_locs)
@@ -438,7 +440,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   # Calculate country indicators
   afp_indicators <- afp_data |>
-    dplyr::group_by(.data$year_label, .data$rolling_period) |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end) |>
     dplyr::summarise(
       npafp_dist = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
                                         raw_data$dist.pop,
@@ -454,10 +457,13 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                                         sp_continuity_validation = FALSE))
     ) |>
     dplyr::rowwise() |>
-    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period")),
+    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period",
+                                                 "analysis_year_start", "analysis_year_end")),
                                 \(x) list(dplyr::tibble(x) |>
                                             dplyr::mutate(year_label = year_label,
-                                                          rolling_period = rolling_period
+                                                          rolling_period = rolling_period,
+                                                          analysis_year_start = analysis_year_start,
+                                                          analysis_year_end = analysis_year_end
                                             )))
     ) |>
     dplyr::ungroup()
@@ -484,16 +490,20 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   es_indicators <- es_data |>
     dplyr::filter(between(analysis_year_end, start_date, end_date)) |>
-    dplyr::group_by(.data$year_label, .data$rolling_period) |>
+    dplyr::group_by(.data$year_label, .data$rolling_period,
+                    analysis_year_start, analysis_year_end) |>
     dplyr::summarize(ev_rate = list(f.ev.rate.01(dplyr::pick(dplyr::everything()),
                                                  min(.data$analysis_year_start),
                                                  max(.data$analysis_year_end)))
                      ) |>
     dplyr::rowwise() |>
-    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period")),
+    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period",
+                                                 "analysis_year_start", "analysis_year_end")),
                                 \(x) list(dplyr::tibble(x) |>
                                             dplyr::mutate(year_label = year_label,
-                                                          rolling_period = rolling_period
+                                                          rolling_period = rolling_period,
+                                                          analysis_year_start = analysis_year_start,
+                                                          analysis_year_end = analysis_year_end
                                             )))) |>
     dplyr::ungroup()
 
@@ -523,7 +533,9 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   # Summarise
   met_npafp <- dplyr::bind_rows(afp_indicators$npafp_dist) |>
     dplyr::left_join(region_lookup_table) |>
-    dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end,
+                    whoregion, ctry) |>
     dplyr::summarise(dist_w_100k = sum(par >= 1e5, na.rm = TRUE),
                      dist_npafp = sum(par != 0, na.rm = TRUE), # remove districts without populations
                      met_npafp = sum(
@@ -543,7 +555,9 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(region_lookup_table) |>
     dplyr::filter(!is.na(ctry)) |>
-    dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end,
+                    whoregion, ctry) |>
     dplyr::summarise(dist_stool = n(),
                      met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = T),
                      prop_met_stool = met_stool / dist_stool * 100,
@@ -555,7 +569,9 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                   "dist" = ADM2_NAME) |>
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(region_lookup_table) |>
-    dplyr::group_by(year_label, rolling_period, whoregion, ctry) |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end,
+                    whoregion, ctry) |>
     dplyr::summarise(es_sites = sum(n_samples_12_mo >= 10 & site_age >= 12, na.rm = T),
                      met_ev = sum(num.samples >= 10 & site_age >= 12 & ev.rate >= 0.5, na.rm = T),
                      prop_met_ev = met_ev / es_sites * 100,
@@ -567,7 +583,9 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::full_join(timely_det_indicator |>
                        rename("ctry" = "place.admin.0")) |>
     dplyr::select(dplyr::any_of(c(
-      "year_label", "rolling_period", "whoregion", "SG Priority Level", "ctry",
+      "year_label", "rolling_period",
+      "analysis_year_start", "analysis_year_end",
+      "whoregion", "SG Priority Level", "ctry",
       "prop_met_npafp", "prop_met_stool", "prop_met_ev",
       "prop_timely_samples", "prop_timely_wild_vdpv",
       "npafp_label", "stool_label", "ev_label",
