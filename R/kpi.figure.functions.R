@@ -513,7 +513,10 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
                                               scales = "free", space = "free",
                                               switch = "y",
                                               labeller = label_wrap_gen(13)),
-                        y.axis.title = "% Districts w/ U15Pop>=100k, NPAFP >=2 (AFRO, EMRO, SEARO), NPAFP >= 1 (WPRO)")
+                        y.axis.title = "% Districts w/ U15Pop>=100k, NPAFP >= 3 (ENDEMICS),\n NPAFP >=2 (AFRO, EMRO, SEARO), NPAFP >= 1 (WPRO)") +
+    ggplot2::theme(
+      axis.title.y = ggplot2::element_text(size = 8)
+    )
 
   ggplot2::ggsave(file.path(output_path, "kpi_bar_npafp.png"),
                   dpi = 400, height = 4, width = 12, bg="white")

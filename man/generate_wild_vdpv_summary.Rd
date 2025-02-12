@@ -11,7 +11,7 @@ generate_wild_vdpv_summary(
   risk_table = NULL,
   lab_locs = NULL,
   .group_by = c("whoregion", "SG Priority Level", "place.admin.0", "rolling_period",
-    "year_label")
+    "year_label", "analysis_year_start", "analysis_year_end")
 )
 }
 \arguments{
