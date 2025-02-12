@@ -11,7 +11,8 @@ edav_io(
   obj = NULL,
   azcontainer = suppressMessages(get_azure_storage_connection()),
   force_delete = F,
-  local_path = NULL
+  local_path = NULL,
+  ...
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ the information in \code{default_dir} if you set that parameter to \code{NULL}.}
 
 \item{local_path}{\code{str} Local file pathway to upload a file to EDAV. Default is \code{NULL}.
 This parameter is only required when passing \code{"upload"} in the \code{io} parameter.}
+
+\item{...}{Optional parameters that work with \code{\link[readr:read_delim]{readr::read_delim()}}.}
 }
 \value{
 Output dependent on argument passed in the \code{io} parameter.
