@@ -762,7 +762,8 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     ADM1_NAME = "prov",
     ADM2_NAME = "dist",
     ADM0_GUID = "adm0guid",
-    u15pop.prov = "u15pop"
+    u15pop.prov = "u15pop",
+    WHO_REGION = "who_region"
   )
   cli::cli_progress_update()
 
@@ -1075,11 +1076,14 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     dplyr::mutate(npafp_rate = dplyr::if_else(npafp_cat != "Missing Pop" & is.nan(npafp_rate), 0, npafp_rate))
 
   # Add region and risk levels
+  region_lookup_table <- pop_data |>
+    dplyr::select(dplyr::any_of(c("ctry", "prov", "dist", "who_region"))) |>
+    dplyr::distinct()
+
   results <- add_risk_category(results) |>
-    tidyr::replace_na(list( `SG Priority Level` = "LOW")) |>
-    dplyr::mutate(Region_1 = get_region(ctry),
-                  Region = dplyr::coalesce(Region, Region_1)) |>
-    dplyr::select(-Region_1)
+    dplyr::left_join(region_lookup_table) |>
+    dplyr::select(-Region) |>
+    tidyr::replace_na(list(`SG Priority Level` = "LOW"))
 
   cli::cli_progress_done()
 
@@ -1373,6 +1377,54 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     purrr::keep(\(x) !is.null(x)) |>
     purrr::map(format_table) |>
     purrr::map(drop_labels)
+
+  # c1 formatting
+  if (!is.null(export_list$c1)) {
+
+    export_list$c1 <- export_list$c1 |>
+      dplyr::select(dplyr::any_of(c(
+        "rolling_period", "whoregion", "sg_priority_level", "ctry",
+        "prop_met_npafp", "prop_met_stool", "prop_met_ev",
+        "prop_timely_wild_vdpv"
+      ))) |>
+      dplyr::rename_with(recode,
+                       rolling_period = "Rolling 12 Months",
+                       whoregion = "WHO Region",
+                       sg_prioritity_level = "GPSAP Risk Category",
+                       ctry = "Country",
+                       prop_met_npafp = "Non-polio AFP rate  – subnational, %",
+                       prop_met_stool = "Stool adequacy  – subnational, %",
+                       prop_met_ev = "ES EV detection rate – national, %",
+                       prop_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %"
+                      )
+  }
+
+  # c2 formatting
+  if (!is.null(export_list$c2)) {
+    export_list$c2 <- export_list$c2 |>
+      dplyr::select(dplyr::any_of(
+        c(
+          "rolling_period", "who_region", "sg_priority_level",
+          "ctry", "prov", "dist",
+
+        )
+      ))
+      dplyr::rename_with(recode,
+                         place.admin.0 = "ctry",
+                         place.admin.1 = "prov",
+                         place.admin.2 = "dist",
+                         person.sex = "sex",
+                         dateonset = "date",
+                         yronset = "year",
+                         datenotify = "date.notify",
+                         dateinvest = "date.invest",
+                         cdc.classification.all = "cdc.class"
+      )
+  }
+
+  # c3 formatting
+
+  # c4 formatting
 
   file_name <- paste0("kpi_tables_",
                       paste0(names(export_list), collapse = "_"),
