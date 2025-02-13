@@ -662,7 +662,7 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
     "SIERRA LEONE", "ZIMBABWE", "EQUATORIAL GUINEA", "MAURITIUS", "RWANDA",
     "ESWATINI", "COTE D'IVOIRE", "COTE D IVOIRE",
     "DEMOCRATIC REPUBLIC OF THE CONGO", "GHANA", "GAMBIA", "MALI",
-    "SEYCHELLES"
+    "SEYCHELLES", "COMOROS"
   )
 
   amro_ctry <- c(
@@ -682,7 +682,7 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
     "SOMALIA", "BAHRAIN", "LEBANON",
     "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM",
     "QATAR", "SUDAN", "SAUDI ARABIA", "UNITED ARAB EMIRATES",
-    "DJIBOUTI", "JORDAN"
+    "DJIBOUTI", "JORDAN", "TUNISIA", "LIBYA", "OMAN"
   )
 
   euro_ctry <- c(
