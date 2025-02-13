@@ -739,7 +739,6 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
                               spatial_scale,
                               risk_category = NULL) {
-
   check_spatial_scale(pop_data, spatial_scale)
 
   cli::cli_progress_bar("Creating C2 table", total = 5)
@@ -773,8 +772,10 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     add_seq_capacity() |>
     col_to_datecol() |>
     add_rolling_years(start_date, "date") |>
-    dplyr::filter(dplyr::between(analysis_year_end, start_date,
-                                 max(analysis_year_end, na.rm = TRUE)))
+    dplyr::filter(dplyr::between(
+      analysis_year_end, start_date,
+      max(analysis_year_end, na.rm = TRUE)
+    ))
 
   # Defaults to missing = good, bad.data = inadequate
   # Start and end dates only filter afp_data and isn't used in calculations
@@ -785,53 +786,70 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 
   # NPAFP and Stool Adequacy
   afp_indicators <- afp_data |>
-    dplyr::group_by(year_label, rolling_period,
-                    analysis_year_start, analysis_year_end) |>
+    dplyr::group_by(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end
+    ) |>
     dplyr::summarize(
       npafp = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
-                                        pop_data,
-                                        min(.data$analysis_year_start),
-                                        max(.data$analysis_year_end),
-                                        spatial_scale, rolling = TRUE,
-                                        sp_continuity_validation = FALSE)),
+        pop_data,
+        min(.data$analysis_year_start),
+        max(.data$analysis_year_end),
+        spatial_scale,
+        rolling = TRUE,
+        sp_continuity_validation = FALSE
+      )),
       stoolad = list(f.stool.ad.01(dplyr::pick(dplyr::everything()),
-                                        pop_data,
-                                        min(.data$analysis_year_start),
-                                        max(.data$analysis_year_end),
-                                        spatial_scale, rolling = TRUE,
-                                        sp_continuity_validation = FALSE))
+        pop_data,
+        min(.data$analysis_year_start),
+        max(.data$analysis_year_end),
+        spatial_scale,
+        rolling = TRUE,
+        sp_continuity_validation = FALSE
+      ))
     ) |>
     dplyr::rowwise() |>
-    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period",
-                                                 "analysis_year_start",
-                                                 "analysis_year_end")),
-                                \(x) list(dplyr::tibble(x) |>
-                                            dplyr::mutate(year_label = year_label,
-                                                          rolling_period = rolling_period,
-                                                          analysis_year_start = analysis_year_start,
-                                                          analysis_year_end = analysis_year_end
-                                            )))
-    ) |>
+    dplyr::mutate(dplyr::across(
+      -dplyr::any_of(c(
+        "year_label", "rolling_period",
+        "analysis_year_start",
+        "analysis_year_end"
+      )),
+      \(x) list(dplyr::tibble(x) |>
+        dplyr::mutate(
+          year_label = year_label,
+          rolling_period = rolling_period,
+          analysis_year_start = analysis_year_start,
+          analysis_year_end = analysis_year_end
+        ))
+    )) |>
     dplyr::ungroup()
   # Stool Condition
   group_stool_cond <- switch(spatial_scale,
-                             "ctry" = c("year_label", "analysis_year_start",
-                                        "analysis_year_end", "rolling_period",
-                                        "ctry", "adm0guid"),
-                             "prov" = c("year_label", "analysis_year_start",
-                                        "analysis_year_end", "rolling_period",
-                                        "ctry", "adm0guid",
-                                        "prov", "adm1guid"),
-                             "dist" = c("year_label", "analysis_year_start",
-                                        "analysis_year_end", "rolling_period",
-                                        "ctry", "adm0guid",
-                                        "prov", "adm1guid", "dist", "adm2guid"))
+    "ctry" = c(
+      "year_label", "analysis_year_start",
+      "analysis_year_end", "rolling_period",
+      "ctry", "adm0guid"
+    ),
+    "prov" = c(
+      "year_label", "analysis_year_start",
+      "analysis_year_end", "rolling_period",
+      "ctry", "adm0guid",
+      "prov", "adm1guid"
+    ),
+    "dist" = c(
+      "year_label", "analysis_year_start",
+      "analysis_year_end", "rolling_period",
+      "ctry", "adm0guid",
+      "prov", "adm1guid", "dist", "adm2guid"
+    )
+  )
   stool_condition <- afp_data |>
     dplyr::group_by(dplyr::across(dplyr::any_of(group_stool_cond))) |>
     dplyr::summarize(
       afp_cases = sum(.data$cdc.classification.all2 != "NOT-AFP"),
       good_samples = sum(.data$cdc.classification.all2 != "NOT-AFP" &
-                           .data$adequacy.final2 == "Adequate"),
+        .data$adequacy.final2 == "Adequate"),
       prop_good_condition = good_samples / afp_cases * 100
     )
   cli::cli_progress_update()
@@ -839,24 +857,30 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   # Completeness of Contact Sampling
   # Calculated in future versions
   group_60_day <- switch(spatial_scale,
-                         "ctry" = c("year_label",
-                                    "analysis_year_start",
-                                    "analysis_year_end",
-                                    "rolling_period",
-                                    "epid", "adm0guid", "ctry"),
-                         "prov" = c("year_label",
-                                    "analysis_year_start",
-                                    "analysis_year_end",
-                                    "rolling_period",
-                                    "epid", "adm0guid", "adm1guid", "ctry",
-                                    "prov"
-                                    ),
-                         "dist" = c("year_label",
-                                    "analysis_year_start",
-                                    "analysis_year_end",
-                                    "rolling_period",
-                                    "epid", "adm0guid", "adm1guid", "adm2guid",
-                                    "ctry", "prov", "dist"))
+    "ctry" = c(
+      "year_label",
+      "analysis_year_start",
+      "analysis_year_end",
+      "rolling_period",
+      "epid", "adm0guid", "ctry"
+    ),
+    "prov" = c(
+      "year_label",
+      "analysis_year_start",
+      "analysis_year_end",
+      "rolling_period",
+      "epid", "adm0guid", "adm1guid", "ctry",
+      "prov"
+    ),
+    "dist" = c(
+      "year_label",
+      "analysis_year_start",
+      "analysis_year_end",
+      "rolling_period",
+      "epid", "adm0guid", "adm1guid", "adm2guid",
+      "ctry", "prov", "dist"
+    )
+  )
 
   # Completeness of 60-day follow-ups
   complete_60_day <- afp_data |>
@@ -871,6 +895,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       sum(adequacy.final2 == "Inadequate") * 100) |>
     ungroup()
   cli::cli_progress_update()
+
   # Timeliness indicators
   timeliness_summary <- afp_data |>
     dplyr::filter(
@@ -931,16 +956,93 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   # Adequacy of active surveillance sites
   # AFP case encounters
 
-  results <- dplyr::full_join(dplyr::bind_rows(afp_indicators$npafp),
-                              dplyr::bind_rows(afp_indicators$stoolad)) |>
+  # Mark inconsistent GUIDs
+  afp_end_dates <- afp_data |>
+    dplyr::select(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end
+    ) |>
+    dplyr::distinct() |>
+    dplyr::filter(dplyr::between(analysis_year_end, start_date, max(analysis_year_end)))
+
+  # Flag any inconsistent GUIDs to say any calculations are invalid
+  # get_incomplete_adm() is a borrowed function from f.stool.ad.01()
+  inconsistent_guids <- afp_end_dates |>
+    dplyr::group_by(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end
+    ) |>
+    # Filter only GUIDs relevant for the start date
+    dplyr::mutate(guid = list(get_incomplete_adm(
+      pop_data |>
+        dplyr::filter(dplyr::between(
+          year,
+          lubridate::year(analysis_year_start),
+          lubridate::year(analysis_year_end)
+        )),
+      spatial_scale,
+      min(.data$analysis_year_start),
+      max(.data$analysis_year_end)
+    ))) |>
+    dplyr::rowwise() |>
+    dplyr::mutate(dplyr::across(
+      -dplyr::any_of(c(
+        "year_label", "rolling_period",
+        "analysis_year_start", "analysis_year_end"
+      )),
+      \(x) list(dplyr::tibble(x) |>
+        dplyr::mutate(
+          year_label = year_label,
+          rolling_period = rolling_period,
+          analysis_year_start = analysis_year_start,
+          analysis_year_end = analysis_year_end,
+          consistent_guid = FALSE
+        ))
+    )) |>
+    dplyr::ungroup()
+
+  inconsistent_guids <- dplyr::bind_rows(inconsistent_guids$guid)
+
+  inconsistent_guids <- switch(spatial_scale,
+    "ctry" = {
+      inconsistent_guids |>
+        dplyr::rename(adm0guid = "guid")
+    },
+    "prov" = {
+      inconsistent_guids |>
+        dplyr::rename(adm1guid = "guid")
+    },
+    "dist" = {
+      inconsistent_guids |>
+        dplyr::rename(adm2guid = "guid")
+    }
+  )
+
+  if (nrow(inconsistent_guids) != 0) {
+    cli::cli_alert_info(paste0(
+      col_blue(
+        "There were ", nrow(inconsistent_guids),
+        " GUIDs not present for the entirety of their 1 year rolling periods.",
+        " This typically occurs when a GUID expires between rolling periods that encompasses multiple years.",
+        " You can find these GUIDs by filtering the column `consistent_guid == FALSE`."
+      )
+    ))
+  }
+
+  results <- dplyr::full_join(
+    dplyr::bind_rows(afp_indicators$npafp),
+    dplyr::bind_rows(afp_indicators$stoolad)
+  ) |>
     dplyr::full_join(stool_condition) |>
     dplyr::full_join(complete_60_day) |>
-    dplyr::full_join(timeliness_summary)
+    dplyr::full_join(timeliness_summary) |>
+    dplyr::left_join(inconsistent_guids)
 
   # Select only required columns
   results <- results |>
     dplyr::mutate(
       npafp_cat = dplyr::case_when(
+        .data$consistent_guid == FALSE ~ "Area did not exist during the entire rolling period",
         (.data$n_npafp == 0) & .data$par >= 100000 ~ "Silent (u15pop >= 100K)",
         (.data$n_npafp == 0) & (.data$par > 0 & .data$par < 100000) ~ "No cases (u15pop < 100K)",
         (.data$par == 0 | is.na(.data$par)) ~ "Missing Pop",
@@ -951,6 +1053,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
         .data$npafp_rate >= 3 ~ ">=3"
       ),
       stool_cat = dplyr::case_when(
+        .data$consistent_guid == FALSE ~ "Area did not exist during the entire rolling period",
         .data$afp.cases == 0 | is.na(.data$afp.cases) ~ "Zero AFP cases",
         .data$afp.cases != 0 & .data$per.stool.ad < 50 ~ "<50%",
         .data$afp.cases != 0 & (.data$per.stool.ad >= 50 & .data$per.stool.ad <= 79) ~ "50%-79%",
@@ -961,7 +1064,8 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       dplyr::any_of(group_stool_cond),
       "npafp_cat", "stool_cat",
       "npafp_rate", "per.stool.ad",
-      "prop_good_condition":"timely_wpv_vdpv"
+      "prop_good_condition":"timely_wpv_vdpv",
+      "consistent_guid"
     )
 
   # Formatting
