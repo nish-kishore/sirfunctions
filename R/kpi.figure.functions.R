@@ -117,16 +117,16 @@ generate_kpi_map <- function(c2, who_region, indicator, .year_label,
 
   if (is.null(.ctry_sf)) {
     .ctry_sf <- suppressMessages(load_clean_ctry_sp(
-      st.year = year,
-      end.year = year,
+      st_year = year,
+      end_year = year,
       type = "long"
     ))
   }
 
   if (is.null(.dist_sf)) {
     .dist_sf <- suppressMessages(load_clean_dist_sp(
-      st.year = year,
-      end.year = year,
+      st_year = year,
+      end_year = year,
       type = "long"
     ))
   }
@@ -232,6 +232,7 @@ generate_kpi_npafp_map <- function(c2, year_label, who_region = NULL,
                                    ctry_sf = NULL, dist_sf = NULL) {
 
   npafp_col <- c(
+    "Area did not exist during the entire rolling period" = "lightgrey",
     "Silent (u15pop >= 100K)" = "#762a83",
     "No cases (u15pop < 100K)" = "#999999",
     "< 1" = "#d7191c",
@@ -286,6 +287,7 @@ generate_kpi_stool_map <- function(c2, year_label, who_region = NULL,
                                    ctry_sf = NULL, dist_sf = NULL) {
 
   stool_color <- c(
+    "Area did not exist during the entire rolling period" = "lightgrey",
     "Zero AFP cases" = "#999999",
     "Unable to Assess" = "white",
     "<50%" = "#d7191c",
