@@ -1074,6 +1074,13 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     # NPAFP is only NA if it's missing population
     dplyr::mutate(npafp_rate = dplyr::if_else(npafp_cat != "Missing Pop" & is.nan(npafp_rate), 0, npafp_rate))
 
+  # Add region and risk levels
+  results <- add_risk_category(results) |>
+    tidyr::replace_na(list( `SG Priority Level` = "LOW")) |>
+    dplyr::mutate(Region_1 = get_region(ctry),
+                  Region = dplyr::coalesce(Region, Region_1)) |>
+    dplyr::select(-Region_1)
+
   cli::cli_progress_done()
 
   return(results)
