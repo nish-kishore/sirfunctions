@@ -392,7 +392,6 @@ generate_c1_table <- function(raw_data, start_date, end_date,
                               risk_category = NULL,
                               lab_locs = NULL,
                               risk_table = NULL) {
-
   cli::cli_progress_bar("Creating C1 table", total = 8)
 
   start_date <- lubridate::as_date(start_date)
@@ -412,15 +411,15 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   # Ensure that if using raw_data, required renamed columns are present. Borrowed from
   # extract.country.data()
   afp_data <- dplyr::rename_with(afp_data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
   )
 
   if (!is.null(risk_category)) {
@@ -428,7 +427,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     afp_data <- suppressMessages(add_risk_category(afp_data)) |>
       dplyr::filter(.data$`SG Priority Level` %in% risk_category)
     es_data <- suppressMessages(add_risk_category(es_data,
-                                                  ctry_col = "ADM0_NAME")) |>
+      ctry_col = "ADM0_NAME"
+    )) |>
       dplyr::filter(.data$`SG Priority Level` %in% risk_category)
   }
   cli::cli_progress_update()
@@ -440,32 +440,42 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   # Calculate country indicators
   afp_indicators <- afp_data |>
-    dplyr::group_by(year_label, rolling_period,
-                    analysis_year_start, analysis_year_end) |>
+    dplyr::group_by(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end
+    ) |>
     dplyr::summarise(
       npafp_dist = list(f.npafp.rate.01(dplyr::pick(dplyr::everything()),
-                                        raw_data$dist.pop,
-                                        min(.data$analysis_year_start),
-                                        max(.data$analysis_year_end),
-                                        "dist", rolling = TRUE,
-                                        sp_continuity_validation = FALSE)),
+        raw_data$dist.pop,
+        min(.data$analysis_year_start),
+        max(.data$analysis_year_end),
+        "dist",
+        rolling = TRUE,
+        sp_continuity_validation = FALSE
+      )),
       stoolad_dist = list(f.stool.ad.01(dplyr::pick(dplyr::everything()),
-                                        raw_data$dist.pop,
-                                        min(.data$analysis_year_start),
-                                        max(.data$analysis_year_end),
-                                        "dist", rolling = TRUE,
-                                        sp_continuity_validation = FALSE))
+        raw_data$dist.pop,
+        min(.data$analysis_year_start),
+        max(.data$analysis_year_end),
+        "dist",
+        rolling = TRUE,
+        sp_continuity_validation = FALSE
+      ))
     ) |>
     dplyr::rowwise() |>
-    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period",
-                                                 "analysis_year_start", "analysis_year_end")),
-                                \(x) list(dplyr::tibble(x) |>
-                                            dplyr::mutate(year_label = year_label,
-                                                          rolling_period = rolling_period,
-                                                          analysis_year_start = analysis_year_start,
-                                                          analysis_year_end = analysis_year_end
-                                            )))
-    ) |>
+    dplyr::mutate(dplyr::across(
+      -dplyr::any_of(c(
+        "year_label", "rolling_period",
+        "analysis_year_start", "analysis_year_end"
+      )),
+      \(x) list(dplyr::tibble(x) |>
+        dplyr::mutate(
+          year_label = year_label,
+          rolling_period = rolling_period,
+          analysis_year_start = analysis_year_start,
+          analysis_year_end = analysis_year_end
+        ))
+    )) |>
     dplyr::ungroup()
   cli::cli_progress_update()
 
@@ -473,8 +483,10 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   # Have to do this outside of es_indicators because grouping by year also
   # effectively filter data belonging to that year label
   es_end_dates <- es_data |>
-    dplyr::select(year_label, rolling_period,
-                  analysis_year_start, analysis_year_end) |>
+    dplyr::select(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end
+    ) |>
     dplyr::distinct() |>
     dplyr::filter(dplyr::between(analysis_year_end, start_date, max(analysis_year_end)))
   # this does NOT filter to established sites, it will list the number of samples
@@ -490,36 +502,49 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   es_indicators <- es_data |>
     dplyr::filter(between(analysis_year_end, start_date, end_date)) |>
-    dplyr::group_by(.data$year_label, .data$rolling_period,
-                    analysis_year_start, analysis_year_end) |>
-    dplyr::summarize(ev_rate = list(f.ev.rate.01(dplyr::pick(dplyr::everything()),
-                                                 min(.data$analysis_year_start),
-                                                 max(.data$analysis_year_end)))
-                     ) |>
+    dplyr::group_by(
+      .data$year_label, .data$rolling_period,
+      analysis_year_start, analysis_year_end
+    ) |>
+    dplyr::summarize(ev_rate = list(f.ev.rate.01(
+      dplyr::pick(dplyr::everything()),
+      min(.data$analysis_year_start),
+      max(.data$analysis_year_end)
+    ))) |>
     dplyr::rowwise() |>
-    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period",
-                                                 "analysis_year_start", "analysis_year_end")),
-                                \(x) list(dplyr::tibble(x) |>
-                                            dplyr::mutate(year_label = year_label,
-                                                          rolling_period = rolling_period,
-                                                          analysis_year_start = analysis_year_start,
-                                                          analysis_year_end = analysis_year_end
-                                            )))) |>
+    dplyr::mutate(dplyr::across(
+      -dplyr::any_of(c(
+        "year_label", "rolling_period",
+        "analysis_year_start", "analysis_year_end"
+      )),
+      \(x) list(dplyr::tibble(x) |>
+        dplyr::mutate(
+          year_label = year_label,
+          rolling_period = rolling_period,
+          analysis_year_start = analysis_year_start,
+          analysis_year_end = analysis_year_end
+        ))
+    )) |>
     dplyr::ungroup()
 
   # Combine both, then able to do an inner join for the final dataset
   # This makes sure for each rolling year, that only the sites selected
   # are in the final ES dataset
   es_indicators <- dplyr::left_join(es_indicators, es_site_age) |>
-    dplyr::mutate(final_es_dataset = purrr::map2(ev_rate, es_sites_w_age,
-                                                 \(x, y) dplyr::left_join(x, y)))
+    dplyr::mutate(final_es_dataset = purrr::map2(
+      ev_rate, es_sites_w_age,
+      \(x, y) dplyr::left_join(x, y)
+    ))
 
   cli::cli_progress_update()
 
+  # This is a country level calculation by default so no need to remove
+  # inconsistent adm2guids
   timely_det_indicator <- generate_wild_vdpv_summary(raw_data,
-                                                     start_date, end_date,
-                                                     risk_table = risk_table,
-                                                     lab_locs = lab_locs)
+    start_date, end_date,
+    risk_table = risk_table,
+    lab_locs = lab_locs
+  )
   cli::cli_progress_update()
 
   # Calculate meeting indicators
@@ -533,91 +558,135 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   # Flag any inconsistent GUIDs to say any calculations are invalid
   # get_incomplete_adm() is a borrowed function from f.stool.ad.01()
   inconsistent_guids <- es_end_dates |>
-    dplyr::group_by(year_label, rolling_period,
-                    analysis_year_start, analysis_year_end) |>
+    dplyr::group_by(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end
+    ) |>
     # Filter only GUIDs relevant for the start date
-    dplyr::mutate(adm2guid = list(get_incomplete_adm(raw_data$dist.pop |>
-                                                       dplyr::filter(dplyr::between(year,
-                                                                                    lubridate::year(analysis_year_start),
-                                                                                    lubridate::year(analysis_year_end))),
-                                                          "dist",
-                                                          min(.data$analysis_year_start),
-                                                          max(.data$analysis_year_end)))) |>
+    dplyr::mutate(adm2guid = list(get_incomplete_adm(
+      raw_data$dist.pop |>
+        dplyr::filter(dplyr::between(
+          year,
+          lubridate::year(analysis_year_start),
+          lubridate::year(analysis_year_end)
+        )),
+      "dist",
+      min(.data$analysis_year_start),
+      max(.data$analysis_year_end)
+    ))) |>
     dplyr::rowwise() |>
-    dplyr::mutate(dplyr::across(-dplyr::any_of(c("year_label", "rolling_period",
-                                                 "analysis_year_start", "analysis_year_end")),
-                                \(x) list(dplyr::tibble(x) |>
-                                            dplyr::mutate(year_label = year_label,
-                                                          rolling_period = rolling_period,
-                                                          analysis_year_start = analysis_year_start,
-                                                          analysis_year_end = analysis_year_end,
-                                                          consistent_guid = FALSE
-                                            )))) |>
+    dplyr::mutate(dplyr::across(
+      -dplyr::any_of(c(
+        "year_label", "rolling_period",
+        "analysis_year_start", "analysis_year_end"
+      )),
+      \(x) list(dplyr::tibble(x) |>
+        dplyr::mutate(
+          year_label = year_label,
+          rolling_period = rolling_period,
+          analysis_year_start = analysis_year_start,
+          analysis_year_end = analysis_year_end,
+          consistent_guid = FALSE
+        ))
+    )) |>
     dplyr::ungroup()
 
   # This creates a long version of GUIDs with invalid rates due to them not
   # existing for the entirety of their rolling period. We combine this to
   # met_npafp, met_stool, etc... and then perform a filter so they are excluded
   # in summary calculations
-  inconsistent_guids <- dplyr::bind_rows(inconsistent_guids$adm2guid) |>
-    dplyr::mutate(consistent_guid = dplyr::if_else(is.na(consistent_guid), TRUE, consistent_guid))
+  inconsistent_guids <- dplyr::bind_rows(inconsistent_guids$adm2guid)
+
+  if (nrow(inconsistent_guids) != 0) {
+    cli::cli_alert_info(paste0(
+      col_blue(
+        "There were ", nrow(inconsistent_guids),
+        " adm2guids not present for the entirety of their 1 year rolling periods.",
+        " This typically occurs when a GUID expires between rolling periods that encompasses multiple years.",
+        " These adm2guids are removed from the country summaries."
+      )
+    ))
+  }
 
   # Summarise
   met_npafp <- dplyr::bind_rows(afp_indicators$npafp_dist) |>
     dplyr::left_join(region_lookup_table) |>
     # invalid GUIDS will have consistnet_guid = FALSE while
-    # valid ones will be TRUE
+    # valid ones will be NA
     dplyr::left_join(inconsistent_guids) |>
-    dplyr::filter(consistent_guid == FALSE) |>
-    dplyr::group_by(year_label, rolling_period,
-                    analysis_year_start, analysis_year_end,
-                    whoregion, ctry) |>
-    dplyr::summarise(dist_w_100k = sum(par >= 1e5, na.rm = TRUE),
-                     dist_npafp = sum(par != 0, na.rm = TRUE), # remove districts without populations
-                     met_npafp = sum(
-                       (par >= 1e5 & npafp_rate >= 3 &
-                          ctry %in% c("AFGHANISTAN", "PAKISTAN")),
-                       (par >= 1e5 & npafp_rate >= 2 &
-                          whoregion %in% c("AFRO", "EMRO", "SEARO") &
-                          !ctry %in% c("AFGHANISTAN", "PAKISTAN")),
-                       (par >= 1e5 & npafp_rate >= 1 &
-                          whoregion %in% c("AMRO", "EURO", "WPRO")),
-                       na.rm = T),
-                     prop_met_npafp = met_npafp / dist_w_100k * 100,
-                     npafp_label = paste0(met_npafp, "/", dist_w_100k)) |>
+    dplyr::filter(is.na(consistent_guid)) |>
+    dplyr::group_by(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end,
+      whoregion, ctry
+    ) |>
+    dplyr::summarise(
+      dist_w_100k = sum(par >= 1e5, na.rm = TRUE),
+      dist_npafp = sum(par != 0, na.rm = TRUE), # remove districts without populations
+      met_npafp = sum(
+        (par >= 1e5 & npafp_rate >= 3 &
+          ctry %in% c("AFGHANISTAN", "PAKISTAN")),
+        (par >= 1e5 & npafp_rate >= 2 &
+          whoregion %in% c("AFRO", "EMRO", "SEARO") &
+          !ctry %in% c("AFGHANISTAN", "PAKISTAN")),
+        (par >= 1e5 & npafp_rate >= 1 &
+          whoregion %in% c("AMRO", "EURO", "WPRO")),
+        na.rm = T
+      ),
+      prop_met_npafp = met_npafp / dist_w_100k * 100,
+      npafp_label = paste0(met_npafp, "/", dist_w_100k)
+    ) |>
     ungroup()
 
   met_stool <- dplyr::bind_rows(afp_indicators$stoolad_dist) |>
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(region_lookup_table) |>
+    # invalid GUIDS will have consistnet_guid = FALSE while
+    # valid ones will be NA
+    dplyr::left_join(inconsistent_guids) |>
+    dplyr::filter(is.na(consistent_guid)) |>
     dplyr::filter(!is.na(ctry)) |>
-    dplyr::group_by(year_label, rolling_period,
-                    analysis_year_start, analysis_year_end,
-                    whoregion, ctry) |>
-    dplyr::summarise(dist_stool = n(),
-                     met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = T),
-                     prop_met_stool = met_stool / dist_stool * 100,
-                     stool_label = paste0(met_stool, "/", dist_stool))
+    dplyr::group_by(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end,
+      whoregion, ctry
+    ) |>
+    dplyr::summarise(
+      dist_stool = n(),
+      met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = T),
+      prop_met_stool = met_stool / dist_stool * 100,
+      stool_label = paste0(met_stool, "/", dist_stool)
+    )
 
   met_ev <- dplyr::bind_rows(es_indicators$final_es_dataset) |>
-    dplyr::rename("ctry" = ADM0_NAME,
-                  "prov" = ADM1_NAME,
-                  "dist" = ADM2_NAME) |>
+    dplyr::rename(
+      "ctry" = ADM0_NAME,
+      "prov" = ADM1_NAME,
+      "dist" = ADM2_NAME
+    ) |>
     dplyr::left_join(dist_lookup_table) |>
     dplyr::left_join(region_lookup_table) |>
-    dplyr::group_by(year_label, rolling_period,
-                    analysis_year_start, analysis_year_end,
-                    whoregion, ctry) |>
-    dplyr::summarise(es_sites = sum(n_samples_12_mo >= 10 & site_age >= 12, na.rm = T),
-                     met_ev = sum(num.samples >= 10 & site_age >= 12 & ev.rate >= 0.5, na.rm = T),
-                     prop_met_ev = met_ev / es_sites * 100,
-                     ev_label = paste0(met_ev, "/", es_sites))
+    # invalid GUIDS will have consistnet_guid = FALSE while
+    # valid ones will be NA
+    dplyr::left_join(inconsistent_guids) |>
+    dplyr::filter(is.na(consistent_guid)) |>
+    dplyr::group_by(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end,
+      whoregion, ctry
+    ) |>
+    dplyr::summarise(
+      es_sites = sum(n_samples_12_mo >= 10 & site_age >= 12, na.rm = T),
+      met_ev = sum(num.samples >= 10 & site_age >= 12 & ev.rate >= 0.5, na.rm = T),
+      prop_met_ev = met_ev / es_sites * 100,
+      ev_label = paste0(met_ev, "/", es_sites)
+    )
   cli::cli_progress_update()
 
   combine <- dplyr::full_join(met_npafp, met_stool) |>
     dplyr::full_join(met_ev) |>
     dplyr::full_join(timely_det_indicator |>
-                       rename("ctry" = "place.admin.0")) |>
+      rename("ctry" = "place.admin.0")) |>
     dplyr::select(dplyr::any_of(c(
       "year_label", "rolling_period",
       "analysis_year_start", "analysis_year_end",
@@ -629,16 +698,16 @@ generate_c1_table <- function(raw_data, start_date, end_date,
       "prop_timely_wild_vdpv_label",
       # "prop_timely_samples_label",
       "prop_timely_cases_label",
-      "prop_timely_env_label")
-    ))
+      "prop_timely_env_label"
+    )))
 
   # Clean up
   combine <- combine |>
     dplyr::filter(!is.na(ctry)) |>
     # If no priority level, default to low
     dplyr::mutate(`SG Priority Level` = dplyr::if_else(is.na(`SG Priority Level`),
-                                                       "LOW", `SG Priority Level`)
-                  ) |>
+      "LOW", `SG Priority Level`
+    )) |>
     # NAs should be replace with NaNs and not be empty
     dplyr::mutate(dplyr::across(dplyr::starts_with("prop") & !dplyr::ends_with("label"), \(x) round(tidyr::replace_na(x, NaN), 2))) |>
     dplyr::mutate(dplyr::across(dplyr::ends_with("label"), \(x) tidyr::replace_na(x, "0/0")))
@@ -647,7 +716,6 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   cli::cli_progress_done()
 
   return(combine)
-
 }
 
 #' AFP surveillance KPI summary
