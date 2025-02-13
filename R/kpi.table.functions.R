@@ -1259,9 +1259,9 @@ generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
       met_timely_wpv_vdpv_det = sum(prop_timely_det_wpv_vdpv >= 80, na.rm = TRUE),
       median_timely_shipment_per_site = median(prop_timely_ship, na.rm = TRUE),
       es_sites = n(),
-      prop_met_ev = met_ev / es_sites,
-      prop_met_good_samples = met_good_samples / es_sites,
-      prop_met_timely_wpv_vdpv_det = met_timely_wpv_vdpv_det / es_sites,
+      prop_met_ev = met_ev / es_sites * 100,
+      prop_met_good_samples = met_good_samples / es_sites * 100,
+      prop_met_timely_wpv_vdpv_det = met_timely_wpv_vdpv_det / es_sites * 100,
       prop_met_ev_label = paste0(met_ev, "/", es_sites),
       prop_met_good_samples_label = paste0(met_good_samples, "/", es_sites),
       prop_met_timely_wpv_vdpv_det_label = paste0(met_timely_wpv_vdpv_det, "/", es_sites)
@@ -1359,7 +1359,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
       dplyr::rename_with(\(x) stringr::str_replace_all(x, "[\\. ]", "_")) |>
       dplyr::mutate(dplyr::across(
         (dplyr::starts_with("prop") |
-          dplyr::starts_with("timely")) &
+          dplyr::starts_with("timely") | dplyr::starts_with("median")) &
           -dplyr::ends_with("label"),
         \(x) round(x, 0)
       ))
@@ -1414,6 +1414,8 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
           "timely_opt_field_shipment", "timely_wpv_vdpv"
         )
       )) |>
+      dplyr::mutate(npafp_rate = round(npafp_rate, 0),
+                    per_stool_ad = round(per_stool_ad, 0)) |>
       dplyr::rename_with(recode,
                          rolling_period = "Rolling 12 Months",
                          region = "WHO Region",
