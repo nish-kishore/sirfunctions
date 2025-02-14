@@ -215,8 +215,8 @@ generate_kpi_template <- function(output_path, name) {
 
   # Generate tables
   c1 <- 'c1 <- generate_c1_table(raw_data, "2022-01-01", "2024-12-31")'
-  c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31", "ctry")'
-  c2_dist <- 'c2_dist <- generate_c2_table(raw_data$afp, raw_data$dist.pop, "2021-01-01", "2023-12-31", "dist")'
+  c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2022-01-01", "2024-12-31", "ctry")'
+  c2_dist <- 'c2_dist <- generate_c2_table(raw_data$afp, raw_data$dist.pop, "2022-01-01", "2024-12-31", "dist")'
   c3 <- 'c3 <- generate_c3_table(raw_data$es, "2022-01-01", "2024-12-31")'
   c4 <- 'c4 <- generate_c4_table(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
 

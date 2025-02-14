@@ -133,7 +133,6 @@ generate_kpi_map <- function(c2, who_region, indicator, .year_label,
 
   c2 <- c2 |>
     dplyr::mutate(year = lubridate::year(analysis_year_end)) |>
-    add_risk_category() |>
     dplyr::filter(
       .data$year_label == .year_label,
       .data$Region %in% who_region,
