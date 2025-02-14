@@ -414,7 +414,7 @@ generate_kpi_ev_map <- function(c3, .year_label, who_region = NULL,
   }
 
   if (is.null(who_region)) {
-    file_name <- paste0("ev_rate_map_global_", year,".png")
+    file_name <- paste0("ev_rate_map_global_", .year_label,".png")
   } else {
     file_name <- paste0("ev_rate_map_", paste0(who_region, collapse = "_")
                         ,"_", year,".png")
