@@ -719,8 +719,50 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   return(combine)
 }
 
+#' Generate C1 rollup for high-priority countries
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Generates a summary of how many of the high priority countries have met their
+#' AFP and ES indicators.
+#'
+#' @param c1 `tibble` The output of [generate_c1_table()].
+#'
+#' @returns `tibble` A summary rollup
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' c1 <- generate_c1_table(raw_data, "2022-01-01", "2024-12-31")
+#' c1_rollup <- generate_c1_rollup(c1)
+#' }
 generate_c1_rollup <- function(c1) {
+  c1_rollup <- c1 |>
+    dplyr::filter(`SG Priority Level` == "HIGH") |>
+    dplyr::group_by(rolling_period) |>
+    dplyr::summarize(
+      met_npafp = sum(prop_met_npafp >= 80, na.rm = TRUE),
+      npafp_denom = sum(!is.na(prop_met_npafp)),
+      stool_denom = sum(!is.na(prop_met_stool)),
+      ev_denom = sum(!is.na(prop_met_ev)),
+      det_denom = sum(!is.na(prop_timely_wild_vdpv)),
+      met_stool = sum(prop_met_stool >= 80, na.rm = TRUE),
+      met_ev = sum(prop_met_ev >= 80, na.rm = TRUE),
+      met_timely_wild_vdpv = sum(prop_timely_wild_vdpv >= 80, na.rm = TRUE),
+      prop_met_npafp = met_npafp / npafp_denom * 100,
+      prop_met_stool = met_stool / stool_denom * 100,
+      prop_met_ev = met_ev / ev_denom * 100,
+      prop_met_timely_wild_vdpv = met_timely_wild_vdpv / det_denom * 100,
+      met_npafp_label = paste0(met_npafp, "/",npafp_denom),
+      met_stool_label = paste0(met_stool, "/", stool_denom),
+      met_ev_label = paste0(met_ev, "/", ev_denom),
+      met_timely_wild_vdpv_label = paste0(met_timely_wild_vdpv, "/", det_denom)
+    ) |>
+    dplyr::ungroup()
 
+  return(c1_rollup)
 }
 
 #' AFP surveillance KPI summary
@@ -1356,7 +1398,7 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date, .group_b
 #' }
 export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                              output_path = Sys.getenv("KPI_TABLES"),
-                             drop_label_cols = TRUE) {
+                             drop_label_cols = FALSE) {
   format_table <- function(x) {
     x <- x |>
       dplyr::rename_with(\(x) stringr::str_to_lower(x)) |>
@@ -1377,7 +1419,14 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     return(x)
   }
 
-  export_list <- list(c1 = c1, c2 = c2, c3 = c3, c4 = c4)
+  if (!is.null(c1)) {
+    c1_rollup <- generate_c1_rollup(c1)
+  } else {
+    c1_rollup <- NULL
+  }
+
+  export_list <- list(c1 = c1, c1_high_risk_summary = c1_rollup,
+                      c2 = c2, c3 = c3, c4 = c4)
   export_list <- export_list |>
     purrr::keep(\(x) !is.null(x)) |>
     purrr::map(format_table)
@@ -1412,6 +1461,35 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                        prop_met_ev = "ES EV detection rate – national, %",
                        prop_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %"
                       )
+  }
+
+  # c1 high risk formatting
+  if (!is.null(c1_rollup)) {
+    export_list$c1_high_risk_summary <- export_list$c1_high_risk_summary %>%
+      {
+        if (!drop_label_cols) {
+          dplyr::mutate(.,
+                        prop_met_npafp = paste0(prop_met_npafp, " (", met_npafp_label, ")"),
+                        prop_met_stool = paste0(prop_met_stool, " (", met_stool_label, ")"),
+                        prop_met_ev = paste0(prop_met_ev, " (", met_ev_label, ")"),
+                        prop_met_timely_wild_vdpv = paste0(prop_met_timely_wild_vdpv, " (",
+                                                           met_timely_wild_vdpv_label, ")")
+                        )
+        } else {
+          .
+        }
+      } |>
+      dplyr::rename_with(recode,
+                         rolling_period = "Rolling 12 Months",
+                         region = "WHO Region",
+                         sg_priority_level = "GPSAP Risk Category",
+                         ctry = "Country",
+                         prop_met_npafp = "Non-polio AFP rate  – subnational, %",
+                         prop_met_stool = "Stool adequacy  – subnational, %",
+                         prop_met_ev = "ES EV detection rate – national, %",
+                         prop_met_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %"
+      ) |>
+      dplyr::select(-dplyr::starts_with("met"), -dplyr::ends_with("denom"))
   }
 
   # c2 formatting
