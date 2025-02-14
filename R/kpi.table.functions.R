@@ -1391,10 +1391,10 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date, .group_b
 #' \dontrun{
 #' init_kpi()
 #' c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
-#' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
+#' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31", "ctry")
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
 #' c4 <- generate_c4_table(lab_data, raw_data$afp, "2021-01-01", "2024-12-31")
-#' export_kpi_table(c1, c2, c3, c4, drop_label_cols = FALSE)
+#' export_kpi_table(c1, c2, c3, c4)
 #' }
 export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                              output_path = Sys.getenv("KPI_TABLES"),
@@ -1423,6 +1423,10 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     c1_rollup <- generate_c1_rollup(c1)
   } else {
     c1_rollup <- NULL
+  }
+
+  if (!is.null(c3)) {
+    c3 <- generate_c3_rollup(c3)
   }
 
   export_list <- list(c1 = c1, c1_high_risk_summary = c1_rollup,
