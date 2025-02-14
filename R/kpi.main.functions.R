@@ -215,17 +215,26 @@ generate_kpi_template <- function(output_path, name) {
 
   # Generate tables
   c1 <- 'c1 <- generate_c1_table(raw_data, "2022-01-01", "2024-12-31")'
-  c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$dist.pop, "2022-01-01", "2024-12-31")'
-  c2_ctry <- paste0('c2_ctry <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2022-01-01", "2024-12-31", ',
-                    '\n.group_by = c("adm0guid", "ctry", "year")')
+  c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31", "ctry")'
+  c2_dist <- 'c2_dist <- generate_c2_table(raw_data$afp, raw_data$dist.pop, "2021-01-01", "2023-12-31", "dist")'
   c3 <- 'c3 <- generate_c3_table(raw_data$es, "2022-01-01", "2024-12-31")'
   c4 <- 'c4 <- generate_c4_table(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
 
-  # Generate figures
+  # Get years available
+  year_list <- 'year_list <- unique(c2$year_label)'
+  region_list <- 'region_list <- unique(c2 |> filter(!is.na(Region)) |> pull(Region))'
+
+  # Generate figures iteratively for years and regions
   sg_priority_map <- "generate_sg_priority_map()"
-  npafp_kpi_map <- 'generate_kpi_npafp_map(c2, 2024, "AFRO", ctry_sf = ctry_sf, dist_sf = dist_sf)'
-  stool_kpi_map <- 'generate_kpi_stool_map(c2, 2024, "AFRO", ctry_sf = ctry_sf, dist_sf = dist_sf)'
-  ev_kpi_map <- 'generate_kpi_ev_map(c3, 2024, "AFRO", ctry_sf = ctry_sf)'
+  npafp_kpi_loop <- paste0('purrr::map(year_list, \\(x) ',
+                           'purrr::map(region_list, ',
+                           '\n \\(y) generate_kpi_npafp_map(c2_dist, x, y, ctry_sf = ctry_sf, dist_sf = dist_sf)))')
+  stool_kpi_loop <-  paste0('purrr::map(year_list, \\(x) ',
+                            'purrr::map(region_list, ',
+                            '\n \\(y) generate_kpi_stool_map(c2_dist, x, y, ctry_sf = ctry_sf, dist_sf = dist_sf)))')
+  ev_kpi_loop <-  paste0('purrr::map(year_list, \\(x) ',
+                         'purrr::map(region_list, ',
+                         '\n \\(y) generate_kpi_ev_map(c3, x, y, ctry_sf = ctry_sf)))')
 
   npafp_bar <- "generate_kpi_npafp_bar(c1, raw_data$afp)"
   stool_bar <- "generate_kpi_stoolad_bar(c1, raw_data$afp)"
@@ -237,12 +246,16 @@ generate_kpi_template <- function(output_path, name) {
   seqship_violin <- 'generate_lab_seqship_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
   seqres_violin <- 'generate_lab_seqres_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
 
-  export_table <- "export_kpi_table(c1, c2, c3, c4, drop_label_cols = FALSE)"
+  export_table <- "export_kpi_table(c1, c2, c3, c4)"
 
   # Write template
   output_string <- c(
     "# KPI Code Template",
-    paste0("# Downloaded on: ", Sys.Date()), "\n\n\n",
+    paste0("# Downloaded on: ", Sys.Date()), "\n",
+    "# Please feel free to adjust the default parameters of the functions below.",
+    "# Use ?function() to pull up the function specification, as well as ",
+    "# examples of how to use them.\n\n",
+    "library(sirfunctions)\n",
     init, "\n",
     "# Obtaining shapefiles in long format ----",
     "# Ensure st.year is the year of your start date.",
@@ -250,13 +263,14 @@ generate_kpi_template <- function(output_path, name) {
     "# Cleaning lab data ----",
     'lab_data <- clean_lab_data(lab_data, "2022-01-01", "2024-12-31", raw_data$afp)\n',
     "# Generate GPSAP C1-C4 tables ----",
-    "# Except for c1, every other table can be specified a custom grouping",
     "# You may also specify and filter countries based on risk category ",
-    c1, c2, c2_ctry, c3, c4, "\n",
+    c1, c2, c2_dist, c3, c4, "\n",
+    "# Getting a list of years and regions",
+    year_list, region_list, "\n",
     "# Generate figures ----",
-    "# Ensure c2 is grouped at the district level.",
-    sg_priority_map, npafp_kpi_map, stool_kpi_map, ev_kpi_map, "\n",
+    sg_priority_map, npafp_kpi_loop, stool_kpi_loop, ev_kpi_loop, "\n",
     npafp_bar, stool_bar, ev_bar, "\n",
+    "# Adjust the y_max as needed via the 'y_max' parameter",
     timely_violin, culture_violin, itd_violin, seqship_violin,
     seqres_violin, "\n",
     "# Export GPSAP tables ----",

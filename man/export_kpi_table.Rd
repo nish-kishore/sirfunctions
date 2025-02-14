@@ -10,7 +10,7 @@ export_kpi_table(
   c3 = NULL,
   c4 = NULL,
   output_path = Sys.getenv("KPI_TABLES"),
-  drop_label_cols = TRUE
+  drop_label_cols = FALSE
 )
 }
 \arguments{
@@ -40,9 +40,9 @@ Performs formatting and export of the C1-C4 KPI tables.
 \dontrun{
 init_kpi()
 c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
-c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31")
+c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31", "ctry")
 c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
 c4 <- generate_c4_table(lab_data, raw_data$afp, "2021-01-01", "2024-12-31")
-export_kpi_table(c1, c2, c3, c4, drop_label_cols = FALSE)
+export_kpi_table(c1, c2, c3, c4)
 }
 }
