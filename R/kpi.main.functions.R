@@ -269,6 +269,8 @@ generate_kpi_template <- function(output_path, name) {
     "# Getting a list of years and regions",
     year_list, region_list, "\n",
     "# Generate figures ----",
+    "# Note: The following will iterate through combinations of years and regions",
+    "# and may take a while to complete.",
     sg_priority_map, npafp_kpi_loop, stool_kpi_loop, ev_kpi_loop, "\n",
     npafp_bar, stool_bar, ev_bar, "\n",
     "# Adjust the y_max as needed via the 'y_max' parameter",
