@@ -1473,8 +1473,8 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                        region = "WHO Region",
                        sg_priority_level = "GPSAP Risk Category",
                        ctry = "Country",
-                       prop_met_npafp = "Non-polio AFP rate  – subnational, %",
-                       prop_met_stool = "Stool adequacy  – subnational, %",
+                       prop_met_npafp = "Non-polio AFP rate – subnational, %",
+                       prop_met_stool = "Stool adequacy – subnational, %",
                        prop_met_ev = "ES EV detection rate – national, %",
                        prop_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %"
                       )
@@ -1499,8 +1499,8 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
       dplyr::arrange(dplyr::desc(rolling_period)) |>
       dplyr::rename_with(recode,
                          rolling_period = "Rolling 12 Months",
-                         prop_met_npafp = "Non-polio AFP rate  – subnational, %",
-                         prop_met_stool = "Stool adequacy  – subnational, %",
+                         prop_met_npafp = "Non-polio AFP rate – subnational, %",
+                         prop_met_stool = "Stool adequacy – subnational, %",
                          prop_met_ev = "ES EV detection rate – national, %",
                          prop_met_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %"
       ) |>
