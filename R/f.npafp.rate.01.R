@@ -206,6 +206,12 @@ f.npafp.rate.01 <- function(
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
 
+  # Choose columns
+  names_geo <- switch(spatial.scale,
+                      "ctry" = names.ctry,
+                      "prov" = names.prov,
+                      "dist" = names.dist)
+
   # Ensure that if using raw.data, required renamed columns are present. Borrowed from
   # extract.country.data()
   afp.data <- dplyr::rename_with(afp.data, recode,
@@ -312,11 +318,27 @@ f.npafp.rate.01 <- function(
   }
 
   # Filter AFP and population data based on start and end dates
-  afp.data <- afp.data |>
-    dplyr::filter(
-      dplyr::between(date, start.date, end.date), age.months < 180,
-      cdc.classification.all2 != "NOT-AFP"
-    )
+  afp.data <- afp.data |> dplyr::filter(cdc.classification.all2 != "NOT-AFP")
+  if (missing_agemonths) {
+    afp.data <- afp.data |>
+      dplyr::filter(dplyr::between(date, start.date, end.date),
+                    (age.months < 180 | is.na(age.months))
+      )
+  } else {
+    if (nrow(agemonth_summary) > 0) {
+      cli::cli_alert_warning(paste0(
+        "Proportion of cases missing `age.months`",
+        "for some combinations of ", paste(names_geo, collapse = ", "),
+        " range between ", min(agemonth_summary$prop) * 100, "-",
+        max(agemonth_summary$prop) * 100, "%",
+        ".\nCheck if toggling missing_agemonths = TRUE is warranted.",
+        "\nRun check_missing_rows() on the dataset for specifics on missingness."
+      ))
+    }
+    afp.data <- afp.data |>
+      dplyr::filter(dplyr::between(date, start.date, end.date),
+                    age.months < 180)
+  }
 
 
   # Only years of analysis
