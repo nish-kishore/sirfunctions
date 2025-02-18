@@ -652,8 +652,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
       whoregion, ctry
     ) |>
     dplyr::summarise(
-      dist_stool = n(),
-      met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = T),
+      dist_stool = sum(adequacy.denominator >= 5, na.rm = TRUE),
+      met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = TRUE),
       prop_met_stool = met_stool / dist_stool * 100,
       stool_label = paste0(met_stool, "/", dist_stool)
     )
@@ -993,6 +993,13 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
           (.data$culture.itd.cat == "International culture/ITD" & .data$daysstooltolab <= 7),
         na.rm = TRUE
       ) / sum(!is.na(.data$culture.itd.cat) & !is.na(.data$daysstooltolab)) * 100,
+
+      median_timely_not = median(ontonot, na.rm = TRUE),
+      median_timely_inv = median(ontoinvest, na.rm = TRUE),
+      median_timely_field = median(ontostool1, na.rm = TRUE),
+      median_stool_shipment = median(daysstooltolab, na.rm = TRUE),
+      median_onto_lab = median(ontolab, na.rm = TRUE),
+
       timely_opt_field_shipment = sum(.data$is_opt_timely == "yes") / sum(.data$is_opt_timely != "unable to assess") * 100,
       timely_wpv_vdpv = sum(.data$is_timely & .data$is_target & .data$timely_cat != "Missing or bad data", na.rm = TRUE) /
         sum(.data$is_timely & .data$timely_cat != "Missing or bad data", na.rm = TRUE) * 100
@@ -1253,7 +1260,8 @@ generate_c3_table <- function(es_data, start_date, end_date,
                                                        "LOW", `SG Priority Level`),
                   Region = get_region(ADM0_NAME))
 
-  es_summary <- dplyr::left_join(es_summary, es_site_age_long)
+  es_summary <- dplyr::left_join(es_summary, es_site_age_long) |>
+    dplyr::filter(analysis_year_end <= end_date)
 
   return(es_summary)
 
@@ -1293,22 +1301,25 @@ generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
 
   c3_rollup <- c3 |>
     dplyr::rename(ctry = "ADM0_NAME",
-                  priority_level = "SG Priority Level",
-                  who_region = "Region") |>
+                  sg_priority_level = "SG Priority Level",
+                  region = "Region") |>
     dplyr::group_by(year_label, rolling_period,
                     analysis_year_start, analysis_year_end,
-                    ctry, who_region, priority_level) |>
+                    ctry, region, sg_priority_level) |>
     dplyr::summarize(
       met_ev = sum(ev_rate >= 50 & n_samples_12_mo >= min_sample & site_age >= 12, na.rm = TRUE),
+      met_ev_5_samples = sum(ev_rate >= 50 & n_samples_12_mo >= 5, na.rm = TRUE),
       met_good_samples = sum(prop_good_es >= 80, na.rm = TRUE),
       met_timely_wpv_vdpv_det = sum(prop_timely_det_wpv_vdpv >= 80, na.rm = TRUE),
       median_timely_shipment_per_site = median(prop_timely_ship, na.rm = TRUE),
       es_sites = sum(n_samples_12_mo >= 1, na.rm = TRUE),
       active_sites = sum(n_samples_12_mo >= min_sample & site_age >= 12, na.rm = TRUE),
       prop_met_ev = met_ev / active_sites * 100,
+      prop_met_ev_5_samples = met_ev_5_samples / es_sites * 100,
       prop_met_good_samples = met_good_samples / es_sites * 100,
       prop_met_timely_wpv_vdpv_det = met_timely_wpv_vdpv_det / es_sites * 100,
       prop_met_ev_label = paste0(met_ev, "/", active_sites),
+      prop_met_ev_5_samples_label = paste0(met_ev_5_samples, "/", es_sites),
       prop_met_good_samples_label = paste0(met_good_samples, "/", es_sites),
       prop_met_timely_wpv_vdpv_det_label = paste0(met_timely_wpv_vdpv_det, "/", es_sites)
     ) |>
@@ -1440,7 +1451,8 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
 
     export_list$c1 <- export_list$c1 |>
       dplyr::select(dplyr::any_of(c(
-        "rolling_period", "sg_priority_level", "region", "ctry",
+        "sg_priority_level", "region", "ctry",
+        "rolling_period",
         "prop_met_npafp", "prop_met_stool", "prop_met_ev",
         "prop_timely_wild_vdpv"
       )), dplyr::ends_with("label"), dplyr::ends_with("cat")) %>%
@@ -1455,6 +1467,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
           .
         }
       } |>
+      dplyr::arrange(sg_priority_level, region, ctry, dplyr::desc(rolling_period)) |>
       dplyr::rename_with(recode,
                        rolling_period = "Rolling 12 Months",
                        region = "WHO Region",
@@ -1483,11 +1496,9 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
           .
         }
       } |>
+      dplyr::arrange(dplyr::desc(rolling_period)) |>
       dplyr::rename_with(recode,
                          rolling_period = "Rolling 12 Months",
-                         region = "WHO Region",
-                         sg_priority_level = "GPSAP Risk Category",
-                         ctry = "Country",
                          prop_met_npafp = "Non-polio AFP rate  – subnational, %",
                          prop_met_stool = "Stool adequacy  – subnational, %",
                          prop_met_ev = "ES EV detection rate – national, %",
@@ -1501,15 +1512,19 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     export_list$c2 <- export_list$c2 |>
       dplyr::select(dplyr::any_of(
         c(
-          "rolling_period", "sg_priority_level", "region",
-          "ctry", "prov", "dist", "npafp_rate", "per_stool_ad",
-          "prop_good_condition", "prop_complete_60_day", "timely_not",
-          "timely_inv", "timely_field", "timely_stool_shipment",
-          "timely_opt_field_shipment", "timely_wpv_vdpv"
+          "sg_priority_level", "region",
+          "ctry", "prov", "dist", "rolling_period", "npafp_rate", "per_stool_ad",
+          "prop_good_condition", "prop_complete_60_day",
+          "timely_not", "median_timely_not",
+          "timely_inv", "median_timely_inv",
+          "timely_field", "median_timely_field",
+          "timely_stool_shipment", "median_stool_shipment",
+          "timely_opt_field_shipment", "median_onto_lab", "timely_wpv_vdpv"
         )
       )) |>
       dplyr::mutate(npafp_rate = round(npafp_rate, 0),
                     per_stool_ad = round(per_stool_ad, 0)) |>
+      dplyr::arrange(sg_priority_level, region, ctry, dplyr::desc(rolling_period)) |>
       dplyr::rename_with(recode,
                          rolling_period = "Rolling 12 Months",
                          region = "WHO Region",
@@ -1522,10 +1537,15 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                          prop_good_condition = "Stool condition, %",
                          prop_complete_60_day = "Completeness of 60-day follow-ups, %",
                          timely_not = "Timeliness of notification, %",
+                         median_timely_not = "Median timeliness of notification",
                          timely_inv = "Timeliness of investigation, %",
+                         median_timely_inv = "Median timeliness of investigation",
                          timely_field = "Timeliness of field activities, %",
+                         median_timely_field = "Median timeliness of field activities",
                          timely_stool_shipment = "Timeliness of stool specimen shipment, %",
+                         median_stool_shipment = "Median timeliness of stool shipment",
                          timely_opt_field_shipment = "Timeliness of optimized field and shipment, %",
+                         median_onto_lab = "Median timeliness of optimized field and shipment",
                          timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV – AFP, %"
       )
   }
@@ -1535,8 +1555,10 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     export_list$c3 <- export_list$c3 |>
       dplyr::select(dplyr::any_of(
         c(
-          "rolling_period", "sg_priority_level", "region",
-          "ctry", "prov", "dist", "es_sites", "prop_met_ev",
+          "sg_priority_level", "region",
+          "ctry", "prov", "dist", "rolling_period",
+          "es_sites", "active_sites", "prop_met_ev",
+          "prop_met_ev_5_samples",
           "prop_met_good_samples", "median_timely_shipment_per_site",
           "prop_met_timely_wpv_vdpv_det"
         )
@@ -1545,6 +1567,8 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
         if (!drop_label_cols) {
           dplyr::mutate(.,
                         prop_met_ev = paste0(prop_met_ev, " (", prop_met_ev_label, ")"),
+                        prop_met_ev_5_samples = paste0(prop_met_ev_5_samples, " (",
+                                                       prop_met_ev_5_samples_label, ")"),
                         prop_met_good_samples = paste0(prop_met_good_samples, " (",
                                                        prop_met_good_samples_label, ")"),
                         prop_met_timely_wpv_vdpv_det = paste0(prop_met_timely_wpv_vdpv_det,
@@ -1554,28 +1578,34 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
           .
         }
       } |>
-    dplyr::rename_with(recode,
-                       rolling_period = "Rolling 12 Months",
-                       region = "WHO Region",
-                       sg_priority_level = "GPSAP Risk Category",
-                       ctry = "Country",
-                       prov = "Province",
-                       dist = "District",
-                       es_sites = "ES Sites",
-                       prop_met_ev = "ES EV detection rate, % ",
-                       prop_met_good_samples = "Condition of ES sample, %",
-                       median_timely_shipment_per_site = "Timeliness of ES sample shipment, %",
-                       prop_met_timely_wpv_vdpv_det = "Timeliness of detection for WPV/VDPV – ES, %"
-    )
+      dplyr::arrange(sg_priority_level, region, ctry, dplyr::desc(rolling_period)) |>
+      dplyr::rename_with(recode,
+                         rolling_period = "Rolling 12 Months",
+                         region = "WHO Region",
+                         sg_priority_level = "GPSAP Risk Category",
+                         ctry = "Country",
+                         prov = "Province",
+                         dist = "District",
+                         es_sites = "ES Sites",
+                         active_sites = "Active Sites",
+                         prop_met_ev = "ES EV detection rate, % ",
+                         prop_met_ev_5_samples = "ES EV detection rate, % (>= 5 samples)",
+                         prop_met_good_samples = "Condition of ES sample, %",
+                         median_timely_shipment_per_site = "Median Timeliness of ES sample, %",
+                         prop_met_timely_wpv_vdpv_det = "Timeliness of detection for WPV/VDPV – ES, %"
+      )
 
   }
 
   # c4 formatting
   export_list <- purrr::map(export_list, drop_labels)
 
-  file_name <- paste0("kpi_tables_",
-                      paste0(names(export_list), collapse = "_"),
-                      "_", Sys.Date(), ".xlsx")
+  names(export_list) <- c("c1 - kpi", "c1 - high risk summary",
+                        "c2 - national AFP indicators",
+                        "c3 - es indicators by site",
+                        "c4 - lab indicators")
+
+  file_name <- paste0("kpi_tables_export_", Sys.Date(), ".xlsx")
   openxlsx::write.xlsx(export_list, file.path(output_path, file_name), colWidths = "auto",
                        headerStyle = openxlsx::createStyle(textDecoration = "Bold"))
 }
