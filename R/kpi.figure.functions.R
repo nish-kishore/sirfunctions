@@ -528,7 +528,7 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
   ctry_abbrev <- get_ctry_abbrev(afp_data)
   priority_ctry <- c1 |>
     dplyr::left_join(ctry_abbrev,
-                     by = c("ctry" = "place.admin.0", "whoregion")) |>
+                     by = c("ctry" = "place.admin.0", "Region" = "whoregion")) |>
     dplyr::filter(.data$`SG Priority Level` == "HIGH") |>
     dplyr::mutate(prop_met_npafp = .data$prop_met_npafp)
 
@@ -536,7 +536,7 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
                         "prop_met_npafp",
                         80,
                         "npafp_label",
-                        faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$whoregion,
+                        faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$Region,
                                               scales = "free", space = "free",
                                               switch = "y",
                                               labeller = label_wrap_gen(13)),
@@ -578,7 +578,7 @@ generate_kpi_evdetect_bar <- function(c1, afp_data,
   ctry_abbrev <- get_ctry_abbrev(afp_data)
   priority_ctry <- c1 |>
     dplyr::left_join(ctry_abbrev,
-                     by = c("ctry" = "place.admin.0", "whoregion")) |>
+                     by = c("ctry" = "place.admin.0", "Region" = "whoregion")) |>
     dplyr::filter(.data$`SG Priority Level` == "HIGH") |>
     dplyr::mutate(prop_met_ev = .data$prop_met_ev)
 
@@ -586,7 +586,7 @@ generate_kpi_evdetect_bar <- function(c1, afp_data,
                                     "prop_met_ev",
                                     80,
                                     "ev_label",
-                                    faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$whoregion,
+                                    faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$Region,
                                                                    scales = "free", space = "free",
                                                                    switch = "y",
                                                                    labeller = label_wrap_gen(13)),
@@ -623,7 +623,7 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
   ctry_abbrev <- get_ctry_abbrev(afp_data)
   priority_ctry <- c1 |>
     dplyr::left_join(ctry_abbrev,
-                     by = c("ctry" = "place.admin.0", "whoregion")) |>
+                     by = c("ctry" = "place.admin.0", "Region" = "whoregion")) |>
     dplyr::filter(.data$`SG Priority Level` == "HIGH") |>
     dplyr::mutate(prop_met_stool = .data$prop_met_stool)
 
@@ -631,7 +631,7 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
                                     "prop_met_stool",
                                     80,
                                     "stool_label",
-                                    faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$whoregion,
+                                    faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$Region,
                                                                    scales = "free", space = "free",
                                                                    switch = "y",
                                                                    labeller = label_wrap_gen(13)),
