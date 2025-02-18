@@ -37,6 +37,7 @@ Imports:
     lubridate,
     Microsoft365R,
     officer,
+    openxlsx,
     readr,
     scales,
     sf,

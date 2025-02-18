@@ -1576,7 +1576,8 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
   file_name <- paste0("kpi_tables_",
                       paste0(names(export_list), collapse = "_"),
                       "_", Sys.Date(), ".xlsx")
-  writexl::write_xlsx(export_list, file.path(output_path, file_name))
+  openxlsx::write.xlsx(export_list, file.path(output_path, file_name), colWidths = "auto",
+                       headerStyle = openxlsx::createStyle(textDecoration = "Bold"))
 }
 
 # Deprecated functions ----
