@@ -615,6 +615,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     # valid ones will be NA
     dplyr::left_join(inconsistent_guids) |>
     dplyr::filter(is.na(consistent_guid)) |>
+    dplyr::filter(!is.na(ctry)) |>
     dplyr::group_by(
       year_label, rolling_period,
       analysis_year_start, analysis_year_end,
@@ -1004,6 +1005,28 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       timely_wpv_vdpv = sum(.data$is_timely & .data$is_target & .data$timely_cat != "Missing or bad data", na.rm = TRUE) /
         sum(.data$is_timely & .data$timely_cat != "Missing or bad data", na.rm = TRUE) * 100
     )
+
+  # Need to calculate outside because calculation should only be done for VDPV/WPV samples
+  median_wpv_vdpv <- afp_data |>
+    dplyr::filter(
+      .data$cdc.classification.all2 != "NOT-AFP",
+      dplyr::between(.data$date, start_date, end_date)
+    ) |>
+    dplyr::mutate(
+      ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
+                               .data$date),
+      is_target = dplyr::if_else(
+        stringr::str_detect(.data$cdc.classification.all2, "WILD|VDPV"),
+        TRUE, FALSE
+      )) |>
+    dplyr::filter(is_target == TRUE) |>
+    dplyr::group_by(dplyr::across(dplyr::any_of(group_stool_cond))) |>
+    dplyr::summarize(
+      median_ontonothq = median(ontonothq)
+    )
+
+  timeliness_summary <- timeliness_summary |> dplyr::left_join(median_wpv_vdpv)
+
   cli::cli_progress_update()
 
   # Completeness of weekly zero reporting
@@ -1342,9 +1365,8 @@ generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
 #' @param afp_data `tibble` AFP surveillance data.
 #' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
 #' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
-#' @param .group_by `str` or `list` What columns to group the results by.
 #'
-#' @return `tibble` A summary of timeliness KPIs for lab data.
+#' @return `list` A summary of timeliness KPIs for lab data.
 #' @export
 #'
 #' @examples
@@ -1353,29 +1375,59 @@ generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
 #' lab_data <- readr::read_csv("C:/Users/ABC1/Desktop/lab_data.csv")
 #' c4 <- generate_c4_table(lab_data, raw_data$afp, "2021-01-01", "2024-12-31")
 #' }
-generate_c4_table <- function(lab_data, afp_data, start_date, end_date, .group_by = "year") {
+generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
   lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date, afp_data)
+  lab_data <- add_rolling_years(lab_data, start_date, "CaseDate")
 
-  lab_summary <- lab_data |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
+  lab_data <- lab_data |> dplyr::filter(!is.na(seq.lab), !is.na(culture.itd.lab),
+                                        seq.lab != "-")
+
+  itd_lab_summary <- lab_data |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end, culture.itd.lab) |>
     dplyr::summarize(
+      # t1, t2, t3, filters for valid samples only for each timeliness interval
       # Timeliness of virus isolation results
-      timely_isolation = sum(.data$days.lab.culture <= 14 & t1 == TRUE, na.rm = TRUE) /
-        sum(t1 == TRUE) * 100,
-      # Timeliness of ITD results
-      timely_itd = sum(.data$days.culture.itd <= 7 & t2 == TRUE & (!.data$FinalCellCultureResult %in% c(NA, "Negative")), na.rm = TRUE) /
-        sum(t2 == TRUE & (!.data$FinalCellCultureResult %in% c(NA, "Negative"))) * 100,
-      # Timeliness of shipment for sequencing
-      timely_seqship = sum(.data$days.seq.ship <= 7 & t3 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE) /
-        sum(t3 == TRUE & !is.na(.data$FinalITDResult)) * 100,
-      #Timeliness of sequencing results
-      timely_seqres = sum(.data$days.itd.seqres <= 7 & t4 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE) /
-        sum(t4 == TRUE & !is.na(.data$FinalITDResult)) * 100,
-    )
+      timely_isolation = sum(.data$days.lab.culture <= 14 & t1 == TRUE, na.rm = TRUE),
+      t1 = sum(t1 == TRUE),
+      prop_timely_isolation = timely_isolation / t1 * 100,
 
-  return(lab_summary)
+      # Timeliness of ITD results
+      timely_itd = sum(.data$days.culture.itd <= 7 & t2 == TRUE & (!.data$FinalCellCultureResult %in% c(NA, "Negative")), na.rm = TRUE),
+      t2 = sum(t2 == TRUE & (!.data$FinalCellCultureResult %in% c(NA, "Negative"))),
+      prop_timely_itd = timely_itd / t2 * 100,
+
+      # Timeliness of shipment for sequencing
+      timely_seqship = sum(.data$days.seq.ship <= 7 & t3 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE),
+      t3 = sum(t3 == TRUE & !is.na(.data$FinalITDResult)),
+      prop_timely_seqship = timely_seqship / t3 * 100,
+
+      # Labels
+      prop_t1_label = paste0(timely_isolation, "/", t1),
+      prop_t2_label = paste0(timely_itd, "/", t2),
+      prop_t3_label = paste0(timely_seqship, "/", t3)
+    ) |>
+    dplyr::ungroup()
+
+  seq_lab_summary <- lab_data |>
+    dplyr::group_by(year_label, rolling_period,
+                    analysis_year_start, analysis_year_end, seq.lab) |>
+    dplyr::summarize(
+      # t4 filters for valid samples only for each timeliness interval
+      #Timeliness of sequencing results
+      timely_seqres = sum(.data$days.itd.seqres <= 7 & t4 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE),
+      t4 = sum(t4 == TRUE & !is.na(.data$FinalITDResult)),
+      prop_timely_seqres = timely_seqres / t4 * 100,
+
+      # Labels
+      prop_t4_label = paste0(timely_seqres, "/", t4)
+    ) |>
+    dplyr::ungroup()
+
+  return(list(itd_lab_summary = itd_lab_summary,
+              seq_lab_summary = seq_lab_summary))
 
   }
 
@@ -1411,23 +1463,33 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                              output_path = Sys.getenv("KPI_TABLES"),
                              drop_label_cols = FALSE) {
   format_table <- function(x) {
-    x <- x |>
-      dplyr::rename_with(\(x) stringr::str_to_lower(x)) |>
-      dplyr::rename_with(\(x) stringr::str_replace_all(x, "[\\. ]", "_")) |>
-      dplyr::mutate(dplyr::across(
-        (dplyr::starts_with("prop") |
-          dplyr::starts_with("timely") | dplyr::starts_with("median")) &
-          -dplyr::ends_with("label"),
-        \(x) round(x, 0)
-      ))
-    return(x)
+
+    tryCatch(
+      {x <- x |>
+        dplyr::rename_with(\(x) stringr::str_to_lower(x)) |>
+        dplyr::rename_with(\(x) stringr::str_replace_all(x, "[\\. ]", "_")) |>
+        dplyr::mutate(dplyr::across(
+          (dplyr::starts_with("prop") |
+             dplyr::starts_with("timely") | dplyr::starts_with("median")) &
+            -dplyr::ends_with("label"),
+          \(x) round(x, 0)
+        ))
+      return(x)
+      },
+      error = function(e) { return(NULL) }
+    )
   }
 
   drop_labels <- function(x) {
-    x <- x |>
-        dplyr::select(-dplyr::ends_with("label"),
-                      -dplyr::ends_with("cat"))
-    return(x)
+    tryCatch(
+      {
+        x <- x |>
+          dplyr::select(-dplyr::ends_with("label"),
+                        -dplyr::ends_with("cat"))
+        return(x)
+      },
+      error = function(e) { return(NULL) }
+    )
   }
 
   if (!is.null(c1)) {
@@ -1438,18 +1500,31 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
 
   if (!is.null(c3)) {
     c3 <- generate_c3_rollup(c3)
+  } else {
+    c3 <- NULL
   }
 
-  export_list <- list(c1 = c1, c1_high_risk_summary = c1_rollup,
-                      c2 = c2, c3 = c3, c4 = c4)
+  if (!is.null(c4)) {
+    c4_itd <- c4$itd_lab_summary
+    c4_seq <- c4$seq_lab_summary
+  } else {
+    c4_itd <- NULL
+    c4_seq <- NULL
+  }
+
+  export_list <- list(`c1 - kpi` = c1, `c1 - high risk summary` = c1_rollup,
+                      `c2 -  national AFP indicators` = c2,
+                      `c3 - es indicators by site` = c3,
+                      `c4 - culture itd lab summary` = c4_itd,
+                      `c4 - seq lab summary` = c4_seq)
   export_list <- export_list |>
     purrr::keep(\(x) !is.null(x)) |>
     purrr::map(format_table)
 
   # c1 formatting
-  if (!is.null(export_list$c1)) {
+  if (!is.null(c1)) {
 
-    export_list$c1 <- export_list$c1 |>
+    export_list$`c1 - kpi` <- export_list$`c1 - kpi` |>
       dplyr::select(dplyr::any_of(c(
         "sg_priority_level", "region", "ctry",
         "rolling_period",
@@ -1482,7 +1557,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
 
   # c1 high risk formatting
   if (!is.null(c1_rollup)) {
-    export_list$c1_high_risk_summary <- export_list$c1_high_risk_summary %>%
+    export_list$`c1 - high risk summary` <- export_list$`c1 - high risk summary` %>%
       {
         if (!drop_label_cols) {
           dplyr::mutate(.,
@@ -1508,8 +1583,8 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
   }
 
   # c2 formatting
-  if (!is.null(export_list$c2)) {
-    export_list$c2 <- export_list$c2 |>
+  if (!is.null(c2)) {
+    export_list$`c2 -  national AFP indicators` <- export_list$`c2 -  national AFP indicators` |>
       dplyr::select(dplyr::any_of(
         c(
           "sg_priority_level", "region",
@@ -1519,7 +1594,8 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
           "timely_inv", "median_timely_inv",
           "timely_field", "median_timely_field",
           "timely_stool_shipment", "median_stool_shipment",
-          "timely_opt_field_shipment", "median_onto_lab", "timely_wpv_vdpv"
+          "timely_opt_field_shipment", "median_onto_lab", "timely_wpv_vdpv",
+          "median_ontonothq"
         )
       )) |>
       dplyr::mutate(npafp_rate = round(npafp_rate, 0),
@@ -1546,13 +1622,14 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                          median_stool_shipment = "Median timeliness of stool shipment",
                          timely_opt_field_shipment = "Timeliness of optimized field and shipment, %",
                          median_onto_lab = "Median timeliness of optimized field and shipment",
-                         timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV – AFP, %"
+                         timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV – AFP, %",
+                         median_ontonothq = "Median timeliness of detection for WPV/VDPV"
       )
   }
 
   # c3 formatting
-  if (!is.null(export_list$c3)) {
-    export_list$c3 <- export_list$c3 |>
+  if (!is.null(c3)) {
+    export_list$`c3 - es indicators by site` <- export_list$`c3 - es indicators by site` |>
       dplyr::select(dplyr::any_of(
         c(
           "sg_priority_level", "region",
@@ -1598,12 +1675,165 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
   }
 
   # c4 formatting
+  if (!is.null(c4)) {
+    export_list$`c4 - culture itd lab summary` <- export_list$`c4 - culture itd lab summary` |>
+      dplyr::select(dplyr::any_of(
+        c(
+          "culture_itd_lab", "rolling_period",
+          "prop_timely_isolation",
+          "prop_timely_itd",
+          "prop_timely_seqship"
+        )
+      ), dplyr::ends_with("label"), dplyr::ends_with("cat")) %>%
+      {
+        if (!drop_label_cols) {
+          dplyr::mutate(.,
+                        prop_timely_isolation = paste0(prop_timely_isolation,
+                                                       " (", prop_t1_label, ")"),
+                        prop_timely_itd = paste0(prop_timely_itd, " (",
+                                                       prop_t2_label, ")"),
+                        prop_timely_seqship = paste0(prop_timely_seqship, " (",
+                                                       prop_t3_label, ")"))
+        } else {
+          .
+        }
+      } |>
+      dplyr::arrange(culture_itd_lab, dplyr::desc(rolling_period)) |>
+      dplyr::rename_with(recode,
+                         rolling_period = "Rolling 12 Months",
+                         culture_itd_lab = "Culture ITD Lab",
+                         prop_timely_isolation = "Timeliness of virus isolation results",
+                         prop_timely_itd = "Timeliness of ITD results",
+                         prop_timely_seqship = "Timeliness of shipment for sequencing"
+      )
+
+    export_list$`c4 - seq lab summary` <- export_list$`c4 - seq lab summary` |>
+      dplyr::select(dplyr::any_of(
+        c("seq_lab", "rolling_period","prop_timely_seqres")),
+        dplyr::ends_with("label"), dplyr::ends_with("cat")) %>%
+      {
+        if (!drop_label_cols) {
+          dplyr::mutate(.,
+                        prop_timely_seqres = paste0(prop_timely_seqres,
+                                                       " (", prop_t4_label, ")"))
+        } else {
+          .
+        }
+      } |>
+      dplyr::arrange(seq_lab, dplyr::desc(rolling_period)) |>
+      dplyr::rename_with(recode,
+                         rolling_period = "Rolling 12 Months",
+                         seq_lab = "Sequencing Lab",
+                         prop_timely_seqres = "Timeliness of shipment for sequencing"
+      )
+
+  }
+
+  # Final formatting
   export_list <- purrr::map(export_list, drop_labels)
 
-  names(export_list) <- c("c1 - kpi", "c1 - high risk summary",
-                        "c2 - national AFP indicators",
-                        "c3 - es indicators by site",
-                        "c4 - lab indicators")
+  # indicator guide
+  c1_indicators <- c(
+    "C1. Non-polio AFP rate – subnational, %",
+    "C1. Stool adequacy – subnational, %",
+    "C1. ES EV detection rate – national, %",
+    "C1. Timeliness of detection for WPV/VDPV, %"
+  )
+  c1_indicators_explanation <- c(
+    "Proportion of districts with >=100K U15 population meeting regional NPAFP rate targets (AFR, EMR, SEAR: >=2, AMR, EUR, WPR: >=1, Endemics: >=3)",
+    "Proportion of districts with >=5 AFP cases and stool adequacy >= 80%",
+    "Proportion of active surveillance sites (sites open >=12 months with >=10 samples collected in the last 12 months) meeting EV detection sensitivity target of >=50%",
+    "Proportion of WPVs and VDPVs with final lab results within 35 days (full laboratory capacity) or 46 days (without full laboratory capacity) of onset for AFP cases or collection date for ES samples"
+  )
+  c2_indicators <- c(
+    "C2. Non-polio AFP rate",
+    "C2. Stool adequacy, %",
+    "C2. Stool condition, %",
+    "C2. Completeness of 60-day follow-ups, %",
+    "C2. Timeliness of notification, %",
+    "C2. Median timeliness of notification",
+    "C2. Timeliness of investigation, %",
+    "C2. Median timeliness of investigation",
+    "C2. Timeliness of field activities, %",
+    "C2. Median timeliness of field activities",
+    "C2. Timeliness of stool specimen shipment, %",
+    "C2. Median timeliness of stool shipment",
+    "C2. Timeliness of optimized field and shipment, %",
+    "C2. Median timeliness of optimized field and shipment",
+    "C2. Timeliness of detection for WPV/VDPV – AFP, %",
+    "C2: Median timeliness of detection for WPV/VDPV"
+  )
+  c2_indicators_explanation <- c(
+    "NPAFP cases per 100 000 population aged <15 years summarized at the country level",
+    "Proportion of AFP cases with 2 stool specimens collected ≥24 hours apart, both within 14 days of paralysis onset, AND received in good condition in a WHO-accredited laboratory summarized at the country level",
+    "Proportion of AFP cases with two stool specimens arriving in good condition at a WHO accredited lab",
+    "Proportion of inadequate AFP cases with a follow up exam for residual paralysis completed within 60–90 days of paralysis onset",
+    "Proportion of AFP cases reported within 7 days of paralysis onset",
+    "Median days AFP cases reported since paralysis onset",
+    "Proportion of AFP cases investigated within 48 hours of notification",
+    "Median days AFP cases investigated after notification",
+    "Proportion of AFP cases with field activities completed within 11 days of paralysis onset",
+    "Median days of AFP cases with field activities completed after paralysis onset",
+    "Proportion of cases with stools that arrive at a WHO-accredited lab within 3 days (domestic shipment) or 7 days (international shipment) of specimen collection",
+    "Median days stools arrived at a WHO-accredited lab after specimen collection",
+    "Proportion of cases with samples that arrive in the lab within 14 days (domestic shipment) or 18 days (international shipment) of paralysis onset",
+    "Median days samples arrive in the lab after paralysis onset",
+    "Proportion of AFP cases with WPV/VDPV final lab results within 35 days (full laboratory capacity) or 46 days (without full laboratory capacity) of paralysis onset",
+    "Median days from onset to final lab results for WPV/VDPV samples"
+  )
+
+  c3_indicators <- c(
+      "C3. ES Sites",
+      "C3. Active Sites",
+      "C3. ES EV detection rate, % ",
+      "C3. ES EV detection rate, % (>= 5 samples)",
+      "C3. Condition of ES sample, %",
+      "C3. Median Timeliness of ES sample, %",
+      "C3. Timeliness of detection for WPV/VDPV – ES, %"
+    )
+  c3_indicators_explanation <- c(
+    "ES Sites with at least one collection in the past twelve months",
+    "ES Sites open >=12 months with >=10 samples collected in the last 12 months",
+    "Proportion of active ES sites that met an EV detection rate of >=50%",
+    "Proportion of ES sites with >=5 samples collected in the last 12 months that met an EV detection rate of >=50%",
+    "Proportion of ES sites with 80% of samples arriving the lab in good condition",
+    "Median proportion of samples across ES sites that arrive at a WHO-accredited lab within 3 days (domestic shipment) or 7 days (international) of sample collection",
+    "Proportion of ES sites with >=80% of samples having WPV/VDPV final lab results within 35 (full laboratory capacity) or 46 days (without full laboratory capacity) of collection"
+  )
+  c4_indicators <- c(
+    "C4. Timeliness of virus isolation results",
+    "C4. Timeliness of ITD results",
+    "C4. Timeliness of shipment for sequencing",
+    "C4. Timeliness of sequencing results"
+  )
+  c4_indicators_explanation <- c(
+    "Proportion of specimens with virus isolation results within 14 days of receipt of AFP specimen or availability of ES concentrate at WHO-accredited lab",
+    "Proportion of specimens with ITD results within 7 days of virus isolation results",
+    "Proportion of specimens that arrive at the sequencing lab within 7 days of ITD results",
+    "Proportion of specimens with sequencing results available within 7 days (AFP) from arrival at the sequencing lab"
+  )
+
+  indicator_tibble <- dplyr::tibble(Indicators = NULL, Description = NULL)
+  if (!is.null(c1)) {
+    indicator_tibble <- dplyr::bind_rows(indicator_tibble,
+                                         dplyr::tibble(Indicators = c1_indicators, Description = c1_indicators_explanation))
+  }
+  if (!is.null(c2)) {
+    indicator_tibble <- dplyr::bind_rows(indicator_tibble,
+                                         dplyr::tibble(Indicators = c2_indicators, Description = c2_indicators_explanation))
+  }
+  if (!is.null(c3)) {
+    indicator_tibble <- dplyr::bind_rows(indicator_tibble,
+                                         dplyr::tibble(Indicators = c3_indicators, Description = c3_indicators_explanation))
+  }
+  if (!is.null(c4)) {
+    indicator_tibble <- dplyr::bind_rows(indicator_tibble,
+                                         dplyr::tibble(Indicators = c4_indicators, Description = c4_indicators_explanation))
+  }
+
+  export_list$`indicator dictionary` <- indicator_tibble
+
+  export_list <- purrr::keep(export_list, \(x) !is.null(x))
 
   file_name <- paste0("kpi_tables_export_", Sys.Date(), ".xlsx")
   openxlsx::write.xlsx(export_list, file.path(output_path, file_name), colWidths = "auto",
