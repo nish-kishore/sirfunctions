@@ -2776,6 +2776,13 @@ generate_es_det_map <- function(es.data,
     )
   }
 
+  if (!requireNamespace("ggpubr", quietly = TRUE)) {
+    stop(
+      'Package "ggpubr" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   if (lifecycle::is_present(es.data.long)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -2905,6 +2912,38 @@ generate_es_det_map <- function(es.data,
     ) +
     sirfunctions::f.plot.looks("02") +
     ggplot2::theme(legend.position = "right")
+
+  if ("imputed_coord" %in% names(es.data)) {
+    imputed_sites <- es.data |>
+      dplyr::filter(imputed_coord == TRUE,
+                    !is.na(lat), !is.na(lng)) |>
+      dplyr::pull(site.name) |>
+      unique()
+
+    if (length(imputed_sites) != 0) {
+      cli::cli_alert_info("Some sites have imputed coordinates due to missing site coordinates")
+      es.det.map <- ggpubr::annotate_figure(
+        es.det.map,
+        bottom = ggpubr::text_grob(
+          paste0("Sites missing coordinates randomly assigned within their district:\n"),
+          hjust = 0.75,
+          vjust = 0.5,
+          size = 10,
+          color = "darkgrey"
+        )
+      )
+      es.det.map <- ggpubr::annotate_figure(es.det.map,
+          bottom =  ggpubr::text_grob(
+            paste0(imputed_sites, collapse = ", "),
+            hjust = 0.97,
+            vjust = -1.7,
+            size = 8,
+            color = "grey"
+          )
+        )
+    }
+  }
+
 
   ggplot2::ggsave(
     "es.det.map.png",
