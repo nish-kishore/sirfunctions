@@ -441,6 +441,8 @@ load_sharepoint_env <- function(raw.data) {
 #' @param country `str` or `list` Countries of interest.
 #' @param start_date `str` Start date of the time span to look for emergences. Defaults to 13 months from the end date.
 #' @param end_date  `str` End date of the time span to look for emergences Defaults to download date of `raw.data`.
+#' @param get_unassigned `bool` Get a list of emergence without a color mapped. This parameter is
+#' useful for ensuring that emergences are all accounted for when making a map.
 #'
 #' @returns `list` A named list containing the mapping of emergence and corresponding colors.
 #' @examples
@@ -450,7 +452,7 @@ load_sharepoint_env <- function(raw.data) {
 #' }
 #'
 #' @export
-set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date = NULL) {
+set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date = NULL, get_unassigned = FALSE) {
   # Default start and end dates
   if (is.null(end_date)) {
     end_date <- lubridate::as_date(raw.data$metadata$download_time)
@@ -511,7 +513,11 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 
   emg_cols <- subset(emg_cols, (names(emg_cols) %in% emg$emg_grp2))
 
-  return(emg_cols)
+  if (get_unassigned) {
+    return(unassigned_emergence)
+  } else {
+    return(emg_cols)
+  }
 }
 
 
@@ -527,6 +533,8 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 #' @param vdpv `bool` Whether to include VPDV in maps. Default `TRUE`.
 #' @param new_detect `bool` Whether to highlight new detections based on WHO HQ report date. Default `TRUE`.
 #' @param output `str` Either a path to a local folder to save the map to, `"sharepoint"`, or `NULL`. Defaults to `NULL`.
+#' @param emg_cols `list` A named list with all of the emergence colors. Defaults to `NULL`, which will download
+#' using [set_emergence_colors()].
 #' @param virus_type `str` or `list`. Virus type to include. Valid values are:
 #'
 #' `"cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1".`
@@ -557,12 +565,12 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 #' @examples
 #' \dontrun{
 #' raw.data <- get_all_polio_data()
-#' p1 <- generate_adhoc_map(raw.data, c("nigeria", "chad"))
+#' p1 <- generate_adhoc_map(raw.data, "algeria")
 #' # Put colors in emergences that don't have a mapped color
 #' emg_cols <- set_emergence_colors(raw.data, c("nigeria", "chad"))
 #' emg_cols["NIE-BOS-1"] <- "yellow"
 #' emg_cols["NIE-YBS-1"] <- "green"
-#' p2 <- p1 + ggplot2::scale_color_manual(name = "Emergence Group", values = emg_cols)
+#' p2 <- generate_adhoc_map(raw.data, c("nigeria", "chad"), emg_cols = emg_cols)
 #' }
 #' @export
 generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
@@ -572,6 +580,7 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
                                new_detect_expand = F,
                                start_date = NULL,
                                end_date = NULL,
+                               emg_cols = NULL,
                                output = NULL,
                                image_size = NULL,
                                height = 6.2,
@@ -688,7 +697,19 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   }
 
   # Getting emergence colors
-  emg_cols <- set_emergence_colors(raw.data, country, start_date, end_date)
+  if (is.null(emg_cols)) {
+    emg_cols <- set_emergence_colors(raw.data, country, start_date, end_date)
+  }
+
+  # Diagnose the emergence colors
+  unaccounted_emg <- suppressMessages(set_emergence_colors(raw.data, country,
+                                                           start_date, end_date,
+                                                           TRUE))
+  unaccounted_emg <- setdiff(unaccounted_emg, names(emg_cols))
+
+  if (length(unaccounted_emg) != 0) {
+    cli::cli_abort("Please assign all emergences colors and try again. See examples from ?generate_adhoc_map().")
+  }
 
   # Load Sharepoint environment
   if (output == "sharepoint") {
