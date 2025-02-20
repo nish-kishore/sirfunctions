@@ -4,7 +4,13 @@
 \alias{set_emergence_colors}
 \title{Set the emergence colors}
 \usage{
-set_emergence_colors(raw.data, country, start_date = NULL, end_date = NULL)
+set_emergence_colors(
+  raw.data,
+  country,
+  start_date = NULL,
+  end_date = NULL,
+  get_unassigned = FALSE
+)
 }
 \arguments{
 \item{raw.data}{\code{list} Global polio data output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
@@ -14,6 +20,9 @@ set_emergence_colors(raw.data, country, start_date = NULL, end_date = NULL)
 \item{start_date}{\code{str} Start date of the time span to look for emergences. Defaults to 13 months from the end date.}
 
 \item{end_date}{\code{str} End date of the time span to look for emergences Defaults to download date of \code{raw.data}.}
+
+\item{get_unassigned}{\code{bool} Get a list of emergence without a color mapped. This parameter is
+useful for ensuring that emergences are all accounted for when making a map.}
 }
 \value{
 \code{list} A named list containing the mapping of emergence and corresponding colors.
