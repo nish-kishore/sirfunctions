@@ -215,9 +215,11 @@ generate_kpi_template <- function(output_path, name) {
 
   # Generate tables
   c1 <- 'c1 <- generate_c1_table(raw_data, "2022-01-01", "2024-12-31")'
+  c1_rollup <- 'c1_rollup <- generate_c1_rollup(c1)'
   c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2022-01-01", "2024-12-31", "ctry")'
   c2_dist <- 'c2_dist <- generate_c2_table(raw_data$afp, raw_data$dist.pop, "2022-01-01", "2024-12-31", "dist")'
   c3 <- 'c3 <- generate_c3_table(raw_data$es, "2022-01-01", "2024-12-31")'
+  c3_rollup <- 'c3_rollup <- generate_c3_rollup(c3)'
   c4 <- 'c4 <- generate_c4_table(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
 
   # Get years available
@@ -265,7 +267,7 @@ generate_kpi_template <- function(output_path, name) {
     'lab_data <- clean_lab_data(lab_data, "2022-01-01", "2024-12-31", raw_data$afp)\n',
     "# Generate GPSAP C1-C4 tables ----",
     "# You may also specify and filter countries based on risk category ",
-    c1, c2, c2_dist, c3, c4, "\n",
+    c1, c1_rollup, c2, c2_dist, c3, c3_rollup, c4, "\n",
     "# Getting a list of years and regions",
     year_list, region_list, "\n",
     "# Generate figures ----",
