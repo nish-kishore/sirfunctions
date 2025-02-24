@@ -1152,6 +1152,7 @@ generate_kpi_tile <- function(c_table, priority_category = "HIGH",
       prop_met_npafp = "Non-polio AFP rate – subnational, %",
       prop_met_stool = "Stool adequacy – subnational, %",
       prop_met_ev = "ES EV detection rate – national, %",
+      prop_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %",
       prop_met_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %",
       # c2
       npafp_rate = "Non-polio AFP rate",
@@ -1183,6 +1184,8 @@ generate_kpi_tile <- function(c_table, priority_category = "HIGH",
       # c4 - seq
       prop_timely_seqres = "Timeliness of shipment for sequencing"
     ) |>
+    dplyr::select(-dplyr::any_of(c("timely_isolation", "timely_seqship",
+                                   "timely_itd", "timely_seqres"))) |>
     tidyr::pivot_longer(
       names_to = "indicator", values_to = "value",
       cols = -dplyr::any_of(c("rolling_period", geo))
