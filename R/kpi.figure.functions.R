@@ -1053,3 +1053,221 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
 
   return(plot)
 }
+
+# Line plots ----
+
+#' Generate tile plots for indicators
+#' @description
+#' Generates tile plots for indicators present in c1-c4, showing changes over
+#' multiple rolling periods.
+#'
+#' @details
+#' The function automatically detects the geographic scale to present in each
+#' plot. If passing a table that is grouped lower than the country level, we recommend
+#' that only one country is present or a subset of districts are presented so that
+#' the output plot is legible.
+#'
+#'
+#' @param c_table `tibble` Either C1, C2, C3, C4
+#'
+#' @return `ggplot2` A tile plot for each indicator for each geography
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
+#' generate_kpi_tile(c1)
+#' }
+generate_kpi_tile <- function(c_table, priority_category = "HIGH",
+                              output_path = Sys.getenv("KPI_FIGURES")) {
+  col_names <- names(c_table)
+  geo <- dplyr::case_when("site.name" %in% col_names == TRUE ~ "site.name",
+    "culture.itd.lab" %in% col_names == TRUE ~ "culture.itd.lab",
+    "seq.lab" %in% col_names == TRUE ~ "seq.lab",
+    "dist" %in% col_names == TRUE ~ "dist",
+    "prov" %in% col_names == TRUE ~ "prov",
+    "ctry" %in% col_names == TRUE ~ "ctry",
+    .default = "rolling_period"
+  )
+
+  table_name <- dplyr::case_when(
+    "npafp_denom" %in% col_names == TRUE ~ "c1_rollup",
+    "prop_timely_wild_vdpv" %in% col_names == TRUE ~ "c1",
+    "prop_complete_60_day" %in% col_names == TRUE ~ "c2",
+    "site.name" %in% col_names == TRUE ~ "c3",
+    "prop_met_ev_5_samples" %in% col_names == TRUE ~ "c3_rollup",
+    "prop_timely_isolation" %in% col_names == TRUE ~ "c4_itd_results",
+    "prop_timely_seqres" %in% col_names == TRUE ~ "c4_seq_results"
+  )
+
+  if ("ctry" %in% col_names) {
+    # get rolling periods
+    rolling_periods <- c_table |>
+      dplyr::select(rolling_period) |>
+      dplyr::distinct()
+
+    # combine rolling periods if not already present
+    c_ctry <- dplyr::cross_join(
+      c_table |>
+        dplyr::select(
+          rolling_period, year_label,
+          analysis_year_start, analysis_year_end
+        ) |>
+        dplyr::distinct(),
+      c_table |>
+        dplyr::select(dplyr::any_of(c(
+          "ctry", "Region",
+          "SG Priority Level",
+          "sg_priority_level"
+        ))) |>
+        dplyr::distinct()
+    )
+    c_table <- dplyr::left_join(c_ctry, c_table)
+  }
+
+  c_sub <- c_table %>%
+    {
+      if ("SG Priority Level" %in% col_names) {
+        dplyr::filter(., `SG Priority Level` == priority_category)
+      } else if ("sg_priority_level" %in% col_names) {
+        dplyr::filter(., sg_priority_level == priority_category)
+      } else {
+        .
+      }
+    } |>
+    dplyr::select(
+      dplyr::any_of(c(
+        "rolling_period", geo,
+        "npafp_rate", "per.stool.ad", "ev_rate"
+      )),
+      dplyr::starts_with("prop"),
+      dplyr::starts_with("timely"),
+      # dplyr::starts_with("median"), need to figure out the best way
+      -dplyr::ends_with("label")
+    ) |>
+    dplyr::rename_with(recode,
+      # c1
+      prop_met_npafp = "Non-polio AFP rate – subnational, %",
+      prop_met_stool = "Stool adequacy – subnational, %",
+      prop_met_ev = "ES EV detection rate – national, %",
+      prop_met_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %",
+      # c2
+      npafp_rate = "Non-polio AFP rate",
+      per.stool.ad = "Stool adequacy, %",
+      prop_good_condition = "Stool condition, %",
+      prop_complete_60_day = "Completeness of 60-day follow-ups, %",
+      timely_not = "Timeliness of notification, %",
+      median_timely_not = "Median timeliness of notification",
+      timely_inv = "Timeliness of investigation, %",
+      median_timely_inv = "Median timeliness of investigation",
+      timely_field = "Timeliness of field activities, %",
+      median_timely_field = "Median timeliness of field activities",
+      timely_stool_shipment = "Timeliness of stool specimen shipment, %",
+      median_stool_shipment = "Median timeliness of stool shipment",
+      timely_opt_field_shipment = "Timeliness of optimized field and shipment, %",
+      median_onto_lab = "Median timeliness of optimized field and shipment",
+      timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV – AFP, %",
+      median_ontonothq = "Median timeliness of detection for WPV/VDPV",
+      # c3
+      prop_met_ev = "ES EV detection rate, % ",
+      prop_met_ev_5_samples = "ES EV detection rate, % (>= 5 samples)",
+      prop_met_good_samples = "Condition of ES sample, %",
+      median_timely_shipment_per_site = "Median Timeliness of ES sample, %",
+      prop_met_timely_wpv_vdpv_det = "Timeliness of detection for WPV/VDPV – ES, %",
+      # c4 - itd
+      prop_timely_isolation = "Timeliness of virus isolation results",
+      prop_timely_itd = "Timeliness of ITD results",
+      prop_timely_seqship = "Timeliness of shipment for sequencing",
+      # c4 - seq
+      prop_timely_seqres = "Timeliness of shipment for sequencing"
+    ) |>
+    tidyr::pivot_longer(
+      names_to = "indicator", values_to = "value",
+      cols = -dplyr::any_of(c("rolling_period", geo))
+    ) |>
+    dplyr::mutate(
+      category = dplyr::case_when(
+        value >= 80 ~ "\u226580%",
+        value >= 50 ~ "\u226550%",
+        value < 50 ~ "<50%",
+        .default = "No Data"
+      ),
+      geo = stringr::str_to_title(!!rlang::sym(geo)),
+      indicator = stringr::str_wrap(indicator, width = 20)
+    )
+
+  if (geo == "rolling_period") {
+    tile_plot <-
+      ggplot2::ggplot(c_sub, aes(x = factor(rolling_period), y = 1, fill = category)) +
+      ggplot2::geom_tile(lwd = 1, linetype = 1, color = "white") +
+      ggplot2::theme_minimal() +
+      ggh4x::facet_grid2(
+        cols = ggplot2::vars(indicator),
+        scales = "free_y", independent = "y", switch = "y"
+      ) +
+      ggplot2::scale_fill_manual(
+        values = c(
+          "\u226580%" = "#0070c0",
+          "\u226550%" = "#F99244",
+          "<50%" = "#FF4041",
+          "No Data" = "lightgrey"
+        ),
+        name = "", na.value = "lightgrey"
+      ) +
+      ggplot2::theme(
+        legend.position = "bottom",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(size = 4.5, face = "bold", color = "grey"),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        strip.text.y.left = element_text(angle = 0, hjust = 1)
+      )
+  } else {
+    tile_plot <-
+      ggplot2::ggplot(c_sub, aes(x = factor(rolling_period), y = geo, fill = category)) +
+      ggplot2::geom_tile(lwd = 1, linetype = 1, color = "white") +
+      ggplot2::theme_minimal() +
+      ggh4x::facet_grid2(
+        rows = vars(geo), cols = ggplot2::vars(indicator),
+        scales = "free_y", independent = "y", switch = "y"
+      ) +
+      ggplot2::scale_fill_manual(
+        values = c(
+          "\u226580%" = "#0070c0",
+          "\u226550%" = "#F99244",
+          "<50%" = "#FF4041",
+          "No Data" = "lightgrey"
+        ),
+        name = "", na.value = "lightgrey"
+      ) +
+      ggplot2::theme(
+        legend.position = "bottom",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(size = 4.5, face = "bold", color = "grey"),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        strip.text.y.left = element_text(angle = 0, hjust = 1)
+      )
+  }
+
+  if (is.null(output_path)) {
+    return(tile_plot)
+  } else if (!is.null(output_path) & table_name != "c1_rollup") {
+    ggplot2::ggsave(file.path(output_path, paste0("kpi_tileplot_", table_name, ".jpg")),
+      dpi = 400, height = 7, width = 12, bg = "white"
+    )
+  } else {
+    ggplot2::ggsave(file.path(output_path, paste0("kpi_tileplot_", table_name, ".jpg")),
+      dpi = 400, height = 2, width = 12, bg = "white"
+    )
+  }
+
+  return(tile_plot)
+}

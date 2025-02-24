@@ -4,7 +4,7 @@
 \alias{generate_c4_table}
 \title{Laboratory surveillance KPIs}
 \usage{
-generate_c4_table(lab_data, afp_data, start_date, end_date, .group_by = "year")
+generate_c4_table(lab_data, afp_data, start_date, end_date)
 }
 \arguments{
 \item{lab_data}{\code{tibble} Lab data containing information of ES or AFP samples.}
@@ -14,11 +14,9 @@ generate_c4_table(lab_data, afp_data, start_date, end_date, .group_by = "year")
 \item{start_date}{\code{str} Start date of the analysis in YYYY-MM-DD format.}
 
 \item{end_date}{\code{str} End date of the analysis in YYYY-MM-DD format.}
-
-\item{.group_by}{\code{str} or \code{list} What columns to group the results by.}
 }
 \value{
-\code{tibble} A summary of timeliness KPIs for lab data.
+\code{list} A summary of timeliness KPIs for lab data.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
