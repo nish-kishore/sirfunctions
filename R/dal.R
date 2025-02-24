@@ -636,6 +636,7 @@ test_EDAV_connection <- function(
 #' - `"SIRFUNCTIONS_GITHUB_TREE"`
 #' - `"AFRO_LAB_DATA"`
 #' - `"EMRO_LAB_DATA"`
+#' - `"CLEANED_LAB_DATA"`
 #'
 #' @returns `str` A string, typically a file path or a URL.
 #' @export
