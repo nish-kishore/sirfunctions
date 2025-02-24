@@ -346,7 +346,24 @@ test_EDAV_connection <- function(
 #'
 #' @examples
 #' get_constant("DEFAULT_EDAV_FOLDER")
-get_constant <- function(constant_name) {
+get_constant <- function(constant_name = NULL) {
+  supported_args <- c(
+    '"DEFAULT_EDAV_FOLDER"',
+    '"CTRY_RISK_CAT"',
+    '"LAB_LOCATIONS"',
+    '"DR_TEMPLATE"',
+    '"SIRFUNCTIONS_GITHUB_TREE"',
+    '"AFRO_LAB_DATA"',
+    '"EMRO_LAB_DATA"',
+    '"CLEANED_LAB_DATA"'
+  )
+
+  if (is.null(constant_name)) {
+    cli::cli_alert_info(paste0("The following arguments are supported:\n",
+                                      paste0(supported_args, collapse = "\n")))
+    cli::cli_abort("Please pass a valid argument.")
+  }
+
   switch(
     constant_name,
     "DEFAULT_EDAV_FOLDER" = "GID/PEB/SIR",
@@ -356,7 +373,8 @@ get_constant <- function(constant_name) {
     "SIRFUNCTIONS_GITHUB_TREE" = "https://api.github.com/repos/nish-kishore/sirfunctions/git/trees",
     "AFRO_LAB_DATA" = "Data/lab/2024-09-20 AFRO Lab Extract (AFP only since 2022).csv",
     "EMRO_LAB_DATA" = "Data/lab/2024-09-20 EMRO Lab Extract (AFP only since 2022).csv",
-    "CLEANED_LAB_DATA" = "Data/lab/emro_afro_cleaned_2016_2024_20240920.csv"
+    "CLEANED_LAB_DATA" = "Data/lab/emro_afro_cleaned_2016_2024_20240920.csv",
+    cli::cli_abort("Please pass a valid argument.")
   )
 }
 
