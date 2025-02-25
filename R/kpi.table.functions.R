@@ -354,25 +354,37 @@ adjust_rolling_years <- function(data, end_date, date_col) {
     ))) |>
     dplyr::filter(year_number == max(year_number))
 
-  data_adj <- data |>
-    dplyr::filter(!!rlang::sym(date_col) <= end_date) |>
-    dplyr::mutate(
-      analysis_year_end = dplyr::if_else(year_label == latest_period$year_label,
-        end_date, analysis_year_end
-      ),
-      rolling_period = dplyr::if_else(year_label == latest_period$year_label,
-        paste0(
-          lubridate::month(.data$analysis_year_start, label = TRUE, abbr = TRUE),
-          " ", lubridate::year(.data$analysis_year_start),
-          " - ",
-          lubridate::month(.data$analysis_year_end, label = TRUE, abbr = TRUE),
-          " ", lubridate::year(.data$analysis_year_end)
-        ),
-        rolling_period
-      )
-    )
+  if (max(data[[date_col]]) <= end_date) {
+    cli::cli_alert_info(paste0("Note: the dataset only contains data up to ",
+                               max(data[[date_col]]), ". However, the specified",
+                                   " end date is ", end_date,
+                               ". Use caution when interpreting results."))
 
-  return(data_adj)
+    return(data)
+  } else {
+    # Adjustment made to the latest year in instances of when there are data greater
+    # than the end date
+    data_adj <- data |>
+      dplyr::filter(!!rlang::sym(date_col) <= end_date) |>
+      dplyr::mutate(
+        analysis_year_end = dplyr::if_else(year_label == latest_period$year_label,
+                                           end_date, analysis_year_end
+        ),
+        rolling_period = dplyr::if_else(year_label == latest_period$year_label,
+                                        paste0(
+                                          lubridate::month(.data$analysis_year_start, label = TRUE, abbr = TRUE),
+                                          " ", lubridate::year(.data$analysis_year_start),
+                                          " - ",
+                                          lubridate::month(.data$analysis_year_end, label = TRUE, abbr = TRUE),
+                                          " ", lubridate::year(.data$analysis_year_end)
+                                        ),
+                                        rolling_period
+        )
+      )
+
+    return(data_adj)
+  }
+
 }
 
 # Public functions ----
