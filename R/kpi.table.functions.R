@@ -150,7 +150,7 @@ generate_pos_timeliness <- function(raw_data, start_date, end_date,
 
   # Adding required columns
   pos <- add_risk_category(pos, risk_table, ctry_col = "place.admin.0")
-  pos <- add_rolling_years(pos, start_date, "dateonset")
+  pos <- add_rolling_years(pos, start_date, end_date, "dateonset")
   pos <- add_seq_capacity(pos, ctry_col = "place.admin.0", lab_locs)
 
   pos_summary <- pos |>
