@@ -309,7 +309,66 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
     )
 }
 
+#' Adjusts the end final year of the rolling period
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' In some instances, the final 12-month rolling period year goes beyond the
+#' stated end date of the analysis. The function adjusts the final year rolling
+#' period so that it is only up to the end date.
+#'
+#' @param data `tibble` Data with rolling period columns.
+#' @param end_date `str` The specified end date.
+#'
+#' @return `tibble` Tibble with adjusted rolling period for the final year.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data(attach.spatial.data = F)
+#' afp_data <- raw_data$afp
+#' afp_data <- add_rolling_years(afp_data, start_date = "2022-01-01")
+#' afp_data <- adjust_rolling_years(afp_data, "2025-02-25")
+#' }
+adjust_rolling_years <- function(data, end_date) {
+  if (!"rolling_period" %in% names(data)) {
+    cli::cli_abort("Please pass data with rolling period columns added.")
+  }
 
+  end_date <- lubridate::as_date(end_date)
+
+  latest_period <- data |>
+    dplyr::select(
+      year_label, rolling_period,
+      analysis_year_start, analysis_year_end
+    ) |>
+    dplyr::distinct() |>
+    dplyr::mutate(year_number = as.integer(stringr::str_extract_all(
+      year_label,
+      "\\d+"
+    ))) |>
+    dplyr::filter(year_number == max(year_number)) |>
+    dplyr::pull(year_label)
+
+  data_adj <- data |>
+    dplyr::mutate(
+      analysis_year_end = dplyr::if_else(year_label == latest_period,
+        end_date, analysis_year_end
+      ),
+      rolling_period = dplyr::if_else(year_label == latest_period,
+        paste0(
+          lubridate::month(.data$analysis_year_start, label = TRUE, abbr = TRUE),
+          " ", lubridate::year(.data$analysis_year_start),
+          " - ",
+          lubridate::month(.data$analysis_year_end, label = TRUE, abbr = TRUE),
+          " ", lubridate::year(.data$analysis_year_end)
+        ),
+        rolling_period
+      )
+    )
+
+  return(data_adj)
+}
 
 # Public functions ----
 
