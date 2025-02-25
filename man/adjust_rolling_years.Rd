@@ -4,12 +4,14 @@
 \alias{adjust_rolling_years}
 \title{Adjusts the end final year of the rolling period}
 \usage{
-adjust_rolling_years(data, end_date)
+adjust_rolling_years(data, end_date, date_col)
 }
 \arguments{
 \item{data}{\code{tibble} Data with rolling period columns.}
 
 \item{end_date}{\code{str} The specified end date.}
+
+\item{date_col}{\code{str} Column used when filtering by the end date.}
 }
 \value{
 \code{tibble} Tibble with adjusted rolling period for the final year.
@@ -20,6 +22,10 @@ adjust_rolling_years(data, end_date)
 In some instances, the final 12-month rolling period year goes beyond the
 stated end date of the analysis. The function adjusts the final year rolling
 period so that it is only up to the end date.
+}
+\details{
+As a consequence of the adjustment, the function will also ensure that the
+final data output also only contains records that are only up to the end date.
 }
 \examples{
 \dontrun{

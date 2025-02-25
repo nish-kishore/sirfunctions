@@ -317,8 +317,13 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 #' stated end date of the analysis. The function adjusts the final year rolling
 #' period so that it is only up to the end date.
 #'
+#' @details
+#' As a consequence of the adjustment, the function will also ensure that the
+#' final data output also only contains records that are only up to the end date.
+#'
 #' @param data `tibble` Data with rolling period columns.
 #' @param end_date `str` The specified end date.
+#' @param date_col `str` Column used when filtering by the end date.
 #'
 #' @return `tibble` Tibble with adjusted rolling period for the final year.
 #' @export
@@ -330,7 +335,7 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 #' afp_data <- add_rolling_years(afp_data, start_date = "2022-01-01")
 #' afp_data <- adjust_rolling_years(afp_data, "2025-02-25")
 #' }
-adjust_rolling_years <- function(data, end_date) {
+adjust_rolling_years <- function(data, end_date, date_col) {
   if (!"rolling_period" %in% names(data)) {
     cli::cli_abort("Please pass data with rolling period columns added.")
   }
@@ -347,15 +352,15 @@ adjust_rolling_years <- function(data, end_date) {
       year_label,
       "\\d+"
     ))) |>
-    dplyr::filter(year_number == max(year_number)) |>
-    dplyr::pull(year_label)
+    dplyr::filter(year_number == max(year_number))
 
   data_adj <- data |>
+    dplyr::filter(!!rlang::sym(date_col) <= end_date) |>
     dplyr::mutate(
-      analysis_year_end = dplyr::if_else(year_label == latest_period,
+      analysis_year_end = dplyr::if_else(year_label == latest_period$year_label,
         end_date, analysis_year_end
       ),
-      rolling_period = dplyr::if_else(year_label == latest_period,
+      rolling_period = dplyr::if_else(year_label == latest_period$year_label,
         paste0(
           lubridate::month(.data$analysis_year_start, label = TRUE, abbr = TRUE),
           " ", lubridate::year(.data$analysis_year_start),
