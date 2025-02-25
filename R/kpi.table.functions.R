@@ -326,7 +326,7 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 #' @param date_col `str` Column used when filtering by the end date.
 #'
 #' @return `tibble` Tibble with adjusted rolling period for the final year.
-#' @export
+#' @keywords internal
 #'
 #' @examples
 #' \dontrun{
@@ -388,9 +388,14 @@ adjust_rolling_years <- function(data, end_date, date_col) {
 #' For example, if the start date is defined as Jan 1, 2021 and we would like to
 #' calculate a 12-month rolling period, the end date would be Dec 31, 2021.
 #'
+#' @details
+#' The function will filter data using the column specified by `date_col` up to
+#' the end date specified.
+#'
 #' @param df `tibble` A dataset containing at least one date column.
 #' @param start_date `str` Start date of Year 1. All years are classified in
 #' reference to this date.
+#' @param end_date `str` End date to filter to.
 #' @param date_col `str` The name of the date column.
 #' @param period `period` A [lubridate::period()] object. Defaults to
 #' `months(12, FALSE)`.
@@ -400,10 +405,10 @@ adjust_rolling_years <- function(data, end_date, date_col) {
 #' @examples
 #' \dontrun{
 #' raw_data <- get_all_polio_data()
-#' afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "dateonset")
+#' afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "2024-05-02", "dateonset")
 #' }
 #' @export
-add_rolling_years <- function(df, start_date, date_col, period = months(12, FALSE)) {
+add_rolling_years <- function(df, start_date, end_date, date_col, period = months(12, FALSE)) {
   start_date <- lubridate::as_date(start_date)
 
   df <- df |>
@@ -425,6 +430,8 @@ add_rolling_years <- function(df, start_date, date_col, period = months(12, FALS
                               " ", lubridate::year(.data$analysis_year_end))
     ) |>
     dplyr::select(-"year_num")
+
+  df <- adjust_rolling_years(df, end_date, date_col)
 
   return(df)
 }
@@ -501,12 +508,8 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   cli::cli_progress_update()
   # Include required columns
   afp_data <- suppressMessages(col_to_datecol(afp_data))
-  afp_data <- add_rolling_years(afp_data, start_date, "date")
-  es_data <- add_rolling_years(es_data, start_date, "collect.date")
-
-  # Any adjustment to the final year, if necessary
-  afp_data <- adjust_rolling_years(afp_data, end_date)
-  es_data <- adjust_rolling_years(es_data, end_date)
+  afp_data <- add_rolling_years(afp_data, start_date, end_date, "date")
+  es_data <- add_rolling_years(es_data, start_date, end_date, "collect.date")
 
   cli::cli_progress_update()
 
@@ -892,15 +895,12 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   afp_data <- afp_data |>
     add_seq_capacity() |>
     col_to_datecol() |>
-    add_rolling_years(start_date, "date") |>
+    add_rolling_years(start_date, end_date, "date") |>
     # Removes years earlier than the start date
     dplyr::filter(dplyr::between(
       analysis_year_end, start_date,
       max(analysis_year_end, na.rm = TRUE)
     ))
-
-  # Adjust final rolling period year, if necessary
-  afp_data <- adjust_rolling_years(afp_data, end_date)
 
   # Defaults to missing = good, bad.data = inadequate
   # Start and end dates only filter afp_data and isn't used in calculations
@@ -1268,9 +1268,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
   end_date <- lubridate::as_date(end_date)
   es_data <- es_data |>
     add_seq_capacity("ADM0_NAME") |>
-    add_rolling_years(start_date, "collect.date")
-
-  es_data <- adjust_rolling_years(es_data, end_date)
+    add_rolling_years(start_date, end_date, "collect.date")
 
   # Get established ES sites first and then filter to appropriate start and end dates
   # Have to do this outside of es_indicators because grouping by year also
@@ -1460,8 +1458,7 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
 
   lab_data <- lab_data |>
     dplyr::filter(dplyr::between(CaseDate, start_date, end_date))
-  lab_data <- add_rolling_years(lab_data, start_date, "CaseDate")
-  lab_data <- adjust_rolling_years(lab_data, end_date)
+  lab_data <- add_rolling_years(lab_data, start_date, end_date, "CaseDate")
 
   lab_data <- lab_data |> dplyr::filter(!is.na(seq.lab), !is.na(culture.itd.lab),
                                         seq.lab != "-")

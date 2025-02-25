@@ -35,3 +35,4 @@ afp_data <- add_rolling_years(afp_data, start_date = "2022-01-01")
 afp_data <- adjust_rolling_years(afp_data, "2025-02-25")
 }
 }
+\keyword{internal}

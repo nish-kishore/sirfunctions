@@ -4,13 +4,21 @@
 \alias{add_rolling_years}
 \title{Label rolling year periods}
 \usage{
-add_rolling_years(df, start_date, date_col, period = months(12, FALSE))
+add_rolling_years(
+  df,
+  start_date,
+  end_date,
+  date_col,
+  period = months(12, FALSE)
+)
 }
 \arguments{
 \item{df}{\code{tibble} A dataset containing at least one date column.}
 
 \item{start_date}{\code{str} Start date of Year 1. All years are classified in
 reference to this date.}
+
+\item{end_date}{\code{str} End date to filter to.}
 
 \item{date_col}{\code{str} The name of the date column.}
 
@@ -29,9 +37,13 @@ the start date and the number of periods to account for in a given rolling year.
 For example, if the start date is defined as Jan 1, 2021 and we would like to
 calculate a 12-month rolling period, the end date would be Dec 31, 2021.
 }
+\details{
+The function will filter data using the column specified by \code{date_col} up to
+the end date specified.
+}
 \examples{
 \dontrun{
 raw_data <- get_all_polio_data()
-afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "dateonset")
+afp_data <- add_rolling_years(raw_data$afp, "2021-01-01", "2024-05-02", "dateonset")
 }
 }
