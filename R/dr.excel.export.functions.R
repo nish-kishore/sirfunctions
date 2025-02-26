@@ -6,7 +6,6 @@
 #' created from [generate_stool_data()] which takes parameters on how to deal with missing or
 #' inadequate stool samples.
 #'
-#' @import dplyr writexl
 #' @param stool.data `tibble` AFP data with final adequacy columns.
 #' This is the output of [generate_stool_data()].
 #' @param country `str` Name of the country.
@@ -24,6 +23,13 @@
 #'
 #' @export
 create_afp_export <- function(stool.data, country = Sys.getenv("DR_COUNTRY"), excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   stool.data.export <- stool.data |>
     dplyr::mutate(nvaccine.2 = NA) |>
     dplyr::select(c(
@@ -82,7 +88,6 @@ create_afp_export <- function(stool.data, country = Sys.getenv("DR_COUNTRY"), ex
 #' The function combines the stool adequacy summary tables from [f.stool.ad.01()]
 #' and exports to an Excel file, with each geographic level on its own tab.
 #'
-#' @import writexl
 #' @param cstool `tibble` Stool adequacy at country level.
 #' @param pstool `tibble` Stool adequacy at province level.
 #' @param dstool `tibble` Stool adequacy at district level.
@@ -108,6 +113,13 @@ create_afp_export <- function(stool.data, country = Sys.getenv("DR_COUNTRY"), ex
 #'
 #' @export
 create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   sheets <- list(
     "country_npafp" = cstool,
     "province_npafp" = pstool,
@@ -123,7 +135,7 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
 #'
 #' The function combines the NPAFP rate summary tables from [f.npafp.rate.01()]
 #' and exports to an Excel file, with each geographic level on its own tab.
-#' @import writexl
+#'
 #' @param ctry.case.ind `tibble` Country NPAFP indicator summary table.
 #' @param prov.case.ind `tibble` Province NPAFP indicator summary table.
 #' @param dist.case.ind `tibble` District NPAFP indicator summary table.
@@ -149,6 +161,13 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
 #'
 #' @export
 create_npafp_export <- function(ctry.case.ind, prov.case.ind, dist.case.ind, excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   sheets <- list(
     "country_npafp" = ctry.case.ind,
     "province_npafp" = prov.case.ind,
@@ -165,7 +184,6 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dist.case.ind, exc
 #'
 #' Export the population roll-ups and determine differences between each population counts.
 #'
-#' @import dplyr writexl tidyr
 #' @param ctry.data `list` A large list containing polio data for a country. This is the output of either
 #' [init_dr()] or [extract_country_data()].
 #' @param country `str` Name of the country.
@@ -180,10 +198,17 @@ create_npafp_export <- function(ctry.case.ind, prov.case.ind, dist.case.ind, exc
 #' @export
 create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"),
                                     excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   pop.check <-
     dplyr::count(
-      dplyr::ungroup(dplyr::filter(ctry.data$dist.pop, year >= min(year))), .data$prov, .data$dist,
-      .data$adm1guid, .data$adm2guid, .data$year, .data$u15pop
+      dplyr::ungroup(dplyr::filter(ctry.data$dist.pop, year >= min(year))), prov, dist,
+      adm1guid, adm2guid, year, u15pop
     )
 
   pop.check1 <- as.data.frame(tidyr::pivot_wider(pop.check,
@@ -211,7 +236,7 @@ create_pop_check_export <- function(ctry.data, country = Sys.getenv("DR_COUNTRY"
 #' Export 60-day follow up table
 #'
 #' Exports the output of [generate_60_day_table_data] into an Excel file.
-#' @import dplyr readr
+#'
 #' @param cases.need60day `tibble` Summary table for 60-day follow-up.
 #' @param country `str` Name of the country.
 #' @param excel_output_path `str` Output path of the Excel file.
@@ -254,7 +279,7 @@ create_60_day_export <- function(cases.need60day, country = Sys.getenv("DR_COUNT
 #' Export potentially compatible and compatible summary table
 #'
 #' Exports the output of [generate_potentially_compatibles_cluster()] as an Excel file.
-#' @import writexl
+#'
 #' @param pot.c.clust `tibble` Potentially compatible cluster summary. The output of
 #' [generate_potentially_compatibles_cluster()].
 #' @param country `str` Name of the country.
@@ -276,6 +301,13 @@ create_60_day_export <- function(cases.need60day, country = Sys.getenv("DR_COUNT
 create_pot_comp_clust_export <- function(pot.c.clust,
                                          country = Sys.getenv("DR_COUNTRY"),
                                          excel_output_path = Sys.getenv("DR_TABLE_PATH")) {
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   writexl::write_xlsx(
     pot.c.clust,
     file.path(

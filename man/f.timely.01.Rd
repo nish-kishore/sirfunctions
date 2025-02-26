@@ -41,11 +41,19 @@ this parameter is set to \code{TRUE}.}
 \code{tibble} A summary table of timeliness of stool collection.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 Creates a table for timeliness by geographic unit including the
 number of timely stool samples for each interval and percent timeliness. Currently,
 the function will only work on \code{ctry.data} (output of \code{\link[=extract_country_data]{extract_country_data()}}).
 }
+\details{
+This function is no longer maintained as it is not used in any of the analytic pipelines.
+An equivalent function is \code{\link[=generate_int_data]{generate_int_data()}}, which expands and simplifies this
+function by also being able to take lab data to calculate lab timeliness intervals.
+}
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data()
 ctry.data <- extract_country_data("algeria", raw.data)
 stool.summary <- f.timely.01(
@@ -54,5 +62,7 @@ stool.summary <- f.timely.01(
   lubridate::as_date("2023-12-31"),
   "ctry"
 )
+}
 
 }
+\keyword{internal}

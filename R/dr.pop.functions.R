@@ -39,7 +39,7 @@ check_missing_pop <- function(pop.data, spatial.scale) {
 
 #' Check the population data in country data from a roll up in province and
 #' district population data
-#' @import dplyr cli
+#'
 #' @param ctry.data country data to check for
 #' @keywords internal
 #'
@@ -98,7 +98,7 @@ check_pop_rollout <- function(ctry.data) {
 }
 
 #' Check for GUIDs that has changed due to redistricting
-#' @import dplyr cli
+#'
 #' @param pop.data population data
 #' @param spatial.scale spatial scale of the data
 #' @keywords internal
@@ -120,36 +120,36 @@ spatial_validation <- function(pop.data, spatial.scale) {
   incomplete.adm <- switch(spatial.scale,
     "ctry" = {
       pop.data |>
-        dplyr::group_by(.data$adm0guid) |>
+        dplyr::group_by(adm0guid) |>
         dplyr::summarize(
           freq = dplyr::n(), years_active = paste0(min(year), "-", max(year)),
           ctry = unique(ctry)
         ) |>
         dplyr::filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
         dplyr::select("ctry", "adm0guid", "years_active") |>
-        dplyr::arrange(.data$ctry, .data$years_active)
+        dplyr::arrange(ctry, years_active)
     },
     "prov" = {
       pop.data |>
-        dplyr::group_by(.data$adm1guid) |>
+        dplyr::group_by(adm1guid) |>
         dplyr::summarize(
           freq = dplyr::n(), years_active = paste0(min(year), "-", max(year)),
           prov = unique(prov)
         ) |>
         dplyr::filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
         dplyr::select("prov", "adm1guid", "years_active") |>
-        dplyr::arrange(.data$prov, .data$years_active)
+        dplyr::arrange(prov, years_active)
     },
     "dist" = {
       pop.data |>
-        dplyr::group_by(.data$adm2guid) |>
+        dplyr::group_by(adm2guid) |>
         dplyr::summarize(
           freq = dplyr::n(), years_active = paste0(min(year), "-", max(year)),
           dist = unique(dist)
         ) |>
         dplyr::filter(freq < length(min(pop.data$year):max(pop.data$year))) |>
         dplyr::select("dist", "adm2guid", "years_active") |>
-        dplyr::arrange(.data$dist, .data$years_active)
+        dplyr::arrange(dist, years_active)
     }
   )
 
@@ -168,7 +168,11 @@ spatial_validation <- function(pop.data, spatial.scale) {
   return(incomplete.adm)
 }
 
+# Deprecated functions ----
+
 #' Get a long version of shapefile at a given spatial scale
+#' @description
+#' `r lifecycle::badge("deprecated")`
 #'
 #' This function was used primarily as a way to build maps in the desk review.
 #'  However, the map generation functions in the desk review will now use the long
@@ -178,7 +182,6 @@ spatial_validation <- function(pop.data, spatial.scale) {
 #' [load_clean_ctry_sp()], [load_clean_prov_sp()], [load_clean_dist_sp()] with
 #' `type = long` are the longform shapefiles.
 #'
-#' @import dplyr
 #' @param ctry.data `list` List containing country data. Either the result of
 #' [extract_country_data()] or [init_dr()].
 #' @param spatial.scale `str` Either `"ctry", "prov", "dist"`.
@@ -194,9 +197,20 @@ spatial_validation <- function(pop.data, spatial.scale) {
 #' ctry.data <- init_dr("algeria")
 #' ctry.shape <- set_shapefiles(ctry.data, "ctry")
 #' }
-#'
-#' @export
+#' @keywords internal
 set_shapefiles <- function(ctry.data, spatial.scale) {
+  lifecycle::deprecate_warn(
+    "1.3.0",
+    "set_shapefiles()",
+    details = paste0(
+      "This function is not used in any of the analytic pipelines ",
+      "and was therefore deprecated.",
+      " Get the current shapefiles by filtering either:\n",
+      "raw.data$ctry, raw.data$prov, ",
+      "raw.data$dist with yr.end == max(yr.end)"
+    )
+  )
+
   valid.spatial.scales <- c("ctry", "prov", "dist")
 
   if (!spatial.scale %in% valid.spatial.scales) {

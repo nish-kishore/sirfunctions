@@ -18,13 +18,19 @@ of \code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extra
 \code{tibble} A table containing summary of AFP cases by year and country.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 Generates a summary table of the number of AFP cases per country and year.
 This function is used primarily with \code{\link[=generate_ctry_timeliness_graph]{generate_ctry_timeliness_graph()}} as a
-label of the y-axis.
+label of the y-axis. However, as of sirfunctions 1.3.0,
+\code{\link[=generate_ctry_timeliness_graph]{generate_ctry_timeliness_graph()}} now creates its own labels.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
 ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+}
 
 }
+\keyword{internal}

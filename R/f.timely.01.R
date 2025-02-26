@@ -2,11 +2,18 @@
 
 #' Calculate stool collection timeliness using only AFP data (DRAFT)
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' Creates a table for timeliness by geographic unit including the
 #' number of timely stool samples for each interval and percent timeliness. Currently,
 #' the function will only work on `ctry.data` (output of [extract_country_data()]).
-#' @import dplyr
-#' @import lubridate
+#'
+#' @details
+#' This function is no longer maintained as it is not used in any of the analytic pipelines.
+#' An equivalent function is [generate_int_data()], which expands and simplifies this
+#' function by also being able to take lab data to calculate lab timeliness intervals.
+#'
 #' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
 #' formated as `adm(0,1,2)guid`, onset date as `date`.
 #' @param admin.data `tibble` Full list of country administrative units by a given
@@ -24,6 +31,7 @@
 #' this parameter is set to `TRUE`.
 #' @returns `tibble` A summary table of timeliness of stool collection.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data()
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' stool.summary <- f.timely.01(
@@ -32,8 +40,9 @@
 #'   lubridate::as_date("2023-12-31"),
 #'   "ctry"
 #' )
+#' }
 #'
-#' @export
+#' @keywords internal
 
 f.timely.01 <- function(
     afp.data,
@@ -42,6 +51,14 @@ f.timely.01 <- function(
     end.date,
     spatial.scale,
     intervals.manual = F) {
+  lifecycle::deprecate_warn(
+    "1.3.0",
+    "f.timely.01()",
+    details = "Please use generate_int_data() instead."
+  )
+
+
+
   # What do i want this function to do?
   # 1. timeliness for each person in line list
   # Will need to define what is timely for each set of variables

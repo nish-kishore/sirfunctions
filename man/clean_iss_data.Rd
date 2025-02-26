@@ -5,7 +5,7 @@
 \title{Perform common cleaning tasks for ISS/eSURV data}
 \usage{
 clean_iss_data(
-  ctry.data,
+  iss_data,
   start_date,
   end_date,
   priority_col = "priority_level",
@@ -15,11 +15,12 @@ clean_iss_data(
   dist_col = "districts",
   hf_col = "name_of_facility_visited",
   today_col = "today",
-  date_of_visit_col = "date_of_visit"
+  date_of_visit_col = "date_of_visit",
+  ctry.data = lifecycle::deprecated()
 )
 }
 \arguments{
-\item{ctry.data}{\code{list} The output of \code{\link[=init_dr]{init_dr()}}, with ISS data attached.}
+\item{iss_data}{\code{tibble} ISS data.}
 
 \item{start_date}{\code{str} Start date of desk review.}
 
@@ -40,6 +41,9 @@ clean_iss_data(
 \item{today_col}{\code{str} Column representing when info was recorded.}
 
 \item{date_of_visit_col}{\code{str} Column representing date of visit.}
+
+\item{ctry.data}{\code{list} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Please pass the
+ISS data directly to the iss.data parameter.}
 }
 \value{
 \code{tibble} Cleaned eSurv/ISS data.
@@ -62,7 +66,7 @@ Ensure that priority level column categories have these specification:
 \dontrun{
 iss_path <- "C:/Users/ABC1/Desktop/iss_data.csv"
 ctry.data <- init_dr("somalia", iss_data_path = iss_path)
-ctry.data$iss.data <- clean_iss_data(ctry.data)
+ctry.data$iss.data <- clean_iss_data(ctry.data$iss.data, start_date, end_date)
 }
 
 }

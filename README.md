@@ -1,5 +1,5 @@
 
-# sirfunctions <img src="https://github.com/user-attachments/assets/3d0dc2cb-b3cc-4e41-ac5f-1dc2ac712449" alt="sirfunctions-logo" height=138, align="right">
+# sirfunctions <img src="man/figures/logo.png" align="right" height="136" alt="" />
 
 <br>
 
@@ -10,7 +10,7 @@ The `sirfunctions` package contains key functions used by the Surveillance, Inno
 
 ## Installation and Updates
 
-Ensure that `devtools` is installed (if not run `install.pacakges("devtools")`). Then run the following command:
+Ensure that `devtools` is installed (if not run `install.packages("devtools")`). Then run the following command:
 
 ```         
 devtools::install_github("nish-kishore/sirfunctions")

@@ -5,21 +5,30 @@
 \title{Generate a log of potential errors in the lab data}
 \usage{
 lab_data_errors(
-  ctry.data,
+  lab.data,
+  afp.data,
   start.date = start_date,
   end.date = end_date,
-  error_path = Sys.getenv("DR_ERROR_PATH")
+  ctry_name = Sys.getenv("DR_COUNTRY"),
+  error_path = Sys.getenv("DR_ERROR_PATH"),
+  ctry.data = lifecycle::deprecated()
 )
 }
 \arguments{
-\item{ctry.data}{\code{list} Large list containing country polio data. Output of \code{\link[=extract_country_data]{extract_country_data()}} or
-\code{\link[=init_dr]{init_dr()}}. Ensure that the lab data is attached to \code{ctry.data} as \code{lab.data}.}
+\item{lab.data}{\code{tibble} Polio lab data.}
+
+\item{afp.data}{\code{tibble} AFP linelist.}
 
 \item{start.date}{\code{str} Start date of the analysis.}
 
 \item{end.date}{\code{str} End date of the analysis.}
 
+\item{ctry_name}{\code{list} or \code{str} A name of a country or a list of countries.
+Please pass lab data directly into lab.data parameter instead.}
+
 \item{error_path}{\code{str} File path to store the error log.}
+
+\item{ctry.data}{\code{list} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
 }
 \value{
 None. It outputs locally an Excel file containing the error log.
@@ -34,6 +43,6 @@ lab_path <- "C:/Users/ABC1/Desktop/lab_data.xlsx"
 start_date <- "2021-01-01"
 end_date <- "2023-12-31"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-lab_data_errors(ctry.data)
+lab_data_errors(ctry.data$lab.data, ctry.data$afp.data)
 }
 }

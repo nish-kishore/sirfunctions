@@ -5,27 +5,26 @@
 \title{Clean lab data from the regional offices.}
 \usage{
 clean_lab_data_regional(
-  ctry.data,
-  ctry_name = Sys.getenv("DR_COUNTRY"),
-  start.date,
-  end.date,
-  delim = "-",
+  lab_data,
+  start_date,
+  end_date,
+  afp_data = NULL,
+  ctry_name = NULL,
   lab_locs_path = NULL
 )
 }
 \arguments{
-\item{ctry.data}{\code{list} Large list of country polio data with lab data attached. Either from
-\code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=init_dr]{init_dr()}}.}
+\item{lab_data}{\code{tibble} Lab dataset.}
 
-\item{ctry_name}{\code{str} Name of the country. Defaults to the desk review country.}
+\item{start_date}{\code{str} Start date of analysis.}
 
-\item{start.date}{\code{str} Start date of analysis.}
+\item{end_date}{\code{str} End date of analysis.}
 
-\item{end.date}{\code{str} End date of analysis.}
+\item{afp_data}{\code{tibble} AFP linelist. Either \code{ctry.data$afp.all.2} or \code{raw.data$afp}.}
 
-\item{delim}{\code{str} Delimiter used for EPIDs. Default is \code{"-"}.}
+\item{ctry_name}{\code{str} or \code{list} Name or a list of countries. Defaults to \code{NULL}.}
 
-\item{lab_locs_path}{\code{str} Path to CSV file containing lab location. Will pull from EDAV if not attached.}
+\item{lab_locs_path}{\code{str} Location of testing lab locations. Default is \code{NULL}. Will download from EDAV, if necessary.}
 }
 \value{
 \code{tibble} Cleaned lab data.
@@ -39,12 +38,16 @@ indicator script.
 \dontrun{
 lab_path <- "C:/Users/XRG9/lab_data_region.csv"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-ctry.data$lab.data <- clean_lab_data_regional(ctry.data, "2021-01-01", "2023-12-31")
+ctry.data$lab_data <- clean_lab_data_regional(
+  lab.data, "2021-01-01", "2023-12-31",
+  ctry.data$afp.all.2, "algeria"
+)
 
 # Not using the desk review pipeline
 raw.data <- get_all_polio_data()
 ctry.data <- extract_country_data("algeria", raw.data)
-ctry.data$lab.data <- read_csv(lab_path)
-ctry.data$lab.data <- clean_lab_data_regional(ctry.data, "2021-01-01", "2023-12-31")
+ctry.data$lab_data <- read_csv(lab_path)
+ctry.data$lab_data <- clean_lab_data_regional(ctry.data, "2021-01-01", "2023-12-31")
 }
 }
+\keyword{internal}

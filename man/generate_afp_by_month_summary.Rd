@@ -5,41 +5,42 @@
 \title{Generate AFP case count summary}
 \usage{
 generate_afp_by_month_summary(
-  afp.by.month,
-  ctry.data,
+  afp_data,
   start_date,
   end_date,
-  by
+  by,
+  pop_data = NULL,
+  ctry.data = lifecycle::deprecated()
 )
 }
 \arguments{
-\item{afp.by.month}{\code{tibble} Output of \code{\link[=generate_afp_by_month]{generate_afp_by_month()}}.}
-
-\item{ctry.data}{\code{list} Large list containing polio country data. Either the output of
-\code{\link[=init_dr]{init_dr()}} or \code{\link[=extract_country_data]{extract_country_data()}}.}
+\item{afp_data}{\code{tibble} AFP dataset.}
 
 \item{start_date}{\code{str} Start date of analysis.}
 
 \item{end_date}{\code{str} End date of analysis.}
 
 \item{by}{\code{str} How to group the data by. Either \code{"prov"}, \code{"dist"}, or \code{"year"}.}
+
+\item{pop_data}{\code{tibble} Population dataset.}
+
+\item{ctry.data}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} \code{ctry.data} is no longer supported;
+the function will explicitly ask for the AFP dataset instead of accessing it from a list.}
 }
 \value{
 \code{tibble} Summary table of AFP cases by month and another grouping variable.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#stable}{\figure{lifecycle-stable.svg}{options: alt='[Stable]'}}}{\strong{[Stable]}}
+
 Summarize AFP case counts by month and another grouping variable.
 }
 \examples{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
-afp.by.month <- generate_afp_by_month(
-  ctry.data$afp.all.2,
-  "2021-01-01", "2023-12-31"
-)
-afp.by.month.prov <- generate_afp_by_month_summary(
-  afp.by.month, ctry.data,
-  "2021-01-01", "2023-12-31", "prov"
+afp.by.month <- generate_afp_by_month_summary(
+  raw.data$afp, "2021-01-01", "2023-12-31", "ctry",
+  raw.data$ctry.pop
 )
 
 }

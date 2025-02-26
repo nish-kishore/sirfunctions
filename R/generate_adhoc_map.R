@@ -6,18 +6,13 @@
 #' This is an internal function changes the zoom level of the map depending on the
 #' user specification.
 #'
-#' @importFrom cli cli_alert_info
-#' @importFrom ggplot2 coord_sf
-#' @importFrom stringr str_trim str_to_lower
-#' @importFrom dplyr filter
-#'
 #' @param g1 `ggplot` Original ggplot map.
 #' @param map_ref `ggplot` Reference map.
 #' @param m_base_ctry `sf` Shapefile containing base map of country.
 #' @param country `str` Country or countries to zoom into.
 #' @keywords internal
 #'
-#' @return `ggplot` Map with adjusted zoom level, if specified.
+#' @returns `ggplot` Map with adjusted zoom level, if specified.
 #'
 set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
   # Set up map zoom level
@@ -97,19 +92,30 @@ set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
 #' @param data_r `tibble` Reported detections.
 #' @param .owner `str` Entity that produced the map.
 #'
-#' @importFrom ggplot2 aes geom_sf ggplot alpha element_blank element_rect element_text geom_point geom_sf_text guide_legend guides labs scale_color_manual scale_fill_manual scale_shape_manual theme theme_bw unit
-#' @importFrom ggrepel geom_label_repel
-#' @importFrom dplyr filter
 #' @keywords internal
-#' @return `ggplot` Map of recent detections.
+#' @returns `ggplot` Map of recent detections.
 
 build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
                                 new_detect, virus_type, surv_options, start_date, date_3a,
                                 download_date, emg_cols, country, labels, clean_maps, data_r,
                                 .owner) {
+  if (!requireNamespace("ggspatial", quietly = TRUE)) {
+    stop(
+      'Package "ggspatial" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
+  if (!requireNamespace("ggrepel", quietly = TRUE)) {
+    stop(
+      'Package "ggrepel" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   g1 <- ggplot2::ggplot() +
     ggplot2::geom_sf(data = m_base_region, fill = "grey80", color = "black", lwd = 0.6, show.legend = FALSE) +
-    ggplot2::geom_sf(data = m_base_prov, aes(fill = .data$detect_status2), color = "grey", lwd = 0.5, show.legend = TRUE) +
+    ggplot2::geom_sf(data = m_base_prov, aes(fill = detect_status2), color = "grey", lwd = 0.5, show.legend = TRUE) +
     ggplot2::geom_sf(data = m_base_region, alpha = 0, color = "black", lwd = 0.6, show.legend = FALSE) +
     ggplot2::scale_fill_manual(
       name = "Last detection \nin region:",
@@ -126,10 +132,10 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
     ) +
     ggplot2::geom_point(
       data = data_p, ggplot2::aes(
-        x = as.numeric(.data$longitude),
-        y = as.numeric(.data$latitude),
-        color = .data$emg_grp2,
-        shape = .data$detect_status
+        x = as.numeric(longitude),
+        y = as.numeric(latitude),
+        color = emg_grp2,
+        shape = detect_status
       ),
       size = 3
     ) +
@@ -138,8 +144,8 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
         ggrepel::geom_label_repel(
           data = m_data_prov,
           ggplot2::aes(
-            label = .data$ADM1_NAME,
-            geometry = .data$SHAPE
+            label = ADM1_NAME,
+            geometry = SHAPE
           ),
           stat = "sf_coordinates",
           size = 2,
@@ -152,17 +158,17 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
     } +
     ggplot2::geom_sf_text(
       data = m_base_region |>
-        dplyr::filter(!(.data$ADM0_NAME %in% country | .data$WHO_CODE %in% clean_maps)),
-      ggplot2::aes(label = .data$WHO_CODE),
+        dplyr::filter(!(ADM0_NAME %in% country | WHO_CODE %in% clean_maps)),
+      ggplot2::aes(label = WHO_CODE),
       size = 2, fontface = "bold"
     ) +
     {
       if (new_detect) {
         ggplot2::geom_point(
           data = data_r, ggplot2::aes(
-            x = as.numeric(.data$longitude),
-            y = as.numeric(.data$latitude),
-            shape = .data$measurement
+            x = as.numeric(longitude),
+            y = as.numeric(latitude),
+            shape = measurement
           ),
           size = 4,
           stroke = 1.5
@@ -244,7 +250,6 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
 #' The function adds new detections as specified by the user when they use
 #' [generate_adhoc_map()]. This function inherits arguments from the parent function.
 #'
-#' @importFrom dplyr filter if_else mutate
 #' @param data_p `tibble` Map data.
 #' @param country `str` or `list` Country or a list of countries.
 #' @param date_3a_a `str` ???
@@ -252,7 +257,7 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
 #' @param date_3b `str` ???
 #' @keywords internal
 #'
-#' @return a dataset containing new detections
+#' @returns a dataset containing new detections
 add_new_detection <- function(data_p, country, date_3a, date_3a_a, date_3b) {
   # initialize variable
   data_r <- NULL
@@ -264,7 +269,7 @@ add_new_detection <- function(data_p, country, date_3a, date_3a_a, date_3b) {
   data_r <- data_p |>
     dplyr::filter(
       place.admin.0 %in% country,
-      dplyr::between(.data$report_date, dplyr::if_else(condition, date_3a_a, date_3a), date_3b)
+      dplyr::between(report_date, dplyr::if_else(condition, date_3a_a, date_3a), date_3b)
     ) |>
     dplyr::mutate(measurement = "Reported detection")
 
@@ -274,13 +279,12 @@ add_new_detection <- function(data_p, country, date_3a, date_3a_a, date_3b) {
 
 #' Identify last detections at the province level
 #'
-#' @importFrom dplyr arrange group_by summarise mutate case_when last
 #' @param data_p dataset containing epids with cases
 #' @param .start_date `date` Start date.
 #' @param .end_date `date` End date.
 #' @keywords internal
 #'
-#' @return `tibble` Summary table identifying last detections at the province level
+#' @returns `tibble` Summary table identifying last detections at the province level
 last_detections_prov <- function(data_p, .start_date, .end_date) {
   data_prov <- data_p |>
     dplyr::arrange(place.admin.1, dateonset) |>
@@ -294,8 +298,8 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
         (last_prov_detect <= (.end_date %m-% months(6)) &
           last_prov_detect >= .start_date) ~ "6-13months"
       ),
-      detect_overall = ifelse(!is.na(.data$detect_status), "Y", "N"),
-      detect_status = factor(.data$detect_status, levels = c("6-13months", "<6months"))
+      detect_overall = ifelse(!is.na(detect_status), "Y", "N"),
+      detect_status = factor(detect_status, levels = c("6-13months", "<6months"))
     )
 
   return(data_prov)
@@ -307,9 +311,6 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
 #' This function primarily pulls the relevant information to build the map. Inherits
 #' areguments from [generate_adhoc_map()].
 #'
-#' @importFrom dplyr arrange between case_when distinct mutate filter
-#' @importFrom lubridate today
-#'
 #' @param raw.data `list` global polio data output from [get_all_polio_data()]
 #' @param .vdpv `bool` Whether to include VDPV in maps.
 #' @param country `str` or `list` Name of the country or countries.
@@ -319,7 +320,7 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
 #' @param surv `str` or `list` Surveillance type.
 #' @keywords internal
 #'
-#' @return `tibble` Filtered dataset used to build the map.
+#' @returns `tibble` Filtered dataset used to build the map.
 pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_date, .end_date) {
   if (.vdpv == "YES") {
     virus_type_modified <- dplyr::case_when(virus_type == "cVDPV 1" ~ "vtype 1",
@@ -332,30 +333,30 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
     data_p <- raw.data$pos |>
       dplyr::mutate(
         vtype_mod = dplyr::case_when(
-          .data$measurement %in% c("cVDPV 1", "VDPV 1") ~ "vtype 1",
-          .data$measurement %in% c("cVDPV 2", "VDPV 2") ~ "vtype 2",
-          .data$measurement %in% c("cVDPV 3", "VDPV 3") ~ "vtype 3",
-          .data$measurement %in% c("WILD 1") ~ "wtype 1"
+          measurement %in% c("cVDPV 1", "VDPV 1") ~ "vtype 1",
+          measurement %in% c("cVDPV 2", "VDPV 2") ~ "vtype 2",
+          measurement %in% c("cVDPV 3", "VDPV 3") ~ "vtype 3",
+          measurement %in% c("WILD 1") ~ "wtype 1"
         ),
         emg_grp2 = dplyr::case_when(
-          .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3") ~ .data$emergencegroup,
-          .data$measurement == "WILD 1" ~ .data$viruscluster,
-          .data$measurement == "VDPV 1" ~ "VDPV 1",
-          .data$measurement == "VDPV 2" ~ "VDPV 2",
-          .data$measurement == "VDPV 3" ~ "VDPV 3"
+          measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3") ~ emergencegroup,
+          measurement == "WILD 1" ~ viruscluster,
+          measurement == "VDPV 1" ~ "VDPV 1",
+          measurement == "VDPV 2" ~ "VDPV 2",
+          measurement == "VDPV 3" ~ "VDPV 3"
         )
       ) |>
       dplyr::filter(
         place.admin.0 %in% country,
         dplyr::between(dateonset, .start_date, .end_date),
-        .data$vtype_mod %in% virus_type_modified
+        vtype_mod %in% virus_type_modified
       )
   } else {
     data_p <- raw.data$pos |>
       dplyr::filter(
         place.admin.0 %in% country &
-          dplyr::between(.data$dateonset, .start_date, .end_date),
-        .data$measurement %in% virus_type
+          dplyr::between(dateonset, .start_date, .end_date),
+        measurement %in% virus_type
       ) |>
       dplyr::mutate(
         emg_grp2 = dplyr::case_when(
@@ -366,7 +367,7 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
   }
 
   data_p <- data_p |>
-    dplyr::arrange(.data$measurement, .data$place.admin.0, .data$place.admin.1, .data$dateonset) |>
+    dplyr::arrange(measurement, place.admin.0, place.admin.1, dateonset) |>
     dplyr::mutate(
       place.admin.1 = factor(place.admin.1,
         levels = rev(sort(unique(place.admin.1))),
@@ -383,29 +384,35 @@ pull_map_data <- function(raw.data, .vdpv, country, surv, virus_type, .start_dat
       recent_detect = factor(case_when(
         dateonset >= (today() %m-% months(3)) ~ "Y"
       )),
-      source_mod = factor(.data$source_mod, levels = c("AFP", "OTHER", "ES")),
+      source_mod = factor(source_mod, levels = c("AFP", "OTHER", "ES")),
       detect_status = dplyr::case_when(
         dateonset > (.end_date %m-% months(6)) ~ "<6months",
         (dateonset <= (.end_date %m-% months(6)) &
           dateonset >= .start_date) ~ "6-13months"
       ),
-      detect_status = factor(.data$detect_status, levels = c("6-13months", "<6months"))
+      detect_status = factor(detect_status, levels = c("6-13months", "<6months"))
     ) |>
-    dplyr::filter(.data$source_mod %in% surv) |>
+    dplyr::filter(source_mod %in% surv) |>
     dplyr::distinct(epid, .keep_all = T)
 
   return(data_p)
 }
 
 #' Load the sharepoint environment
-#' @importFrom Microsoft365R get_sharepoint_site
-#' @importFrom cli cli_alert
+#'
 #' @param raw.data global polio data output by sirfunctions::get_all_polio_data()
 #' @keywords internal
 #'
-#' @return sharepoint path
+#' @returns sharepoint path
 load_sharepoint_env <- function(raw.data) {
-  get_sharepoint_site(
+  if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
+    stop(
+      'Package "Microsoft365R" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
+  Microsoft365R::get_sharepoint_site(
     site_url = "https://cdc.sharepoint.com/teams/CGH-GID-PEB",
     tenant = Sys.getenv("CLIMICROSOFT365_TENANT", "common"),
     app = Sys.getenv("CLIMICROSOFT365_AADAPPID"),
@@ -429,14 +436,15 @@ load_sharepoint_env <- function(raw.data) {
 #'
 #' Used in conjunction to [generate_adhoc_map()]. The function returns a named
 #' list with emergence names mapped to a color.
-#' @importFrom dplyr filter arrange case_when distinct mutate
-#' @importFrom tidyr drop_na
+#'
 #' @param raw.data `list` Global polio data output of [get_all_polio_data()].
 #' @param country `str` or `list` Countries of interest.
 #' @param start_date `str` Start date of the time span to look for emergences. Defaults to 13 months from the end date.
 #' @param end_date  `str` End date of the time span to look for emergences Defaults to download date of `raw.data`.
+#' @param get_unassigned `bool` Get a list of emergence without a color mapped. This parameter is
+#' useful for ensuring that emergences are all accounted for when making a map.
 #'
-#' @return `list` A named list containing the mapping of emergence and corresponding colors.
+#' @returns `list` A named list containing the mapping of emergence and corresponding colors.
 #' @examples
 #' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
@@ -444,7 +452,7 @@ load_sharepoint_env <- function(raw.data) {
 #' }
 #'
 #' @export
-set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date = NULL) {
+set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date = NULL, get_unassigned = FALSE) {
   # Default start and end dates
   if (is.null(end_date)) {
     end_date <- lubridate::as_date(raw.data$metadata$download_time)
@@ -474,57 +482,19 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
   emg <- raw.data$pos |>
     dplyr::filter(place.admin.0 %in% country) |>
     dplyr::mutate(emg_grp2 = dplyr::case_when(
-      .data$measurement == "WILD 1" ~ viruscluster,
+      measurement == "WILD 1" ~ viruscluster,
       TRUE ~ emergencegroup
     )) |>
     dplyr::filter(
-      .data$dateonset >= start_date,
-      .data$source %in% c("AFP", "ENV"),
-      .data$measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")
+      dateonset >= start_date,
+      source %in% c("AFP", "ENV"),
+      measurement %in% c("cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1")
     ) |>
-    dplyr::distinct(.data$emg_grp2) |>
-    dplyr::arrange(.data$emg_grp2) |>
+    dplyr::distinct(emg_grp2) |>
+    dplyr::arrange(emg_grp2) |>
     tidyr::drop_na()
 
-  emg_cols <- c(
-    "ANG-LNO-3" = "#68228b",
-    "BOT-FRA-1" = "#458B74",
-    "CAE-EXT-1" = "#fd8d3c",
-    "CAF-BNG-2" = "#d21404",
-    "CAF-BNG-3" = "#00008b",
-    "ETH-TIG-1" = "#CA5621",
-    "EGY-NOR-1" = "#8B2323",
-    "INO-ACE-1" = "#ED7222",
-    "INO-cVDPV2" = "#458B00",
-    "MAD-ANO-2" = "#B254A5",
-    "MOZ-MAN-1" = "#458B00",
-    "MOZ-NPL-2" = "#008B8b",
-    "NIE-KTS-1" = "#68228b",
-    "NIE-ZAS-1" = "#F5191C",
-    "RDC-BUE-1" = "#8B8B83",
-    "RDC-HKA-2" = "#B14A34",
-    "RDC-KOR-1" = "#104E8B",
-    "RDC-MAN-3" = "#556B2F",
-    # "RDC-MAN-5" = "#B5651d",
-    "RDC-cVDPV2" = "#000000",
-    "RDC-SKV-1" = "#8B3A3A",
-    "RDC-TAN-1" = "#CA5621",
-    "RDC-TSH-1" = "#AC6A9F",
-    "RDC-TSH-2" = "#F5191C",
-    "RSS-JON-1" = "#fd8d3c",
-    "RSS-UNL-1" = "#2D7E47",
-    "RSS-WEQ-1" = "#8B8B83",
-    "SOM-BAN-1" = "#891171",
-    "SOM-BAY-1" = "#7C68B3",
-    "SUD-RED-1" = "#F28265",
-    "YEM-TAI-1" = "#4A708B",
-    "ZIM-HRE-1" = "#A03E3F",
-    "YB3A" = "#4A708B",
-    "YB3C" = "#A03E3F",
-    "YB3A4A" = "#AC6A9F",
-    "YB3A4A & YB3A4B" = "#fd8d3c",
-    "YB3A4B" = "#2D7E47"
-  )
+  emg_cols <- f.color.schemes("emergence.groups")
 
   unassigned_emergence <- setdiff(emg$emg_grp2, names(emg_cols))
   if (length(unassigned_emergence) == 0) {
@@ -543,19 +513,17 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 
   emg_cols <- subset(emg_cols, (names(emg_cols) %in% emg$emg_grp2))
 
-  return(emg_cols)
+  if (get_unassigned) {
+    return(unassigned_emergence)
+  } else {
+    return(emg_cols)
+  }
 }
 
 
 #' Create adhoc maps for emergences
 #'
 #' Creates a map of recent emergences. The default will display outbreaks from the past 13 months.
-#'
-#' @importFrom dplyr filter arrange case_when left_join mutate
-#' @importFrom ggplot2 ggsave coord_sf
-#' @importFrom lubridate as_date days floor_date today
-#' @importFrom stringr regex str_detect str_to_lower str_to_upper str_trim
-#' @importFrom cli cli_alert_info cli_alert_success cli_alert_warning
 #'
 #' @param raw.data `list` Global polio data. The output of [get_all_polio_data()].
 #' Make sure the spatial data is attached, otherwise, it will not work.
@@ -565,6 +533,8 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 #' @param vdpv `bool` Whether to include VPDV in maps. Default `TRUE`.
 #' @param new_detect `bool` Whether to highlight new detections based on WHO HQ report date. Default `TRUE`.
 #' @param output `str` Either a path to a local folder to save the map to, `"sharepoint"`, or `NULL`. Defaults to `NULL`.
+#' @param emg_cols `list` A named list with all of the emergence colors. Defaults to `NULL`, which will download
+#' using [set_emergence_colors()].
 #' @param virus_type `str` or `list`. Virus type to include. Valid values are:
 #'
 #' `"cVDPV 1", "cVDPV 2", "cVDPV 3", "WILD 1".`
@@ -591,16 +561,16 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 #' @param width `numeric` Width of the map. Defaults to `4.5`.
 #' @param scale `numeric` Scale of the map. Defaults to `1.25`.
 #' @param dpi `numeric` DPI of the map. Defaults to `300`.
-#' @return `ggplot` A map of outbreaks.
+#' @returns `ggplot` A map of outbreaks.
 #' @examples
 #' \dontrun{
 #' raw.data <- get_all_polio_data()
-#' p1 <- generate_adhoc_map(raw.data, c("nigeria", "chad"))
+#' p1 <- generate_adhoc_map(raw.data, "algeria")
 #' # Put colors in emergences that don't have a mapped color
 #' emg_cols <- set_emergence_colors(raw.data, c("nigeria", "chad"))
 #' emg_cols["NIE-BOS-1"] <- "yellow"
 #' emg_cols["NIE-YBS-1"] <- "green"
-#' p2 <- p1 + ggplot2::scale_color_manual(name = "Emergence Group", values = emg_cols)
+#' p2 <- generate_adhoc_map(raw.data, c("nigeria", "chad"), emg_cols = emg_cols)
 #' }
 #' @export
 generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
@@ -610,6 +580,7 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
                                new_detect_expand = F,
                                start_date = NULL,
                                end_date = NULL,
+                               emg_cols = NULL,
                                output = NULL,
                                image_size = NULL,
                                height = 6.2,
@@ -726,7 +697,19 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   }
 
   # Getting emergence colors
-  emg_cols <- set_emergence_colors(raw.data, country, start_date, end_date)
+  if (is.null(emg_cols)) {
+    emg_cols <- set_emergence_colors(raw.data, country, start_date, end_date)
+  }
+
+  # Diagnose the emergence colors
+  unaccounted_emg <- suppressMessages(set_emergence_colors(raw.data, country,
+                                                           start_date, end_date,
+                                                           TRUE))
+  unaccounted_emg <- setdiff(unaccounted_emg, names(emg_cols))
+
+  if (length(unaccounted_emg) != 0) {
+    cli::cli_abort("Please assign all emergences colors and try again. See examples from ?generate_adhoc_map().")
+  }
 
   # Load Sharepoint environment
   if (output == "sharepoint") {
@@ -797,19 +780,19 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
   # Get the corresponding base regions based on WHO region
   if (any(c("EMRO", "EURO") %in% who_region)) {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% region_mapping[["EMRO"]], ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% region_mapping[["EMRO"]], ENDDATE == "9999-12-31")
   } else if ("WPRO" %in% who_region) {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% region_mapping[["WPRO"]], ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% region_mapping[["WPRO"]], ENDDATE == "9999-12-31")
   } else if ("SEARO" %in% who_region) {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% region_mapping[["SEARO"]], ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% region_mapping[["SEARO"]], ENDDATE == "9999-12-31")
   } else if ("AFRO" %in% who_region) {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% region_mapping[["AFRO"]], ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% region_mapping[["AFRO"]], ENDDATE == "9999-12-31")
   } else {
     m_base_region <- raw.data$global.ctry |>
-      dplyr::filter(.data$WHO_REGION %in% who_region, ENDDATE == "9999-12-31")
+      dplyr::filter(WHO_REGION %in% who_region, ENDDATE == "9999-12-31")
   }
 
   # Create labels by country
@@ -820,10 +803,10 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
     tibble::rownames_to_column(var = "num_label") |>
     dplyr::mutate(
       detect_status2 = dplyr::case_when(
-        is.na(.data$detect_status) ~ ">13months",
-        TRUE ~ .data$detect_status
+        is.na(detect_status) ~ ">13months",
+        TRUE ~ detect_status
       ),
-      detect_status2 = factor(.data$detect_status2, levels = c(">13months", "6-13months", "<6months"))
+      detect_status2 = factor(detect_status2, levels = c(">13months", "6-13months", "<6months"))
     )
 
   # Filters to impacted regions only

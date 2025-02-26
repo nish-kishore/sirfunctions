@@ -6,17 +6,17 @@
 \usage{
 generate_prov_timeliness_graph(
   int.data,
-  afp.prov.year.lab,
-  output_path = Sys.getenv("DR_FIGURE_PATH")
+  output_path = Sys.getenv("DR_FIGURE_PATH"),
+  afp.prov.year.lab = lifecycle::deprecated()
 )
 }
 \arguments{
 \item{int.data}{\code{tibble} Summary table with timeliness intervals at the province level.}
 
-\item{afp.prov.year.lab}{\code{tibble} Summary table of samples sent by year and province.
-Output of \code{\link[=generate_prov_year_lab]{generate_prov_year_lab()}}.}
-
 \item{output_path}{\code{str} Path where to output the figure.}
+
+\item{afp.prov.year.lab}{\code{tibble} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+Deprecated since it is not used anymore.}
 }
 \value{
 \code{ggplot} Plot of timeliness intervals at the country level.
@@ -36,6 +36,6 @@ int.data.prov <- generate_int_data(ctry.data, start_date, end_date,
   spatial.scale = "prov",
   lab.timeliness.prov
 )
-generate_ctry_timeliness_graph(int.data.prov, afp.prov.year.lab)
+generate_ctry_timeliness_graph(int.data.prov)
 }
 }

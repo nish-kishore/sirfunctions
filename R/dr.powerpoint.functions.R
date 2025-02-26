@@ -1,12 +1,19 @@
 # Private functions ----
 #' Generate PowerPoint assumptions
-#' @importFrom officer fp_text unordered_list
+#'
 #' @param start_date start date of desk review
 #' @param end_date end date of desk review
 #' @keywords internal
 #'
 #' @returns list of strings
 generate_pptx_assumptions <- function(start_date, end_date) {
+  if (!requireNamespace("officer", quietly = TRUE)) {
+    stop(
+      'Package "officer" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   pptx.assumptions <- c(
     "Data sources:",
     paste0("POLIS (data as of ", format(end_date, "%d-%b-%Y"), ")", " unless specified otherwise"),
@@ -74,8 +81,6 @@ get_ppt_template <- function(path = NULL) {
 #' superseded by [generate_dr_ppt2()]. The function outputs images to the PowerPoint
 #' directly from objects, unlike `generate_dr_ppt2()` which uses images saved in a folder.
 #'
-#' @importFrom officer add_slide layout_properties layout_summary ph_location_label ph_location_type ph_with read_pptx
-#'
 #' @param ppt_template_path `str` Sath to the PowerPoint template.
 #' @param ctry.data `list` List containing polio data for a country. Either the output of
 #' [extract_country_data()] or [init_dr()].
@@ -135,6 +140,13 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
   if (!requireNamespace("rvg", quietly = TRUE)) {
     stop('Package "rvg" must be installed to use this function.',
       .call = FALSE
+    )
+  }
+
+  if (!requireNamespace("officer", quietly = TRUE)) {
+    stop(
+      'Package "officer" must be installed to use this function.',
+      call. = FALSE
     )
   }
 
@@ -442,9 +454,6 @@ generate_dr_ppt <- function(ppt_template_path, ctry.data, start_date, end_date,
 #' Generating the PowerPoint from the figures folder is generally faster and allows
 #' figures to remain consistent. Tables remain as PowerPoint tables.
 #'
-#' @importFrom lubridate today
-#' @importFrom officer add_slide block_list external_img fp_text fpar ftext layout_properties layout_summary ph_location ph_location_label ph_location_type ph_with read_pptx
-#'
 #' @param ctry.data `list` Country polio data. Either the output of [extract_country_data()] or
 #' [init_dr()].
 #' @param start_date `str` Start date of desk review.
@@ -482,6 +491,13 @@ generate_dr_ppt2 <- function(ctry.data,
                              fig.path = Sys.getenv("DR_FIGURE_PATH"),
                              country = Sys.getenv("DR_COUNTRY"),
                              ppt_output_path = Sys.getenv("DR_POWERPOINT_PATH")) {
+  if (!requireNamespace("officer", quietly = TRUE)) {
+    stop(
+      'Package "officer" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   ppt_template_path <- get_ppt_template(ppt_template_path)
   assump <- generate_pptx_assumptions(start_date, end_date)
   incomplete.adm.dist <- spatial_validation(ctry.data$dist.pop, "dist")

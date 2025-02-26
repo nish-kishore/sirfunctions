@@ -1,9 +1,7 @@
 #' Calculate EV detection rate function
 #'
 #' Function to calculate the EV detection rate in sites from POLIS.
-#' @importFrom dplyr case_when distinct group_by left_join mutate n select summarize ungroup as_tibble
-#' @importFrom lubridate as_date
-#' @importFrom scales label_percent
+#'
 #' @param es.data `tibble` ES data which includes site name (site.name),
 #' country (ADM0_NAME),
 #' date of collection (collect.date), and a binary ev detection variable (ev.detect)
@@ -33,7 +31,7 @@ f.ev.rate.01 <- function(
   start.date <- lubridate::as_date(start.date)
   end.date <- lubridate::as_date(end.date)
 
-  # check to make sure that data has necessary variables
+  # Check to make sure that data has necessary variables
   necessary.es.vars <- c("collect.date", "ADM0_NAME", "site.name", "ev.detect")
   useful.es.vars <- c("ADM1_NAME", "ADM2_NAME", "lat", "lng")
 
@@ -67,8 +65,7 @@ f.ev.rate.01 <- function(
 
   # Limit ES data to the range described by the analysis start and end dates
   es.data <- es.data |>
-    dplyr::filter(collect.date >= start.date & collect.date <= end.date)
-
+    dplyr::filter(dplyr::between(collect.date, start.date, end.date))
 
   # Create site-level summary
   es.sum <- es.data |>
@@ -97,7 +94,13 @@ f.ev.rate.01 <- function(
   es.sum <- dplyr::left_join(
     es.sum,
     es.data |>
-      dplyr::select(tidyr::any_of(c("site.name", "ADM1_NAME", "ADM2_NAME", "lat", "lng"))) |>
+      dplyr::select(dplyr::any_of(c("site.name",
+        "ADM0_NAME", "ADM1_NAME", "ADM2_NAME",
+        "adm0guid" = "ctry.guid",
+        "adm1guid" = "prov.guid",
+        "adm2guid" = "dist.guid",
+        "lat", "lng"
+      ))) |>
       dplyr::distinct()
   )
 

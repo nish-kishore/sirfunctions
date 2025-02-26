@@ -4,16 +4,25 @@
 \alias{generate_pop_tab}
 \title{Summary table of indicators at the province level}
 \usage{
-generate_pop_tab(prov.case.ind, pstool, start_date, end_date)
+generate_pop_tab(
+  pnpafp,
+  pstool,
+  start_date,
+  end_date,
+  prov.case.ind = lifecycle::deprecated()
+)
 }
 \arguments{
-\item{prov.case.ind}{\code{tibble} Case indicator at province level. Output of \code{\link[=prep_npafp_table]{prep_npafp_table()}} at the province level.}
+\item{pnpafp}{\code{tibble} NPAFP table. Output of \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}} at the province level.}
 
 \item{pstool}{\code{tibble} Stool adequacy at province level. Output of \code{\link[=f.stool.ad.01]{f.stool.ad.01()}} at the province level.}
 
 \item{start_date}{\code{str} Start date of analysis.}
 
 \item{end_date}{\code{str} End date of analysis.}
+
+\item{prov.case.ind}{\code{tibble} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+Deprecated in favor of the more informative pnpafp param name.}
 }
 \value{
 \code{flextable} Summary table of province NPAFP and stool adequacy rates per year.
@@ -36,7 +45,6 @@ prov.extract <- f.npafp.rate.01(
   rolling = F,
   sp_continuity_validation = F
 )
-prov.case.ind <- prep_npafp_table(prov.extract, ctry.data$afp.all.2, start_date, end_date, "prov")
 pstool <- f.stool.ad.01(
   afp.data = ctry.data$afp.all.2,
   admin.data = ctry.data$prov.pop,
@@ -48,7 +56,7 @@ pstool <- f.stool.ad.01(
   rolling = F,
   sp_continuity_validation = F
 )
-generate_pop_tab(prov.case.ind, pstool, start_date, end_date)
+generate_pop_tab(prov.extract, pstool, start_date, end_date)
 }
 
 }

@@ -9,11 +9,14 @@ load_clean_ctry_sp(
   fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
   ctry_guid = NULL,
   ctry_name = NULL,
-  end.year = lubridate::year(Sys.Date()),
-  st.year = 2000,
-  data.only = F,
+  end_year = lubridate::year(Sys.Date()),
+  st_year = 2000,
+  data_only = FALSE,
   type = NULL,
-  version = "standard"
+  version = "standard",
+  end.year = lifecycle::deprecated(),
+  st.year = lifecycle::deprecated(),
+  data.only = lifecycle::deprecated()
 )
 }
 \arguments{
@@ -25,11 +28,11 @@ load_clean_ctry_sp(
 
 \item{ctry_name}{\verb{str array} Array of all country names that you want to pull.}
 
-\item{end.year}{\code{int} Last year you want to pull information for. Default is current year.}
+\item{end_year}{\code{int} Last year you want to pull information for. Default is current year.}
 
-\item{st.year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
+\item{st_year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
 
-\item{data.only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
+\item{data_only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
 
 \item{type}{\code{str} Whether to return a spatial object for every year group. Defaults to \code{NULL}.
 \itemize{
@@ -43,6 +46,15 @@ still under evaluation/development. Default is \code{"standard"}.
 \item \code{"standard"} Standard shapefiles.
 \item \code{"dev"}  New shapefiles still under evaluation/development.
 }}
+
+\item{end.year}{\code{int} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{end_year}.}
+
+\item{st.year}{\code{int} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{st_year}.}
+
+\item{data.only}{\code{bool} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{data_only}.}
 }
 \value{
 \code{tibble} or \code{sf} Dataframe containing spatial data.
