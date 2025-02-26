@@ -2191,3 +2191,299 @@ get_diff_cols <- function(df, id_col) {
 
   return(col_with_differences)
 }
+
+#' Check for rows with NA values
+#'
+#' A general function that checks the number of `NA` rows for a particular
+#' column.
+#' @param df `tibble` Dataset to check.
+#' @param .col_name `str` Name of the target column.
+#' @param .group_by `str` or `list` A string or a list of strings to group the
+#' check by.
+#'
+#' @returns `tibble` A summary of the number of rows missing for the target
+#' variable.
+#' @export
+#'
+#' @examples
+#' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' missing <- check_missing_rows(raw.data$afp, "age.months", c("place.admin.0", "yronset"))
+check_missing_rows <- function(df,
+                               .col_name,
+                               .group_by) {
+  # Input checks
+  if (!.col_name %in% names(df)) {
+    cli::cli_abort(paste0(.col_name, "column is missing in the dataset."))
+  }
+
+  if (length(setdiff(.group_by, names(df))) != 0) {
+    invalid_cols <- setdiff(.group_by, names(df))
+    cli::cli_alert_warning(paste0(
+      "These columns are missing in the dataset: ",
+      paste(invalid_cols, collapse = ", ")
+    ))
+    cli::cli_abort("Please use different grouping columns and try again.")
+  }
+
+  missing <- df |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
+    dplyr::summarise(
+      n = sum(is.na(.data[[.col_name]])),
+      total_rows = dplyr::n(),
+      prop = round(n / total_rows, 2)
+    )
+
+  return(missing)
+}
+
+#' Interactive loading of EDAV data
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' This function is a way to interactively work with files in the EDAV
+#' environment, which is convenient as we don't have to search for files within
+#' Azure Storage Explorer.
+#'
+#' @param path `str` Path to start at initially.
+#'
+#' @returns `tibble` Data from the EDAV environment.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' test <- explore_edav()
+#' }
+explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
+  cli::cli_alert_info(paste0(
+    "Interactive file selection activated.",
+    " Use esc to exit."
+  ))
+  pointer <- path
+  while (TRUE) {
+    tryCatch(
+      expr = {
+        output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+        print(
+          output |>
+            dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+          n = nrow(output)
+        )
+      },
+      error = function(e) {
+        cli::cli_alert_warning("\nAccess denied. Please choose a valid option.")
+        pointer <<- gsub("[^/]+$", "", pointer)
+        pointer <<- sub("/$", "", pointer)
+
+        output <<- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+        print(
+          output |>
+            dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+          n = nrow(output)
+        )
+      }
+    )
+
+    cli::cli_alert_info(paste0(
+      "\nPlease choose an option (1-4):\n",
+      "1) Previous directory\n",
+      "2) Move up one directory\n",
+      "3) Download as an R object (.Rds, .Rda, .csv, .xlsx supported) \n",
+      "4) Download file locally\n",
+      "5) Copy absolute file path"
+    ))
+    response <- stringr::str_trim(readline("Response: "))
+    if (!response %in% c("1", "2", "3", "4", "5")) {
+      cli::cli_alert_warning("Invalid response. Please try again.\n")
+    } else if (response == "1") {
+      # Special case of navigating back to root
+      if (stringr::str_count(pointer, "/") == 0) {
+        pointer <- ""
+      }
+      pointer <- gsub("[^/]+$", "", pointer)
+      pointer <- sub("/$", "", pointer)
+      cli::cli_alert_success(paste0("Navigating to: ", pointer))
+    } else if (response == "2") {
+      while (TRUE) {
+        if (nrow(output) == 1) {
+          pointer <- output[1, ]$name
+          pointer <- sub("/$", "", pointer)
+          cli::cli_alert_success(paste0("Navigating to: ", pointer))
+          break
+        }
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+          error = function(e) {
+            NA
+          }
+        )
+        if (is.na(response) | response > nrow(output) | response == 0) {
+          cli::cli_alert_warning("Invalid response. Please try again:\n")
+
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+            n = nrow(output)
+          )
+        } else if (output[response, ]$isdir == FALSE) {
+          cli::cli_alert_warning("Not a directory. Please try again:\n")
+          break
+        } else {
+          pointer <- output[response, ]$name
+          pointer <- sub("/$", "", pointer)
+          cli::cli_alert_success(paste0("Navigating to: ", pointer))
+          break
+        }
+      }
+    } else if (response == "3") {
+      while (TRUE) {
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+          error = function(e) {
+            NA
+          }
+        )
+        if (is.na(response) | response > nrow(output) | response == 0) {
+          cli::cli_alert_info("Invalid response. Please try again:\n")
+
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
+            n = nrow(output)
+          )
+        } else if (output[response, ]$isdir == TRUE) {
+          cli::cli_alert_info(paste0(
+            output[response, ]$name,
+            " is a directory. Navigating to it."
+          ))
+          pointer <- output[response, ]$name
+          break
+        } else {
+          pointer <- file.path(output[response, ]$name)
+          ext <- tools::file_ext(pointer)
+          if (ext %in% c("xlsx", "xls")) {
+            withr::with_tempdir(
+              {
+                AzureStor::storage_download(get_azure_storage_connection(),
+                                            pointer,
+                                            file.path(tempdir(), basename(pointer)),
+                                            overwrite = TRUE
+                )
+                output <- read_excel_from_edav(file.path(tempdir(),
+                                                         basename(pointer)))
+                return(output)
+              }
+            )
+          } else {
+            output <- edav_io("read", default_dir = "", pointer)
+            return(output)
+          }
+        }
+      }
+    } else if (response == "4") {
+      while (TRUE) {
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+                             error = function(e) {
+                               NA
+                             }
+        )
+        if (is.na(response) | response > nrow(output) | response == 0) {
+          cli::cli_alert_info("Invalid response. Please try again:\n")
+
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
+            n = nrow(output)
+          )
+        } else if (output[response, ]$isdir == TRUE) {
+          cli::cli_alert_info(paste0(
+            output[response, ]$name,
+            " is a directory. Navigating to it."
+          ))
+          pointer <- output[response, ]$name
+          break
+        } else {
+          pointer <- file.path(output[response, ]$name)
+          while (TRUE) {
+            cli::cli_alert_info("Enter folder path (no quotes):")
+            dest <- file.path(stringr::str_trim(readline("Response: ")))
+            if (!dir.exists(dest)) {
+              cli::cli_alert_info("Not a valid file path. Please try again.")
+            } else {
+              AzureStor::storage_download(get_azure_storage_connection(),
+                                          pointer,
+                                          file.path(dest, basename(pointer)),
+                                          overwrite = TRUE
+              )
+
+              cli::cli_alert_success(paste0("File downloaded at: ",
+                                            file.path(dest, basename(pointer))))
+              return(NULL)
+            }
+          }
+        }
+      }
+    } else if (response == "5") {
+      while (TRUE) {
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+          error = function(e) {
+            NA
+          }
+        )
+        if (is.na(response) | response > nrow(output) | response == 0) {
+          cli::cli_alert_info("Invalid response. Please try again:\n")
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(
+                name,
+                "[^/]+$"
+              )),
+            n = nrow(output)
+          )
+        } else {
+          path_name <- file.path(output[response, ]$name)
+          return(path_name)
+        }
+      }
+    }
+  }
+}
+
+# Private functions ----
+
+#' Reads an Excel file from EDAV to the R environment
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' This function is an extension of the readxl() that adapts to files with
+#' multiple tabs. If there are multiple tabs, each sheet are downloaded into a
+#' named list with the corresponding tab name.
+#'
+#' @details
+#' Actually, this function doesn't need to be used on EDAV files. It can work
+#' with local files as well.
+#'
+#'
+#' @param src `str` Path to the Excel file.
+#'
+#' @return `tibble` or `list` A tibble or a list of tibbles containing data from
+#' the Excel file.
+#' @keywords internal
+#'
+read_excel_from_edav <- function(src) {
+  sheets <- readxl::excel_sheets(src)
+  if (length(sheets > 1)) {
+    output <- purrr::map(sheets, \(x) readxl::read_xlsx(src, x))
+    names(output) <- sheets
+  } else {
+    output <- readxl::read_xlsx(src, sheets)
+  }
+
+  return(output)
+}
