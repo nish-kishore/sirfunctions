@@ -2478,11 +2478,11 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
 #'
 read_excel_from_edav <- function(src) {
   sheets <- readxl::excel_sheets(src)
-  if (length(sheets > 1)) {
+  if (length(sheets) > 1) {
     output <- purrr::map(sheets, \(x) readxl::read_xlsx(src, x))
     names(output) <- sheets
   } else {
-    output <- readxl::read_xlsx(src, sheets)
+    output <- readxl::read_excel(src)
   }
 
   return(output)
