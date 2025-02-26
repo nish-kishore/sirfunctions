@@ -2169,9 +2169,9 @@ check_missing_rows <- function(df,
 #'
 #' @examples
 #' \dontrun{
-#' test <- get_edav_data()
+#' test <- explore_edav()
 #' }
-get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
+explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
   cli::cli_alert_info(paste0(
     "Interactive file selection activated.",
     " Use esc to exit."
@@ -2205,11 +2205,12 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
       "\nPlease choose an option (1-4):\n",
       "1) Previous directory\n",
       "2) Move up one directory\n",
-      "3) Download as an R object\n",
-      "4) Copy absolute file path"
+      "3) Download as an R object (.Rds, .Rda, .csv, .xlsx supported) \n",
+      "4) Download file locally\n",
+      "5) Copy absolute file path"
     ))
     response <- stringr::str_trim(readline("Response: "))
-    if (!response %in% c("1", "2", "3", "4")) {
+    if (!response %in% c("1", "2", "3", "4", "5")) {
       cli::cli_alert_warning("Invalid response. Please try again.\n")
     } else if (response == "1") {
       # Special case of navigating back to root
@@ -2278,11 +2279,72 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
           break
         } else {
           pointer <- file.path(output[response, ]$name)
-          output <- edav_io("read", default_dir = "", pointer)
-          return(output)
+          ext <- tools::file_ext(pointer)
+          if (ext %in% c("xlsx", "xls")) {
+            withr::with_tempdir(
+              {
+                AzureStor::storage_download(get_azure_storage_connection(),
+                                            pointer,
+                                            file.path(tempdir(), basename(pointer)),
+                                            overwrite = TRUE
+                )
+                output <- read_excel_from_edav(file.path(tempdir(),
+                                                         basename(pointer)))
+                return(output)
+              }
+            )
+          } else {
+            output <- edav_io("read", default_dir = "", pointer)
+            return(output)
+          }
         }
       }
     } else if (response == "4") {
+      while (TRUE) {
+        cli::cli_alert_info("Please input the line number:")
+        response <- stringr::str_trim(readline("Response: "))
+        response <- tryCatch(suppressWarnings(as.numeric(response)),
+                             error = function(e) {
+                               NA
+                             }
+        )
+        if (is.na(response) | response > nrow(output) | response == 0) {
+          cli::cli_alert_info("Invalid response. Please try again:\n")
+
+          print(
+            output |>
+              dplyr::mutate(name = stringr::str_extract(.data$name, "[^/]+$")),
+            n = nrow(output)
+          )
+        } else if (output[response, ]$isdir == TRUE) {
+          cli::cli_alert_info(paste0(
+            output[response, ]$name,
+            " is a directory. Navigating to it."
+          ))
+          pointer <- output[response, ]$name
+          break
+        } else {
+          pointer <- file.path(output[response, ]$name)
+          while (TRUE) {
+            cli::cli_alert_info("Enter folder path (no quotes):")
+            dest <- file.path(stringr::str_trim(readline("Response: ")))
+            if (!dir.exists(dest)) {
+              cli::cli_alert_info("Not a valid file path. Please try again.")
+            } else {
+              AzureStor::storage_download(get_azure_storage_connection(),
+                                          pointer,
+                                          file.path(dest, basename(pointer)),
+                                          overwrite = TRUE
+              )
+
+              cli::cli_alert_success(paste0("File downloaded at: ",
+                                            file.path(dest, basename(pointer))))
+              return(NULL)
+            }
+          }
+        }
+      }
+    } else if (response == "5") {
       while (TRUE) {
         cli::cli_alert_info("Please input the line number:")
         response <- stringr::str_trim(readline("Response: "))
@@ -2308,4 +2370,37 @@ get_edav_data <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
       }
     }
   }
+}
+
+# Private functions ----
+
+#' Reads an Excel file from EDAV to the R environment
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' This function is an extension of the readxl() that adapts to files with
+#' multiple tabs. If there are multiple tabs, each sheet are downloaded into a
+#' named list with the corresponding tab name.
+#'
+#' @details
+#' Actually, this function doesn't need to be used on EDAV files. It can work
+#' with local files as well.
+#'
+#'
+#' @param src `str` Path to the Excel file.
+#'
+#' @return `tibble` or `list` A tibble or a list of tibbles containing data from
+#' the Excel file.
+#' @keywords internal
+#'
+read_excel_from_edav <- function(src) {
+  sheets <- readxl::excel_sheets(src)
+  if (length(sheets > 1)) {
+    output <- purrr::map(sheets, \(x) readxl::read_xlsx(src, x))
+    names(output) <- sheets
+  } else {
+    output <- readxl::read_xlsx(src, sheets)
+  }
+
+  return(output)
 }

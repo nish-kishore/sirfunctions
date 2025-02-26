@@ -55,6 +55,7 @@ Suggests:
     datasets,
     readxl,
     tibble,
+    tools,
     knitr,
     magick,
     vctrs,
