@@ -1430,6 +1430,9 @@ update_polio_data <- function(local_dataset, overwrite = T) {
       cli::cli_process_start(paste0("Replacing ", i, " with the most recent data"))
       updated_data[i] <- list(new_data[[i]])
       cli::cli_process_done()
+    } else if (stringr::str_ends(i, ".dupe")) {
+      cli::cli_alert_info("Skipping...")
+      next # Ignore updating of dupes datasets
     } else {
       updated_data[i] <- list(suppressMessages(dplyr::full_join(old_data[[i]], new_data[[i]])))
 
@@ -1440,16 +1443,40 @@ update_polio_data <- function(local_dataset, overwrite = T) {
                           "pos" = pos_dedup_col,
                           "sia" = sia_dedup_col,
                           "es" = es_dedup_col)
+      yr_col <- switch(i,
+                       "afp" = "yronset",
+                       "para.case" = "yronset",
+                       "other" = "yronset",
+                       "pos" = "yronset",
+                       "sia" = "yr.sia",
+                       "es" = "collect.yr"
+                       )
 
       if (i %in% c("afp", "other", "pos", "sia", "es", "para.case")) {
         cli::cli_process_start("Deduplicating records")
-        nrow_before <- nrow(updated_data[[i]])
         updated_data[[i]] <- updated_data[[i]] |>
           dplyr::group_by(!!!dplyr::syms(dedup_col)) |>
           dplyr::slice_tail() |>
-          dplyr::ungroup()
-        nrow_after <- nrow(updated_data[[i]])
-        cli::cli_alert_info(paste0((nrow_before - nrow_after), " duplicate records removed."))
+          dplyr::ungroup() |>
+          # Create a UID for comparing old data with new
+          tidyr::unite("uid", dplyr::any_of(dedup_col), remove = FALSE)
+        cli::cli_process_done()
+
+        cli::cli_process_start("Removing dropped records from the updated dataset")
+        new_ids <- tidyr::unite(new_data[[i]][dedup_col], "uid")
+        removed_ids <- updated_data[[i]] |>
+          dplyr::filter(!!dplyr::sym(yr_col) >= 2019,
+                        !uid %in% new_ids[, 1]) |>
+          dplyr::pull(uid)
+        updated_data[[i]] <- updated_data[[i]] |>
+          dplyr::filter(!uid %in% removed_ids)
+
+        if (length(removed_ids) == 0) {
+          cli::cli_alert_info("No records removed since the last update.")
+        } else {
+          cli::cli_alert_info(paste0("There were ", length(removed_ids),
+                                     " records removed in the latest update."))
+        }
         cli::cli_process_done()
       }
     }
