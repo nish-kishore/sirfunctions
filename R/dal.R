@@ -1392,6 +1392,91 @@ duplicate_check <- function(.raw.data = raw.data) {
   return(.raw.data)
 }
 
+#' Update a local dataset with new data
+#' Update a local global polio data (raw.data) with new data
+#'
+#' @param local_dataset file path to the RDS file
+#' @param overwrite should the file be overwritten? Default TRUE.
+#'
+#' @export
+update_polio_data <- function(local_dataset, overwrite = T) {
+  cli::cli_process_start("Reading local dataset")
+  old_data <- readr::read_rds(local_dataset)
+  old_data_names <- names(old_data)
+  dataset_name <- basename(local_dataset)
+  cli::cli_process_done()
+
+  spatial_data <- F
+  if (length(intersect(c("global.ctry", "global.prov", "global.dist"), old_data_names)) > 0) {
+    spatial_data <- T
+  }
+
+  new_data <- get_all_polio_data(attach.spatial.data = spatial_data)
+
+
+  updated_data <- list()
+  afp_dedup_col <- c("epid", "place.admin.0", "dateonset")
+  pos_dedup_col <- c("epid", "polis.case.id", "env.sample.id", "place.admin.0",
+                     "virustype", "ntchanges", "emergencegroup", "dateonset",
+                     "source")
+  sia_dedup_col <- c("adm2guid", "sub.activity.start.date", "vaccine.type",
+                     "age.group","status", "lqas.loaded", "im.loaded")
+  es_dedup_col <- c("env.sample.id", "virus.type", "emergence.group",
+                    "nt.changes", "site.id", "collection.date", "collect.yr")
+
+  for (i in old_data_names) {
+    cli::cli_alert_info(paste0("Updating ", i))
+    if (i %in% c("metadata", "global.ctry", "global.prov", "global.dist", "roads", "cities")) {
+      cli::cli_process_start(paste0("Replacing ", i, " with the most recent data"))
+      updated_data[i] <- list(new_data[[i]])
+      cli::cli_process_done()
+    } else {
+      updated_data[i] <- list(suppressMessages(dplyr::full_join(old_data[[i]], new_data[[i]])))
+
+      dedup_col <- switch(i,
+                          "afp"  = afp_dedup_col,
+                          "para.case" = afp_dedup_col,
+                          "other" = afp_dedup_col,
+                          "pos" = pos_dedup_col,
+                          "sia" = sia_dedup_col,
+                          "es" = es_dedup_col)
+
+      if (i %in% c("afp", "other", "pos", "sia", "es", "para.case")) {
+        cli::cli_process_start("Deduplicating records")
+        nrow_before <- nrow(updated_data[[i]])
+        updated_data[[i]] <- updated_data[[i]] |>
+          dplyr::group_by(!!!dplyr::syms(dedup_col)) |>
+          dplyr::slice_tail() |>
+          dplyr::ungroup()
+        nrow_after <- nrow(updated_data[[i]])
+        cli::cli_alert_info(paste0((nrow_before - nrow_after), " duplicate records removed."))
+        cli::cli_process_done()
+      }
+    }
+  }
+
+  cli::cli_alert_success("Local dataset updated.")
+
+  cli::cli_process_start("Final duplicate checking in the updated dataset.")
+  updated_data <- duplicate_check(updated_data)
+  cli::cli_process_done()
+
+  if (overwrite) {
+    readr::write_rds(updated_data, local_dataset)
+    cli::cli_alert_success("File overwritten successfully.")
+  } else {
+    new_dataset <- file.path(dirname(local_dataset),
+                             paste0(tools::file_path_sans_ext(dataset_name), "_saved_", lubridate::today(), ".rds"))
+    readr::write_rds(updated_data, new_dataset)
+    cli::cli_alert_success("Updated file written successfully.")
+  }
+
+  # Cleaning up environment
+  rm(old_data, new_data, updated_data)
+  invisible(gc())
+
+}
+
 #### 3) Secondary SP Functions ####
 
 #' Download district geographic data
