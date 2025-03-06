@@ -4,13 +4,7 @@
 \alias{generate_inad_tab}
 \title{Issues with stool adequacy at the country level}
 \usage{
-generate_inad_tab(
-  ctry.data,
-  cstool,
-  start_date,
-  end_date,
-  stool.data = lifecycle::deprecated()
-)
+generate_inad_tab(ctry.data, cstool, start_date, end_date)
 }
 \arguments{
 \item{ctry.data}{\code{list} large list containing polio data for a country. This is the output of

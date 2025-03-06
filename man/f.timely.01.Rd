@@ -53,6 +53,7 @@ An equivalent function is \code{\link[=generate_int_data]{generate_int_data()}},
 function by also being able to take lab data to calculate lab timeliness intervals.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data()
 ctry.data <- extract_country_data("algeria", raw.data)
 stool.summary <- f.timely.01(
@@ -61,6 +62,7 @@ stool.summary <- f.timely.01(
   lubridate::as_date("2023-12-31"),
   "ctry"
 )
+}
 
 }
 \keyword{internal}

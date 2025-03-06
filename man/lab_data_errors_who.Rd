@@ -38,8 +38,10 @@ WHO lab data.
 \dontrun{
 lab_path <- "C:/Users/XRG9/lab_data_who.csv"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-lab_data_errors_who(ctry.data$lab.data, ctry.data$afp.all.2,
-                    "2021-01-01", "2023-12-31")
+lab_data_errors_who(
+  ctry.data$lab.data, ctry.data$afp.all.2,
+  "2021-01-01", "2023-12-31"
+)
 }
 }
 \keyword{internal}

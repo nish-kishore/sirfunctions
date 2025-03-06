@@ -5,7 +5,7 @@
 \title{Perform common cleaning tasks for ISS/eSURV data}
 \usage{
 clean_iss_data(
-  iss.data,
+  iss_data,
   start_date,
   end_date,
   priority_col = "priority_level",
@@ -20,6 +20,8 @@ clean_iss_data(
 )
 }
 \arguments{
+\item{iss_data}{\code{tibble} ISS data.}
+
 \item{start_date}{\code{str} Start date of desk review.}
 
 \item{end_date}{\code{str} End date of desk review.}

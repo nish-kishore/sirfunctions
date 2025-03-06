@@ -1,8 +1,7 @@
 #' Function to calculate timeliness of detection
 #'
 #' Calculates the overall timeliness of detection in AFP & ES POLIS data.
-#' @import dplyr
-#' @import lubridate
+#'
 #' @param afp.data `tibble` AFP data which includes classification of AFP cases with onset date and date of notification to HQ.
 #' @param es.data `tibble` ES data which includes classification of samples with collection date and date of notification to HQ.
 #' @param ctryseq.data `tibble` A table consisting of the following columns for each country:
@@ -73,7 +72,7 @@ f.timely.detection.01 <- function(
 
   # Limit AFP data to the range described by the analysis start and end dates
   afp.data <- afp.data |>
-    dplyr::filter(between(.data$date, start.date, end.date)) |>
+    dplyr::filter(between(date, start.date, end.date)) |>
     dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) lubridate::as_date(x)))
 
   # Warning message about non-overlapping dates
@@ -91,7 +90,7 @@ f.timely.detection.01 <- function(
 
   # Limit ES data to the range described by the analysis start and end dates
   es.data <- es.data |>
-    dplyr::filter(between(.data$collect.date, start.date, end.date)) |>
+    dplyr::filter(between(collect.date, start.date, end.date)) |>
     dplyr::mutate(dplyr::across(dplyr::contains("date"), \(x) lubridate::as_date(x)),
       ctry = ADM0_NAME
     )

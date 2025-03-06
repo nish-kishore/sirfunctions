@@ -2,13 +2,7 @@
 #'
 #' Generate the figures and stitch together a GIF to evaluate emergence group
 #' movement over time, generally aggregated as cumulative per month
-#' @importFrom cli cli_alert cli_alert_info cli_h1 cli_process_done cli_process_start
-#' @importFrom dplyr arrange filter group_by inner_join lag left_join mutate n pull select slice summarise
-#' @importFrom ggplot2 aes coord_sf geom_bar geom_sf geom_vline ggplot ggsave labs scale_fill_brewer theme_bw
-#' @importFrom ggpubr annotate_figure ggarrange
-#' @importFrom lubridate as_date floor_date month year
-#' @importFrom sf st_bbox
-#' @importFrom tidyr expand_grid
+#'
 #' @param emergence_group `str` Designation of the emergence group to review.
 #' @param pos `tibble` Positives data set. This is `raw.data$pos`, which is part of the
 #' output of [get_all_polio_data()].
@@ -49,6 +43,13 @@ create_emergence_group_gif <- function(
   if (!requireNamespace("magick", quietly = TRUE)) {
     stop('Package "magick" must be installed to use this function.',
       .call = FALSE
+    )
+  }
+
+  if (!requireNamespace("ggpubr", quietly = TRUE)) {
+    stop(
+      'Package "ggpubr" must be installed to use this function.',
+      call. = FALSE
     )
   }
 

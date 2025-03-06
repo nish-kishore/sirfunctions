@@ -1,9 +1,7 @@
 #' Calculate EV detection rate function
 #'
 #' Function to calculate the EV detection rate in sites from POLIS.
-#' @importFrom dplyr case_when distinct group_by left_join mutate n select summarize ungroup as_tibble any_of
-#' @importFrom lubridate as_date
-#' @importFrom scales label_percent
+#'
 #' @param es.data `tibble` ES data which includes site name (site.name),
 #' country (ADM0_NAME),
 #' date of collection (collect.date), and a binary ev detection variable (ev.detect)
@@ -71,7 +69,7 @@ f.ev.rate.01 <- function(
 
   # Create site-level summary
   es.sum <- es.data |>
-    dplyr::group_by(.data$ADM0_NAME, .data$site.name) |>
+    dplyr::group_by(ADM0_NAME, site.name) |>
     dplyr::summarize(
       num.samples = dplyr::n(),
       num.ev.pos = sum(ev.detect == 1, na.rm = T)
@@ -97,11 +95,12 @@ f.ev.rate.01 <- function(
     es.sum,
     es.data |>
       dplyr::select(dplyr::any_of(c("site.name",
-                                    "ADM0_NAME","ADM1_NAME", "ADM2_NAME",
-                                    "adm0guid" = "ctry.guid",
-                                    "adm1guid" = "prov.guid",
-                                    "adm2guid" = "dist.guid",
-                                    "lat", "lng"))) |>
+        "ADM0_NAME", "ADM1_NAME", "ADM2_NAME",
+        "adm0guid" = "ctry.guid",
+        "adm1guid" = "prov.guid",
+        "adm2guid" = "dist.guid",
+        "lat", "lng"
+      ))) |>
       dplyr::distinct()
   )
 

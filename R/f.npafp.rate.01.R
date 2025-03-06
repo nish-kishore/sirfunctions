@@ -13,7 +13,7 @@
 #' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @keywords internal
 #'
-#' @return `tibble` A summary table including NPAFP rates and population data.
+#' @returns `tibble` A summary table including NPAFP rates and population data.
 npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
@@ -40,14 +40,14 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
 
   int.data <- afp.data |>
     dplyr::mutate(year = lubridate::year(date)) |>
-    dplyr::group_by(get(geo), .data$year) |>
+    dplyr::group_by(get(geo), year) |>
     dplyr::summarise(
-      n_npafp = sum(.data$cdc.classification.all2 %in% npafp_col),
+      n_npafp = sum(cdc.classification.all2 %in% npafp_col),
       afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
-      num.wpv.cases = sum(.data$wild.1 == TRUE | .data$wild.3 == TRUE, na.rm = T),
-      num.vdpv1.cases = sum(.data$vdpv.1 == TRUE, na.rm = T),
-      num.vdpv2.cases = sum(.data$vdpv.2 == TRUE, na.rm = T),
-      num.vdpv3.cases = sum(.data$vdpv.3 == TRUE, na.rm = T)
+      num.wpv.cases = sum(wild.1 == TRUE | wild.3 == TRUE, na.rm = T),
+      num.vdpv1.cases = sum(vdpv.1 == TRUE, na.rm = T),
+      num.vdpv2.cases = sum(vdpv.2 == TRUE, na.rm = T),
+      num.vdpv3.cases = sum(vdpv.3 == TRUE, na.rm = T)
     ) |>
     dplyr::ungroup()
 
@@ -59,7 +59,7 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
 
   int.data <- dplyr::full_join(int.data, pop.data) |>
     dplyr::left_join(year.data) |>
-    dplyr::mutate(npafp_rate = .data$n_npafp / .data$u15pop * 100000 / .data$weight) |>
+    dplyr::mutate(npafp_rate = n_npafp / u15pop * 100000 / weight) |>
     dplyr::select(dplyr::all_of(c(
       "year", "n_npafp", "u15pop",
       "afp.case", "num.wpv.cases", "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases",
@@ -67,7 +67,7 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
       "earliest_date", "latest_date", "npafp_rate",
       pop_cols
     ))) |>
-    arrange(!!!dplyr::syms(spatial_scale), .data$year)
+    arrange(!!!dplyr::syms(spatial_scale), year)
 
   return(int.data)
 }
@@ -87,7 +87,7 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
 #' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @keywords internal
 #'
-#' @return A summary table including NPAFP rates and population data.
+#' @returns A summary table including NPAFP rates and population data.
 npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial_scale, pending) {
   # static local vars
   names.ctry <- c("adm0guid", "year", "ctry")
@@ -111,7 +111,7 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
   # Calculate par
   par.data <- year.pop.data |>
     dplyr::group_by(get(geo)) |>
-    summarise(par = sum(.data$weight * .data$u15pop)) |>
+    summarise(par = sum(weight * u15pop)) |>
     ungroup()
 
   if (pending) {
@@ -124,14 +124,14 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
   int.data <- afp.data |>
     dplyr::group_by(get(geo)) |>
     dplyr::summarise(
-      n_npafp = sum(.data$cdc.classification.all2 %in% npafp_col),
-      earliest_date = min(.data$earliest_date),
-      latest_date = max(.data$latest_date),
+      n_npafp = sum(cdc.classification.all2 %in% npafp_col),
+      earliest_date = min(earliest_date),
+      latest_date = max(latest_date),
       afp.case = sum(!is.na(cdc.classification.all2), na.rm = T),
-      num.wpv.cases = sum(.data$wild.1 == TRUE | .data$wild.3 == TRUE, na.rm = T),
-      num.vdpv1.cases = sum(.data$vdpv.1 == TRUE, na.rm = T),
-      num.vdpv2.cases = sum(.data$vdpv.2 == TRUE, na.rm = T),
-      num.vdpv3.cases = sum(.data$vdpv.3 == TRUE, na.rm = T)
+      num.wpv.cases = sum(wild.1 == TRUE | wild.3 == TRUE, na.rm = T),
+      num.vdpv1.cases = sum(vdpv.1 == TRUE, na.rm = T),
+      num.vdpv2.cases = sum(vdpv.2 == TRUE, na.rm = T),
+      num.vdpv3.cases = sum(vdpv.3 == TRUE, na.rm = T)
     ) |>
     dplyr::ungroup() |>
     dplyr::mutate(days.at.risk = as.numeric(end_date - start_date + 1))
@@ -147,7 +147,7 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
   )
 
   int.data <- int.data |>
-    dplyr::mutate(npafp_rate = .data$n_npafp / .data$par * 100000)
+    dplyr::mutate(npafp_rate = n_npafp / par * 100000)
 
   # Get population information
   int.data <- int.data |>
@@ -166,9 +166,6 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' Calculate the NPAFP rate from POLIS data. Can either pass `raw.data` to calculate NPAFP rates
 #' on the global dataset, or a `ctry.data` dataset.
 #'
-#' @import dplyr
-#' @import lubridate
-#' @import tidyr
 #' @param afp.data `tibble` AFP data which includes GUID at a given spatial scale
 #' formatted as `adm(0,1,2)guid`, onset date as `date` and `cdc.classification.all2` which includes
 #' `"NPAFP", "PENDING", "LAB PENDING"`. This is either `ctry.data$afp.all.2` of [extract_country_data()] or
@@ -199,7 +196,6 @@ f.npafp.rate.01 <- function(
     missing_agemonths = F,
     rolling = F,
     sp_continuity_validation = T) {
-
   # Check if afp.data and pop.data has arguments
   if (!(hasArg(afp.data) & hasArg(pop.data))) {
     stop("Please include both afp.data and pop.data as arguments to the function.")
@@ -209,6 +205,12 @@ f.npafp.rate.01 <- function(
   names.ctry <- c("adm0guid", "year", "ctry")
   names.prov <- c(names.ctry, "adm1guid", "prov")
   names.dist <- c(names.prov, "adm2guid", "dist")
+
+  # Choose columns
+  names_geo <- switch(spatial.scale,
+                      "ctry" = names.ctry,
+                      "prov" = names.prov,
+                      "dist" = names.dist)
 
   # Ensure that if using raw.data, required renamed columns are present. Borrowed from
   # extract.country.data()
@@ -316,9 +318,27 @@ f.npafp.rate.01 <- function(
   }
 
   # Filter AFP and population data based on start and end dates
-  afp.data <- afp.data |>
-    dplyr::filter(dplyr::between(date, start.date, end.date), age.months < 180,
-                  cdc.classification.all2 != "NOT-AFP")
+  afp.data <- afp.data |> dplyr::filter(cdc.classification.all2 != "NOT-AFP")
+  if (missing_agemonths) {
+    afp.data <- afp.data |>
+      dplyr::filter(dplyr::between(date, start.date, end.date),
+                    (age.months < 180 | is.na(age.months))
+      )
+  } else {
+    if (nrow(agemonth_summary) > 0) {
+      cli::cli_alert_warning(paste0(
+        "Proportion of cases missing `age.months`",
+        "for some combinations of ", paste(names_geo, collapse = ", "),
+        " range between ", min(agemonth_summary$prop) * 100, "-",
+        max(agemonth_summary$prop) * 100, "%",
+        ".\nCheck if toggling missing_agemonths = TRUE is warranted.",
+        "\nRun check_missing_rows() on the dataset for specifics on missingness."
+      ))
+    }
+    afp.data <- afp.data |>
+      dplyr::filter(dplyr::between(date, start.date, end.date),
+                    age.months < 180)
+  }
 
 
   # Only years of analysis
@@ -363,15 +383,21 @@ f.npafp.rate.01 <- function(
   } else {
     int.data <- suppressMessages(npafp_year(afp.data, pop.data, year.data, spatial.scale, pending))
     int.data <- int.data |>
-      dplyr::filter(!is.na(.data$year))
+      dplyr::filter(!is.na(year))
   }
 
-  numeric_cols <- c("n_npafp", "u15pop", "npafp_rate", "par",
-                    "afp.case", "num.wpv.cases",
-                    "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases")
+  numeric_cols <- c(
+    "n_npafp", "u15pop", "npafp_rate", "par",
+    "afp.case", "num.wpv.cases",
+    "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases"
+  )
   int.data <- int.data |>
-    dplyr::mutate(dplyr::across(dplyr::any_of(numeric_cols),
-                                \(x) tidyr::replace_na(x, 0)))
+    dplyr::mutate(dplyr::across(
+      dplyr::any_of(numeric_cols),
+      \(x) tidyr::replace_na(x, 0)
+    )) |>
+    # in rare cases of duplicate pop records
+    dplyr::distinct()
 
   return(int.data)
 }

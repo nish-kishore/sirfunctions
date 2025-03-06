@@ -26,9 +26,11 @@ This function was used primarily with \code{\link[=generate_prov_timeliness_grap
 function is not used anymore.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
 prov.labels <- generate_prov_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+}
 
 }
 \keyword{internal}

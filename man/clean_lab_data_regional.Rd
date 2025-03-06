@@ -38,8 +38,10 @@ indicator script.
 \dontrun{
 lab_path <- "C:/Users/XRG9/lab_data_region.csv"
 ctry.data <- init_dr("algeria", lab_data_path = lab_path)
-ctry.data$lab_data <- clean_lab_data_regional(lab.data, "2021-01-01", "2023-12-31",
-ctry.data$afp.all.2, "algeria")
+ctry.data$lab_data <- clean_lab_data_regional(
+  lab.data, "2021-01-01", "2023-12-31",
+  ctry.data$afp.all.2, "algeria"
+)
 
 # Not using the desk review pipeline
 raw.data <- get_all_polio_data()

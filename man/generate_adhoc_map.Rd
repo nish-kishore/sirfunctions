@@ -16,6 +16,7 @@ generate_adhoc_map(
   new_detect_expand = F,
   start_date = NULL,
   end_date = NULL,
+  emg_cols = NULL,
   output = NULL,
   image_size = NULL,
   height = 6.2,
@@ -61,6 +62,9 @@ Options:
 
 \item{end_date}{\code{str} End date. If not specified, defaults to the download date of raw.data.}
 
+\item{emg_cols}{\code{list} A named list with all of the emergence colors. Defaults to \code{NULL}, which will download
+using \code{\link[=set_emergence_colors]{set_emergence_colors()}}.}
+
 \item{output}{\code{str} Either a path to a local folder to save the map to, \code{"sharepoint"}, or \code{NULL}. Defaults to \code{NULL}.}
 
 \item{image_size}{\code{str} Standard sizes of the map outputs. Options are:
@@ -89,11 +93,11 @@ Creates a map of recent emergences. The default will display outbreaks from the 
 \examples{
 \dontrun{
 raw.data <- get_all_polio_data()
-p1 <- generate_adhoc_map(raw.data, c("nigeria", "chad"))
+p1 <- generate_adhoc_map(raw.data, "algeria")
 # Put colors in emergences that don't have a mapped color
 emg_cols <- set_emergence_colors(raw.data, c("nigeria", "chad"))
 emg_cols["NIE-BOS-1"] <- "yellow"
 emg_cols["NIE-YBS-1"] <- "green"
-p2 <- p1 + ggplot2::scale_color_manual(name = "Emergence Group", values = emg_cols)
+p2 <- generate_adhoc_map(raw.data, c("nigeria", "chad"), emg_cols = emg_cols)
 }
 }

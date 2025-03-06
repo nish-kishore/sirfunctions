@@ -30,7 +30,13 @@ generate_int_data(
 \item{lab_data_summary}{\code{tibble} Summarized lab data, if available. This parameter will calculate timeliness intervals in the lab. Otherwise,
 only the field component will be presented. This is the output of \code{\link[=generate_lab_timeliness]{generate_lab_timeliness()}}.}
 
-\item{ctry.data}{\code{list} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+\item{ctry.data}{\code{list} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}}
+
+\item{spatial.scale}{\code{str} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor
+of \code{spatial_scale}.}
+
+\item{lab.data}{\code{tibble} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\code{lab_data_summary}.
 
 Passing ctry.data has been deprecated in favor of independently assigning the AFP dataset to
 afp.data and the population dataset to pop.data. This allows the function to run either on
@@ -50,17 +56,23 @@ sent to lab.
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
 # lab data not attached
-int.data <- generate_int_data(raw.data$afp, raw.data$ctry.pop,
-                              "2021-01-01", "2023-12-31", "ctry")
+int.data <- generate_int_data(
+  raw.data$afp, raw.data$ctry.pop,
+  "2021-01-01", "2023-12-31", "ctry"
+)
 
 # If lab data is available. Assume ctry.data is loaded.
 lab_path <- "C:/Users/ABC1/Desktop/algeria_lab.csv"
 lab.data <- readr::read_csv(lab_path)
-lab.data.summary <- generate_lab_timeliness(lab.data, "ctry",
-                                            "2021-01-01", "2023-12-31")
-int.data <- generate_int_data(ctry.data$afp.all.2, ctry.data$ctry.pop,
-                              "2021-01-01", "2023-12-31", "ctry",
-                              lab.data.summary)
+lab.data.summary <- generate_lab_timeliness(
+  lab.data, "ctry",
+  "2021-01-01", "2023-12-31"
+)
+int.data <- generate_int_data(
+  ctry.data$afp.all.2, ctry.data$ctry.pop,
+  "2021-01-01", "2023-12-31", "ctry",
+  lab.data.summary
+)
 }
 
 }

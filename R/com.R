@@ -3,8 +3,7 @@
 #' Send a message on Microsoft Teams
 #'
 #' Helper function to send message to validated MS Teams interface.
-#' @import Microsoft365R
-#' @import AzureAuth
+#'
 #' @param msg `str` Message to be sent.
 #' @param team_id `str` Teams ID. Defaults to `"CGH-GID-PEB-SIR"`.
 #' @param channel `str` Channel where message should be sent.
@@ -19,6 +18,13 @@
 #'
 #' @export
 send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE 2.0", attach = NULL, type = "text") {
+  if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
+    stop(
+      'Package "Microsoft365R" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   team <- Microsoft365R::get_team(team_id)
 
   channel <- team$get_channel(channel)
@@ -33,8 +39,7 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #' Upload file to Sharepoint
 #'
 #' Helper function to upload file to MS SharePoint
-#' @import Microsoft365R
-#' @import AzureAuth
+#'
 #' @param file_to_upload `str` Local path of files to be uploaded.
 #' @param sharepoint_file_loc `str` Location in SharePoint to upload file.
 #' @param site `str` SharePoint site location. Defaults to `"CGH-GID-PEB"`
@@ -50,6 +55,13 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #'
 #' @export
 upload_to_sharepoint <- function(file_to_upload, sharepoint_file_loc, site = "https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283", drive = "Documents") {
+  if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
+    stop(
+      'Package "Microsoft365R" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   tokens <- AzureAuth::list_azure_tokens()
 
   token_hash_names <- tokens |> names()
@@ -102,6 +114,13 @@ send_outlook_email <- function(title, body, recipient, attachment = NULL) {
   if (!requireNamespace("blastula", quietly = TRUE)) {
     stop('Package "blastula" must be installed to use this function.',
       .call = FALSE
+    )
+  }
+
+  if (!requireNamespace("Microsoft365R", quietly = TRUE)) {
+    stop(
+      'Package "Microsoft365R" must be installed to use this function.',
+      call. = FALSE
     )
   }
 

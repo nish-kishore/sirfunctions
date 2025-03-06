@@ -3,8 +3,7 @@
 #' Checks for missing geographic data
 #' @description checks the AFP dataset for rows with missing geographic data.
 #' It checks for missing data based on the scale passed through spatial.scale.
-#' @importFrom dplyr filter
-#' @importFrom cli cli_alert_warning
+#'
 #' @param afp.data tibble containing AFP data
 #' @param spatial.scale what geographic level to check for. Valid values are "ctry","prov", "dist".
 #' @keywords internal
@@ -35,7 +34,7 @@ check_missing_geo <- function(afp.data, spatial.scale) {
 #'
 #' @param afp.data tibble of AFP data
 #' @keywords internal
-#' @import cli dplyr
+#'
 #' @returns tibble of AFP data with filled district data
 impute_dist_afp <- function(afp.data) {
   cli::cli_process_start("Filling in missing district data in the AFP linelist")
@@ -151,7 +150,7 @@ impute_dist_afp <- function(afp.data) {
 #' Convert character date columns to date columns in the AFP linelist
 #'
 #' @param afp.data tibble: AFP data
-#' @import cli dplyr
+#'
 #' @keywords internal
 #' @returns AFP linelist with converted date columns and additional timeliness cols
 col_to_datecol <- function(afp.data) {
@@ -176,10 +175,16 @@ col_to_datecol <- function(afp.data) {
 #' Add columns in the AFP data for number of doses and dose category
 #'
 #' @param afp.data AFP linelist (specifically, afp.all.2)
-#' @import cli dplyr
+#'
 #' @keywords internal
 #' @returns tibble with AFP data with columns for number of doses and dose category
 add_zero_dose_col <- function(afp.data) {
+  if (!requireNamespace("forcats", quietly = TRUE)) {
+    stop(
+      'Package "forcats" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
   cli::cli_process_start("Cleaning and adding columns for zero-dose children data")
   afp.data <- afp.data %>%
     dplyr::mutate(dplyr::across(
@@ -251,7 +256,7 @@ add_zero_dose_col <- function(afp.data) {
 
 
 #' Create age group categories
-#' @import cli dplyr
+#'
 #' @param age.months column containing age in months
 #' @keywords internal
 #' @returns a column containing age group categories
@@ -275,7 +280,7 @@ add_age_group <- function(age.months) {
 }
 
 #' Add province name back to those without district names
-#' @import dplyr
+#'
 #' @param npafp.output tibble output after running f.npafp.rate.01 at the district
 #' level
 #' @keywords internal
@@ -294,10 +299,11 @@ add_prov_npafp_table <- function(npafp.output) {
 
 #' Generate AFP case count summary
 #'
-#' Summarize AFP case counts by month and another grouping variable.
+#' @description
 #' `r lifecycle::badge("stable")`
-#' @import dplyr tidyr lubridate
-#' @importFrom zoo as.yearmon
+#'
+#' Summarize AFP case counts by month and another grouping variable.
+#'
 #' @param afp_data `tibble` AFP dataset.
 #' @param pop_data `tibble` Population dataset.
 #' @param start_date `str` Start date of analysis.
@@ -310,14 +316,21 @@ add_prov_npafp_table <- function(npafp.output) {
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' afp.by.month <- generate_afp_by_month_summary(
-#'   raw.data$afp, raw.data$ctry.pop,
-#'   "2021-01-01", "2023-12-31", "ctry"
+#'   raw.data$afp, "2021-01-01", "2023-12-31", "ctry",
+#'   raw.data$ctry.pop
 #' )
 #'
 #' @export
 generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
                                           pop_data = NULL,
                                           ctry.data = lifecycle::deprecated()) {
+  if (!requireNamespace("zoo", quietly = TRUE)) {
+    stop(
+      'Package "zoo" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   if (lifecycle::is_present(ctry.data)) {
     lifecycle::deprecate_warn(
       when = "1.3.0",
@@ -349,36 +362,40 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
   end_date <- lubridate::as_date(end_date)
 
   afp_data <- dplyr::rename_with(afp_data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
   )
 
   if (!is.null(pop_data)) {
     pop_data <- dplyr::rename_with(pop_data, recode,
-                                   u15pop.prov = "u15pop",
-                                   ADM0_NAME = "ctry",
-                                   ADM1_NAME = "prov",
-                                   ADM2_NAME = "dist")
+      u15pop.prov = "u15pop",
+      ADM0_NAME = "ctry",
+      ADM1_NAME = "prov",
+      ADM2_NAME = "dist"
+    )
     pop_data <- pop_data |>
       dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)))
 
     mon_year <- dplyr::tibble(
       mon.year = seq(lubridate::floor_date(start_date, "month"), end_date, by = "month"),
-      year = lubridate::year(.data$mon.year)) |>
+      year = lubridate::year(mon.year)
+    ) |>
       dplyr::full_join(pop_data)
   }
 
   afp_data <- afp_data |>
-    dplyr::filter(cdc.classification.all2 != "NOT-AFP",
-                  # NOTE: this also filters NA values
-                  dplyr::between(date, start_date, end_date)) |>
+    dplyr::filter(
+      cdc.classification.all2 != "NOT-AFP",
+      # NOTE: this also filters NA values
+      dplyr::between(date, start_date, end_date)
+    ) |>
     dplyr::mutate(mon.year = lubridate::floor_date(date, "month"))
 
   afp_summary <- switch(by,
@@ -388,7 +405,7 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
         dplyr::summarize(cases = dplyr::n()) |>
         dplyr::ungroup() |>
         dplyr::full_join(mon_year |>
-                           dplyr::select("mon.year", "year", "ctry", "adm0guid", "u15pop")) |>
+          dplyr::select("mon.year", "year", "ctry", "adm0guid", "u15pop")) |>
         tidyr::replace_na(list(cases = 0))
     },
     "prov" = {
@@ -397,7 +414,7 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
         dplyr::summarize(cases = dplyr::n()) |>
         dplyr::ungroup() |>
         dplyr::full_join(mon_year |>
-                            select("mon.year", "year", "ctry", "prov", "adm1guid", "u15pop")) |>
+          select("mon.year", "year", "ctry", "prov", "adm1guid", "u15pop")) |>
         tidyr::replace_na(list(cases = 0))
     },
     "dist" = {
@@ -406,17 +423,19 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
         dplyr::summarize(cases = dplyr::n()) |>
         dplyr::ungroup() |>
         dplyr::full_join(mon_year |>
-                            select("mon.year", "year", "ctry", "prov", "dist", "adm2guid", "u15pop")) |>
+          select("mon.year", "year", "ctry", "prov", "dist", "adm2guid", "u15pop")) |>
         tidyr::replace_na(list(cases = 0))
     },
     "year" = {
       afp_data |>
-        dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
-        dplyr::group_by(.data$year) |>
+        dplyr::filter(dplyr::between(date, start_date, end_date)) |>
+        dplyr::group_by(year) |>
         dplyr::summarize(afp.case = dplyr::n()) |>
         dplyr::ungroup() |>
-        dplyr::full_join(dplyr::tibble(year = seq(lubridate::year(start_date),
-                                                  lubridate::year(end_date)))) |>
+        dplyr::full_join(dplyr::tibble(year = seq(
+          lubridate::year(start_date),
+          lubridate::year(end_date)
+        ))) |>
         tidyr::replace_na(list(afp.case = 0))
     }
   )
@@ -424,7 +443,7 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
   if (by != "year") {
     afp_summary <- afp_summary |>
       dplyr::mutate(
-        mon.year = lubridate::as_date(zoo::as.yearmon(.data$mon.year, "%b-%y")),
+        mon.year = lubridate::as_date(zoo::as.yearmon(mon.year, "%b-%y")),
         case.cat = dplyr::case_when(
           cases == 0 ~ "0",
           cases == 1 ~ "1",
@@ -432,15 +451,15 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
           cases >= 6 & cases < 10 ~ "6-9",
           cases >= 10 ~ "10+"
         ),
-        year = lubridate::year(.data$mon.year),
-        mononset = lubridate::month(.data$mon.year)
+        year = lubridate::year(mon.year),
+        mononset = lubridate::month(mon.year)
       ) |>
       dplyr::mutate(case.cat = factor(
-        .data$case.cat,
+        case.cat,
         levels = c("0", "1", "2-5", "6-9", "10+"),
         labels = c("0", "1", "2-5", "6-9", "10+")
       )) |>
-      dplyr::filter(!is.na(.data$year))
+      dplyr::filter(!is.na(year))
   }
 
   return(afp_summary)
@@ -453,7 +472,6 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
 #' by default, the function will return only the timeliness intervals up to when the samples were
 #' sent to lab.
 #'
-#' @import dplyr lubridate tidyr
 #' @param afp_data `tibble` AFP dataset.
 #' @param pop_data `tibble` Population dataset that matches the spatial scale.
 #' @param start_date `str` Start date of analysis.
@@ -462,6 +480,10 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
 #' @param lab_data_summary `tibble` Summarized lab data, if available. This parameter will calculate timeliness intervals in the lab. Otherwise,
 #' only the field component will be presented. This is the output of [generate_lab_timeliness()].
 #' @param ctry.data `list` `r lifecycle::badge("deprecated") `
+#' @param spatial.scale `str` `r lifecycle::badge("deprecated")` Renamed in favor
+#' of `spatial_scale`.
+#' @param lab.data `tibble` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' `lab_data_summary`.
 #'
 #' Passing ctry.data has been deprecated in favor of independently assigning the AFP dataset to
 #' afp.data and the population dataset to pop.data. This allows the function to run either on
@@ -472,17 +494,23 @@ generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' # lab data not attached
-#' int.data <- generate_int_data(raw.data$afp, raw.data$ctry.pop,
-#'                               "2021-01-01", "2023-12-31", "ctry")
+#' int.data <- generate_int_data(
+#'   raw.data$afp, raw.data$ctry.pop,
+#'   "2021-01-01", "2023-12-31", "ctry"
+#' )
 #'
 #' # If lab data is available. Assume ctry.data is loaded.
 #' lab_path <- "C:/Users/ABC1/Desktop/algeria_lab.csv"
 #' lab.data <- readr::read_csv(lab_path)
-#' lab.data.summary <- generate_lab_timeliness(lab.data, "ctry",
-#'                                             "2021-01-01", "2023-12-31")
-#' int.data <- generate_int_data(ctry.data$afp.all.2, ctry.data$ctry.pop,
-#'                               "2021-01-01", "2023-12-31", "ctry",
-#'                               lab.data.summary)
+#' lab.data.summary <- generate_lab_timeliness(
+#'   lab.data, "ctry",
+#'   "2021-01-01", "2023-12-31"
+#' )
+#' int.data <- generate_int_data(
+#'   ctry.data$afp.all.2, ctry.data$ctry.pop,
+#'   "2021-01-01", "2023-12-31", "ctry",
+#'   lab.data.summary
+#' )
 #' }
 #'
 #' @seealso [clean_ctry_data()]
@@ -492,10 +520,11 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
                               ctry.data = lifecycle::deprecated(),
                               spatial.scale = lifecycle::deprecated(),
                               lab.data = lifecycle::deprecated()) {
-
-   if (lifecycle::is_present(spatial.scale)) {
-    lifecycle::deprecate_warn("1.3.0", "generate_int_data(spatial.scale)",
-                              "generate_int_data(spatial_scale)")
+  if (lifecycle::is_present(spatial.scale)) {
+    lifecycle::deprecate_warn(
+      "1.3.0", "generate_int_data(spatial.scale)",
+      "generate_int_data(spatial_scale)"
+    )
     spatial_scale <- spatial.scale
     if (!spatial_scale %in% c("ctry", "prov")) {
       cli::cli_abort('Only "ctry" and "prov" spatial scales are supported at this time.')
@@ -506,19 +535,24 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     lifecycle::deprecate_warn(
       when = "1.3.0",
       what = "generate_int_data(ctry.data)",
-      details = paste0("Ability to pass a list with AFP and pop data will be deprecated.",
-                       " Please pass datasets directly to the afp_data and pop_data parameters.")
+      details = paste0(
+        "Ability to pass a list with AFP and pop data will be deprecated.",
+        " Please pass datasets directly to the afp_data and pop_data parameters."
+      )
     )
     afp_data <- ctry.data$afp.all.2
     pop_data <- switch(spatial_scale,
-                       "ctry" = ctry.data$ctry.pop,
-                       "prov" = ctry.data$prov.pop)
+      "ctry" = ctry.data$ctry.pop,
+      "prov" = ctry.data$prov.pop
+    )
     check_spatial_scale(pop_data, spatial_scale)
   }
 
   if (lifecycle::is_present(lab.data)) {
-    lifecycle::deprecate_warn("1.3.0", "generate_int_data(lab.data)",
-                              "generate_int_data(lab_data_summary)")
+    lifecycle::deprecate_warn(
+      "1.3.0", "generate_int_data(lab.data)",
+      "generate_int_data(lab_data_summary)"
+    )
     lab_data_summary <- lab.data
   }
 
@@ -526,22 +560,22 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
   # extract.country.data()
 
   afp_data <- dplyr::rename_with(afp_data, recode,
-                                 place.admin.0 = "ctry",
-                                 place.admin.1 = "prov",
-                                 place.admin.2 = "dist",
-                                 person.sex = "sex",
-                                 dateonset = "date",
-                                 yronset = "year",
-                                 datenotify = "date.notify",
-                                 dateinvest = "date.invest",
-                                 cdc.classification.all = "cdc.class"
+    place.admin.0 = "ctry",
+    place.admin.1 = "prov",
+    place.admin.2 = "dist",
+    person.sex = "sex",
+    dateonset = "date",
+    yronset = "year",
+    datenotify = "date.notify",
+    dateinvest = "date.invest",
+    cdc.classification.all = "cdc.class"
   )
   pop_data <- dplyr::rename_with(pop_data, recode,
-                                 ADM0_NAME = "ctry",
-                                 ADM1_NAME = "prov",
-                                 ADM2_NAME = "dist",
-                                 ADM0_GUID = "adm0guid",
-                                 u15pop.prov = "u15pop"
+    ADM0_NAME = "ctry",
+    ADM1_NAME = "prov",
+    ADM2_NAME = "dist",
+    ADM0_GUID = "adm0guid",
+    u15pop.prov = "u15pop"
   )
 
   if (!"daysstooltolab" %in% names(afp_data)) {
@@ -553,8 +587,10 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
   afp_data <- afp_data |>
-    dplyr::filter(dplyr::between(date, start_date, end_date),
-                  .data$cdc.classification.all2 != "NOT-AFP")
+    dplyr::filter(
+      dplyr::between(date, start_date, end_date),
+      cdc.classification.all2 != "NOT-AFP"
+    )
 
   select_criteria <- NULL
   select_criteria <- switch(spatial_scale,
@@ -579,7 +615,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     "ctry" = {
       int.data <- afp_data |>
         dplyr::mutate(year = lubridate::year(date)) |>
-        dplyr::group_by(.data$adm0guid, .data$year) |>
+        dplyr::group_by(adm0guid, year) |>
         dplyr::select(any_of(select_criteria)) |>
         dplyr::mutate(dplyr::across(
           dplyr::any_of(as_num_conversion), \(x) as.numeric(x)
@@ -588,7 +624,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     "prov" = {
       int.data <- afp_data |>
         dplyr::mutate(year = lubridate::year(date)) |>
-        dplyr::group_by(.data$adm1guid, .data$year) |>
+        dplyr::group_by(adm1guid, year) |>
         dplyr::select(dplyr::any_of(select_criteria)) |>
         dplyr::mutate(dplyr::across(
           dplyr::any_of(as_num_conversion), \(x) as.numeric(x)
@@ -603,7 +639,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
           names_to = "type",
           values_to = "value"
         ) |>
-        dplyr::group_by(.data$year, .data$type, .data$adm0guid, .data$ctry) |>
+        dplyr::group_by(year, type, adm0guid, ctry) |>
         dplyr::summarize(
           medi = median(value, na.rm = T),
           freq = sum(!is.na(value))
@@ -616,8 +652,10 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
           names_to = "type",
           values_to = "value"
         ) |>
-        dplyr::group_by(.data$year, .data$type, .data$adm1guid,
-                        .data$prov, .data$ctry) |>
+        dplyr::group_by(
+          year, type, adm1guid,
+          prov, ctry
+        ) |>
         dplyr::summarize(
           medi = median(value, na.rm = T),
           freq = sum(!is.na(value))
@@ -626,15 +664,16 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
   )
 
   if (!is.null(lab_data_summary)) {
-
     tryCatch(
       {
         int.data <- dplyr::bind_rows(lab_data_summary, int.data)
       },
       error = function(e) {
-        error_message <- paste0("It seems like lab_data_summary have empty ",
-                                "geographies. Make sure to run generate_lab_timeliness() ",
-                                "with cleaned lab data that has geographic info.")
+        error_message <- paste0(
+          "It seems like lab_data_summary have empty ",
+          "geographies. Make sure to run generate_lab_timeliness() ",
+          "with cleaned lab data that has geographic info."
+        )
         cli::cli_abort(error_message)
       }
     )
@@ -666,7 +705,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     )
     int.data.filter <- int.data |>
       dplyr::filter(type %in% who.additional.cols) |>
-      dplyr::summarise(sum = sum(.data$medi)) |>
+      dplyr::summarise(sum = sum(medi)) |>
       dplyr::pull()
 
     if (is.na(sum(int.data.filter))) {
@@ -714,7 +753,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
       "days.itd.arriveseq",
       "days.seq.rec.res"
     )) |>
-    dplyr::mutate(type = ordered(.data$type,
+    dplyr::mutate(type = ordered(type,
       levels = names(levs),
       labels = levs
     )) |>
@@ -725,35 +764,40 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     dplyr::select(dplyr::where(function(x) !all(is.na(x))))
 
   labs <- switch(spatial_scale,
-                 "ctry" = {
-                   afp_data |>
-                     dplyr::filter(
-                       dplyr::between(.data$date, start_date, end_date),
-                       cdc.classification.all2 != "NOT-AFP"
-                     ) |>
-                     dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
-                     dplyr::mutate(labs = paste0(
-                       year,
-                       " (N=", n, ")"
-                     ))
-                 },
-                 "prov" = {
-                   afp_data |>
-                     dplyr::filter(
-                       dplyr::between(.data$date, start_date, end_date)
-                       ) |>
-                     dplyr::count(.data$prov, .data$adm1guid, .data$year) |>
-                     dplyr::mutate(labs = paste0(
-                       year,
-                       " (N=", n, ")"
-                     ))
-                 })
+    "ctry" = {
+      afp_data |>
+        dplyr::filter(
+          dplyr::between(date, start_date, end_date),
+          cdc.classification.all2 != "NOT-AFP"
+        ) |>
+        dplyr::count(ctry, adm0guid, year) |>
+        dplyr::mutate(labs = paste0(
+          year,
+          " (N=", n, ")"
+        ))
+    },
+    "prov" = {
+      afp_data |>
+        dplyr::filter(
+          dplyr::between(date, start_date, end_date)
+        ) |>
+        dplyr::count(prov, adm1guid, year) |>
+        dplyr::mutate(labs = paste0(
+          year,
+          " (N=", n, ")"
+        ))
+    }
+  )
 
   int.data <- suppressMessages(dplyr::left_join(int.data, labs))
-  int.data <- int.data |> filter(!is.na(.data$type), !is.na(.data$ctry),
-                                 dplyr::between(.data$year,
-                                                lubridate::year(start_date),
-                                                lubridate::year(end_date)))
+  int.data <- int.data |> filter(
+    !is.na(type), !is.na(ctry),
+    dplyr::between(
+      year,
+      lubridate::year(start_date),
+      lubridate::year(end_date)
+    )
+  )
 
   return(int.data)
 }
@@ -764,7 +808,6 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 #' summarizes the number of cases due for follow up, those with recorded follow ups, number missing
 #' follow ups, and compatible cases.
 #'
-#' @import dplyr lubridate
 #' @param stool.data `tibble` AFP data with stool adequacy columns. This is the output of
 #' [generate_stool_data()].
 #' @param start_date `str` Start date of analysis.
@@ -819,8 +862,8 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
       need60.sys.date = Sys.Date()
     ) |> # needed to record when the table was created
     dplyr::filter(dplyr::between(date, start_date, end_date)) |>
-    dplyr::mutate(need60day.v2 = dplyr::if_else(.data$adequacy.final == "Inadequate" &
-      .data$due.60followup == 1, 1, 0)) |>
+    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final == "Inadequate" &
+      due.60followup == 1, 1, 0)) |>
     # dplyr::filter(need60day.v2 == 1 |
     #   cdc.classification.all2 == "COMPATIBLE") |>
     dplyr::mutate(
@@ -933,7 +976,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #'
 #' Creates a table of compatible and potentially compatible cases, with an
 #' optional parameter to run a clustering algorithm.
-#' @import dplyr
+#'
 #' @param cases.need60day `tibble` Summary table of cases that need 60-day follow-up.
 #' This is the output of [generate_60_day_table_data()].
 #' @param create_cluster `bool` Add column for clusters? Default to `FALSE`.
@@ -952,6 +995,13 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #'
 #' @export
 generate_potentially_compatibles_cluster <- function(cases.need60day, create_cluster = F) {
+  if (!requireNamespace("vctrs", quietly = TRUE)) {
+    stop(
+      'Package "vctrs" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   pot.c.clust <- cases.need60day |>
     dplyr::filter(pot.compatible == 1 | classification == "Compatible") |>
     dplyr::mutate(
@@ -1007,7 +1057,6 @@ generate_potentially_compatibles_cluster <- function(cases.need60day, create_clu
 #' Performs a check for different errors in the AFP linelist and population files.
 #' It also alerts the users for GUIDs that have changed.
 #'
-#' @import cli writexl
 #' @param ctry.data `list` Large list containing polio country data. This is the output of
 #' [extract_country_data()] or [init_dr()].
 #' @param error_path `str` Path where to store checks in `ctry.data`.
@@ -1020,6 +1069,13 @@ generate_potentially_compatibles_cluster <- function(cases.need60day, create_clu
 #' @export
 ctry_data_errors <- function(ctry.data,
                              error_path = Sys.getenv("DR_ERROR_PATH")) {
+  if (!requireNamespace("writexl", quietly = TRUE)) {
+    stop(
+      'Package "writexl" must be installed to use this function.',
+      call. = FALSE
+    )
+  }
+
   message("Checking for data quality issues")
 
   # afp.all.2
@@ -1075,7 +1131,7 @@ ctry_data_errors <- function(ctry.data,
 #' missing districts, convert character date columns to a date data type, calculates
 #' age group, add columns for the number of doses per case, and cleans the environmental
 #' surveillance data.
-#' @import cli dplyr
+#'
 #' @param ctry.data `list` Large list containing polio country data. This is the output of
 #' [extract_country_data()] or [init_dr()].
 #'
@@ -1115,8 +1171,6 @@ clean_ctry_data <- function(ctry.data) {
 #'
 #' Unlike the stool adequacy function, this will not filter out `NOT-AFP` cases, as it is expected for other functions
 #' that use the output of this function to do the filtering. For example, [generate_60_day_table_data()].
-#'
-#' @import dplyr lubridate
 #'
 #' @param afp.data `tibble` AFP linelist. Either `ctry.data$afp.all.2`
 #' @param start_date `str` Start date of the analysis.
@@ -1168,7 +1222,7 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
     },
     "inadequate" = {
       stool.data |>
-        dplyr::mutate(adequacy.final = dplyr::if_else(.data$adequacy.final == 77, 0, .data$adequacy.final))
+        dplyr::mutate(adequacy.final = dplyr::if_else(adequacy.final == 77, 0, adequacy.final))
     }
   )
 
@@ -1177,16 +1231,16 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
   stool.data <- switch(missing,
     "good" = {
       stool.data |>
-        dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.03, .data$adequacy.final))
+        dplyr::mutate(adequacy.final2 = dplyr::if_else(adequacy.final == 99, adequacy.03, adequacy.final))
     },
     "bad" = {
       stool.data |>
-        dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.01, .data$adequacy.final))
+        dplyr::mutate(adequacy.final2 = dplyr::if_else(adequacy.final == 99, adequacy.01, adequacy.final))
     },
     "exclude" = {
       cli::cli_alert_warning("AFP cases with missing adequacy excluded from stool adequacy calculation.")
       stool.data |>
-        dplyr::mutate(adequacy.final2 = dplyr::if_else(.data$adequacy.final == 99, .data$adequacy.02, .data$adequacy.final))
+        dplyr::mutate(adequacy.final2 = dplyr::if_else(adequacy.final == 99, adequacy.02, adequacy.final))
     }
   )
 
@@ -1227,25 +1281,27 @@ generate_stool_data <- function(afp.data, start_date, end_date, missing = "good"
 #' @param end_date `str` End date of analysis.
 #' @returns `tibble` A table containing summary of AFP cases by year and country.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.labels <- generate_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+#' }
 #'
 #' @keywords internal
 generate_year_lab <- function(ctry.data, start_date, end_date) {
-
   lifecycle::deprecate_warn("1.0.0", "generate_year_lab()",
-                            details = "This function is not used in the desk review.")
+    details = "This function is not used in the desk review."
+  )
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   afp.year.lab <- ctry.data$afp.all.2 |>
     dplyr::filter(
-      dplyr::between(.data$date, start_date, end_date),
+      dplyr::between(date, start_date, end_date),
       cdc.classification.all2 != "NOT-AFP"
     ) |>
-    dplyr::count(.data$ctry, .data$adm0guid, .data$year) |>
+    dplyr::count(ctry, adm0guid, year) |>
     dplyr::mutate(labs = paste0(
       year,
       " (N=", n, ")"
@@ -1269,21 +1325,23 @@ generate_year_lab <- function(ctry.data, start_date, end_date) {
 #' @param end_date `str` End date of analysis.
 #' @returns `tibble` A table containing summary of AFP cases by year and province.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' prov.labels <- generate_prov_year_lab(ctry.data, "2021-01-01", "2023-12-31")
+#' }
 #'
 #' @keywords internal
 generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
-
   lifecycle::deprecate_warn("1.3.0", "generate_prov_year_lab()",
-                              details = "This function is not used in the desk review.")
+    details = "This function is not used in the desk review."
+  )
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
 
   afp.prov.year.lab <- ctry.data$afp.all.2 |>
-    dplyr::filter(dplyr::between(.data$date, start_date, end_date)) |>
+    dplyr::filter(dplyr::between(date, start_date, end_date)) |>
     dplyr::count(prov, adm1guid, year) |>
     dplyr::mutate(labs = paste0(
       year,
@@ -1291,5 +1349,4 @@ generate_prov_year_lab <- function(ctry.data, start_date, end_date) {
     ))
 
   return(afp.prov.year.lab)
-
 }
