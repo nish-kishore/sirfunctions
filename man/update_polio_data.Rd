@@ -2,17 +2,27 @@
 % Please edit documentation in R/dal.R
 \name{update_polio_data}
 \alias{update_polio_data}
-\title{Update a local dataset with new data
-Update a local global polio data (raw.data) with new data}
+\title{Update a local dataset with new data}
 \usage{
 update_polio_data(local_dataset, overwrite = T)
 }
 \arguments{
-\item{local_dataset}{file path to the RDS file}
+\item{local_dataset}{\code{str} File path to the global polio data RDS file.}
 
-\item{overwrite}{should the file be overwritten? Default TRUE.}
+\item{overwrite}{\code{bool} Should the file be overwritten? Default \code{TRUE}.}
+}
+\value{
+None.
 }
 \description{
-Update a local dataset with new data
-Update a local global polio data (raw.data) with new data
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
+Update a local global polio data (raw.data) with new data.
+}
+\examples{
+\dontrun{
+local_raw_data <- "C:/Users/ABC1/Desktop/raw.data.rds"
+update_polio_data(local_raw_data, overwrite = FALSE)
+}
+
 }

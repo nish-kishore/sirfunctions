@@ -1393,12 +1393,21 @@ duplicate_check <- function(.raw.data = raw.data) {
 }
 
 #' Update a local dataset with new data
-#' Update a local global polio data (raw.data) with new data
+#' @description
+#' `r lifecycle::badge("experimental")`
 #'
-#' @param local_dataset file path to the RDS file
-#' @param overwrite should the file be overwritten? Default TRUE.
+#' Update a local global polio data (raw.data) with new data.
 #'
+#' @param local_dataset `str` File path to the global polio data RDS file.
+#' @param overwrite `bool` Should the file be overwritten? Default `TRUE`.
+#' @returns None.
 #' @export
+#' @examples
+#' \dontrun{
+#' local_raw_data <- "C:/Users/ABC1/Desktop/raw.data.rds"
+#' update_polio_data(local_raw_data, overwrite = FALSE)
+#' }
+#'
 update_polio_data <- function(local_dataset, overwrite = T) {
   cli::cli_process_start("Reading local dataset")
   old_data <- readr::read_rds(local_dataset)
