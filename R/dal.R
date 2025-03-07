@@ -1426,7 +1426,10 @@ update_polio_data <- function(local_dataset, overwrite = T) {
 
   for (i in old_data_names) {
     cli::cli_alert_info(paste0("Updating ", i))
-    if (i %in% c("metadata", "global.ctry", "global.prov", "global.dist", "roads", "cities")) {
+    if (i %in% c("metadata",
+                 "ctry.pop", "prov.pop", "dist.pop",
+                 "global.ctry", "global.prov", "global.dist",
+                 "roads", "cities", "afp.epi", "coverage")) {
       cli::cli_process_start(paste0("Replacing ", i, " with the most recent data"))
       updated_data[i] <- list(new_data[[i]])
       cli::cli_process_done()
@@ -1463,11 +1466,18 @@ update_polio_data <- function(local_dataset, overwrite = T) {
         cli::cli_process_done()
 
         cli::cli_process_start("Removing dropped records from the updated dataset")
-        new_ids <- tidyr::unite(new_data[[i]][dedup_col], "uid")
-        removed_ids <- updated_data[[i]] |>
-          dplyr::filter(!!dplyr::sym(yr_col) >= 2019,
-                        !uid %in% new_ids[, 1]) |>
+        # Get updated 2019 UIDs
+        new_ids <- tidyr::unite(new_data[[i]], "uid", dplyr::any_of(dedup_col)) |>
           dplyr::pull(uid)
+        # Create UIDs in the old data
+        old_data[[i]] <- tidyr::unite(old_data[[i]], "uid", dplyr::any_of(dedup_col),
+                                 remove = FALSE)
+        # Check UIDs that are in old data that are dropped in the new data
+        removed_ids <- old_data[[i]] |>
+          dplyr::filter(!!dplyr::sym(yr_col) >= 2019,
+                        !uid %in% new_ids) |>
+          dplyr::pull(uid)
+        # Remove the dropped records
         updated_data[[i]] <- updated_data[[i]] |>
           dplyr::filter(!uid %in% removed_ids)
 
