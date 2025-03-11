@@ -9,7 +9,7 @@ read_excel_from_edav(src, ...)
 \arguments{
 \item{src}{\code{str} Path to the Excel file.}
 
-\item{...}{Additional parameters of read_xlsx.}
+\item{...}{Additional parameters of \code{\link[readxl:read_excel]{readxl::read_excel()}}.}
 }
 \value{
 \code{tibble} or \code{list} A tibble or a list of tibbles containing data from

@@ -74,11 +74,13 @@ get_azure_storage_connection <- function(
 #' @param force_delete `bool` Use delete io without verification in the command line.
 #' @param local_path `str` Local file pathway to upload a file to EDAV. Default is `NULL`.
 #' This parameter is only required when passing `"upload"` in the `io` parameter.
-#' @param ... Optional parameters that work with [readr::read_delim()].
+#' @param ... Optional parameters that work with [readr::read_delim()] or [readxl::read_excel()].
 #' @returns Output dependent on argument passed in the `io` parameter.
 #' @examples
 #' \dontrun{
 #' df <- edav_io("read", file_loc = "df1.csv") # read file from EDAV
+#' # Passing parameters that work with read_csv or read_excel, like sheet or skip.
+#' df2 <- edav_io("read", file_loc = "df2.xlsx", sheet = 1, skip = 2)
 #' list_of_df <- list(df_1 = df, df_2 = df)
 #' edav_io("write", file_loc = "Data/test/df.csv", obj = df) # saves df to the test folder in EDAV
 #' edav_io("write", file_loc = "Data/test/df.xlsx", obj = list_of_df) # saves list_of_df as an Excel file with multiple sheets.
@@ -2197,6 +2199,13 @@ check_missing_rows <- function(df,
 #' This function is a way to interactively work with files in the EDAV
 #' environment, which is convenient as we don't have to search for files within
 #' Azure Storage Explorer.
+#' @details
+#' There are Excel files that may need additional formatting before it can be
+#' read properly into an R object. For example, skipping columns or rows.
+#' For complicated Excel files, it would be best to directly call [edav_io()]
+#' in "read" mode, and pass additional parameters via `...`. See [edav_io()]
+#' examples for details.
+#'
 #'
 #' @param path `str` Path to start at initially.
 #'
@@ -2424,7 +2433,7 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
 #'
 #'
 #' @param src `str` Path to the Excel file.
-#' @param ... Additional parameters of read_xlsx.
+#' @param ... Additional parameters of [readxl::read_excel()].
 #'
 #' @return `tibble` or `list` A tibble or a list of tibbles containing data from
 #' the Excel file.

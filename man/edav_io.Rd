@@ -44,7 +44,7 @@ the information in \code{default_dir} if you set that parameter to \code{NULL}.}
 \item{local_path}{\code{str} Local file pathway to upload a file to EDAV. Default is \code{NULL}.
 This parameter is only required when passing \code{"upload"} in the \code{io} parameter.}
 
-\item{...}{Optional parameters that work with \code{\link[readr:read_delim]{readr::read_delim()}}.}
+\item{...}{Optional parameters that work with \code{\link[readr:read_delim]{readr::read_delim()}} or \code{\link[readxl:read_excel]{readxl::read_excel()}}.}
 }
 \value{
 Output dependent on argument passed in the \code{io} parameter.
@@ -57,6 +57,8 @@ all files in a folder.
 \examples{
 \dontrun{
 df <- edav_io("read", file_loc = "df1.csv") # read file from EDAV
+# Passing parameters that work with read_csv or read_excel, like sheet or skip.
+df2 <- edav_io("read", file_loc = "df2.xlsx", sheet = 1, skip = 2)
 list_of_df <- list(df_1 = df, df_2 = df)
 edav_io("write", file_loc = "Data/test/df.csv", obj = df) # saves df to the test folder in EDAV
 edav_io("write", file_loc = "Data/test/df.xlsx", obj = list_of_df) # saves list_of_df as an Excel file with multiple sheets.
