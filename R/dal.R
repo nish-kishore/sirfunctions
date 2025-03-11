@@ -206,7 +206,7 @@ edav_io <- function(
   }
 
   if (io == "write") {
-    if (!grepl(".rds|.csv|.xlsx|.xls|.png$", file_loc)) {
+    if (!grepl(".rds|.csv|.xlsx|.xls|.png|.jpg|.jpeg$", file_loc)) {
       cli::cli_abort(paste0("Please pass a path including the file name in file_loc.",
                             " (i.e., folder/data.csv)"))
     }
