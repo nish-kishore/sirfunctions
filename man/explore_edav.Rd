@@ -19,6 +19,13 @@ This function is a way to interactively work with files in the EDAV
 environment, which is convenient as we don't have to search for files within
 Azure Storage Explorer.
 }
+\details{
+There are Excel files that may need additional formatting before it can be
+read properly into an R object. For example, skipping columns or rows.
+For complicated Excel files, it would be best to directly call \code{\link[=edav_io]{edav_io()}}
+in "read" mode, and pass additional parameters via \code{...}. See \code{\link[=edav_io]{edav_io()}}
+examples for details.
+}
 \examples{
 \dontrun{
 test <- explore_edav()
