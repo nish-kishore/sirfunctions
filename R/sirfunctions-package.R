@@ -112,6 +112,7 @@
 #' @importFrom utils download.file
 #' @importFrom utils globalVariables
 #' @importFrom utils head
+#' @importFrom withr with_tempdir
 ## usethis namespace: end
 NULL
 

@@ -230,7 +230,7 @@ f.color.schemes <- function(type) {
            "PAK-PWR-1" = "#b2d8d8",
            "PAK-TOR-1" = "#be29ec",
            "PAK-ZHB-1" = "#fff9ae",
-           "PAK−KHI−2" = "#993823",
+           "PAK-KHI-2" = "#993823",
            "PHL-NCR-1" = "#8585b7",
            "PHL-NCR-2" = "#800080",
            "RDC-BUE-1" = "#8B8B83",
