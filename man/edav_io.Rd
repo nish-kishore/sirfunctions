@@ -18,8 +18,10 @@ edav_io(
 \arguments{
 \item{io}{\code{str} The type of operation to perform in EDAV.
 \itemize{
-\item \code{"read"} Read a file from EDAV, must be an rds, csv, or rda.
-\item \code{"write"} Write a file from EDAV, must be an rds, csv or rda.
+\item \code{"read"} Read a file from EDAV, must be an rds, csv, rda, or xlsx file.
+\item \code{"write"} Write a file to EDAV, must be an rds, csv, rda, or xlsx file. To
+write an Excel file with multiple sheets, pass a named list containing the tibbles
+of interest. See examples.
 \item \code{"exists.dir"} Returns a boolean after checking to see if a folder exists.
 \item \code{"exists.file"}Returns a boolean after checking to see if a file exists.
 \item \code{"create"} Creates a folder and all preceding folders.
@@ -55,7 +57,9 @@ all files in a folder.
 \examples{
 \dontrun{
 df <- edav_io("read", file_loc = "df1.csv") # read file from EDAV
-edav_io("write", file_loc = "Data/test", obj = df) # saves df to the test folder in EDAV
+list_of_df <- list(df_1 = df, df_2 = df)
+edav_io("write", file_loc = "Data/test/df.csv", obj = df) # saves df to the test folder in EDAV
+edav_io("write", file_loc = "Data/test/df.xlsx", obj = list_of_df) # saves list_of_df as an Excel file with multiple sheets.
 edav_io("exists.dir", "Data/nonexistentfolder") # returns FALSE
 edav_io("exists.file", file_loc = "Data/test/df1.csv") # returns TRUE
 edav_io("create", "Data/nonexistentfolder") # creates a folder called nonexistentfolder

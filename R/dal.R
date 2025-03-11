@@ -57,7 +57,9 @@ get_azure_storage_connection <- function(
 #'
 #' @param io `str` The type of operation to perform in EDAV.
 #' - `"read"` Read a file from EDAV, must be an rds, csv, rda, or xlsx file.
-#' - `"write"` Write a file from EDAV, must be an rds, csv or rda.
+#' - `"write"` Write a file to EDAV, must be an rds, csv, rda, or xlsx file. To
+#' write an Excel file with multiple sheets, pass a named list containing the tibbles
+#' of interest. See examples.
 #' - `"exists.dir"` Returns a boolean after checking to see if a folder exists.
 #' - `"exists.file"`Returns a boolean after checking to see if a file exists.
 #' - `"create"` Creates a folder and all preceding folders.
@@ -77,7 +79,9 @@ get_azure_storage_connection <- function(
 #' @examples
 #' \dontrun{
 #' df <- edav_io("read", file_loc = "df1.csv") # read file from EDAV
-#' edav_io("write", file_loc = "Data/test", obj = df) # saves df to the test folder in EDAV
+#' list_of_df <- list(df_1 = df, df_2 = df)
+#' edav_io("write", file_loc = "Data/test/df.csv", obj = df) # saves df to the test folder in EDAV
+#' edav_io("write", file_loc = "Data/test/df.xlsx", obj = list_of_df) # saves list_of_df as an Excel file with multiple sheets.
 #' edav_io("exists.dir", "Data/nonexistentfolder") # returns FALSE
 #' edav_io("exists.file", file_loc = "Data/test/df1.csv") # returns TRUE
 #' edav_io("create", "Data/nonexistentfolder") # creates a folder called nonexistentfolder
@@ -202,12 +206,31 @@ edav_io <- function(
   }
 
   if (io == "write") {
+    if (!grepl(".rds|.csv|.xlsx|.xls|.png$", file_loc)) {
+      cli::cli_abort(paste0("Please pass a path including the file name in file_loc.",
+                            " (i.e., folder/data.csv)"))
+    }
+
     if (endsWith(file_loc, ".rds")) {
       AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
     }
 
     if (endsWith(file_loc, ".csv")) {
       AzureStor::storage_write_csv(object = obj, container = azcontainer, file = file_loc)
+    }
+
+    if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
+      withr::with_tempdir(
+        {
+          writexl::write_xlsx(obj,
+                              path = file.path(tempdir(), basename(file_loc)))
+
+          AzureStor::storage_upload(
+            container = azcontainer, dest = file_loc,
+            src = file.path(tempdir(), basename(file_loc))
+          )
+        }
+        )
     }
 
     if ("gg" %in% class(obj)) {
