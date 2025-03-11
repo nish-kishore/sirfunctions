@@ -18,8 +18,8 @@ edav_io(
 \arguments{
 \item{io}{\code{str} The type of operation to perform in EDAV.
 \itemize{
-\item \code{"read"} Read a file from EDAV, must be an rds, csv, rda, or xlsx file.
-\item \code{"write"} Write a file to EDAV, must be an rds, csv, rda, or xlsx file. To
+\item \code{"read"} Read a file from EDAV, must be an rds, csv, rda, or xls/xlsx file.
+\item \code{"write"} Write a file to EDAV, must be an rds, csv, rda, or xls/xlsx file. To
 write an Excel file with multiple sheets, pass a named list containing the tibbles
 of interest. See examples.
 \item \code{"exists.dir"} Returns a boolean after checking to see if a folder exists.

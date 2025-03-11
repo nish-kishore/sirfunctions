@@ -56,8 +56,8 @@ get_azure_storage_connection <- function(
 #' all files in a folder.
 #'
 #' @param io `str` The type of operation to perform in EDAV.
-#' - `"read"` Read a file from EDAV, must be an rds, csv, rda, or xlsx file.
-#' - `"write"` Write a file to EDAV, must be an rds, csv, rda, or xlsx file. To
+#' - `"read"` Read a file from EDAV, must be an rds, csv, rda, or xls/xlsx file.
+#' - `"write"` Write a file to EDAV, must be an rds, csv, rda, or xls/xlsx file. To
 #' write an Excel file with multiple sheets, pass a named list containing the tibbles
 #' of interest. See examples.
 #' - `"exists.dir"` Returns a boolean after checking to see if a folder exists.
@@ -160,8 +160,8 @@ edav_io <- function(
       stop("File does not exist")
     }
 
-    if (!grepl(".rds|.rda|.csv|.xlsx", file_loc)) {
-      stop("At the moment only 'rds' 'rda', 'csv' and 'xlsx' are supported for reading.")
+    if (!grepl(".rds|.rda|.csv|.xlsx|.xls", file_loc)) {
+      stop("At the moment only 'rds' 'rda', 'csv', 'xls', and 'xlsx' are supported for reading.")
     }
 
     if (endsWith(file_loc, ".rds")) {
