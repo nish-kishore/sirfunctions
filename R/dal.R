@@ -2274,6 +2274,9 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
           pointer <- sub("/$", "", pointer)
           cli::cli_alert_success(paste0("Navigating to: ", pointer))
           break
+        } else if (nrow(output) == 0) {
+          cli::cli_alert_warning("Directory is empty.")
+          break
         }
         cli::cli_alert_info("Please input the line number:")
         response <- stringr::str_trim(readline("Response: "))
