@@ -82,8 +82,10 @@ get_azure_storage_connection <- function(
 #' # Passing parameters that work with read_csv or read_excel, like sheet or skip.
 #' df2 <- edav_io("read", file_loc = "df2.xlsx", sheet = 1, skip = 2)
 #' list_of_df <- list(df_1 = df, df_2 = df)
-#' edav_io("write", file_loc = "Data/test/df.csv", obj = df) # saves df to the test folder in EDAV
-#' edav_io("write", file_loc = "Data/test/df.xlsx", obj = list_of_df) # saves list_of_df as an Excel file with multiple sheets.
+#' # Saves df to the test folder in EDAV
+#' edav_io("write", file_loc = "Data/test/df.csv", obj = df)
+#' # Saves list_of_df as an Excel file with multiple sheets.
+#' edav_io("write", file_loc = "Data/test/df.xlsx", obj = list_of_df)
 #' edav_io("exists.dir", "Data/nonexistentfolder") # returns FALSE
 #' edav_io("exists.file", file_loc = "Data/test/df1.csv") # returns TRUE
 #' edav_io("create", "Data/nonexistentfolder") # creates a folder called nonexistentfolder
