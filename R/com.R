@@ -42,6 +42,7 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #'
 #' @param file_to_upload `str` Local path of files to be uploaded.
 #' @param sharepoint_file_loc `str` Location in SharePoint to upload file.
+#' Must include the file name and extension (i.e., folder/file_name.csv).
 #' @param site `str` SharePoint site location. Defaults to `"CGH-GID-PEB"`
 #' or the site URL: `"https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"`.
 #' @param drive `str` SharePoint drive to upload data to.
@@ -49,7 +50,7 @@ send_teams_message <- function(msg, team_id = "CGH-GID-PEB-SIR", channel = "CORE
 #' @examples
 #' \dontrun{
 #' file_path <- "C:/Users/ABC1/df1.csv"
-#' sp_path <- "test_folder"
+#' sp_path <- "test_folder/df1.csv"
 #' upload_to_sharepoint(file_path, sp_path)
 #' }
 #'

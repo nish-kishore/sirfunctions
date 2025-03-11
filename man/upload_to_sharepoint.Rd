@@ -14,7 +14,8 @@ upload_to_sharepoint(
 \arguments{
 \item{file_to_upload}{\code{str} Local path of files to be uploaded.}
 
-\item{sharepoint_file_loc}{\code{str} Location in SharePoint to upload file.}
+\item{sharepoint_file_loc}{\code{str} Location in SharePoint to upload file.
+Must include the file name and extension (i.e., folder/file_name.csv).}
 
 \item{site}{\code{str} SharePoint site location. Defaults to \code{"CGH-GID-PEB"}
 or the site URL: \code{"https://cdc.sharepoint.com/teams/CGH-GID-PEB-SIR283"}.}
@@ -30,7 +31,7 @@ Helper function to upload file to MS SharePoint
 \examples{
 \dontrun{
 file_path <- "C:/Users/ABC1/df1.csv"
-sp_path <- "test_folder"
+sp_path <- "test_folder/df1.csv"
 upload_to_sharepoint(file_path, sp_path)
 }
 
