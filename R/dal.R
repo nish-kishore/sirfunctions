@@ -56,7 +56,7 @@ get_azure_storage_connection <- function(
 #' all files in a folder.
 #'
 #' @param io `str` The type of operation to perform in EDAV.
-#' - `"read"` Read a file from EDAV, must be an rds, csv, or rda.
+#' - `"read"` Read a file from EDAV, must be an rds, csv, rda, or xlsx file.
 #' - `"write"` Write a file from EDAV, must be an rds, csv or rda.
 #' - `"exists.dir"` Returns a boolean after checking to see if a folder exists.
 #' - `"exists.file"`Returns a boolean after checking to see if a file exists.
@@ -152,8 +152,8 @@ edav_io <- function(
       stop("File does not exist")
     }
 
-    if (!grepl(".rds|.rda|.csv", file_loc)) {
-      stop("At the moment only 'rds' 'rda' and 'csv' are supported for reading.")
+    if (!grepl(".rds|.rda|.csv|.xlsx", file_loc)) {
+      stop("At the moment only 'rds' 'rda', 'csv' and 'xlsx' are supported for reading.")
     }
 
     if (endsWith(file_loc, ".rds")) {
@@ -181,10 +181,23 @@ edav_io <- function(
 
     if (endsWith(file_loc, ".csv")) {
       return(suppressWarnings(AzureStor::storage_read_csv(azcontainer, file_loc, ...)))
-    }
-
-    if (endsWith(file_loc, ".rda")) {
+    } else if (endsWith(file_loc, ".rda")) {
       return(suppressWarnings(AzureStor::storage_load_rdata(azcontainer, file_loc)))
+    } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
+      output <- NULL
+      withr::with_tempdir(
+        {
+          AzureStor::storage_download(azcontainer,
+                                      file_loc,
+                                      file.path(tempdir(), basename(file_loc)),
+                                      overwrite = TRUE
+          )
+          output <- read_excel_from_edav(src = file.path(tempdir(),
+                                                         basename(file_loc)),
+                                         ...)
+        }
+        )
+      return(output)
     }
   }
 
@@ -2388,15 +2401,17 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
 #'
 #'
 #' @param src `str` Path to the Excel file.
+#' @param ... Additional parameters of read_xlsx.
 #'
 #' @return `tibble` or `list` A tibble or a list of tibbles containing data from
 #' the Excel file.
 #' @keywords internal
 #'
-read_excel_from_edav <- function(src) {
+read_excel_from_edav <- function(src, ...) {
   sheets <- readxl::excel_sheets(src)
   if (length(sheets) > 1) {
-    output <- purrr::map(sheets, \(x) readxl::read_xlsx(src, x))
+    output <- purrr::map(sheets, \(x) readxl::read_xlsx(path = src, sheet = x,
+                                                        ...))
     names(output) <- sheets
   } else {
     output <- readxl::read_excel(src)
