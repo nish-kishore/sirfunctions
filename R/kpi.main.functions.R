@@ -34,10 +34,10 @@ init_kpi <- function(path = getwd(), name = NULL) {
   # Main folder
   cli::cli_process_start("Setting up folder structure")
   if (is.null(name)) {
-    analysis_path <- file.path(path, Sys.Date())
-  } else {
-    analysis_path <- file.path(path, name)
+    name <- today
   }
+
+  analysis_path <- file.path(path, name)
 
   # Path to data
   if (!dir.exists(file.path(analysis_path, "data"))) {
