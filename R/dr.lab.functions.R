@@ -1179,7 +1179,7 @@ clean_lab_data <- function(lab_data, start_date, end_date,
     lab_data <- clean_lab_data_who(lab_data, start_date, end_date,
                                    afp_data, ctry_name
                                    )
-    lab_data <- add_rolling_years(lab_data, start_date, "DateOfOnset")
+    lab_data <- add_rolling_years(lab_data, start_date, end_date, "DateOfOnset")
   } else {
     if ("prov" %in% lab_data_cols) {
       cli::cli_alert_warning("Lab data already cleaned.")
@@ -1187,7 +1187,7 @@ clean_lab_data <- function(lab_data, start_date, end_date,
     }
     lab_data <- clean_lab_data_regional(lab_data, start_date, end_date,
                                         afp_data, ctry_name, lab_locs_path)
-    lab_data <- add_rolling_years(lab_data, start_date, "CaseDate")
+    lab_data <- add_rolling_years(lab_data, start_date, end_date, "CaseDate")
   }
 
   return(lab_data)
