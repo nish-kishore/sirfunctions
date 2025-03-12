@@ -352,14 +352,17 @@ adjust_rolling_years <- function(data, end_date, date_col) {
       year_label,
       "\\d+"
     ))) |>
-    dplyr::filter(year_number == max(year_number))
+    dplyr::filter(year_number == max(year_number, na.rm =  TRUE))
 
-  if (max(data[[date_col]]) <= end_date) {
+  if (max(data[[date_col]], na.rm = TRUE) <= end_date) {
     cli::cli_alert_info(paste0("Note: the dataset only contains data up to ",
                                max(data[[date_col]]), ". However, the specified",
                                    " end date is ", end_date,
                                ". Use caution when interpreting results."))
 
+    return(data)
+  } else if (is.na(max(data[[date_col]], na.rm = TRUE))) {
+    cli::cli_alert(paste0("'", date_col, "'", " is an empty vector."))
     return(data)
   } else {
     # Adjustment made to the latest year in instances of when there are data greater
@@ -422,6 +425,13 @@ adjust_rolling_years <- function(data, end_date, date_col) {
 #' @export
 add_rolling_years <- function(df, start_date, end_date, date_col, period = months(12, FALSE)) {
   start_date <- lubridate::as_date(start_date)
+
+  n_rows <- nrow(df)
+  n_row_col <- sum(is.na(df[[date_col]]))
+
+  if (n_rows == n_row_col) {
+    cli::cli_abort("The date_col selected is an NA vector. Please check your data.")
+  }
 
   df <- df |>
     dplyr::mutate(
