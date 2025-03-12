@@ -2281,6 +2281,7 @@ check_missing_rows <- function(df,
 #'
 #'
 #' @param path `str` Path to start at initially.
+#' @param azcontainer Azure storage container provided by [get_azure_storage_connection()].
 #'
 #' @returns `tibble` Data from the EDAV environment.
 #' @export
@@ -2289,7 +2290,8 @@ check_missing_rows <- function(df,
 #' \dontrun{
 #' test <- explore_edav()
 #' }
-explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
+explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER"),
+                         azcontainer = suppressMessages(get_azure_storage_connection())) {
   cli::cli_alert_info(paste0(
     "Interactive file selection activated.",
     " Use esc to exit."
@@ -2298,7 +2300,10 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
   while (TRUE) {
     tryCatch(
       expr = {
-        output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+        output <- edav_io(io = "list", default_dir = "",
+                          file_loc = file.path(pointer),
+                          azcontainer = azcontainer
+                          )
         print(
           output |>
             dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
@@ -2310,7 +2315,9 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         pointer <<- gsub("[^/]+$", "", pointer)
         pointer <<- sub("/$", "", pointer)
 
-        output <<- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+        output <<- edav_io(io = "list", default_dir = "",
+                           file_loc = file.path(pointer),
+                           azcontainer = azcontainer)
         print(
           output |>
             dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
@@ -2404,7 +2411,7 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
           if (ext %in% c("xlsx", "xls")) {
             withr::with_tempdir(
               {
-                AzureStor::storage_download(get_azure_storage_connection(),
+                AzureStor::storage_download(azcontainer,
                                             pointer,
                                             file.path(tempdir(), basename(pointer)),
                                             overwrite = TRUE
@@ -2415,7 +2422,8 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
               }
             )
           } else {
-            output <- edav_io("read", default_dir = "", pointer)
+            output <- edav_io("read", default_dir = "", pointer,
+                              azcontainer = azcontainer)
             return(output)
           }
         }
@@ -2452,7 +2460,7 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
             if (!dir.exists(dest)) {
               cli::cli_alert_info("Not a valid file path. Please try again.")
             } else {
-              AzureStor::storage_download(get_azure_storage_connection(),
+              AzureStor::storage_download(azcontainer,
                                           pointer,
                                           file.path(dest, basename(pointer)),
                                           overwrite = TRUE
