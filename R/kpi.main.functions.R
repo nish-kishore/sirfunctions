@@ -224,7 +224,7 @@ generate_kpi_template <- function(output_path, name) {
 
   # Get years available
   year_list <- 'year_list <- unique(c2$year_label)'
-  region_list <- 'region_list <- unique(c2 |> filter(!is.na(Region)) |> pull(Region))'
+  region_list <- 'region_list <- unique(c2 |> dplyr::filter(!is.na(Region)) |> dplyr::pull(Region))'
 
   # Generate figures iteratively for years and regions
   sg_priority_map <- "generate_sg_priority_map()"
