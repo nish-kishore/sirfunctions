@@ -335,7 +335,9 @@ test_EDAV_connection <- function(
 
   tick <- Sys.time()
 
-  edav_io(io = "write", file_loc = paste0(folder, "/tmp.rds"), obj = tmp_data, default_dir = NULL)
+  edav_io(io = "write", file_loc = paste0(folder, "/tmp.rds"), obj = tmp_data,
+          default_dir = NULL,
+          azcontainer = azcontainer)
   # readr::write_rds(tmp_data, paste0(folder, "/tmp.rds"))
 
   tock <- Sys.time()
@@ -344,7 +346,9 @@ test_EDAV_connection <- function(
 
   tick <- Sys.time()
 
-  x <- edav_io(io = "read", file_loc = paste0(folder, "/tmp.rds"), default_dir = NULL)
+  x <- edav_io(io = "read", file_loc = paste0(folder, "/tmp.rds"),
+               default_dir = NULL,
+               azcontainer = azcontainer)
   # x <- readr::read_rds(paste0(folder, "/tmp.rds"))
 
   tock <- Sys.time()
@@ -360,7 +364,10 @@ test_EDAV_connection <- function(
     "{prettyunits::pretty_sec(dt2)}"
   ))
 
-  suppressMessages(edav_io(io = "delete", file_loc = paste0(folder, "/tmp.rds"), default_dir = NULL, force_delete = T), classes = c("message", "warning"))
+  suppressMessages(edav_io(io = "delete", file_loc = paste0(folder, "/tmp.rds"),
+                           default_dir = NULL, force_delete = T,
+                           azcontainer = azcontainer),
+                   classes = c("message", "warning"))
   # x <- file.remove(paste0(folder, "/tmp.rds"))
 
   dt3 <- test_size / file_size * dt1
