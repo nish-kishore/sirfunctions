@@ -9,7 +9,8 @@ get_all_polio_data(
   folder = "GID/PEB/SIR/Data/",
   force.new.run = F,
   recreate.static.files = F,
-  attach.spatial.data = T
+  attach.spatial.data = T,
+  azcontainer = suppressMessages(get_azure_storage_connection())
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ get_all_polio_data(
 \item{recreate.static.files}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run all data and cache.}
 
 \item{attach.spatial.data}{\code{bool} Default \code{TRUE}, adds spatial data to downloaded object.}
+
+\item{azcontainer}{Azure storage container provided by \code{\link[=get_azure_storage_connection]{get_azure_storage_connection()}}.}
 }
 \value{
 Named \code{list} containing polio data that is relevant to CDC.
