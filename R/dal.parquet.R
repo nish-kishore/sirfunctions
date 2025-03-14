@@ -107,6 +107,50 @@ build_parquet_raw_data <- function(path = NULL, from_edav = F, container = NULL)
   return(raw_data)
 }
 
+#' Uploads a local parquet folder to EDAV
+#'
+#' Uploads a folder containing parquet files to EDAV
+#'
+#' @param src `str` Local path to the parquet folder.
+#' @param dest `str` EDAV endpoint.
+#' @param container `azcontainer` An instance of an Azure container.
+#'
+#' @returns None.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' local_dir <- "C:/Users/ABC1/Desktop/parquet_folder"
+#' edav_dir <- "ABC/parquet_folder"
+#' upload_parquet_to_edav(local_dir, edav_dir)
+#' }
+upload_parquet_to_edav <- function(src, dest, container = NULL) {
+  if (is.null(container)) {
+    container <- get_azure_storage_connection()
+  }
+
+  while (TRUE) {
+    cli::cli_alert_info(paste0("Confirm upload to: ", dest, "/", basename(src), " (y/n)"))
+    response <- stringr::str_to_lower(stringr::str_trim(readline("> ")))
+    if (!response %in% c("y", "n")) {
+      cli::cli_alert_warning("Invalid response. Try again.")
+    } else if (response == "n") {
+      cli::cli_alert("Upload cancelled.")
+    } else if (response == "y") {
+      break
+    }
+  }
+
+  cli::cli_process_start("Uploading parquet folder to EDAV")
+  start <- Sys.time()
+  AzureStor::multiupload_adls_file(container, paste0(src, "/*"), dest,
+                                   recursive = TRUE)
+  cli::cli_process_done()
+  cli::cli_alert_success(c("Uploaded in: ",
+                           round(difftime(Sys.time(), start, "mins"), 2),
+                           " mins"))
+}
+
 # Private functions ----
 
 #' Gets the column used to partition a column
@@ -208,10 +252,10 @@ build_parquet_raw_data_edav <- function(path = NULL, container = NULL, ...) {
 
   raw_data <- NULL
   # Download files locally in the temp directory first
-  dest <- "C:/Users/XRG9/Desktop/test"
+  dest <- tempdir()
   local_pq <- file.path(dest, basename(path))
   AzureStor::multidownload_adls_file(container,
-                                     src = "GID/PEB/SIR/Sandbox/parquet_sandbox/*",
+                                     src = paste0(path, "/*"),
                                      dest = local_pq,
                                      recursive = TRUE,
                                      overwrite = TRUE
@@ -219,7 +263,7 @@ build_parquet_raw_data_edav <- function(path = NULL, container = NULL, ...) {
 
   raw_data <- build_parquet_raw_data_local(local_pq)
   cli::cli_process_done()
-  cli::cli_process_start(paste0("Built in ", difftime(start, Sys.time(), "mins"), " mins."))
+  cli::cli_process_start(paste0("Built in ", difftime(Sys.time(), start, "mins"), " mins."))
 
   return(raw_data)
 
