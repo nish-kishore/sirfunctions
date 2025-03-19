@@ -20,6 +20,9 @@
 #' [generate_es_site_det()].
 #' - `"es.detections"` Default detection types. Used primarily with
 #' [generate_es_site_det()].
+#' - `"vpd.critical.ctry"`: Priority VPD countries
+#' - `"vpd.binary.ctry"`: Priority and non-priority VPD countries binary designation.
+#' - `"vpd.colors"`: VPD colors.
 #' @returns Named `list` with color sets.
 #' @examples
 #' color_list <- f.color.schemes("epicurve")
@@ -31,7 +34,8 @@ f.color.schemes <- function(type) {
     "epicurve", "para.case", "afp.prov", "afp.dist",
     "pot.comp", "silence", "silence.v2", "cases", "es", "mapval",
     "timeliness.col.vars", "emergence.groups", "es.vaccine.types",
-    "es.detections"
+    "es.detections", "vpd.critical.ctry", "vpd.binary.critical.ctry",
+    "vpd.colors"
   )
 
   if (!type %in% types) {
@@ -317,6 +321,39 @@ f.color.schemes <- function(type) {
            "Sabin 1 or Sabin 3" = scales::brewer_pal(palette = "Set1")(9)[6],
            "Sabin 1/3" = scales::brewer_pal(palette = "Set1")(9)[2],
            "Sabin 1/3 and VDPV2" = scales::brewer_pal(palette = "Set1")(9)[5]
+         ),
+         "vpd.critical.ctry" = c(
+           "AFG" = "#a51d42",
+           "BRA" = "#D5006D",
+           "COD" = "#00a266",
+           "ETH" = "#007B7A",
+           "IDN" = "#582d90",
+           "NGA" = "#334a54",
+           "PAK" = "#D76B6E",
+           "PHL" = "#A76DAB"
+         ),
+         "vpd.binary.critical.ctry" = c(
+           "Yes" = "#007B7A",
+           "No" = "#afabab"
+         ),
+         "vpd.colors" = c(
+           "Measles" = "#a51d42",
+           "Rubella" = "#CC79A7",
+           "CRS" = "#FF9999",
+           "Polio" = "#009E73",
+           "Cholera" = "#0072B2",
+           "Ebola" = "#FF5733",
+           "Mpox" = "#C77CFF",
+           "Meningitis" = "#D55E00",
+           "Diphtheria" = "#6A5ACD",
+           "Yellow fever" = "#E69F00",
+           "Neonatal tetanus" = "#86e0b5",
+           "Tetanus (all)" = "#A5C1BA",
+           "Typhoid" = "#8DA0CB",
+           "COVID-19" = "#A3A500",
+           "Jap encephalitis" = "#007B7A",
+           "Pertussis" = "#041c3a",
+           "Mumps" = "#66B3FF"
          )
   )
 }
