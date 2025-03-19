@@ -32,7 +32,7 @@ get_azure_storage_connection <- function(
 
   if (stringr::str_starts(Sys.getenv("SF_PARTNER"), "posit_workbench")) {
     if (is.null(posit_workbench_path)) {
-      creds_path <- "credentials/posit_workbench_creds.yaml"
+      creds_path <- "~/credentials/posit_workbench_creds.yaml"
     } else {
       creds_path <- posit_workbench_path
     }
