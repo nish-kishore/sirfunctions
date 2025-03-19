@@ -195,22 +195,28 @@ get_vpd_data <- function(vpd_name = NULL, variable_name = NULL, years = NULL,
 get_vpd_missingness <- function(vpd_name = NULL, variable_name = NULL,
                                 min_year = 1980,
                                 max_year = lubridate::year(Sys.Date())) {
+  cli::cli_process_start("Getting VPD data")
   vpd_data <- edav_io(io = "read",
                       default_dir = "GID/GIDMEA/giddatt",
                       file_loc = "data_clean/country_vpd_year_casedata.rds")
-
+  cli::cli_process_done()
   # only 1980 and above
   vpd_data <- vpd_data |>
     dplyr::filter(dplyr::between(year, min_year, max_year))
 
+  cli::cli_process_start("Getting full VPD list")
   full_vpd <- edav_io(io = "read",
                       default_dir = "GID/GIDMEA/giddatt",
                       file_loc = "data_clean/ref_vpd.rds") |>
     dplyr::select(vpd)
+  cli::cli_process_done()
+
+  cli::cli_process_start("Getting full country list")
   full_ctry <- edav_io(io = "read",
                        default_dir = "GID/GIDMEA/giddatt",
                        file_loc = "data_clean/ref_country.rds") |>
     dplyr::select(country_name)
+  cli::cli_process_done()
 
   full_variables <- vpd_data |>
     dplyr::select(variable) |>
