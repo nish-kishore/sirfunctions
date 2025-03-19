@@ -254,7 +254,7 @@ build_parquet_raw_data_edav <- function(path = NULL, container = NULL, ...) {
   # Download files locally in the temp directory first
   dest <- tempdir()
   local_pq <- file.path(dest, basename(path))
-  AzureStor::multidownload_adls_file(container,
+  AzureStor::storage_multidownload(container,
                                      src = paste0(path, "/*"),
                                      dest = local_pq,
                                      recursive = TRUE,
