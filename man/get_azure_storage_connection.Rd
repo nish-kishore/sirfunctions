@@ -7,6 +7,7 @@
 get_azure_storage_connection(
   app_id = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
   auth = "authorization_code",
+  posit_yaml_path = NULL,
   ...
 )
 }
@@ -21,6 +22,9 @@ Valid values are:\code{"authorization_code"}, \code{"device_code"},
 \code{"client_credentials"}, \code{"resource_owner"}, \code{"on_behalf_of"}.
 
 See \strong{Details} of \code{\link[AzureAuth:get_azure_token]{AzureAuth::get_azure_token()}} for further details.}
+
+\item{posit_yaml_path}{\code{str} Path to the YAML file in Posit workbench.
+If \code{NULL}, the path will be in \code{"~/credentials/posit_workbench_creds.yaml"}.}
 
 \item{...}{additional parameters passed to \code{\link[AzureAuth:get_azure_token]{AzureAuth::get_azure_token()}}.}
 }

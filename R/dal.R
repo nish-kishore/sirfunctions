@@ -17,7 +17,8 @@
 #' `"client_credentials"`, `"resource_owner"`, `"on_behalf_of"`.
 #'
 #' See **Details** of [AzureAuth::get_azure_token()] for further details.
-#'
+#' @param posit_yaml_path `str` Path to the YAML file in Posit workbench.
+#' If `NULL`, the path will be in `"~/credentials/posit_workbench_creds.yaml"`.
 #' @param ... additional parameters passed to [AzureAuth::get_azure_token()].
 #' @returns Azure container verification
 #' @examples
@@ -27,14 +28,14 @@
 get_azure_storage_connection <- function(
     app_id = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
     auth = "authorization_code",
-    posit_workbench_path = NULL,
+    posit_yaml_path = NULL,
     ...) {
 
   if (stringr::str_starts(Sys.getenv("SF_PARTNER"), "posit_workbench")) {
-    if (is.null(posit_workbench_path)) {
+    if (is.null(posit_yaml_path)) {
       creds_path <- "~/credentials/posit_workbench_creds.yaml"
     } else {
-      creds_path <- posit_workbench_path
+      creds_path <- posit_yaml_path
     }
     creds <- yaml::read_yaml(creds_path)
     mytoken <- AzureAuth::get_azure_token(
