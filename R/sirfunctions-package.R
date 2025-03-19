@@ -2,10 +2,10 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @import rlang
 #' @import dplyr
-#' @import lubridate
 #' @import ggplot2
+#' @import lubridate
+#' @import rlang
 #' @importFrom AzureAuth get_azure_token
 #' @importFrom AzureAuth list_azure_tokens
 #' @importFrom AzureAuth load_azure_token
@@ -113,6 +113,7 @@
 #' @importFrom utils globalVariables
 #' @importFrom utils head
 #' @importFrom withr with_tempdir
+#' @importFrom yaml read_yaml
 ## usethis namespace: end
 NULL
 
