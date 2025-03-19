@@ -1432,6 +1432,137 @@ duplicate_check <- function(.raw.data = raw.data) {
   return(.raw.data)
 }
 
+#' Update a local dataset with new data
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Update a local global polio data (raw.data) with new data.
+#'
+#' @param local_dataset `str` File path to the global polio data RDS file.
+#' @param overwrite `bool` Should the file be overwritten? Default `TRUE`.
+#' @returns None.
+#' @export
+#' @examples
+#' \dontrun{
+#' local_raw_data <- "C:/Users/ABC1/Desktop/raw.data.rds"
+#' update_polio_data(local_raw_data, overwrite = FALSE)
+#' }
+#'
+update_polio_data <- function(local_dataset, overwrite = T) {
+  cli::cli_process_start("Reading local dataset")
+  old_data <- readr::read_rds(local_dataset)
+  old_data_names <- names(old_data)
+  dataset_name <- basename(local_dataset)
+  cli::cli_process_done()
+
+  spatial_data <- F
+  if (length(intersect(c("global.ctry", "global.prov", "global.dist"), old_data_names)) > 0) {
+    spatial_data <- T
+  }
+
+  new_data <- get_all_polio_data(attach.spatial.data = spatial_data)
+
+
+  updated_data <- list()
+  afp_dedup_col <- c("epid", "place.admin.0", "dateonset")
+  pos_dedup_col <- c("epid", "polis.case.id", "env.sample.id", "place.admin.0",
+                     "virustype", "ntchanges", "emergencegroup", "dateonset",
+                     "source")
+  sia_dedup_col <- c("adm2guid", "sub.activity.start.date", "vaccine.type",
+                     "age.group","status", "lqas.loaded", "im.loaded")
+  es_dedup_col <- c("env.sample.id", "virus.type", "emergence.group",
+                    "nt.changes", "site.id", "collection.date", "collect.yr")
+
+  for (i in old_data_names) {
+    cli::cli_alert_info(paste0("Updating ", i))
+    if (i %in% c("metadata",
+                 "ctry.pop", "prov.pop", "dist.pop",
+                 "global.ctry", "global.prov", "global.dist",
+                 "roads", "cities", "afp.epi", "coverage")) {
+      cli::cli_process_start(paste0("Replacing ", i, " with the most recent data"))
+      updated_data[i] <- list(new_data[[i]])
+      cli::cli_process_done()
+    } else if (stringr::str_ends(i, ".dupe")) {
+      cli::cli_alert_info("Skipping...")
+      next # Ignore updating of dupes datasets
+    } else {
+      updated_data[i] <- list(suppressMessages(dplyr::full_join(old_data[[i]], new_data[[i]])))
+
+      dedup_col <- switch(i,
+                          "afp"  = afp_dedup_col,
+                          "para.case" = afp_dedup_col,
+                          "other" = afp_dedup_col,
+                          "pos" = pos_dedup_col,
+                          "sia" = sia_dedup_col,
+                          "es" = es_dedup_col)
+      yr_col <- switch(i,
+                       "afp" = "yronset",
+                       "para.case" = "yronset",
+                       "other" = "yronset",
+                       "pos" = "yronset",
+                       "sia" = "yr.sia",
+                       "es" = "collect.yr"
+                       )
+
+      if (i %in% c("afp", "other", "pos", "sia", "es", "para.case")) {
+        cli::cli_process_start("Deduplicating records")
+        updated_data[[i]] <- updated_data[[i]] |>
+          dplyr::group_by(!!!dplyr::syms(dedup_col)) |>
+          dplyr::slice_tail() |>
+          dplyr::ungroup() |>
+          # Create a UID for comparing old data with new
+          tidyr::unite("uid", dplyr::any_of(dedup_col), remove = FALSE)
+        cli::cli_process_done()
+
+        cli::cli_process_start("Removing dropped records from the updated dataset")
+        # Get updated 2019 UIDs
+        new_ids <- tidyr::unite(new_data[[i]], "uid", dplyr::any_of(dedup_col)) |>
+          dplyr::pull(uid)
+        # Create UIDs in the old data
+        old_data[[i]] <- tidyr::unite(old_data[[i]], "uid", dplyr::any_of(dedup_col),
+                                 remove = FALSE)
+        # Check UIDs that are in old data that are dropped in the new data
+        removed_ids <- old_data[[i]] |>
+          dplyr::filter(!!dplyr::sym(yr_col) >= 2019,
+                        !uid %in% new_ids) |>
+          dplyr::pull(uid)
+        # Remove the dropped records
+        updated_data[[i]] <- updated_data[[i]] |>
+          dplyr::filter(!uid %in% removed_ids)
+
+        if (length(removed_ids) == 0) {
+          cli::cli_alert_info("No records removed since the last update.")
+        } else {
+          cli::cli_alert_info(paste0("There were ", length(removed_ids),
+                                     " records removed in the latest update."))
+        }
+        cli::cli_process_done()
+      }
+    }
+  }
+
+  cli::cli_alert_success("Local dataset updated.")
+
+  cli::cli_process_start("Final duplicate checking in the updated dataset.")
+  updated_data <- duplicate_check(updated_data)
+  cli::cli_process_done()
+
+  if (overwrite) {
+    readr::write_rds(updated_data, local_dataset)
+    cli::cli_alert_success("File overwritten successfully.")
+  } else {
+    new_dataset <- file.path(dirname(local_dataset),
+                             paste0(tools::file_path_sans_ext(dataset_name), "_saved_", lubridate::today(), ".rds"))
+    readr::write_rds(updated_data, new_dataset)
+    cli::cli_alert_success("Updated file written successfully.")
+  }
+
+  # Cleaning up environment
+  rm(old_data, new_data, updated_data)
+  invisible(gc())
+
+}
+
 #### 3) Secondary SP Functions ####
 
 #' Download district geographic data
