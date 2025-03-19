@@ -27,14 +27,33 @@
 get_azure_storage_connection <- function(
     app_id = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
     auth = "authorization_code",
+    posit_workbench_path = NULL,
     ...) {
-  mytoken <- AzureAuth::get_azure_token(
-    resource = "https://storage.azure.com/",
-    tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
-    app = app_id,
-    auth_type = auth,
-    ...
-  )
+
+  if (stringr::str_starts(Sys.getenv("SF_PARTNER"), "posit_workbench")) {
+    if (is.null(posit_workbench_path)) {
+      creds_path <- "credentials/posit_workbench_creds.yaml"
+    } else {
+      creds_path <- posit_workbench_path
+    }
+    creds <- yaml::read_yaml(creds_path)
+    mytoken <- AzureAuth::get_azure_token(
+      resource = "https://storage.azure.com/",
+      tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
+      app = creds$app_id,
+      auth_type = NULL,
+      password = creds$pw,
+      ...
+    )
+  } else {
+    mytoken <- AzureAuth::get_azure_token(
+      resource = "https://storage.azure.com/",
+      tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
+      app = app_id,
+      auth_type = auth,
+      ...
+    )
+  }
 
   cached_tokens <- AzureAuth::list_azure_tokens()
   token_hash_names <- AzureAuth::list_azure_tokens() |> names()
