@@ -4,10 +4,12 @@
 \alias{read_excel_from_edav}
 \title{Reads an Excel file from EDAV to the R environment}
 \usage{
-read_excel_from_edav(src)
+read_excel_from_edav(src, ...)
 }
 \arguments{
 \item{src}{\code{str} Path to the Excel file.}
+
+\item{...}{Additional parameters of \code{\link[readxl:read_excel]{readxl::read_excel()}}.}
 }
 \value{
 \code{tibble} or \code{list} A tibble or a list of tibbles containing data from
