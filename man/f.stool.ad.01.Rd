@@ -63,11 +63,13 @@ missing data is treated. \code{"good"} classifies missing data as good quality
 excludes missing from the calculations.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data()
 stool.ads <- f.stool.ad.01(raw.data$afp, raw.data$ctry.pop,
   "2021-01-01", "2023-12-31",
   "ctry",
   sp_continuity_validation = FALSE
 )
+}
 
 }

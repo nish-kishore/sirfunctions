@@ -55,3 +55,10 @@ for the entirety of the analysis dates? Default \code{TRUE}.}
 Calculate the NPAFP rate from POLIS data. Can either pass \code{raw.data} to calculate NPAFP rates
 on the global dataset, or a \code{ctry.data} dataset.
 }
+\examples{
+\dontrun{
+raw.data <- get_all_polio_data()
+npafp_ctry <- f.npafp.rate.01(raw.data$afp, raw.data$ctry.pop, "2022-01-01", "2024-12-31", "ctry")
+}
+
+}
