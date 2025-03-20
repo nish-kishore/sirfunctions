@@ -39,7 +39,10 @@ Imports:
     sf (>= 1.0-19),
     stringr (>= 1.5.0),
     utils (>= 4.4.0),
-    tidyr (>= 1.3.0)
+    tidyr (>= 1.3.0),
+    httr,
+    jsonlite,
+    purrr
 Suggests:
     blastula,
     forcats,
@@ -49,8 +52,6 @@ Suggests:
     ggpubr,
     ggrepel,
     prettyunits,
-    purrr,
-    httr,
     janitor,
     datasets,
     readxl,

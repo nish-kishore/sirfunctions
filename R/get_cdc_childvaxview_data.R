@@ -14,13 +14,10 @@
 #'
 #' @examples
 #' cdc_data <- get_cdc_childvaxview_data(geo_level="substate")
+#' cdc_data <- get_cdc_childvaxview_data(geo_level="national", vaccines=c("Polio","MMR"))
 #'
 get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL, vaccines=NULL,
                                       base_url="https://data.cdc.gov/resource/fhky-rtsk.json") {
-
-  # # Load necessary libraries
-  # library(httr)
-  # library(jsonlite)
 
   # Check parameter validity ####
   valid_geo_levels <- c("national", "regional", "state", "substate")
@@ -88,7 +85,7 @@ get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL, vaccines=NUL
     states_disagg <- c("Illinois", "New York","Pennsylvania","Texas")
 
     all_data <- all_data %>%
-      filter(
+      dplyr::filter(
           (geo_level == "national" & geography == "United States") |
           (geo_level == "regional" & geography %in% c(paste0("Region ", 1:10))) |
           (geo_level == "state" & !(geography %in% c("United States", paste0("Region ", 1:10), substate_areas))) |
@@ -99,15 +96,15 @@ get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL, vaccines=NUL
   # Clean vaccine data  ####
 
   # All cols imported as chr; change "NA" and "" to missing before further conversion
-  all_data <- all_data %>% mutate(
-    across(everything(), ~ na_if(., "NA")),
-    across(everything(), ~ na_if(.,""))
+  all_data <- all_data %>% dplyr::mutate(
+    dplyr::across(dplyr::everything(), ~ na_if(., "NA")),
+    dplyr::across(dplyr::everything(), ~ na_if(.,""))
   )
 
   all_data <- all_data %>%
-    mutate(
+    dplyr::mutate(
       # Assign VPDs (matching vpd_ref data to each vaccine)
-      vpd = case_when(
+      vpd = dplyr::case_when(
         vaccine == "Hib" ~ "H. influenza type B disease",
         vaccine == "≥1 Dose MMR" ~ "Multiple", # Measles, Mumps, Rubella
         vaccine == "Influenza" ~ "Influenza",
@@ -122,14 +119,14 @@ get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL, vaccines=NUL
         TRUE ~ NA_character_
       ),
       # simplify where dose value included under 'vaccine' field
-      dose = case_when(
+      dose = dplyr::case_when(
         vaccine == "≥1 Dose MMR" ~ "≥1 Dose",
         vaccine == "≥1 Dose Varicella" ~ "≥1 Dose",
         vaccine == "Combined 7 Series" ~ "Full series",
         TRUE ~ dose
       ),
       # Simplify values by separating dose from vaccine, where together
-      vaccine = case_when(
+      vaccine = dplyr::case_when(
         vaccine == "≥1 Dose MMR" ~ "MMR",
         vaccine == "≥1 Dose Varicella" ~ "Varicella",
         TRUE ~ vaccine
@@ -143,12 +140,12 @@ get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL, vaccines=NUL
 
   ## If country level, add iso3 code to ensure appropriate merging with other GID datasets
   if (geo_level=="national"){
-    all_data <- all_data %>% mutate(iso3_code = "USA")
+    all_data <- all_data %>% dplyr::mutate(iso3_code = "USA")
     }
 
   # Define vaccines filtering ####
   if (!is.null(vaccines)) {
-    all_data <- all_data %>% filter(vaccine %in% vaccines)
+    all_data <- all_data %>% dplyr::filter(vaccine %in% vaccines)
   }
 
   # Return dataframe ####

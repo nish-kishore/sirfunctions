@@ -2,10 +2,10 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @import rlang
 #' @import dplyr
-#' @import lubridate
 #' @import ggplot2
+#' @import lubridate
+#' @import rlang
 #' @importFrom AzureAuth get_azure_token
 #' @importFrom AzureAuth list_azure_tokens
 #' @importFrom AzureAuth load_azure_token
@@ -56,10 +56,15 @@
 #' @importFrom flextable vline
 #' @importFrom flextable width
 #' @importFrom glue glue
+#' @importFrom httr content
+#' @importFrom httr GET
+#' @importFrom httr status_code
+#' @importFrom jsonlite fromJSON
 #' @importFrom lifecycle badge
 #' @importFrom lifecycle deprecate_warn
 #' @importFrom lifecycle deprecated
 #' @importFrom lifecycle is_present
+#' @importFrom purrr map
 #' @importFrom readr read_csv
 #' @importFrom readr read_rds
 #' @importFrom readr write_csv
