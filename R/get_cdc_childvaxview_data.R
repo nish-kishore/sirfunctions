@@ -135,11 +135,14 @@ get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL, vaccines=NUL
       coverage_estimate = as.numeric(coverage_estimate),
       population_sample_size = as.numeric(population_sample_size),
       lb_95ci = stringr::str_extract(`_95_ci`, "^[0-9]+\\.[0-9]+") %>% as.numeric(), # extract numbers before 'to'
-      ub_95ci = stringr::str_extract(`_95_ci`, "(?<=to )([0-9]+\\.[0-9]+)") %>% as.numeric() # extract numbers after 'to'
-    )
+      ub_95ci = stringr::str_extract(`_95_ci`, "(?<=to )([0-9]+\\.[0-9]+)") %>% as.numeric(), # extract numbers after 'to'
+
+      # add data source
+      source = paste0("US CDC ChildVaxView, as of ", lubridate::today())
+      )
 
   ## If country level, add iso3 code to ensure appropriate merging with other GID datasets
-  if (geo_level=="national"){
+  if (!(is.null(geo_level)) && geo_level=="national"){
     all_data <- all_data %>% dplyr::mutate(iso3_code = "USA")
     }
 
