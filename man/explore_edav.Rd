@@ -4,10 +4,15 @@
 \alias{explore_edav}
 \title{Interactive loading of EDAV data}
 \usage{
-explore_edav(path = get_constant("DEFAULT_EDAV_FOLDER"))
+explore_edav(
+  path = get_constant("DEFAULT_EDAV_FOLDER"),
+  azcontainer = suppressMessages(get_azure_storage_connection())
+)
 }
 \arguments{
 \item{path}{\code{str} Path to start at initially.}
+
+\item{azcontainer}{Azure storage container provided by \code{\link[=get_azure_storage_connection]{get_azure_storage_connection()}}.}
 }
 \value{
 \code{tibble} Data from the EDAV environment.

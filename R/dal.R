@@ -8,10 +8,18 @@
 #' validates that the individual still has access. The current tenant ID
 #' is hard coded for CDC resources.
 #'
-#' @param app_id `str` Application ID defaults to "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+#' @param app_id `str` Application ID defaults to `"04b07795-8ddb-461a-bbee-02f9e1bf7b46"`,
 #' this can be changed if you have a service principal.
-#' @param auth `str` Authorization type defaults to "authorization_code",
+#' @param auth `str` Authorization type defaults to `"authorization_code"`,
 #' this can be changed if you have a service principal.
+#'
+#' Valid values are:`"authorization_code"`, `"device_code"`,
+#' `"client_credentials"`, `"resource_owner"`, `"on_behalf_of"`.
+#'
+#' See **Details** of [AzureAuth::get_azure_token()] for further details.
+#' @param posit_yaml_path `str` Path to the YAML file in Posit workbench.
+#' If `NULL`, the path will be in `"~/credentials/posit_workbench_creds.yaml"`.
+#' @param ... additional parameters passed to [AzureAuth::get_azure_token()].
 #' @returns Azure container verification
 #' @examples
 #' azcontainer <- get_azure_storage_connection()
@@ -19,13 +27,34 @@
 #' @export
 get_azure_storage_connection <- function(
     app_id = "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
-    auth = "authorization_code") {
-  mytoken <- AzureAuth::get_azure_token(
-    resource = "https://storage.azure.com/",
-    tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
-    app = app_id,
-    auth_type = auth
-  )
+    auth = "authorization_code",
+    posit_yaml_path = NULL,
+    ...) {
+
+  if (stringr::str_starts(Sys.getenv("SF_PARTNER"), "posit_workbench")) {
+    if (is.null(posit_yaml_path)) {
+      creds_path <- "~/credentials/posit_workbench_creds.yaml"
+    } else {
+      creds_path <- posit_yaml_path
+    }
+    creds <- yaml::read_yaml(creds_path)
+    mytoken <- AzureAuth::get_azure_token(
+      resource = "https://storage.azure.com/",
+      tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
+      app = creds$app_id,
+      auth_type = NULL,
+      password = creds$pw,
+      ...
+    )
+  } else {
+    mytoken <- AzureAuth::get_azure_token(
+      resource = "https://storage.azure.com/",
+      tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
+      app = app_id,
+      auth_type = auth,
+      ...
+    )
+  }
 
   cached_tokens <- AzureAuth::list_azure_tokens()
   token_hash_names <- AzureAuth::list_azure_tokens() |> names()
@@ -326,7 +355,9 @@ test_EDAV_connection <- function(
 
   tick <- Sys.time()
 
-  edav_io(io = "write", file_loc = paste0(folder, "/tmp.rds"), obj = tmp_data, default_dir = NULL)
+  edav_io(io = "write", file_loc = paste0(folder, "/tmp.rds"), obj = tmp_data,
+          default_dir = NULL,
+          azcontainer = azcontainer)
   # readr::write_rds(tmp_data, paste0(folder, "/tmp.rds"))
 
   tock <- Sys.time()
@@ -335,7 +366,9 @@ test_EDAV_connection <- function(
 
   tick <- Sys.time()
 
-  x <- edav_io(io = "read", file_loc = paste0(folder, "/tmp.rds"), default_dir = NULL)
+  x <- edav_io(io = "read", file_loc = paste0(folder, "/tmp.rds"),
+               default_dir = NULL,
+               azcontainer = azcontainer)
   # x <- readr::read_rds(paste0(folder, "/tmp.rds"))
 
   tock <- Sys.time()
@@ -351,7 +384,10 @@ test_EDAV_connection <- function(
     "{prettyunits::pretty_sec(dt2)}"
   ))
 
-  suppressMessages(edav_io(io = "delete", file_loc = paste0(folder, "/tmp.rds"), default_dir = NULL, force_delete = T), classes = c("message", "warning"))
+  suppressMessages(edav_io(io = "delete", file_loc = paste0(folder, "/tmp.rds"),
+                           default_dir = NULL, force_delete = T,
+                           azcontainer = azcontainer),
+                   classes = c("message", "warning"))
   # x <- file.remove(paste0(folder, "/tmp.rds"))
 
   dt3 <- test_size / file_size * dt1
@@ -426,6 +462,7 @@ get_constant <- function(constant_name) {
 #' @param force.new.run `bool` Default `FALSE`, if `TRUE` will run recent data and cache.
 #' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
 #' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.
+#' @param azcontainer Azure storage container provided by [get_azure_storage_connection()].
 #' @returns Named `list` containing polio data that is relevant to CDC.
 #' @examples
 #' \dontrun{
@@ -439,14 +476,18 @@ get_all_polio_data <- function(
     folder = "GID/PEB/SIR/Data/",
     force.new.run = F,
     recreate.static.files = F,
-    attach.spatial.data = T) {
+    attach.spatial.data = T,
+    azcontainer = suppressMessages(get_azure_storage_connection())) {
   # check to see that size parameter is appropriate
   if (!size %in% c("small", "medium", "large")) {
     stop("The parameter 'size' must be either 'small', 'medium', or 'large'")
   }
 
   # look to see if the recent raw data rds is in the analytic folder
-  prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+  prev_table <- edav_io(io = "list",
+                        file_loc = file.path(folder, "/analytic"),
+                        default_dir = NULL,
+                        azcontainer = azcontainer) |>
     dplyr::filter(grepl("raw.data.recent.rds", name)) |>
     dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
@@ -473,19 +514,28 @@ get_all_polio_data <- function(
   if (!force.new.run) {
     # determine all raw data files to be downloaded
     cli::cli_alert_info("Downloading most recent active polio data from 2019 onwards")
-    raw.data.post.2019 <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
+    raw.data.post.2019 <- edav_io(io = "read",
+                                  file_loc = prev_table$file,
+                                  default_dir = NULL,
+                                  azcontainer = azcontainer)
 
     if (size == "small") {
       raw.data <- raw.data.post.2019
     }
 
     if (size == "medium") {
-      prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+      prev_table <- edav_io(io = "list",
+                            file_loc = file.path(folder, "/analytic"),
+                            default_dir = NULL,
+                            azcontainer = azcontainer) |>
         dplyr::filter(grepl("raw.data.2016.2018.rds", name)) |>
         dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
       cli::cli_alert_info("Downloading static polio data from 2016-2019")
-      raw.data.2016.2018 <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
+      raw.data.2016.2018 <- edav_io(io = "read",
+                                    file_loc = prev_table$file,
+                                    default_dir = NULL,
+                                    azcontainer = azcontainer)
 
       raw.data <- split_concat_raw_data(
         action = "concat",
@@ -495,19 +545,31 @@ get_all_polio_data <- function(
     }
 
     if (size == "large") {
-      prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+      prev_table <- edav_io(io = "list",
+                            file_loc = file.path(folder, "/analytic"),
+                            default_dir = NULL,
+                            azcontainer = azcontainer) |>
         dplyr::filter(grepl("raw.data.2016.2018.rds", name)) |>
         dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
       cli::cli_alert_info("Downloading static polio data from 2016-2019")
-      raw.data.2016.2019 <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
+      raw.data.2016.2019 <- edav_io(io = "read",
+                                    file_loc = prev_table$file,
+                                    default_dir = NULL,
+                                    azcontainer = azcontainer)
 
-      prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+      prev_table <- edav_io(io = "list",
+                            file_loc = file.path(folder, "/analytic"),
+                            default_dir = NULL,
+                            azcontainer = azcontainer) |>
         dplyr::filter(grepl("raw.data.2000", name)) |>
         dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
       cli::cli_alert_info("Downloading static polio data from 2001-2016")
-      raw.data.2001.2016 <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
+      raw.data.2001.2016 <- edav_io(io = "read",
+                                    file_loc = prev_table$file,
+                                    default_dir = NULL,
+                                    azcontainer = azcontainer)
 
       raw.data <- split_concat_raw_data(
         action = "concat",
@@ -521,7 +583,10 @@ get_all_polio_data <- function(
 
     if (attach.spatial.data) {
       cli::cli_process_start("Downloading and attaching spatial data")
-      spatial.data <- edav_io(io = "read", file_loc = file.path(folder, paste0("analytic/spatial.data.rds")), default_dir = NULL)
+      spatial.data <- edav_io(io = "read",
+                              file_loc = file.path(folder, paste0("analytic/spatial.data.rds")),
+                              default_dir = NULL,
+                              azcontainer = azcontainer)
 
       raw.data$global.ctry <- spatial.data$global.ctry
       raw.data$global.prov <- spatial.data$global.prov
@@ -540,7 +605,7 @@ get_all_polio_data <- function(
   } else {
     cli::cli_h1("Testing download times")
 
-    download_metrics <- test_EDAV_connection(return_list = T)
+    download_metrics <- test_EDAV_connection(azcontainer, return_list = T)
 
     # use the truncated AFP file
     afp.trunc <- T
@@ -550,11 +615,26 @@ get_all_polio_data <- function(
     }
 
     dl_table <- dplyr::bind_rows(
-      edav_io(io = "list", file_loc = file.path(folder, "polis"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path(folder, "spatial"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path(folder, "coverage"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path(folder, "pop"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path("GID/PEB/SIR/POLIS/"), default_dir = NULL) |>
+      edav_io(io = "list",
+              file_loc = file.path(folder, "polis"),
+              default_dir = NULL,
+              azcontainer = azcontainer),
+      edav_io(io = "list",
+              file_loc = file.path(folder, "spatial"),
+              default_dir = NULL,
+              azcontainer = azcontainer),
+      edav_io(io = "list",
+              file_loc = file.path(folder, "coverage"),
+              default_dir = NULL,
+              azcontainer = azcontainer),
+      edav_io(io = "list",
+              file_loc = file.path(folder, "pop"),
+              default_dir = NULL,
+              azcontainer = azcontainer),
+      edav_io(io = "list",
+              file_loc = file.path("GID/PEB/SIR/POLIS/"),
+              default_dir = NULL,
+              azcontainer = azcontainer) |>
         dplyr::filter(grepl("cache", name))
     ) |>
       dplyr::filter(!is.na(size)) |>
@@ -580,16 +660,16 @@ get_all_polio_data <- function(
     spatial.data <- list()
 
     cli::cli_process_start("1) Loading country shape files from EDAV")
-    spatial.data$global.ctry <- load_clean_ctry_sp()
+    spatial.data$global.ctry <- load_clean_ctry_sp(azcontainer)
     cli::cli_process_done()
 
 
     cli::cli_process_start("2) Loading province shape files from EDAV")
-    spatial.data$global.prov <- load_clean_prov_sp()
+    spatial.data$global.prov <- load_clean_prov_sp(azcontainer)
     cli::cli_process_done()
 
     cli::cli_process_start("3) Loading district shape files from EDAV")
-    spatial.data$global.dist <- load_clean_dist_sp()
+    spatial.data$global.dist <- load_clean_dist_sp(azcontainer)
     cli::cli_process_done()
 
     cli::cli_process_start("4) Loading AFP line list data from EDAV (This file is almost 3GB and can take a while)")
@@ -597,7 +677,8 @@ get_all_polio_data <- function(
       edav_io(
         io = "read",
         file_loc = dplyr::filter(dl_table, grepl("afp", file)) |>
-          dplyr::pull(file), default_dir = NULL
+          dplyr::pull(file), default_dir = NULL,
+        azcontainer = azcontainer
       ) |>
       dplyr::filter(surveillancetypename == "AFP") |>
       dplyr::mutate(
@@ -705,7 +786,8 @@ get_all_polio_data <- function(
       edav_io(
         io = "read",
         file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
-          dplyr::pull(file), default_dir = NULL
+          dplyr::pull(file), default_dir = NULL,
+        azcontainer = azcontainer
       ) |>
       dplyr::ungroup()
 
@@ -713,7 +795,8 @@ get_all_polio_data <- function(
       edav_io(
         io = "read",
         file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
-          dplyr::pull(file), default_dir = NULL
+          dplyr::pull(file), default_dir = NULL,
+        azcontainer = azcontainer
       ) |>
       dplyr::ungroup()
 
@@ -721,7 +804,8 @@ get_all_polio_data <- function(
       edav_io(
         io = "read",
         file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
-          dplyr::pull(file), default_dir = NULL
+          dplyr::pull(file), default_dir = NULL,
+        azcontainer = azcontainer
       ) |>
       dplyr::ungroup()
     cli::cli_process_done()
@@ -732,7 +816,8 @@ get_all_polio_data <- function(
       edav_io(
         io = "read",
         file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
-          dplyr::pull(file), default_dir = NULL
+          dplyr::pull(file), default_dir = NULL,
+        azcontainer = azcontainer
       ) |>
       dplyr::select(
         ctry = adm0_name,
@@ -746,7 +831,8 @@ get_all_polio_data <- function(
         edav_io(
           io = "read",
           file_loc = dplyr::filter(dl_table, grepl("mcv1", file)) |>
-            dplyr::pull(file), default_dir = NULL
+            dplyr::pull(file), default_dir = NULL,
+          azcontainer = azcontainer
         ) |>
           dplyr::select(
             ctry = adm0_name,
@@ -767,7 +853,8 @@ get_all_polio_data <- function(
       edav_io(
         io = "read",
         file_loc = dplyr::filter(dl_table, grepl("/es_2001", file)) |>
-          dplyr::pull(file), default_dir = NULL
+          dplyr::pull(file), default_dir = NULL,
+        azcontainer = azcontainer
       )
     cli::cli_process_done()
 
@@ -776,7 +863,8 @@ get_all_polio_data <- function(
       edav_io(
         io = "read",
         file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
-          dplyr::pull(file), default_dir = NULL
+          dplyr::pull(file), default_dir = NULL,
+        azcontainer = azcontainer
       )
 
     cli::cli_process_done()
@@ -786,7 +874,8 @@ get_all_polio_data <- function(
       edav_io(
         io = "read",
         file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
-          dplyr::pull(file), default_dir = NULL
+          dplyr::pull(file), default_dir = NULL,
+        azcontainer = azcontainer
       )
 
     cli::cli_process_done()
@@ -796,7 +885,8 @@ get_all_polio_data <- function(
       edav_io(
         io = "read",
         file_loc = dplyr::filter(dl_table, grepl("/other", file)) |>
-          dplyr::pull(file), default_dir = NULL
+          dplyr::pull(file), default_dir = NULL,
+        azcontainer = azcontainer
       )
 
     cli::cli_process_done()
@@ -805,7 +895,8 @@ get_all_polio_data <- function(
     spatial.data$roads <- edav_io(
       io = "read",
       file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
-        dplyr::pull(file), default_dir = NULL
+        dplyr::pull(file), default_dir = NULL,
+      azcontainer = azcontainer
     )
     cli::cli_process_done()
 
@@ -813,7 +904,8 @@ get_all_polio_data <- function(
     spatial.data$cities <- edav_io(
       io = "read",
       file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
-        dplyr::pull(file), default_dir = NULL
+        dplyr::pull(file), default_dir = NULL,
+      azcontainer = azcontainer
     )
     cli::cli_process_done()
 
@@ -822,13 +914,17 @@ get_all_polio_data <- function(
     polis.cache <- edav_io(
       io = "read",
       file_loc = dplyr::filter(dl_table, grepl("cache", file)) |>
-        dplyr::pull(file), default_dir = NULL
+        dplyr::pull(file), default_dir = NULL,
+      azcontainer = azcontainer
     ) |>
       dplyr::mutate(last_sync = as.Date(last_sync))
 
     raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
 
-    raw.data$metadata$processed_time <- edav_io(io = "list", file_loc = file.path(folder, "/polis"), default_dir = NULL) |>
+    raw.data$metadata$processed_time <- edav_io(io = "list",
+                                                file_loc = file.path(folder, "/polis"),
+                                                default_dir = NULL,
+                                                azcontainer = azcontainer) |>
       dplyr::filter(grepl("positives", name)) |>
       dplyr::select("ctime" = "lastModified") |>
       dplyr::mutate(ctime = as.Date(ctime)) |>
@@ -908,14 +1004,16 @@ get_all_polio_data <- function(
         io = "write",
         file_loc = file.path(folder, paste0("analytic/", dplyr::pull(out_files[i, ], file_name))),
         obj = out[[dplyr::pull(out_files[i, ], tag)]],
-        default_dir = NULL
+        default_dir = NULL,
+        azcontainer = azcontainer
       )
     }
 
     edav_io(
       io = "write",
       file_loc = file.path(folder, paste0("analytic/spatial.data.rds")),
-      obj = spatial.data, default_dir = NULL
+      obj = spatial.data, default_dir = NULL,
+      azcontainer = azcontainer
     )
 
     cli::cli_process_done()
@@ -2341,6 +2439,7 @@ check_missing_rows <- function(df,
 #'
 #'
 #' @param path `str` Path to start at initially.
+#' @param azcontainer Azure storage container provided by [get_azure_storage_connection()].
 #'
 #' @returns `tibble` Data from the EDAV environment.
 #' @export
@@ -2349,7 +2448,8 @@ check_missing_rows <- function(df,
 #' \dontrun{
 #' test <- explore_edav()
 #' }
-explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
+explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER"),
+                         azcontainer = suppressMessages(get_azure_storage_connection())) {
   cli::cli_alert_info(paste0(
     "Interactive file selection activated.",
     " Use esc to exit."
@@ -2358,7 +2458,10 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
   while (TRUE) {
     tryCatch(
       expr = {
-        output <- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+        output <- edav_io(io = "list", default_dir = "",
+                          file_loc = file.path(pointer),
+                          azcontainer = azcontainer
+                          )
         print(
           output |>
             dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
@@ -2370,7 +2473,9 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
         pointer <<- gsub("[^/]+$", "", pointer)
         pointer <<- sub("/$", "", pointer)
 
-        output <<- edav_io(io = "list", default_dir = "", file_loc = file.path(pointer))
+        output <<- edav_io(io = "list", default_dir = "",
+                           file_loc = file.path(pointer),
+                           azcontainer = azcontainer)
         print(
           output |>
             dplyr::mutate(name = stringr::str_extract(name, "[^/]+$")),
@@ -2464,7 +2569,7 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
           if (ext %in% c("xlsx", "xls")) {
             withr::with_tempdir(
               {
-                AzureStor::storage_download(get_azure_storage_connection(),
+                AzureStor::storage_download(azcontainer,
                                             pointer,
                                             file.path(tempdir(), basename(pointer)),
                                             overwrite = TRUE
@@ -2475,7 +2580,8 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
               }
             )
           } else {
-            output <- edav_io("read", default_dir = "", pointer)
+            output <- edav_io("read", default_dir = "", pointer,
+                              azcontainer = azcontainer)
             return(output)
           }
         }
@@ -2512,7 +2618,7 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER")) {
             if (!dir.exists(dest)) {
               cli::cli_alert_info("Not a valid file path. Please try again.")
             } else {
-              AzureStor::storage_download(get_azure_storage_connection(),
+              AzureStor::storage_download(azcontainer,
                                           pointer,
                                           file.path(dest, basename(pointer)),
                                           overwrite = TRUE
