@@ -1,9 +1,13 @@
 #' Pull CDC NCIRD childvaxview immunization coverage data
 #' @description
-#' Pull coverage data from API and filter by desired geographic level
+#' Pull coverage data from API and filter by desired geographic level and vaccines
 #' @param limit `int` Number of rows to download, defaults to max allowed (1000).
 #' @param geo_level `str` Geographic categories of coverage data.
 #' Choose from: 'national', 'regional', 'state', or 'substate'.
+#' @param vaccines `str` A string or vector of strings of vaccines for which to provide coverage data.
+#' Choose from: 'DTaP', 'Polio', 'Hep B', 'PCV', 'Varicella', 'MMR', 'Hib', 'Hep A', 'Influenza', 'Rotavirus', 'Combined 7 series'.
+#' @param base_url `str` URL to US CDC NCIRD API endpoint.
+#' Defaults to "https://data.cdc.gov/resource/fhky-rtsk.json".
 #'
 #' @return `tibble` Dataframe of vaccine coverage estimates for all VPDs.
 #' @export
@@ -11,21 +15,46 @@
 #' @examples
 #' cdc_data <- get_cdc_childvaxview_data(geo_level="substate")
 #'
-get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL) {
+get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL, vaccines=NULL,
+                                      base_url="https://data.cdc.gov/resource/fhky-rtsk.json") {
 
   # # Load necessary libraries
   # library(httr)
   # library(jsonlite)
 
-  ## Get data from API (>1000 rows) ####
-  base_url <- "https://data.cdc.gov/resource/fhky-rtsk.json" # NCIRD API endpoint
+  # Check parameter validity ####
+  valid_geo_levels <- c("national", "regional", "state", "substate")
+  if (!(is.null(geo_level)) && !(geo_level %in% valid_geo_levels) ) {
+    stop("Invalid geo_level. Choose from: 'national', 'regional', 'state', or 'substate', or set to NULL to include all geographic categories.")
+  }
 
-  # Initialize variables for pagination
-  offset <- 0
-  all_data <- list() # Create a list to store data
+  valid_vaccines <- c("DTaP", "Polio", "Hep B", "PCV", "Varicella","MMR", "Hib","Hep A", "Influenza","Rotavirus", "Combined 7 Series")
+  if (!(is.null(vaccines)) && !all(vaccines %in% valid_vaccines)) {
+    stop("At least one invalid vaccine name provided. Choose from: 'DTaP', 'Polio', 'Hep B', 'PCV', 'Varicella','MMR', 'Hib','Hep A', 'Influenza','Rotavirus', 'Combined 7 Series', or set to NULL to include all geographic categories.")
+  }
 
-  repeat {
-    url <- sprintf("%s?$limit=%d&$offset=%d", base_url, limit, offset)
+  # Count records to get and define all urls ####
+
+  # Total # of records to get
+  count_response <- httr::GET(sprintf("%s?$select=count(*)", base_url))
+
+  if (httr::status_code(count_response) != 200) {
+    stop("Failed to retrieve total record count: ", httr::status_code(count_response), "\nResponse: ", httr::content(count_response, "text"))
+  }
+
+  total_count <- jsonlite::fromJSON(httr::content(count_response, "text"))[[1]] %>%
+    as.numeric()
+
+  # Generate all URLs
+  num_requests <- ceiling(total_count / limit) # requests needed
+  urls <- purrr::map(0:(num_requests - 1), function(i) {
+    sprintf("%s?$limit=%d&$offset=%d", base_url, limit, i * limit)
+  }) %>% unlist()
+
+  # Get paginated data from url ####
+  all_data <- dplyr::tibble() # Create empty df to store data
+
+  for (url in urls){
     response <- httr::GET(url)
 
     # Check if request was successful (status code 200)
@@ -33,31 +62,22 @@ get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL) {
       data_chunk <- jsonlite::fromJSON(httr::content(response, "text")) # Parse JSON content
 
       if (length(data_chunk) == 0) {
-        break # Exit loop if no more data is returned
+        break() # Exit loop if no more data is returned
       }
 
-      all_data[[length(all_data) + 1]] <- data_chunk # Append new chunk of data
-
-      offset <- offset + limit # Increment offset for next request
+      # Combine chunks into dataframe
+      all_data <- all_data %>% dplyr::bind_rows(data_chunk)
 
     } else {
       stop("Failed to retrieve data: ", httr::status_code(response), "\nResponse: ", httr::content(response, "text"))
       # Error if request failed; include response text for debugging
     }
 
-    Sys.sleep(1) # Optional: Add a delay between requests to avoid hitting rate limits.
+    Sys.sleep(1) # Add a delay between requests to avoid hitting rate limits.
   }
-
-  # Combine all chunks into a single dataframe
-  final_data <- do.call(rbind, all_data)
 
   # Define geo_level filtering ####
   if (!is.null(geo_level)) {
-    valid_geo_levels <- c("national", "regional", "state", "substate")
-
-    if (!(geo_level %in% valid_geo_levels)) {
-      stop("Invalid geo_level. Choose from: 'national', 'regional', 'state', or 'substate'.")
-    }
 
     substate_areas <- c("IL-City of Chicago","IL-Rest of state",
                         "NY-City of New York","NY-Rest of state",
@@ -67,17 +87,70 @@ get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL) {
 
     states_disagg <- c("Illinois", "New York","Pennsylvania","Texas")
 
-    filtered_data <- final_data %>%
+    all_data <- all_data %>%
       filter(
-        (geo_level == "national" & geography == "United States") |
+          (geo_level == "national" & geography == "United States") |
           (geo_level == "regional" & geography %in% c(paste0("Region ", 1:10))) |
           (geo_level == "state" & !(geography %in% c("United States", paste0("Region ", 1:10), substate_areas))) |
           (geo_level == "substate" & !(geography %in% c("United States", paste0("Region ", 1:10), states_disagg)))
       )
-
-    return(filtered_data)
-
   }
 
-  return(final_data)
+  # Clean vaccine data  ####
+
+  # All cols imported as chr; change "NA" and "" to missing before further conversion
+  all_data <- all_data %>% mutate(
+    across(everything(), ~ na_if(., "NA")),
+    across(everything(), ~ na_if(.,""))
+  )
+
+  all_data <- all_data %>%
+    mutate(
+      # Assign VPDs (matching vpd_ref data to each vaccine)
+      vpd = case_when(
+        vaccine == "Hib" ~ "H. influenza type B disease",
+        vaccine == "≥1 Dose MMR" ~ "Multiple", # Measles, Mumps, Rubella
+        vaccine == "Influenza" ~ "Influenza",
+        vaccine == "Rotavirus" ~ "Rotavirus",
+        vaccine == "PCV" ~ "Pneumococcal disease",
+        vaccine == "≥1 Dose Varicella" ~ "Varicella",
+        vaccine == "Hep B" ~ "Hepatitis B",
+        vaccine == "Hep A" ~ "Hepatitis A",
+        vaccine == "Polio" ~ "Poliomyelitis",
+        vaccine == "DTaP" ~ "Multiple", # Diphtheria, Tetanus, Pertussis
+        vaccine == "Combined 7 Series" ~ "Multiple", # received combined 7-vaccine series by age 24 months
+        TRUE ~ NA_character_
+      ),
+      # simplify where dose value included under 'vaccine' field
+      dose = case_when(
+        vaccine == "≥1 Dose MMR" ~ "≥1 Dose",
+        vaccine == "≥1 Dose Varicella" ~ "≥1 Dose",
+        vaccine == "Combined 7 Series" ~ "Full series",
+        TRUE ~ dose
+      ),
+      # Simplify values by separating dose from vaccine, where together
+      vaccine = case_when(
+        vaccine == "≥1 Dose MMR" ~ "MMR",
+        vaccine == "≥1 Dose Varicella" ~ "Varicella",
+        TRUE ~ vaccine
+      ),
+      # convert to numeric values and extract upper and lower CI bounds
+      coverage_estimate = as.numeric(coverage_estimate),
+      population_sample_size = as.numeric(population_sample_size),
+      lb_95ci = stringr::str_extract(`_95_ci`, "^[0-9]+\\.[0-9]+") %>% as.numeric(), # extract numbers before 'to'
+      ub_95ci = stringr::str_extract(`_95_ci`, "(?<=to )([0-9]+\\.[0-9]+)") %>% as.numeric() # extract numbers after 'to'
+    )
+
+  ## If country level, add iso3 code to ensure appropriate merging with other GID datasets
+  if (geo_level=="national"){
+    all_data <- all_data %>% mutate(iso3_code = "USA")
+    }
+
+  # Define vaccines filtering ####
+  if (!is.null(vaccines)) {
+    all_data <- all_data %>% filter(vaccine %in% vaccines)
+  }
+
+  # Return dataframe ####
+  return(all_data)
 }
