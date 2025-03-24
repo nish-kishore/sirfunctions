@@ -259,7 +259,8 @@ get_vpd_missingness <- function(vpd_name = NULL, variable_name = NULL,
 
   no_values <- dplyr::anti_join(complete,
                                 vpd_data |>
-                                  select(country_name, year, vpd, variable))
+                                  select(country_name, year, vpd, variable),
+                                by = c("vpd", "country_name", "variable", "year"))
 
   years_with_data <- vpd_data |>
     dplyr::group_by(vpd, country_name, variable) |>
@@ -268,7 +269,8 @@ get_vpd_missingness <- function(vpd_name = NULL, variable_name = NULL,
     dplyr::group_by(vpd, country_name, variable) |>
     dplyr::summarize(missing_years = paste0(unique(year), collapse = ", "))
 
-  summary <- dplyr::full_join(years_with_data, no_values_summary) |>
+  summary <- dplyr::full_join(years_with_data, no_values_summary,
+                              by = c("vpd", "country_name", "variable")) |>
     dplyr::ungroup()
 
   return(summary)
