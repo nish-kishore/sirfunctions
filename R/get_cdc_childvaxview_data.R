@@ -1,6 +1,6 @@
 #' Pull CDC NCIRD childvaxview immunization coverage data
 #' @description
-#' Pull coverage data from API and filter by desired geographic level and vaccines
+#' Pull coverage data from API and filter by desired geographic level and vaccines.
 #' @param limit `int` Number of rows to download, defaults to max allowed (1000).
 #' @param geo_level `str` Geographic categories of coverage data.
 #' Choose from: 'national', 'regional', 'state', or 'substate'.
@@ -16,7 +16,8 @@
 #' cdc_data <- get_cdc_childvaxview_data(geo_level="substate")
 #' cdc_data <- get_cdc_childvaxview_data(geo_level="national", vaccines=c("Polio","MMR"))
 #'
-get_cdc_childvaxview_data <- function(limit = 1000, geo_level=NULL, vaccines=NULL,
+get_cdc_childvaxview_data <- function(geo_level=NULL, vaccines=NULL,
+                                      limit = 1000,
                                       base_url="https://data.cdc.gov/resource/fhky-rtsk.json") {
 
   # Check parameter validity ####
