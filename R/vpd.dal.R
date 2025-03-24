@@ -166,9 +166,16 @@ get_vpd_data <- function(vpd_name = NULL, variable_name = NULL, years = NULL,
       vpd_data_list$ctry_pop <- vpd_data_list$ctry_sf |>
         dplyr::filter(iso3_code %in% iso3_codes)
       }
-    }
+  }
 
-  return(vpd_data_list)
+  if (!add_ctry_sf & !add_ctry_pop) {
+
+    return(vpd_data_list$vpd_data)
+
+  } else {
+
+    return(vpd_data_list)
+  }
 
 }
 
