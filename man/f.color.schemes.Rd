@@ -26,6 +26,9 @@ with \code{\link[=generate_adhoc_map]{generate_adhoc_map()}}.
 \code{\link[=generate_es_site_det]{generate_es_site_det()}}.
 \item \code{"es.detections"} Default detection types. Used primarily with
 \code{\link[=generate_es_site_det]{generate_es_site_det()}}.
+\item \code{"vpd.critical.ctry"}: Priority VPD countries
+\item \code{"vpd.binary.ctry"}: Priority and non-priority VPD countries binary designation.
+\item \code{"vpd.colors"}: VPD colors.
 }}
 }
 \value{
