@@ -22,6 +22,8 @@ get_vpd_vars <- function() {
     dplyr::group_by(vpd) |>
     dplyr::summarize(variable = paste0(sort(unique(variable)), collapse = ", "))
 
+  return(summary)
+
 }
 
 #' Get vaccine preventable diseases dataset
