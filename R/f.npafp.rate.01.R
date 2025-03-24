@@ -185,6 +185,12 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' @param sp_continuity_validation `bool` Should we filter places that are not present
 #' for the entirety of the analysis dates? Default `TRUE`.
 #' @returns `tibble` A table containing NPAFP rates as well as additional information relevant to each location analyzed.
+#' @examples
+#' \dontrun{
+#' raw.data <- get_all_polio_data()
+#' npafp_ctry <- f.npafp.rate.01(raw.data$afp, raw.data$ctry.pop, "2022-01-01", "2024-12-31", "ctry")
+#' }
+#'
 #' @export
 f.npafp.rate.01 <- function(
     afp.data,
