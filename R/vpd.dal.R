@@ -1,3 +1,5 @@
+# Public functions ----
+
 #' Obtain available variables for VPD data
 #'
 #' @description
@@ -220,6 +222,16 @@ get_vpd_missingness <- function(vpd_name = NULL, variable_name = NULL,
     dplyr::select(vpd)
   cli::cli_process_done()
 
+  if (!is.null(vpd_name)) {
+    invalid_vpd_name <- setdiff(vpd_name, full_vpd$vpd)
+    if (length(invalid_vpd_name) != 0) {
+      cli::cli_alert(paste0("Invalid variable name: ",
+                            paste0(invalid_vpd_name, collapse = ", ")))
+      cli::cli_abort(paste0("Valid values are:\n",
+                            paste0(sort(full_vpd$vpd), collapse = ", ")))
+    }
+  }
+
   cli::cli_process_start("Getting full country list")
   full_ctry <- edav_io(io = "read",
                        default_dir = "GID/GIDMEA/giddatt",
@@ -231,10 +243,14 @@ get_vpd_missingness <- function(vpd_name = NULL, variable_name = NULL,
     dplyr::select(variable) |>
     dplyr::distinct()
 
-  invalid_variable_name <- setdiff(variable_name, full_variables$variable)
-  if (length(invalid_variable_name) != 0) {
-    cli::cli_abort(paste0("Invalid variable name: ",
-                          paste0(invalid_variable_name, collapse = ", ")))
+  if (!is.null(variable_name)) {
+    invalid_variable_name <- setdiff(variable_name, full_variables$variable)
+    if (length(invalid_variable_name) != 0) {
+      cli::cli_alert(paste0("Invalid variable name: ",
+                            paste0(invalid_variable_name, collapse = ", ")))
+      cli::cli_abort(paste0("Valid values are:\n",
+                            paste0(full_variables$variable, collapse = ", ")))
+    }
   }
 
   years <- dplyr::tibble(year = min_year:max_year)
@@ -255,6 +271,11 @@ get_vpd_missingness <- function(vpd_name = NULL, variable_name = NULL,
       dplyr::filter(variable %in% variable_name)
     vpd_data <- vpd_data |>
       dplyr::filter(variable %in% variable_name)
+
+    if (nrow(vpd_data) == 0) {
+      cli::cli_abort(paste0(paste0(variable_name, collapse = ", "),
+                            " not available for the selected VPD(s)."))
+    }
   }
 
   no_values <- dplyr::anti_join(complete,
@@ -262,16 +283,88 @@ get_vpd_missingness <- function(vpd_name = NULL, variable_name = NULL,
                                   select(country_name, year, vpd, variable),
                                 by = c("vpd", "country_name", "variable", "year"))
 
+  cli::cli_process_start("Calculating missing years")
+  group_count <- vpd_data |>
+    dplyr::select(vpd, country_name, variable) |>
+    dplyr::distinct() |>
+    nrow()
+
+  cli::cli_alert_info(paste0("Estimated completion time: ",
+                             round(group_count * 0.015 / 60, 2), " mins."))
+
+  tick <- Sys.time()
+  if ((group_count * 0.015 / 60) >= 2) {
+    cli::cli_alert_info(paste0("Passing restrictions on start and end year",
+                               ", variable name, and VPD name may speed up calculations."))
+  }
+
   years_with_data <- vpd_data |>
+    dplyr::select(vpd, country_name, variable, year) |>
     dplyr::group_by(vpd, country_name, variable) |>
-    dplyr::summarize(years_with_data = paste0(unique(year), collapse = ", "))
+    dplyr::summarize(years_with_data = calc_hr_range(year))
+
   no_values_summary <- no_values |>
+    dplyr::select(vpd, country_name, variable, year) |>
     dplyr::group_by(vpd, country_name, variable) |>
-    dplyr::summarize(missing_years = paste0(unique(year), collapse = ", "))
+    dplyr::summarize(missing_years = calc_hr_range(year))
 
   summary <- dplyr::full_join(years_with_data, no_values_summary,
                               by = c("vpd", "country_name", "variable")) |>
     dplyr::ungroup()
+  cli::cli_process_done()
+  cli::cli_alert_success(paste0("Process completed in: ",
+                         round(difftime(Sys.time(), tick, units = "mins"), 2),
+                         " mins."))
+
 
   return(summary)
 }
+
+# Private function ----
+
+#' Return an array of numbers summarized in human readable format
+#'
+#' @description
+#' Given an array of numbers this returns those numbers in human readable format.
+#'
+#' @param numbers `int` An array of numbers.
+#' @returns A string in human readable format.
+#' @keywords internal
+#'
+calc_hr_range <- function(numbers) {
+  #can probably do this in base R but easier to follow logic for debugging here
+  dplyr::tibble(
+    nums = numbers
+  ) |>
+
+    #make sure numbers are in order
+    dplyr::arrange(nums) |>
+
+    #adjust to ensure no repeats
+    unique() |>
+
+    #calculate the different in units between each ordinal set
+    dplyr::mutate(diffs = nums - dplyr::lag(nums, default = nums[1])) |>
+
+    #flag sets where there is more than a 1 unit increase
+    dplyr::mutate(set_iterator = ifelse(diffs > 1, 1, 0)) |>
+
+    #specify sets based on an incrementing iterator of sets
+    dplyr::mutate(set = cumsum(set_iterator)) |>
+
+    #group by sets and identify min/max in string
+    dplyr::group_by(set) |>
+    dplyr::summarise(range = ifelse(
+      min(nums) == max(nums),
+      as.character(min(nums)),
+      paste0(min(nums),"-",max(nums))
+    )
+    ) |>
+
+    #extract values and condense for ease of reading
+    dplyr::pull(range) |>
+    paste0(collapse = ", ")
+}
+
+
+tick <- Sys.time()
