@@ -356,12 +356,14 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #' @param admin.data `tibble` Population data. Renamed in favor of `pop.data`.
 #' @returns `tibble` Long format stool adequacy evaluations.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data()
 #' stool.ads <- f.stool.ad.01(raw.data$afp, raw.data$ctry.pop,
 #'   "2021-01-01", "2023-12-31",
 #'   "ctry",
 #'   sp_continuity_validation = FALSE
 #' )
+#' }
 #'
 #' @export
 f.stool.ad.01 <- function(

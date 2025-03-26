@@ -1,6 +1,6 @@
 Package: sirfunctions
 Title: Key Functions to Analyze Global Polio Surveillance Data
-Version: 1.3.1
+Version: 1.3.2
 Authors@R: c(
     person("Nishant", "Kishore", , "ynm2@cdc.gov", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0408-2747")),
@@ -40,6 +40,9 @@ Imports:
     stringr (>= 1.5.0),
     utils (>= 4.4.0),
     tidyr (>= 1.3.0),
+    httr,
+    jsonlite,
+    purrr,
     withr
 Suggests:
     blastula,
@@ -50,8 +53,6 @@ Suggests:
     ggpubr,
     ggrepel,
     prettyunits,
-    purrr,
-    httr,
     janitor,
     datasets,
     readxl,
