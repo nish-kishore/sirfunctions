@@ -49,6 +49,194 @@ get_azure_storage_connection <- function(
   return(azcontainer)
 }
 
+#' sirfunctions i/o handler
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Manages read/write/list/create/delete functions for sirfunctions. This function
+#' is adapted from [tidypolis_io](https://github.com/nish-kishore/tidypolis/blob/4e2f75e5ee3205b84c5b78f4b1776e2270e1f9ec/R/dal.R#L15).
+#'
+#' @param obj `str` Object to be loaded into EDAV
+#' @param io `str` The type of operation to use. Valid values include:
+#' - `"read"`: reads data from the specified `file_path`.
+#' - `"write"`: writes data to the specified `file_path`.
+#' - `"list"`: lists the files in the specified `file_path`.
+#' - `"exists.dir"`: determines whether a directory is present.
+#' - `"exists.file"`: determines whether a file is present.
+#' - `"create.dir"`: creates a directory to the specified `file_path`.
+#' - `"delete"`: deletes a file or folder in the specified `file_path`.
+#' @param file_loc `str` Path of file relative to the `default_folder`.
+#' @param default_folder `str` The default folder to use. Defaults to `"GID/PEB/SIR`.
+#' @param edav `bool` Whether the function should interact with the EDAV environment.
+#' Defaults to `FALSE`, which interacts with files locally.
+#' @param azcontainer `Azure container` A container object returned by
+#' [get_azure_storage_connection()].
+#' @param full_names `bool` If `io="list"`, include the full reference path. Default `FALSE`.
+#' @param ... Optional parameters that work with [readr::read_delim()] or [readxl::read_excel()].
+#' @returns Conditional on `io`. If `io` is `"read"`, then it will return a tibble. If `io` is `"list"`, it will return a
+#' list of file names. Otherwise, the function will return `NULL`. `exists.dir` and `exists.file` will return a `bool`.
+#'
+#' @examples
+#' \dontrun{
+#' df <- sirfunctions_io("read", file_loc = "df1.csv") # read file from EDAV
+#' # Passing parameters that work with read_csv or read_excel, like sheet or skip.
+#' df2 <- sirfunctions_io("read", file_loc = "df2.xlsx", sheet = 1, skip = 2)
+#' list_of_df <- list(df_1 = df, df_2 = df)
+#' # Saves df to the test folder in EDAV
+#' sirfunctions_io("write", file_loc = "Data/test/df.csv", obj = df)
+#' # Saves list_of_df as an Excel file with multiple sheets.
+#' sirfunctions_io("write", file_loc = "Data/test/df.xlsx", obj = list_of_df)
+#' sirfunctions_io("exists.dir", "Data/nonexistentfolder") # returns FALSE
+#' sirfunctions_io("exists.file", file_loc = "Data/test/df1.csv") # returns TRUE
+#' sirfunctions_io("create", "Data/nonexistentfolder") # creates a folder called nonexistentfolder
+#' sirfunctions_io("list") # list all files from the default directory
+#' }
+#'
+#' @export
+sirfunctions_io <- function(
+    io,
+    default_dir = "GID/PEB/SIR",
+    file_loc,
+    obj = NULL,
+    edav = as.logical(Sys.getenv("POLIS_EDAV_FLAG")),
+    azcontainer = suppressMessages(sirfunctions::get_azure_storage_connection()),
+    full_names = F,
+    ...) {
+  if (!is.null(file_loc)) {
+    if (is.null(default_dir)) {
+      file_loc <- file_loc
+    } else {
+      file_loc <- file.path(default_dir, file_loc)
+    }
+  } else {
+    file_loc <- default_dir
+  }
+
+  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create")
+
+  if (!io %in% opts) {
+    stop("io: must be 'read', 'write', 'delete', 'create', 'exists.dir', 'exists.file' or 'list'")
+  }
+
+  if (io == "write" & is.null(obj)) {
+    stop("Need to supply an object to be written")
+  }
+
+  if (io == "list") {
+    if (edav) {
+      out <- sirfunctions::edav_io(
+        io = "list",
+        NULL,
+        file_loc,
+        azcontainer = azcontainer
+      )
+
+      if (full_names) {
+        return(
+          out |> dplyr::pull(name)
+        )
+      } else {
+        return(
+          out |>
+            dplyr::mutate(name = basename(name)) |>
+            dplyr::pull(name)
+        )
+      }
+    } else {
+      return(list.files(file_loc, full.names = full_names))
+    }
+  }
+
+  if (io == "exists.dir") {
+    if (edav) {
+      return(edav_io("exists.dir",
+        NULL,
+        file_loc,
+        azcontainer = azcontainer
+      ))
+    } else {
+      return(dir.exists(file_loc))
+    }
+  }
+
+  if (io == "exists.file") {
+    if (edav) {
+      return(edav_io(
+        io = "exists.file",
+        NULL,
+        file_loc,
+        azcontainer = azcontainer
+      ))
+    } else {
+      return(file.exists(file_loc))
+    }
+  }
+
+  if (io == "read") {
+    if (edav) {
+      return(edav_io(
+        io = "read", NULL,
+        file_loc, azcontainer = azcontainer
+      ))
+    } else {
+      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$", file_loc)) {
+        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx' and 'xls' are supported for reading.")
+      }
+
+      if (endsWith(file_loc, ".rds")) {
+        return(readr::read_rds(file_loc))
+      } else if (endsWith(file_loc, ".rda")) {
+        return(load(file_loc))
+      } else if (endsWith(file_loc, ".csv")) {
+        return(readr::read_csv(file_loc))
+      } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
+        return(read_excel_from_edav(src = file_loc, ...))
+      }
+    }
+  }
+
+  if (io == "write") {
+    if (is.null(obj)) {
+      stop("You need to include an object to be written.")
+    }
+
+    if (edav) {
+      edav_io(io = "write", file_loc = file_loc, obj = obj, azcontainer = azcontainer)
+    } else {
+      if (!grepl(".rds$|.rda$|.csv$", file_loc)) {
+        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx' and 'xls' are supported for reading.")
+      } else if (endsWith(file_loc, ".rds")) {
+        readr::write_rds(x = obj, file = file_loc)
+      } else if (endsWith(file_loc, ".rda")) {
+        save(list = obj, file = file_loc)
+      } else if (endsWith(file_loc, ".csv")) {
+        readr::write_csv(x = obj, file = file_loc)
+      } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
+        writexl::write_xlsx(obj, path = file_loc)
+      }
+    }
+  }
+
+  if (io == "delete") {
+    if (edav) {
+      edav_io(io = "delete", file_loc = file_loc, force_delete = T, azcontainer = azcontainer)
+    } else {
+      file.remove(file_loc)
+    }
+  }
+
+  if (io == "create.dir") {
+    if (edav) {
+      edav_io(io = "create", file_loc = file_loc)
+    } else {
+      dir.create(file_loc)
+    }
+  }
+
+  return(NULL)
+}
+
 #' Helper function to read and write key data to the EDAV environment
 #'
 #' The function serves as the primary way to interact with the EDAV system from R. It can
@@ -160,7 +348,7 @@ edav_io <- function(
       stop("File does not exist")
     }
 
-    if (!grepl(".rds|.rda|.csv|.xlsx|.xls", file_loc)) {
+    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$", file_loc)) {
       stop("At the moment only 'rds' 'rda', 'csv', 'xls', and 'xlsx' are supported for reading.")
     }
 
@@ -210,7 +398,7 @@ edav_io <- function(
   }
 
   if (io == "write") {
-    if (!grepl(".rds|.csv|.xlsx|.xls|.png|.jpg|.jpeg$", file_loc)) {
+    if (!grepl(".rds$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$", file_loc)) {
       cli::cli_abort(paste0("Please pass a path including the file name in file_loc.",
                             " (i.e., folder/data.csv)"))
     }
@@ -449,12 +637,15 @@ get_all_polio_data <- function(
   }
 
   # Constant variables
-  # Paths used for each processes
+  # Each file comes out of these folders
   analytic_folder <- file.path(data_folder, "analytic")
   polis_folder <- file.path(data_folder, "polis")
   spatial_folder <- file.path(data_folder, "spatial")
   coverage_folder <- file.path(data_folder, "coverage")
   pop_folder <- file.path(data_folder, "pop")
+
+  # Files
+
 
   # look to see if the recent raw data rds is in the analytic folder
   prev_table <- edav_io(io = "list", file_loc = analytic_folder, default_dir = NULL) |>
