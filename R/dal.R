@@ -1675,6 +1675,7 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
+#' @param edav `bool` Load from EDAV? Defaults to `TRUE`.
 #' @param end.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `end_year`.
 #' @param st.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
@@ -1699,6 +1700,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                data_only = FALSE,
                                type = NULL,
                                version = "standard",
+                               edav = TRUE,
                                end.year = lifecycle::deprecated(),
                                st.year = lifecycle::deprecated(),
                                data.only = lifecycle::deprecated()) {
@@ -1818,6 +1820,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
+#' @param edav `bool` Load from EDAV? Defaults to `TRUE`.
 #' @param end.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `end_year`.
 #' @param st.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
@@ -1842,6 +1845,7 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                data_only = FALSE,
                                type = NULL,
                                version = "standard",
+                               edav = TRUE,
                                end.year = lifecycle::deprecated(),
                                st.year = lifecycle::deprecated(),
                                data.only = lifecycle::deprecated()) {
@@ -1876,7 +1880,13 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
     cli::cli_alert_info("Loading province spatial files")
   }
 
-  out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
+  if (edav) {
+    out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp))
+  } else {
+    out <- readRDS(fp)
+  }
+
+  out <- out |>
     dplyr::mutate(
       yr.st = lubridate::year(STARTDATE),
       yr.end = lubridate::year(ENDDATE),
@@ -1937,6 +1947,7 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
+#' @param edav `bool` Load data from EDAV? Defaults to TRUE.
 #' @param end.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `end_year`.
 #' @param st.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
@@ -1958,6 +1969,7 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
                                data_only = FALSE,
                                type = NULL,
                                version = "standard",
+                               edav = TRUE,
                                end.year = lifecycle::deprecated(),
                                st.year = lifecycle::deprecated(),
                                data.only = lifecycle::deprecated()) {
@@ -1992,7 +2004,13 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
     cli::cli_alert_info("Loading country spatial files")
   }
 
-  out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
+  if (edav) {
+    out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp))
+  } else {
+    out <- readRDS(fp)
+  }
+
+  out <- out |>
     dplyr::mutate(
       yr.st = lubridate::year(STARTDATE),
       yr.end = lubridate::year(ENDDATE),
@@ -2027,10 +2045,6 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 
   return(out)
 }
-
-local_load_clean_dist_sp <- function() {}
-local_load_clean_prov_sp <- function() {}
-local_load_clean_ctry_sp <- function() {}
 
 #### 4) Misc ####
 
