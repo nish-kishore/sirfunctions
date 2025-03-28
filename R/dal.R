@@ -422,7 +422,9 @@ get_constant <- function(constant_name) {
 #' - `"small"`: Data from 2019-present.
 #' - `"medium"`: Data from 2016-present.
 #' - `"large"`: Data from 2001-present.
-#' @param folder `str` Location of the CDC pre-processed endpoint, defaults to `"GID/PEB/SIR/Data"`.
+#' @param data_folder `str` Location of the CDC pre-processed endpoint. Defaults to `"GID/PEB/SIR/Data"`.
+#' @param core_ready_folder `str` Location of the pre-processed files.
+#' This will be the location of the POLIS folder. Defaults to `"GID/PEB/SIR/POLIS"`.
 #' @param force.new.run `bool` Default `FALSE`, if `TRUE` will run recent data and cache.
 #' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
 #' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.
@@ -436,7 +438,8 @@ get_constant <- function(constant_name) {
 #' @export
 get_all_polio_data <- function(
     size = "small",
-    folder = "GID/PEB/SIR/Data/",
+    data_folder = "GID/PEB/SIR/Data",
+    core_ready_folder = "GID/PEB/SIR/POLIS",
     force.new.run = F,
     recreate.static.files = F,
     attach.spatial.data = T) {
@@ -445,8 +448,16 @@ get_all_polio_data <- function(
     stop("The parameter 'size' must be either 'small', 'medium', or 'large'")
   }
 
+  # Constant variables
+  # Paths used for each processes
+  analytic_folder <- file.path(data_folder, "analytic")
+  polis_folder <- file.path(data_folder, "polis")
+  spatial_folder <- file.path(data_folder, "spatial")
+  coverage_folder <- file.path(data_folder, "coverage")
+  pop_folder <- file.path(data_folder, "pop")
+
   # look to see if the recent raw data rds is in the analytic folder
-  prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+  prev_table <- edav_io(io = "list", file_loc = analytic_folder, default_dir = NULL) |>
     dplyr::filter(grepl("raw.data.recent.rds", name)) |>
     dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
@@ -480,7 +491,7 @@ get_all_polio_data <- function(
     }
 
     if (size == "medium") {
-      prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+      prev_table <- edav_io(io = "list", file_loc = analytic_folder, default_dir = NULL) |>
         dplyr::filter(grepl("raw.data.2016.2018.rds", name)) |>
         dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
@@ -495,14 +506,14 @@ get_all_polio_data <- function(
     }
 
     if (size == "large") {
-      prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+      prev_table <- edav_io(io = "list", file_loc = analytic_folder, default_dir = NULL) |>
         dplyr::filter(grepl("raw.data.2016.2018.rds", name)) |>
         dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
       cli::cli_alert_info("Downloading static polio data from 2016-2019")
       raw.data.2016.2019 <- edav_io(io = "read", file_loc = prev_table$file, default_dir = NULL)
 
-      prev_table <- edav_io(io = "list", file_loc = file.path(folder, "/analytic"), default_dir = NULL) |>
+      prev_table <- edav_io(io = "list", file_loc = analytic_folder, default_dir = NULL) |>
         dplyr::filter(grepl("raw.data.2000", name)) |>
         dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
@@ -521,7 +532,10 @@ get_all_polio_data <- function(
 
     if (attach.spatial.data) {
       cli::cli_process_start("Downloading and attaching spatial data")
-      spatial.data <- edav_io(io = "read", file_loc = file.path(folder, paste0("analytic/spatial.data.rds")), default_dir = NULL)
+      spatial.data <- edav_io(io = "read",
+                              file_loc = file.path(analytic_folder,
+                                                   "spatial.data.rds"),
+                              default_dir = NULL)
 
       raw.data$global.ctry <- spatial.data$global.ctry
       raw.data$global.prov <- spatial.data$global.prov
@@ -550,11 +564,11 @@ get_all_polio_data <- function(
     }
 
     dl_table <- dplyr::bind_rows(
-      edav_io(io = "list", file_loc = file.path(folder, "polis"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path(folder, "spatial"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path(folder, "coverage"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path(folder, "pop"), default_dir = NULL),
-      edav_io(io = "list", file_loc = file.path("GID/PEB/SIR/POLIS/"), default_dir = NULL) |>
+      edav_io(io = "list", file_loc = polis_folder, default_dir = NULL),
+      edav_io(io = "list", file_loc = spatial_folder, default_dir = NULL),
+      edav_io(io = "list", file_loc = coverage_folder, default_dir = NULL),
+      edav_io(io = "list", file_loc = pop_folder, default_dir = NULL),
+      edav_io(io = "list", file_loc = core_ready_folder, default_dir = NULL) |>
         dplyr::filter(grepl("cache", name))
     ) |>
       dplyr::filter(!is.na(size)) |>
@@ -828,7 +842,7 @@ get_all_polio_data <- function(
 
     raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
 
-    raw.data$metadata$processed_time <- edav_io(io = "list", file_loc = file.path(folder, "/polis"), default_dir = NULL) |>
+    raw.data$metadata$processed_time <- edav_io(io = "list", file_loc = polis_folder, default_dir = NULL) |>
       dplyr::filter(grepl("positives", name)) |>
       dplyr::select("ctime" = "lastModified") |>
       dplyr::mutate(ctime = as.Date(ctime)) |>
@@ -906,7 +920,7 @@ get_all_polio_data <- function(
     for (i in 1:nrow(out_files)) {
       edav_io(
         io = "write",
-        file_loc = file.path(folder, paste0("analytic/", dplyr::pull(out_files[i, ], file_name))),
+        file_loc = file.path(analytic_folder, dplyr::pull(out_files[i, ], file_name)),
         obj = out[[dplyr::pull(out_files[i, ], tag)]],
         default_dir = NULL
       )
@@ -914,7 +928,7 @@ get_all_polio_data <- function(
 
     edav_io(
       io = "write",
-      file_loc = file.path(folder, paste0("analytic/spatial.data.rds")),
+      file_loc = file.path(analytic_folder, "spatial.data.rds"),
       obj = spatial.data, default_dir = NULL
     )
 
