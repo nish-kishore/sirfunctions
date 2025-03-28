@@ -9,9 +9,9 @@ sirfunctions_io(
   default_dir = "GID/PEB/SIR",
   file_loc,
   obj = NULL,
-  edav = as.logical(Sys.getenv("POLIS_EDAV_FLAG")),
+  edav = TRUE,
   azcontainer = suppressMessages(sirfunctions::get_azure_storage_connection()),
-  full_names = F,
+  full_names = T,
   ...
 )
 }
@@ -32,12 +32,12 @@ sirfunctions_io(
 \item{obj}{\code{str} Object to be loaded into EDAV}
 
 \item{edav}{\code{bool} Whether the function should interact with the EDAV environment.
-Defaults to \code{FALSE}, which interacts with files locally.}
+Defaults to \code{TRUE}, otherwise, interacts with files locally.}
 
 \item{azcontainer}{\verb{Azure container} A container object returned by
 \code{\link[=get_azure_storage_connection]{get_azure_storage_connection()}}.}
 
-\item{full_names}{\code{bool} If \code{io="list"}, include the full reference path. Default \code{FALSE}.}
+\item{full_names}{\code{bool} If \code{io="list"}, include the full reference path. Default \code{TRUE}.}
 
 \item{...}{Optional parameters that work with \code{\link[readr:read_delim]{readr::read_delim()}} or \code{\link[readxl:read_excel]{readxl::read_excel()}}.}
 

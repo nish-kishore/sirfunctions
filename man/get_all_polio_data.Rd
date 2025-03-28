@@ -10,7 +10,8 @@ get_all_polio_data(
   core_ready_folder = "GID/PEB/SIR/POLIS",
   force.new.run = F,
   recreate.static.files = F,
-  attach.spatial.data = T
+  attach.spatial.data = T,
+  use_edav = TRUE
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ This will be the location of the POLIS folder. Defaults to \code{"GID/PEB/SIR/PO
 \item{recreate.static.files}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run all data and cache.}
 
 \item{attach.spatial.data}{\code{bool} Default \code{TRUE}, adds spatial data to downloaded object.}
+
+\item{use_edav}{\code{bool} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
 }
 \value{
 Named \code{list} containing polio data that is relevant to CDC.
