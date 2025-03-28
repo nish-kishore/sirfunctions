@@ -828,7 +828,7 @@ get_all_polio_data <- function(
     cli::cli_process_done()
 
     cli::cli_process_start("3) Loading district shape files")
-    spatial.data$global.dist <- load_clean_dist_sp(fp = file.path(spatial_folder, global_prov_sf_name),
+    spatial.data$global.dist <- load_clean_dist_sp(fp = file.path(spatial_folder, global_dist_sf_name),
                                                    edav = use_edav)
     cli::cli_process_done()
 
