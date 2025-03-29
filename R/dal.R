@@ -1788,7 +1788,13 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
     cli::cli_alert_info("Loading district spatial files")
   }
 
-  out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp)) |>
+  if (edav) {
+    out <- suppressWarnings(AzureStor::storage_load_rds(azcontainer, fp))
+  } else {
+    out <- readRDS(fp)
+  }
+
+  out <- out |>
     dplyr::mutate(
       STARTDATE = lubridate::as_date(STARTDATE),
       # Typo in the dist start date (year) in shapefiles. Temporary correcting the start date for South Darfur in Sudan
