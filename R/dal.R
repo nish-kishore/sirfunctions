@@ -730,7 +730,7 @@ if (!force.new.run) {
       cli::cli_alert_info("Loading static polio data from 2016-2019")
     }
 
-    raw.data.2016.2018 <- edav_io("read", NULL, prev_table$file, edav = use_edav)
+    raw.data.2016.2018 <- sirfunctions_io("read", NULL, prev_table$file, edav = use_edav)
 
     raw.data <- split_concat_raw_data(
       action = "concat",
