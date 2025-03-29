@@ -157,10 +157,19 @@ sirfunctions_io <- function(
       }
 
       files <- lapply(files, \(x) get_file_info(x)) |>
-        dplyr::bind_rows() |>
-        dplyr::mutate(name = basename(name))
+        dplyr::bind_rows()
 
-      return(files)
+      if (full_names) {
+
+        return(files)
+
+      } else {
+        files <- files |>
+          dplyr::mutate(name = basename(name))
+
+        return(files)
+
+      }
     }
   }
 
@@ -672,8 +681,9 @@ get_all_polio_data <- function(
   global_dist_sf_name <- "global.dist.rds"
 
   # look to see if the recent raw data rds is in the analytic folder
-  prev_table <- sirfunctions_io(io = "list", file_loc = analytic_folder, default_dir = NULL,
-                                edav = use_edav) |>
+  prev_table <- sirfunctions_io("list", NULL, analytic_folder,
+    edav = use_edav
+  ) |>
     dplyr::filter(grepl(raw_data_recent_name, name)) |>
     dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
@@ -699,7 +709,11 @@ get_all_polio_data <- function(
 
   if (!force.new.run) {
     # determine all raw data files to be downloaded
-    cli::cli_alert_info("Downloading most recent active polio data from 2019 onwards")
+    if (use_edav) {
+      cli::cli_alert_info("Downloading most recent active polio data from 2019 onwards")
+    } else {
+      cli::cli_alert_info("Loading most recent active polio data from 2019 onwards")
+    }
     raw.data.post.2019 <- sirfunctions_io("read", NULL, prev_table$file, edav = use_edav)
 
     if (size == "small") {
@@ -711,7 +725,12 @@ get_all_polio_data <- function(
         dplyr::filter(grepl(raw_data_2016_2018_name, name)) |>
         dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
-      cli::cli_alert_info("Downloading static polio data from 2016-2019")
+      if (use_edav) {
+        cli::cli_alert_info("Downloading static polio data from 2016-2019")
+      } else {
+        cli::cli_alert_info("Loading static polio data from 2016-2019")
+      }
+
       raw.data.2016.2018 <- edav_io("read", NULL, prev_table$file, edav = use_edav)
 
       raw.data <- split_concat_raw_data(
@@ -722,18 +741,29 @@ get_all_polio_data <- function(
     }
 
     if (size == "large") {
-      prev_table <- sirfunctions_io("list", NULL, analytic_folder, edav = use_edav) |>
+      prev_table <- sirfunctions_io("list", NULL, analytic_folder,
+        edav = use_edav, full_names = TRUE
+      ) |>
         dplyr::filter(grepl(raw_data_2016_2018_name, name)) |>
         dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
-      cli::cli_alert_info("Downloading static polio data from 2016-2019")
+      if (use_edav) {
+        cli::cli_alert_info("Downloading static polio data from 2016-2019")
+      } else {
+        cli::cli_alert_info("Loading static polio data from 2016-2019")
+      }
       raw.data.2016.2019 <- sirfunctions_io("read", NULL, prev_table$file, edav = use_edav)
 
       prev_table <- sirfunctions_io("list", NULL, analytic_folder, edav = use_edav) |>
         dplyr::filter(grepl(raw_data_2000_name, name)) |>
         dplyr::select("file" = "name", "size", "ctime" = "lastModified")
 
-      cli::cli_alert_info("Downloading static polio data from 2001-2016")
+      if (use_edav) {
+        cli::cli_alert_info("Downloading static polio data from 2001-2016")
+      } else {
+        cli::cli_alert_info("Loading static polio data from 2001-2016")
+      }
+
       raw.data.2001.2016 <- sirfunctions_io("read", NULL, prev_table$file, edav = use_edav)
 
       raw.data <- split_concat_raw_data(
@@ -747,10 +777,16 @@ get_all_polio_data <- function(
     cli::cli_process_done()
 
     if (attach.spatial.data) {
-      cli::cli_process_start("Downloading and attaching spatial data")
+      if (use_edav) {
+        cli::cli_process_start("Downloading and attaching spatial data")
+      } else {
+        cli::cli_process_start("Loading and attaching spatial data")
+      }
+
       spatial.data <- sirfunctions_io("read", NULL,
-                                      file.path(analytic_folder, spatial_data_name),
-                                      edav = use_edav)
+        file.path(analytic_folder, spatial_data_name),
+        edav = use_edav
+      )
 
       raw.data$global.ctry <- spatial.data$global.ctry
       raw.data$global.prov <- spatial.data$global.prov
@@ -767,7 +803,6 @@ get_all_polio_data <- function(
 
     return(raw.data)
   } else {
-
     if (use_edav) {
       cli::cli_h1("Testing download times")
       download_metrics <- test_EDAV_connection(return_list = T)
@@ -794,7 +829,7 @@ get_all_polio_data <- function(
     if (use_edav) {
       dl_table <- dl_table |>
         dplyr::mutate(
-        "dl_time_sec" = size / download_metrics$size * download_metrics$d
+          "dl_time_sec" = size / download_metrics$size * download_metrics$d
         )
     }
 
@@ -812,31 +847,43 @@ get_all_polio_data <- function(
       download_time <- dl_table$dl_time_sec |> sum()
     }
 
-    cli::cli_h1("Downloading POLIS Data")
+    if (use_edav) {
+      cli::cli_h1("Downloading POLIS Data")
+    } else {
+      cli::cli_h1("Loading POLIS Data")
+    }
 
     raw.data <- list()
     spatial.data <- list()
 
     cli::cli_process_start("1) Loading country shape files")
-    spatial.data$global.ctry <- load_clean_ctry_sp(fp = file.path(spatial_folder, global_ctry_sf_name),
-                                                   edav = use_edav)
+    spatial.data$global.ctry <- load_clean_ctry_sp(
+      fp = file.path(spatial_folder, global_ctry_sf_name),
+      edav = use_edav
+    )
     cli::cli_process_done()
 
     cli::cli_process_start("2) Loading province shape files")
-    spatial.data$global.prov <- load_clean_prov_sp(fp = file.path(spatial_folder, global_prov_sf_name),
-                                                   edav = use_edav)
+    spatial.data$global.prov <- load_clean_prov_sp(
+      fp = file.path(spatial_folder, global_prov_sf_name),
+      edav = use_edav
+    )
     cli::cli_process_done()
 
     cli::cli_process_start("3) Loading district shape files")
-    spatial.data$global.dist <- load_clean_dist_sp(fp = file.path(spatial_folder, global_dist_sf_name),
-                                                   edav = use_edav)
+    spatial.data$global.dist <- load_clean_dist_sp(
+      fp = file.path(spatial_folder, global_dist_sf_name),
+      edav = use_edav
+    )
     cli::cli_process_done()
 
     cli::cli_process_start("4) Loading AFP line list data (This file is almost 3GB and can take a while)")
     raw.data$afp <-
-      sirfunctions_io("read", NULL, file_loc = dplyr::filter(dl_table,
-                                                             grepl("afp", file)) |>
-          dplyr::pull(file), edav = use_edav) |>
+      sirfunctions_io("read", NULL, file_loc = dplyr::filter(
+        dl_table,
+        grepl("afp", file)
+      ) |>
+        dplyr::pull(file), edav = use_edav) |>
       dplyr::filter(surveillancetypename == "AFP") |>
       dplyr::mutate(
         cdc.classification.all2 = dplyr::case_when(
@@ -942,19 +989,22 @@ get_all_polio_data <- function(
     raw.data$dist.pop <-
       sirfunctions_io("read", NULL,
         file_loc = dplyr::filter(dl_table, grepl("dist.pop", file)) |>
-          dplyr::pull(file), edav = use_edav) |>
+          dplyr::pull(file), edav = use_edav
+      ) |>
       dplyr::ungroup()
 
     raw.data$prov.pop <-
       sirfunctions_io("read", NULL,
         file_loc = dplyr::filter(dl_table, grepl("prov.pop", file)) |>
-          dplyr::pull(file), edav = use_edav) |>
+          dplyr::pull(file), edav = use_edav
+      ) |>
       dplyr::ungroup()
 
     raw.data$ctry.pop <-
-      sirfunctions_io( "read",
+      sirfunctions_io("read",
         file_loc = dplyr::filter(dl_table, grepl("ctry.pop", file)) |>
-          dplyr::pull(file), edav = use_edav) |>
+          dplyr::pull(file), edav = use_edav
+      ) |>
       dplyr::ungroup()
     cli::cli_process_done()
 
@@ -963,7 +1013,8 @@ get_all_polio_data <- function(
     raw.data$coverage <-
       sirfunctions_io("read", NULL,
         file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
-          dplyr::pull(file), edav = use_edav) |>
+          dplyr::pull(file), edav = use_edav
+      ) |>
       dplyr::select(
         ctry = adm0_name,
         prov = adm1_name,
@@ -1051,7 +1102,9 @@ get_all_polio_data <- function(
     raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
 
     raw.data$metadata$processed_time <- sirfunctions_io("list", NULL,
-                                                        polis_folder, edav = use_edav) |>
+      polis_folder,
+      edav = use_edav
+    ) |>
       dplyr::filter(grepl("positives", name)) |>
       dplyr::select("ctime" = "lastModified") |>
       dplyr::mutate(ctime = as.Date(ctime)) |>
