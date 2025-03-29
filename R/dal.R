@@ -1080,14 +1080,14 @@ if (!force.new.run) {
 
   cli::cli_process_start("11) Loading road network data")
   spatial.data$roads <- sirfunctions_io("read", NULL,
-    file_loc = dplyr::filter(dl_table, grepl("roads", file)) |>
+    file_loc = dplyr::filter(dl_table, grepl("roads.rds", file)) |>
       dplyr::pull(file), edav = use_edav
   )
   cli::cli_process_done()
 
   cli::cli_process_start("12) Loading city spatial data")
   spatial.data$cities <- sirfunctions_io("read", NULL,
-    file_loc = dplyr::filter(dl_table, grepl("cities", file)) |>
+    file_loc = dplyr::filter(dl_table, grepl("cities.rds", file)) |>
       dplyr::pull(file), edav = use_edav
   )
   cli::cli_process_done()
