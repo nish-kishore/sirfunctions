@@ -1010,7 +1010,7 @@ if (!force.new.run) {
   cli::cli_process_done()
 
 
-  cli::cli_process_start("6) Loading coverage data from EDAV")
+  cli::cli_process_start("6) Loading coverage data")
   raw.data$coverage <-
     sirfunctions_io("read", NULL,
       file_loc = dplyr::filter(dl_table, grepl("dpt", file)) |>
@@ -1042,7 +1042,7 @@ if (!force.new.run) {
 
   cli::cli_process_done()
 
-  cli::cli_process_start("7) Loading ES data from EDAV")
+  cli::cli_process_start("7) Loading ES data")
 
   raw.data$es <-
     sirfunctions_io("read", NULL,
@@ -1051,7 +1051,7 @@ if (!force.new.run) {
     )
   cli::cli_process_done()
 
-  cli::cli_process_start("8) Loading SIA data from EDAV")
+  cli::cli_process_start("8) Loading SIA data")
   raw.data$sia <-
     sirfunctions_io("read", NULL,
       file_loc = dplyr::filter(dl_table, grepl("sia", file)) |>
@@ -1060,7 +1060,7 @@ if (!force.new.run) {
 
   cli::cli_process_done()
 
-  cli::cli_process_start("9) Loading all positives from EDAV")
+  cli::cli_process_start("9) Loading all positives")
   raw.data$pos <-
     sirfunctions_io("read", NULL,
       file_loc = dplyr::filter(dl_table, grepl("/pos", file)) |>
@@ -1069,7 +1069,7 @@ if (!force.new.run) {
 
   cli::cli_process_done()
 
-  cli::cli_process_start("10) Loading other surveillance linelist from EDAV")
+  cli::cli_process_start("10) Loading other surveillance linelist")
   raw.data$other <-
     sirfunctions_io("read", NULL,
       file_loc = dplyr::filter(dl_table, grepl("/other", file)) |>
