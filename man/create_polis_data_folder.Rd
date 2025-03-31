@@ -4,12 +4,12 @@
 \alias{create_polis_data_folder}
 \title{Creates polis folder to the data folder}
 \usage{
-create_polis_data_folder(data_folder, core_ready_folder, use_edav)
+create_polis_data_folder(data_folder, polis_folder, use_edav)
 }
 \arguments{
 \item{data_folder}{\code{str} Path to the data folder.}
 
-\item{core_ready_folder}{\code{str} Path to the core ready folder}
+\item{polis_folder}{\code{str} Path to the core ready folder}
 
 \item{use_edav}{\code{bool} Are file paths on EDAV?}
 }

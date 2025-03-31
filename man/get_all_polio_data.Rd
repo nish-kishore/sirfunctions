@@ -7,7 +7,7 @@
 get_all_polio_data(
   size = "small",
   data_folder = "GID/PEB/SIR/Data",
-  core_ready_folder = "GID/PEB/SIR/POLIS",
+  polis_folder = "GID/PEB/SIR/POLIS",
   force.new.run = F,
   recreate.static.files = F,
   attach.spatial.data = T,
@@ -22,10 +22,10 @@ get_all_polio_data(
 \item \code{"large"}: Data from 2001-present.
 }}
 
-\item{data_folder}{\code{str} Location of the CDC pre-processed endpoint. Defaults to \code{"GID/PEB/SIR/Data"}.}
+\item{data_folder}{\code{str} Location of the data folder containing pre-processed POLIS data,
+spatial files, coverage data, and population data. Defaults to \code{"GID/PEB/SIR/Data"}.}
 
-\item{core_ready_folder}{\code{str} Location of the pre-processed files.
-This will be the location of the POLIS folder. Defaults to \code{"GID/PEB/SIR/POLIS"}.}
+\item{polis_folder}{\code{str} Location of the POLIS folder. Defaults to \code{"GID/PEB/SIR/POLIS"}.}
 
 \item{force.new.run}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run recent data and cache.}
 

@@ -257,6 +257,8 @@ sirfunctions_io <- function(
     } else {
       if (dir.exists(file_loc)) {
         file.remove(list.files(file_loc, full.names = TRUE))
+      } else {
+        dir.create(file_loc)
       }
     }
   }
@@ -637,9 +639,9 @@ get_constant <- function(constant_name) {
 #' - `"small"`: Data from 2019-present.
 #' - `"medium"`: Data from 2016-present.
 #' - `"large"`: Data from 2001-present.
-#' @param data_folder `str` Location of the CDC pre-processed endpoint. Defaults to `"GID/PEB/SIR/Data"`.
-#' @param core_ready_folder `str` Location of the pre-processed files.
-#' This will be the location of the POLIS folder. Defaults to `"GID/PEB/SIR/POLIS"`.
+#' @param data_folder `str` Location of the data folder containing pre-processed POLIS data,
+#' spatial files, coverage data, and population data. Defaults to `"GID/PEB/SIR/Data"`.
+#' @param polis_folder `str` Location of the POLIS folder. Defaults to `"GID/PEB/SIR/POLIS"`.
 #' @param force.new.run `bool` Default `FALSE`, if `TRUE` will run recent data and cache.
 #' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
 #' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.
@@ -655,7 +657,7 @@ get_constant <- function(constant_name) {
 get_all_polio_data <- function(
     size = "small",
     data_folder = "GID/PEB/SIR/Data",
-    core_ready_folder = "GID/PEB/SIR/POLIS",
+    polis_folder = "GID/PEB/SIR/POLIS",
     force.new.run = F,
     recreate.static.files = F,
     attach.spatial.data = T,
@@ -667,7 +669,7 @@ if (!size %in% c("small", "medium", "large")) {
 # Constant variables
 # Each file comes out of these folders
 analytic_folder <- file.path(data_folder, "analytic")
-polis_folder <- file.path(data_folder, "polis")
+polis_data_folder <- file.path(data_folder, "polis")
 spatial_folder <- file.path(data_folder, "spatial")
 coverage_folder <- file.path(data_folder, "coverage")
 pop_folder <- file.path(data_folder, "pop")
@@ -821,7 +823,7 @@ if (!force.new.run) {
 } else {
 
   # Check that the required folders have data
-  for (folder in c(analytic_folder, polis_folder, spatial_folder,
+  for (folder in c(analytic_folder, polis_data_folder, spatial_folder,
                    coverage_folder, pop_folder)) {
 
     # get_all_polio_data will recreate the analytic folder if it's missing
@@ -839,7 +841,7 @@ if (!force.new.run) {
              } else {
                cli::cli_alert_info("Moving updated polis data to the data folder")
              }
-             create_polis_data_folder(data_folder, core_ready_folder, use_edav)
+             create_polis_data_folder(data_folder, polis_folder, use_edav)
            },
            "spatial" = {
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
@@ -881,11 +883,11 @@ if (!force.new.run) {
   }
 
   dl_table <- dplyr::bind_rows(
-    sirfunctions_io("list", NULL, polis_folder, edav = use_edav),
+    sirfunctions_io("list", NULL, polis_data_folder, edav = use_edav),
     sirfunctions_io("list", NULL, spatial_folder, edav = use_edav),
     sirfunctions_io("list", NULL, coverage_folder, edav = use_edav),
     sirfunctions_io("list", NULL, pop_folder, edav = use_edav),
-    sirfunctions_io("list", NULL, core_ready_folder, edav = use_edav) |>
+    sirfunctions_io("list", NULL, polis_folder, edav = use_edav) |>
       dplyr::filter(grepl("cache", name))
   ) |>
     dplyr::filter(!is.na(size)) |>
@@ -2829,13 +2831,13 @@ read_excel_from_edav <- function(src, ...) {
 #' inside get_all_polio_data().
 #'
 #' @param data_folder `str` Path to the data folder.
-#' @param core_ready_folder `str` Path to the core ready folder
+#' @param polis_folder `str` Path to the core ready folder
 #' @param use_edav `bool` Are file paths on EDAV?
 #'
 #' @return NULL
 #' @keywords internal
 #'
-create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
+create_polis_data_folder <- function(data_folder, polis_folder, use_edav) {
 
   files <- c("afp_linelist_2001-01-01",
              "afp_linelist_2019-01-01",
@@ -2844,14 +2846,13 @@ create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
              "positives_2001-01-01",
              "sia_2000")
 
-  source.table <- dplyr::tibble(
-    "src_path" = sirfunctions_io(io = "list", NULL,
-                                  file.path(core_ready_folder, "data", "Core_Ready_Files"),
-                                  edav = use_edav) |> dplyr::pull(name)
-    ) |>
+  source.table <- sirfunctions_io("list", NULL,
+                                  file.path(polis_folder, "data", "Core_Ready_Files"),
+                                  edav = use_edav) |>
+    dplyr::select(src_path = name) |>
     dplyr::mutate(
       name = basename(src_path),
-      dest_path = file.path(data_folder, "polis", name),
+      dest_path = file.path(data_folder, "polis", name)
     ) |>
     dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
     dplyr::select(name, src_path, dest_path)
@@ -2869,21 +2870,23 @@ create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
                   file.path(data_folder, "polis", "archive", archive_folder_name),
                   edav = use_edav)
 
-  current.table <- dplyr::tibble(
-    "src_path" = sirfunctions_io(io = "list", NULL,
+  current.table <- sirfunctions_io(io = "list", NULL,
                                  file.path(data_folder, "polis"),
-                                 edav = use_edav) |> dplyr::pull(name)
-  ) |>
-    dplyr::mutate(
-      name = basename(src_path)
-    ) |>
-    dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
-    dplyr::select(name, src_path)
+                                 edav = use_edav) |>
+    dplyr::filter(isdir != TRUE)
 
   if (nrow(current.table) == 0) {
     cli::cli_alert_success("No data to archive")
     cli::cli_process_done()
   } else {
+    current.table <- current.table |>
+      dplyr::select(src_path = name) |>
+      dplyr::mutate(
+        name = basename(src_path)
+      ) |>
+      dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
+      dplyr::select(name, src_path)
+
     current.table.size <- sirfunctions_io(io = "list", NULL,
                                           file.path(data_folder, "polis"),
                                           edav = use_edav) |>
