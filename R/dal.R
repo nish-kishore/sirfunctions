@@ -2851,10 +2851,10 @@ create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
   #move all files to core polis data folder
   lapply(seq_along(source.table), function(i){
     local <- sirfunctions_io("read", NULL,
-                             dplyr::pull(out.table[i,], src_path),
+                             dplyr::pull(source.table[i,], src_path),
                              edav = use_edav)
     sirfunctions_io("write", NULL,
-                    dplyr::pull(out.table[i,], dest_path),
+                    dplyr::pull(source.table[i,], dest_path),
                     obj = local,
                     edav = use_edav)
     })
