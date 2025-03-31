@@ -872,7 +872,7 @@ if (!force.new.run) {
 
   # Remake the spatial folder in the data folder if it doesn't exist
   if (!sirfunctions_io("exists.dir", NULL, spatial_folder, edav = use_edav)) {
-    sirfunctions_io("create", NULL, spatial_folder, edav = use_edav)
+    sirfunctions_io("create.dir", NULL, spatial_folder, edav = use_edav)
     lapply(list.files(file.path(core_ready_folder, "spatial"), full.names = TRUE),
            \(x) file.copy(x,
                           file.path(data_folder, "spatial", basename(x)),
