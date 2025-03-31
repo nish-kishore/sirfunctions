@@ -840,11 +840,13 @@ if (!force.new.run) {
              create_polis_data_folder(data_folder, core_ready_folder, use_edav)
            },
            "spatial" = {
-             cli::cli_abort(paste0("No spatial data found in the data folder.",
-                                   " Ensure that the output folder when running ",
-                                   " tidypolis::process_spatial() is ",
-                                   spatial_folder),
-             )
+             if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
+               cli::cli_abort(paste0("No spatial data found in the data folder.",
+                                     " Ensure that the output folder when running ",
+                                     " tidypolis::process_spatial() is ",
+                                     spatial_folder),
+               )
+             }
            },
            "coverage" = {
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
@@ -2852,16 +2854,42 @@ create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
     dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
     dplyr::select(name, src_path, dest_path)
 
-  #move all files to core polis data folder
+  # Archive previous versions in the core polis data folder
+  cli::cli_process_start("Archiving previous data in the polis folder")
+  if (!sirfunctions_io("exists.dir", NULL, file.path(data_folder, "polis", "archive"), edav = use_edav)) {
+    sirfunctions_io("create.dir", NULL, file.path(data_folder, "polis", "archive"), edav = use_edav)
+  }
+  # Move previous files to archive in polis data folder
+
+  # Explicitly create since Sys.Date() could potentially vary when ran overnight
+  archive_folder_name <- Sys.Date()
+  sirfunctions_io("create", NULL,
+                  file.path(data_folder, "polis", "archive", archive_folder_name),
+                  edav = use_edav)
+
+  lapply(1:nrow(source.table), \(i) {
+    local <- sirfunctions_io("read", NULL, source.table$src_path[i])
+    sirfunctions_io("write", NULL, file.path(data_folder, "archive",
+                                             archive_folder_name,
+                                             source.table$src_path[i]),
+                    obj = local, edav = use_edav)
+  })
+  cli::cli_process_done()
+
+  cli::cli_process_start("Adding updated data to polis data folder")
+
+  # Delete previous files
+  lapply(1:nrow(source.table), \(i) {
+    sirfunctions_io(io = "delete", file_path = source.table$src_path[i])
+  })
+
+  # Move all files to core polis data folder
   lapply(1:nrow(source.table), function(i){
-    local <- sirfunctions_io("read", NULL,
-                             dplyr::pull(source.table[i,], src_path),
-                             edav = use_edav)
-    sirfunctions_io("write", NULL,
-                    dplyr::pull(source.table[i,], dest_path),
-                    obj = local,
-                    edav = use_edav)
-    })
+    local <- sirfunctions_io("read", NULL, dplyr::pull(out.table[i,], source), edav = use_edav)
+    sirfunctions_io("write", NULL, dplyr::pull(out.table[i,], dest), edav = use_edav)
+  })
+
+  cli::cli_process_done()
 
   return(NULL)
 }
