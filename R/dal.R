@@ -679,6 +679,7 @@ for (folder in c(analytic_folder, polis_folder, spatial_folder,
            "analytic" = {
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
                cli::cli_alert_info("No analytics folder found. Will create a new one.")
+               sirfunctions_io("create.dir", NULL, folder, edav = use_edav)
              }
            },
            "polis" = {
