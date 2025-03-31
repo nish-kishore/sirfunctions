@@ -698,7 +698,7 @@ if (nrow(prev_table) > 0) {
     dplyr::mutate(file = as.character(file),
                   size = as.double(size),
                   ctime = as_datetime(ctime)) |>
-    dplyr::select(!is.na(file))
+    dplyr::filter(!is.na(file))
 }
 
 # if there is previous dataset then
