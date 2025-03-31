@@ -878,7 +878,8 @@ if (!force.new.run) {
     } else {
       lapply(list.files(file.path(core_ready_folder, "spatial"), full.names = TRUE),
              \(x) file.copy(x,
-                            file.path(data_folder, "spatial", basename(x)))
+                            file.path(data_folder, "spatial", basename(x)),
+                            recursive = TRUE)
              )
     }
   }
