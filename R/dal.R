@@ -683,11 +683,12 @@ for (folder in c(analytic_folder, polis_folder, spatial_folder,
              }
            },
            "polis" = {
-             cli::cli_alert_info("Moving updated polis data to the data folder")
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
+               cli::cli_alert_info("Creating polis folder in the data folder")
                sirfunctions_io("create.dir", NULL, folder, edav = use_edav)
+             } else {
+               cli::cli_alert_info("Moving updated polis data to the data folder")
              }
-
              create_polis_data_folder(data_folder, core_ready_folder, use_edav)
            },
            "spatial" = {
