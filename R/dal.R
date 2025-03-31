@@ -687,6 +687,7 @@ for (folder in c(analytic_folder, polis_folder, spatial_folder,
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
                sirfunctions_io("create.dir", NULL, folder, edav = use_edav)
              }
+
              create_polis_data_folder(data_folder, core_ready_folder, use_edav)
            },
            "spatial" = {
@@ -2850,7 +2851,7 @@ create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
     dplyr::select(name, src_path, dest_path)
 
   #move all files to core polis data folder
-  lapply(seq_along(source.table), function(i){
+  lapply(1:nrow(source.table), function(i){
     local <- sirfunctions_io("read", NULL,
                              dplyr::pull(source.table[i,], src_path),
                              edav = use_edav)
