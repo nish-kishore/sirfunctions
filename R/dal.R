@@ -870,6 +870,19 @@ if (!force.new.run) {
   raw.data <- list()
   spatial.data <- list()
 
+  if (nrow(sirfunctions_io("list", NULL,
+                           file_loc = spatial_folder,
+                           edav = use_edav)) == 0) {
+    if (use_edav) {
+
+    } else {
+      lapply(list.files(file.path(core_ready_folder, "spatial"), full.names = TRUE),
+             \(x) file.copy(x,
+                            file.path(data_folder, "spatial", basename(x)))
+             )
+    }
+  }
+
   cli::cli_process_start("1) Loading country shape files")
   spatial.data$global.ctry <- load_clean_ctry_sp(
     fp = file.path(spatial_folder, global_ctry_sf_name),
