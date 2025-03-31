@@ -2846,7 +2846,7 @@ create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
       dest_path = file.path(data_folder, "polis", name),
     ) |>
     dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
-    dplyr::select(name, src_path, des_path)
+    dplyr::select(name, src_path, dest_path)
 
   #move all files to core polis data folder
   lapply(seq_along(source.table), function(i){
