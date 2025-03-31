@@ -2863,7 +2863,7 @@ create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
 
   # Explicitly create since Sys.Date() could potentially vary when ran overnight
   archive_folder_name <- Sys.Date()
-  sirfunctions_io("create", NULL,
+  sirfunctions_io("create.dir", NULL,
                   file.path(data_folder, "polis", "archive", archive_folder_name),
                   edav = use_edav)
 
