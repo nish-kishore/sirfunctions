@@ -113,10 +113,10 @@ sirfunctions_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create")
+  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create.dir")
 
   if (!io %in% opts) {
-    stop("io: must be 'read', 'write', 'delete', 'create', 'exists.dir', 'exists.file' or 'list'")
+    stop("io: must be 'read', 'write', 'delete', 'create.dir', 'exists.dir', 'exists.file' or 'list'")
   }
 
   if (io == "write" & is.null(obj)) {
