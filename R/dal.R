@@ -255,7 +255,9 @@ sirfunctions_io <- function(
     if (edav) {
       edav_io(io = "create", file_loc = file_loc)
     } else {
-      dir.create(file_loc)
+      if (dir.exists(file_loc)) {
+        file.remove(list.files(file_loc, full.names = TRUE))
+      }
     }
   }
 
@@ -2838,7 +2840,7 @@ create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
   files <- c("afp_linelist_2001-01-01",
              "afp_linelist_2019-01-01",
              "es_2001-01-08",
-             "other_surveillance_type_linelist",
+             "other_surveillance_type_linelist_2016_",
              "positives_2001-01-01",
              "sia_2000")
 
@@ -2867,26 +2869,58 @@ create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
                   file.path(data_folder, "polis", "archive", archive_folder_name),
                   edav = use_edav)
 
-  lapply(1:nrow(source.table), \(i) {
-    local <- sirfunctions_io("read", NULL, source.table$src_path[i])
-    sirfunctions_io("write", NULL, file.path(data_folder, "archive",
-                                             archive_folder_name,
-                                             source.table$src_path[i]),
-                    obj = local, edav = use_edav)
-  })
-  cli::cli_process_done()
+  current.table <- dplyr::tibble(
+    "src_path" = sirfunctions_io(io = "list", NULL,
+                                 file.path(data_folder, "polis"),
+                                 edav = use_edav) |> dplyr::pull(name)
+  ) |>
+    dplyr::mutate(
+      name = basename(src_path)
+    ) |>
+    dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
+    dplyr::select(name, src_path)
+
+  if (nrow(current.table) == 0) {
+    cli::cli_alert_success("No data to archive")
+    cli::cli_process_done()
+  } else {
+    current.table.size <- sirfunctions_io(io = "list", NULL,
+                                          file.path(data_folder, "polis"),
+                                          edav = use_edav) |>
+      dplyr::mutate(size = size / 1000000000) |>
+      dplyr::pull(size) |>
+      sum(na.rm = TRUE)
+    cli::cli_alert_warning(paste0("NOTE: This archive is ",
+                                  round(current.table.size, 2),
+                                  " GB. ",
+                                  "If you're archiving locally, ",
+                                  "we recommend reviewing old archives periodically and",
+                                  " decide whether to put them in a backup storage device or",
+                                  " in cloud storage."))
+
+    lapply(1:nrow(current.table), \(i) {
+      local <- sirfunctions_io("read", NULL, current.table$src_path[i], edav = use_edav)
+      sirfunctions_io("write", NULL,
+                      file.path(data_folder, "polis", "archive", archive_folder_name,
+                                basename(current.table$src_path[i])),
+                      obj = local, edav = use_edav)
+    })
+    cli::cli_process_done()
+  }
 
   cli::cli_process_start("Adding updated data to polis data folder")
 
   # Delete previous files
-  lapply(1:nrow(source.table), \(i) {
-    sirfunctions_io(io = "delete", file_path = source.table$src_path[i])
+  lapply(1:nrow(current.table), \(i) {
+    sirfunctions_io("delete", NULL,
+                    current.table$src_path[i], edav = use_edav)
   })
 
   # Move all files to core polis data folder
   lapply(1:nrow(source.table), function(i){
-    local <- sirfunctions_io("read", NULL, dplyr::pull(out.table[i,], source), edav = use_edav)
-    sirfunctions_io("write", NULL, dplyr::pull(out.table[i,], dest), edav = use_edav)
+    local <- sirfunctions_io("read", NULL, dplyr::pull(source.table[i,], src_path), edav = use_edav)
+    sirfunctions_io("write", NULL, dplyr::pull(source.table[i,], dest_path),
+                    obj = local, edav = use_edav)
   })
 
   cli::cli_process_done()
