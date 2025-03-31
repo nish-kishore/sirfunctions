@@ -282,6 +282,7 @@ sirfunctions_io <- function(
 #' - `"create"` Creates a folder and all preceding folders.
 #' - `"list"` Returns a tibble with all objects in a folder.
 #' - `"upload"` Moves a file of any type to EDAV.
+#' - `"delete"` Deletes a file.
 #' @param default_dir `str` The default directory in EDAV. `"GID/PEB/SIR"` is the default directory
 #' for all SIR data in EDAV. Can be set to `NULL` if you provide the full directory path in `file_loc`.
 #' @param file_loc `str` Location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
