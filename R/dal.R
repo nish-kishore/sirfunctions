@@ -682,9 +682,23 @@ global_dist_sf_name <- "global.dist.rds"
 # look to see if the recent raw data rds is in the analytic folder
 prev_table <- sirfunctions_io("list", NULL, analytic_folder,
   edav = use_edav
-) |>
-  dplyr::filter(grepl(raw_data_recent_name, name)) |>
-  dplyr::select("file" = "name", "size", "ctime" = "lastModified")
+)
+
+if (nrow(prev_table) > 0) {
+  prev_table <- prev_table |>
+    dplyr::filter(grepl(raw_data_recent_name, name)) |>
+    dplyr::select("file" = "name", "size", "ctime" = "lastModified")
+} else {
+  # if empty, make sure to recreate tibble to the right format
+  prev_table <- tibble(
+    "file" = NA,
+    "size" = NA,
+    "ctime" = NA
+  ) |>
+    dplyr::mutate(file = as.character(file),
+                  size = as.double(size),
+                  ctime = as_datetime(ctime))
+}
 
 # if there is previous dataset then
 if (nrow(prev_table) > 0) {
