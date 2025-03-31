@@ -15,6 +15,7 @@ load_clean_prov_sp(
   data_only = FALSE,
   type = NULL,
   version = "standard",
+  edav = TRUE,
   end.year = lifecycle::deprecated(),
   st.year = lifecycle::deprecated(),
   data.only = lifecycle::deprecated()
@@ -49,6 +50,8 @@ still under evaluation/development. Default is \code{"standard"}.
 \item \code{"standard"} Standard shapefiles.
 \item \code{"dev"}  New shapefiles still under evaluation/development.
 }}
+
+\item{edav}{\code{bool} Load from EDAV? Defaults to \code{TRUE}.}
 
 \item{end.year}{\code{int} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
 \code{end_year}.}

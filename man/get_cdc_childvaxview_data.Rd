@@ -5,20 +5,20 @@
 \title{Pull CDC NCIRD childvaxview immunization coverage data}
 \usage{
 get_cdc_childvaxview_data(
-  limit = 1000,
   geo_level = NULL,
   vaccines = NULL,
+  limit = 1000,
   base_url = "https://data.cdc.gov/resource/fhky-rtsk.json"
 )
 }
 \arguments{
-\item{limit}{\code{int} Number of rows to download, defaults to max allowed (1000).}
-
 \item{geo_level}{\code{str} Geographic categories of coverage data.
 Choose from: 'national', 'regional', 'state', or 'substate'.}
 
 \item{vaccines}{\code{str} A string or vector of strings of vaccines for which to provide coverage data.
 Choose from: 'DTaP', 'Polio', 'Hep B', 'PCV', 'Varicella', 'MMR', 'Hib', 'Hep A', 'Influenza', 'Rotavirus', 'Combined 7 series'.}
+
+\item{limit}{\code{int} Number of rows to download, defaults to max allowed (1000).}
 
 \item{base_url}{\code{str} URL to US CDC NCIRD API endpoint.
 Defaults to "https://data.cdc.gov/resource/fhky-rtsk.json".}
