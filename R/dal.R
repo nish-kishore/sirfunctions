@@ -670,6 +670,49 @@ spatial_folder <- file.path(data_folder, "spatial")
 coverage_folder <- file.path(data_folder, "coverage")
 pop_folder <- file.path(data_folder, "pop")
 
+# Check that the required folders have data
+for (folder in c(analytic_folder, polis_folder, spatial_folder,
+                 coverage_folder, pop_folder)) {
+
+  # get_all_polio_data will recreate the analytic folder if it's missing
+  switch(basename(folder),
+           "analytic" = {
+             if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
+               cli::cli_alert_info("No analytics folder found. Will create a new one.")
+             }
+           },
+           "polis" = {
+             cli::cli_alert_info("Moving updated polis data to the data folder")
+             if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
+               sirfunctions_io("create.dir", NULL, folder, edav = use_edav)
+             }
+             create_polis_data_folder(data_folder, core_ready_folder, use_edav)
+           },
+           "spatial" = {
+             cli::cli_abort(paste0("No spatial data found in the data folder.",
+                                   " Ensure that the output folder when running ",
+                                   " tidypolis::process_spatial() is ",
+                                   spatial_folder),
+             )
+           },
+           "coverage" = {
+             if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
+               cli::cli_abort(paste0("Coverage data not found.",
+                                     "Please create and add coverage data in: ",
+                                     folder))
+             }
+           },
+           "pop" = {
+             if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
+               cli::cli_abort(paste0("Population data not found. ",
+                                     "Preprocessing of population files may be required. ",
+                                     "Please create a pop data folder and add data in: ",
+                                     folder))
+             }
+           }
+    )
+  }
+
 # Required files
 raw_data_recent_name <- "raw.data.recent.rds"
 raw_data_2016_2018_name <- "raw.data.2016.2018.rds"
@@ -869,16 +912,6 @@ if (!force.new.run) {
 
   raw.data <- list()
   spatial.data <- list()
-
-  # Remake the spatial folder in the data folder if it doesn't exist
-  if (!sirfunctions_io("exists.dir", NULL, spatial_folder, edav = use_edav)) {
-    sirfunctions_io("create.dir", NULL, spatial_folder, edav = use_edav)
-    lapply(list.files(file.path(core_ready_folder, "spatial"), full.names = TRUE),
-           \(x) file.copy(x,
-                          file.path(data_folder, "spatial", basename(x)),
-                          recursive = TRUE)
-           )
-    }
 
   cli::cli_process_start("1) Loading country shape files")
   spatial.data$global.ctry <- load_clean_ctry_sp(
@@ -2779,4 +2812,52 @@ read_excel_from_edav <- function(src, ...) {
   }
 
   return(output)
+}
+
+#' Creates polis folder to the data folder
+#'
+#' @description
+#' Copies the updated POLIS data into the data folder. This function is used
+#' inside get_all_polio_data().
+#'
+#' @param data_folder `str` Path to the data folder.
+#' @param core_ready_folder `str` Path to the core ready folder
+#' @param use_edav `bool` Are file paths on EDAV?
+#'
+#' @return NULL
+#' @keywords internal
+#'
+create_polis_data_folder <- function(data_folder, core_ready_folder, use_edav) {
+
+  files <- c("afp_linelist_2001-01-01",
+             "afp_linelist_2019-01-01",
+             "es_2001-01-08",
+             "other_surveillance_type_linelist",
+             "positives_2001-01-01",
+             "sia_2000")
+
+  source.table <- dplyr::tibble(
+    "src_path" = sirfunctions_io(io = "list", NULL,
+                                  file.path(core_ready_folder, "data", "Core_Ready_Files"),
+                                  edav = use_edav) |> dplyr::pull(name)
+    ) |>
+    dplyr::mutate(
+      name = basename(src_path),
+      dest_path = file.path(data_folder, "polis", name),
+    ) |>
+    dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
+    dplyr::select(name, src_path, des_path)
+
+  #move all files to core polis data folder
+  lapply(seq_along(source.table), function(i){
+    local <- sirfunctions_io("read", NULL,
+                             dplyr::pull(out.table[i,], src_path),
+                             edav = use_edav)
+    sirfunctions_io("write", NULL,
+                    dplyr::pull(out.table[i,], dest_path),
+                    obj = local,
+                    edav = use_edav)
+    })
+
+  return(NULL)
 }
