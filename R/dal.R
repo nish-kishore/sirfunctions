@@ -227,7 +227,7 @@ sirfunctions_io <- function(
     }
 
     if (edav) {
-      edav_io(io = "write", file_loc = file_loc, obj = obj, azcontainer = azcontainer)
+      edav_io(io = "write", NULL, file_loc = file_loc, obj = obj, azcontainer = azcontainer)
     } else {
       if (!grepl(".rds$|.rda$|.csv$", file_loc)) {
         stop("At the moment only 'rds' 'rda' 'csv' 'xlsx' and 'xls' are supported for reading.")
@@ -245,7 +245,7 @@ sirfunctions_io <- function(
 
   if (io == "delete") {
     if (edav) {
-      edav_io(io = "delete", file_loc = file_loc, force_delete = T, azcontainer = azcontainer)
+      edav_io("delete", NULL, file_loc = file_loc, force_delete = T, azcontainer = azcontainer)
     } else {
       file.remove(file_loc)
     }
@@ -253,7 +253,7 @@ sirfunctions_io <- function(
 
   if (io == "create.dir") {
     if (edav) {
-      edav_io(io = "create", file_loc = file_loc)
+      edav_io(io = "create", NULL, file_loc = file_loc)
     } else {
       if (dir.exists(file_loc)) {
         file.remove(list.files(file_loc, full.names = TRUE))
