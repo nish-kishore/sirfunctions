@@ -804,7 +804,7 @@ generate_timely_det_violin <- function(raw_data,
 generate_lab_culture_violin <- function(lab_data, afp_data,
                                        start_date, end_date,
                                        output_path = Sys.getenv("KPI_FIGURES"),
-                                       y_max = 250) {
+                                       y_max = 60) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -873,7 +873,7 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
 generate_lab_itd_violin <- function(lab_data, afp_data,
                                         start_date, end_date,
                                         output_path = Sys.getenv("KPI_FIGURES"),
-                                        y_max = 250) {
+                                        y_max = 60) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -941,7 +941,7 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
 generate_lab_seqship_violin <- function(lab_data, afp_data,
                                         start_date, end_date,
                                         output_path = Sys.getenv("KPI_FIGURES"),
-                                        y_max = 250) {
+                                        y_max = 50) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -1009,7 +1009,7 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
 generate_lab_seqres_violin <- function(lab_data, afp_data,
                                         start_date, end_date,
                                         output_path = Sys.getenv("KPI_FIGURES"),
-                                        y_max = 250) {
+                                        y_max = 60) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
