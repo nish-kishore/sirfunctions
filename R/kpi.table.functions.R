@@ -368,7 +368,12 @@ adjust_rolling_years <- function(data, end_date, date_col) {
     # Adjustment made to the latest year in instances of when there are data greater
     # than the end date
     data_adj <- data |>
-      dplyr::filter(!!rlang::sym(date_col) <= end_date) |>
+      dplyr::mutate(year_number = as.integer(stringr::str_extract_all(
+        year_label,
+        "[-+]?\\d+"
+      ))) |>
+      dplyr::filter(!!rlang::sym(date_col) <= end_date,
+                    year_number > 0) |>
       dplyr::mutate(
         analysis_year_end = dplyr::if_else(year_label == latest_period$year_label,
                                            end_date, analysis_year_end
@@ -436,20 +441,26 @@ add_rolling_years <- function(df, start_date, end_date, date_col, period = month
   df <- df |>
     dplyr::mutate(
       date_interval = lubridate::interval(start_date, !!rlang::sym(date_col)),
-      year_num = floor(.data$date_interval / period),
+      year_num = floor(date_interval / period),
       year_label = paste0("Year ", year_num + 1),
-      analysis_year_start = start_date %m+% years(.data$year_num),
-      analysis_year_end = .data$analysis_year_start %m+% period %m-% days(1),
-      analysis_year_end = dplyr::if_else(lubridate::leap_year(.data$analysis_year_end) &
-                                           lubridate::month(.data$analysis_year_end) == 2 &
-                                           lubridate::day(.data$analysis_year_end) == 27,
-                                         .data$analysis_year_end %m+% days(1),
-                                         .data$analysis_year_end),
-      rolling_period = paste0(lubridate::month(.data$analysis_year_start, label = TRUE, abbr = TRUE),
-                              " ", lubridate::year(.data$analysis_year_start),
+      analysis_year_start = start_date %m+% lubridate::years(year_num),
+      analysis_year_start = dplyr::if_else(lubridate::leap_year(analysis_year_start) &
+                                             lubridate::month(analysis_year_start) == 2 &
+                                             lubridate::day(analysis_year_start) == 28 &
+                                             year_num != 0,
+                                           start_date %m+% lubridate::years(year_num) %m+% lubridate::days(1),
+                                           analysis_year_start),
+      analysis_year_end = analysis_year_start %m+% period %m-% days(1),
+      analysis_year_end = dplyr::if_else(lubridate::leap_year(analysis_year_end) &
+                                           lubridate::month(analysis_year_end) == 2 &
+                                           lubridate::day(analysis_year_end) == 27,
+                                         analysis_year_end %m+% days(1),
+                                         analysis_year_end),
+      rolling_period = paste0(lubridate::month(analysis_year_start, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(analysis_year_start),
                               " - ",
-                              lubridate::month(.data$analysis_year_end, label = TRUE, abbr = TRUE),
-                              " ", lubridate::year(.data$analysis_year_end))
+                              lubridate::month(analysis_year_end, label = TRUE, abbr = TRUE),
+                              " ", lubridate::year(analysis_year_end))
     ) |>
     dplyr::select(-"year_num")
 
