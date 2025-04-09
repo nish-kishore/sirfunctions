@@ -195,6 +195,17 @@ get_ctry_abbrev <- function(afp_data) {
                   place.admin.0 == "PAKISTAN" & ctry.short == "IND",
                   place.admin.0 == "ZAMBIA" & ctry.short == "TAN")
 
+  summarize_ctry_abbrev <- ctry_abbrev |>
+    dplyr::group_by(place.admin.0) |>
+    dplyr::summarize(n = n()) |>
+    dplyr::filter(n > 1) |>
+    dplyr::ungroup()
+
+  if (nrow(summarize_ctry_abbrev) > 0) {
+    cli::cli_abort(paste0("Some values in the country lookup table are not unique for the following countries: ",
+                          paste0(summarize_ctry_abbrev$place.admin.0, collapse = ", ")))
+  }
+
   return(ctry_abbrev)
 }
 
