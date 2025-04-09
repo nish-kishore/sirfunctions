@@ -660,7 +660,7 @@ get_lab_locs <- function(path = NULL) {
                   seq.lab = stringr::str_replace_all(seq.lab, "- ", "-"),
                   culture.itd.lab = stringr::str_replace_all(culture.itd.lab, "- ", "-")) |>
     dplyr::mutate(`wgs.lab*` = dplyr::case_when(
-      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Israel",
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Unknown",
       `wgs.lab*` %in% c("-", NA) ~ "Unknown",
       .default = `wgs.lab*`)) |>
     dplyr::mutate(culture.itd.lab = dplyr::case_when(
