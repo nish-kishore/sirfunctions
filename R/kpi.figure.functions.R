@@ -1122,13 +1122,13 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
         "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
     )
 
-  if (!is.null(lab_filtered)) {
+  if (!is.null(who_region)) {
     lab_filtered <- lab_filtered |>
       dplyr::filter(.data$whoregion %in% who_region)
   }
 
   if (rolling) {
-    facets <- ggh4x::facet_nested(rolling_year ~ seq.cat + seq.lab,
+    facets <- ggh4x::facet_nested(rolling_period ~ seq.cat + seq.lab,
                                   scales = "free", space = "free",
                                   labeller = label_wrap_gen(13),
                                   switch = "y")
