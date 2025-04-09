@@ -719,6 +719,11 @@ generate_kpi_violin <- function(
 #' @param raw_data `list` Global polio data. Output of [get_all_polio_data()]
 #' @param start_date `str` Analysis start date formatted as "YYYY-MM-DD".
 #' @param end_date `str` Analysis end date formatted as "YYYY-MM-DD".
+#' @param priority_level `list` Priority levels to display. Defaults to
+#' `c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")`.
+#' @param rolling `bool` Using rolling periods or year-to-year? Defaults to `TRUE`.
+#' @param who_region `list` Regions to display. Defaults to `NULL`, which shows
+#' all of the regions.
 #' @param output_path `str` Where to output the figure to.
 #' @param y_max `num` The maximum y-axis value.
 #'
@@ -732,6 +737,9 @@ generate_kpi_violin <- function(
 #' }
 generate_timely_det_violin <- function(raw_data,
                                        start_date, end_date,
+                                       priority_level = c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW"),
+                                       who_region = NULL,
+                                       rolling = TRUE,
                                        output_path = Sys.getenv("KPI_FIGURES"),
                                        y_max = 250) {
 
@@ -742,11 +750,20 @@ generate_timely_det_violin <- function(raw_data,
   color.risk.cat <- c(
     "HIGH" = "#d73027",
     "MEDIUM" = "orange",
-    "LOW (WATCHLIST)" = "#9ecae1"
+    "LOW (WATCHLIST)" = "#9ecae1",
+    "LOW" = "#08519c"
   )
 
+  if (is.null(who_region)) {
+    who_region <- pos |>
+      dplyr::filter(!is.na(whoregion)) |>
+      dplyr::pull(whoregion) |>
+      unique()
+  }
+
   exclude_low <- pos |>
-    dplyr::filter(.data$`SG Priority Level` != "LOW") |>
+    dplyr::filter(.data$`SG Priority Level` %in% priority_level,
+                  .data$whoregion %in% who_region) |>
     dplyr::left_join(ctry_abbrev,
                      by = c("place.admin.0", "whoregion")) |>
     dplyr::mutate(seq_lab = case_when(
@@ -759,13 +776,21 @@ generate_timely_det_violin <- function(raw_data,
         "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
     )
 
+  if (rolling) {
+    facets <- ggh4x::facet_nested(rolling_period~seq_lab+who.region,
+                                    scales = "free", space = "free",
+                                    labeller = label_wrap_gen(13),
+                                    switch = "y")
+  } else {
+    facets <- ggh4x::facet_nested(year~seq_lab+who.region,
+                                    scales = "free", space = "free",
+                                    labeller = label_wrap_gen(13),
+                                    switch = "y")
+  }
 
   plot <- generate_kpi_violin(exclude_low, "ctry.short", "ontonothq",
                               "sg_priority_level",
-                              ggh4x::facet_nested(rolling_period~seq_lab+who.region,
-                                                  scales = "free", space = "free",
-                                           labeller = label_wrap_gen(13),
-                                           switch = "y"),
+                              facets,
                               80, y.max = y_max)
   plot <- plot +
     ggplot2::scale_fill_manual(values = color.risk.cat,
@@ -789,6 +814,11 @@ generate_timely_det_violin <- function(raw_data,
 #' @param afp_data `tibble` AFP dataset.
 #' @param start_date `str` Start date of the analysis formatted as "YYYY-MM-DD".
 #' @param end_date `str` End date of the analysis formatted as "YYYY-MM-DD".
+#' @param priority_level `list` Priority levels to display. Defaults to
+#' `c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")`.
+#' @param who_region `list` Regions to display. Defaults to `NULL`, which shows
+#' all of the regions.
+#' @param rolling `bool` Using rolling periods or year-to-year? Defaults to `TRUE`.
 #' @param output_path `str` Where to output the figure to.
 #' @param y_max `num` Maximum value in the y-axis.
 #'
@@ -804,6 +834,9 @@ generate_timely_det_violin <- function(raw_data,
 #' }
 generate_lab_culture_violin <- function(lab_data, afp_data,
                                        start_date, end_date,
+                                       priority_level = c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW"),
+                                       who_region = NULL,
+                                       rolling = TRUE,
                                        output_path = Sys.getenv("KPI_FIGURES"),
                                        y_max = 60) {
 
@@ -813,7 +846,8 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
   color.risk.cat <- c(
     "HIGH" = "#d73027",
     "MEDIUM" = "orange",
-    "LOW (WATCHLIST)" = "#9ecae1"
+    "LOW (WATCHLIST)" = "#9ecae1",
+    "LOW" = "#08519c"
   )
 
   lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
@@ -825,8 +859,7 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
     dplyr::mutate(
       year = lubridate::year(.data$DateStoolCollected)
     ) |>
-    dplyr::filter(.data$`SG Priority Level` != "LOW" |
-                    !is.na(.data$`SG Priority Level`),
+    dplyr::filter(.data$`SG Priority Level` %in% priority_level,
                   !is.na(.data$culture.itd.cat),
                   dplyr::between(DateStoolCollected, start_date, end_date)) |>
     dplyr::mutate(
@@ -834,12 +867,26 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
       "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
     )
 
+  if (!is.null(who_region)) {
+    lab_filtered <- lab_filtered |>
+      dplyr::filter(.data$whoregion %in% who_region)
+  }
+
+  if (rolling) {
+    facets <- ggh4x::facet_nested(rolling_period~whoregion + culture.itd.cat,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  } else {
+    facets <- ggh4x::facet_nested(year~whoregion + culture.itd.cat,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  }
+
   plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.lab.culture",
                               "sg_priority_level",
-                              ggh4x::facet_nested(year~whoregion + culture.itd.cat,
-                                                  scales = "free", space = "free",
-                                                  labeller = label_wrap_gen(13),
-                                                  switch = "y"), 14,
+                              facets, 14,
                               y.max = y_max)
   plot <- plot +
     ggplot2::scale_fill_manual(values = color.risk.cat,
@@ -872,9 +919,12 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
 #'                         "2021-01-01", "2023-12-31", getwd())
 #' }
 generate_lab_itd_violin <- function(lab_data, afp_data,
-                                        start_date, end_date,
-                                        output_path = Sys.getenv("KPI_FIGURES"),
-                                        y_max = 60) {
+                                    start_date, end_date,
+                                    priority_level = c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW"),
+                                    who_region = NULL,
+                                    rolling = TRUE,
+                                    output_path = Sys.getenv("KPI_FIGURES"),
+                                    y_max = 60) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -882,7 +932,8 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
   color.risk.cat <- c(
     "HIGH" = "#d73027",
     "MEDIUM" = "orange",
-    "LOW (WATCHLIST)" = "#9ecae1"
+    "LOW (WATCHLIST)" = "#9ecae1",
+    "LOW" = "#08519c"
   )
 
   lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
@@ -894,8 +945,7 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
     dplyr::mutate(
       year = lubridate::year(.data$DateStoolCollected)
     ) |>
-    dplyr::filter(.data$`SG Priority Level` != "LOW" |
-                    !is.na(.data$`SG Priority Level`),
+    dplyr::filter(.data$`SG Priority Level` %in% priority_level,
                   !is.na(.data$culture.itd.cat),
                   dplyr::between(DateStoolCollected, start_date, end_date)) |>
     dplyr::mutate(
@@ -903,11 +953,24 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
         "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
     )
 
+  if (!is.null(who_region)) {
+    lab_filtered <- lab_filtered |>
+      dplyr::filter(.data$whoregion %in% who_region)
+  }
+
+  if (rolling) {
+    facets <- ggplot2::facet_wrap(~ .data$culture.itd.lab,
+                                  scales = "free", ncol = 7,
+                                  labeller = label_wrap_gen(20))
+  } else {
+    facets <- ggplot2::facet_wrap(~ .data$culture.itd.lab,
+                                  scales = "free", ncol = 7,
+                                  labeller = label_wrap_gen(20))
+  }
+
   plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.culture.itd",
                               "sg_priority_level",
-                              ggplot2::facet_wrap(~ .data$culture.itd.lab,
-                                                  scales = "free", ncol = 7,
-                                         labeller = label_wrap_gen(20)), 7,
+                              facets, 7,
                               y.max = y_max)
   plot <- plot +
     ggplot2::scale_fill_manual(values = color.risk.cat,
@@ -941,6 +1004,9 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
 #' }
 generate_lab_seqship_violin <- function(lab_data, afp_data,
                                         start_date, end_date,
+                                        priority_level = c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW"),
+                                        who_region = NULL,
+                                        rolling = TRUE,
                                         output_path = Sys.getenv("KPI_FIGURES"),
                                         y_max = 50) {
 
@@ -950,7 +1016,8 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
   color.risk.cat <- c(
     "HIGH" = "#d73027",
     "MEDIUM" = "orange",
-    "LOW (WATCHLIST)" = "#9ecae1"
+    "LOW (WATCHLIST)" = "#9ecae1",
+    "LOW" = "#08519c"
   )
 
   lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
@@ -962,8 +1029,7 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
     dplyr::mutate(
       year = lubridate::year(.data$DateStoolCollected)
     ) |>
-    dplyr::filter(.data$`SG Priority Level` != "LOW" |
-                    !is.na(.data$`SG Priority Level`),
+    dplyr::filter(.data$`SG Priority Level` %in% priority_level,
                   !is.na(.data$culture.itd.cat),
                   dplyr::between(DateStoolCollected, start_date, end_date)) |>
     dplyr::mutate(
@@ -971,12 +1037,26 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
         "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
     )
 
+  if (!is.null(who_region)) {
+    lab_filtered <- lab_filtered |>
+      dplyr::filter(whoregion %in% who_region)
+  }
+
+  if (rolling) {
+    facets <- ggh4x::facet_nested(rolling_period ~ seq.cat + seq.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  } else {
+    facets <- ggh4x::facet_nested(year ~ seq.cat + seq.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  }
+
   plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.seq.ship",
                               "sg_priority_level",
-                              ggh4x::facet_nested(year ~ seq.cat + seq.lab,
-                                                  scales = "free", space = "free",
-                                                  labeller = label_wrap_gen(13),
-                                                  switch = "y"), 7,
+                              facets, 7,
                               y.max = y_max)
   plot <- plot +
     ggplot2::scale_fill_manual(values = color.risk.cat,
@@ -1008,7 +1088,10 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
 #'                            "2021-01-01", "2023-12-31", getwd())
 #' }
 generate_lab_seqres_violin <- function(lab_data, afp_data,
-                                        start_date, end_date,
+                                       start_date, end_date,
+                                       priority_level = c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW"),
+                                       who_region = NULL,
+                                       rolling = TRUE,
                                         output_path = Sys.getenv("KPI_FIGURES"),
                                         y_max = 60) {
 
@@ -1018,7 +1101,8 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
   color.risk.cat <- c(
     "HIGH" = "#d73027",
     "MEDIUM" = "orange",
-    "LOW (WATCHLIST)" = "#9ecae1"
+    "LOW (WATCHLIST)" = "#9ecae1",
+    "LOW" = "#08519c"
   )
 
   lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
@@ -1030,8 +1114,7 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
     dplyr::mutate(
       year = lubridate::year(.data$DateStoolCollected)
     ) |>
-    dplyr::filter(.data$`SG Priority Level` != "LOW" |
-                    !is.na(.data$`SG Priority Level`),
+    dplyr::filter(.data$`SG Priority Level` %in% priority_level,
                   !is.na(.data$culture.itd.cat),
                   dplyr::between(DateStoolCollected, start_date, end_date)) |>
     dplyr::mutate(
@@ -1039,12 +1122,26 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
         "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
     )
 
+  if (!is.null(lab_filtered)) {
+    lab_filtered <- lab_filtered |>
+      dplyr::filter(.data$whoregion %in% who_region)
+  }
+
+  if (rolling) {
+    facets <- ggh4x::facet_nested(rolling_year ~ seq.cat + seq.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  } else {
+    facets <- ggh4x::facet_nested(year ~ seq.cat + seq.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  }
+
   plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.itd.seqres",
                               "sg_priority_level",
-                              ggh4x::facet_nested(year ~ seq.cat + seq.lab,
-                                                  scales = "free", space = "free",
-                                                  labeller = label_wrap_gen(13),
-                                                  switch = "y"), 7,
+                              facets, 7,
                               y.max = y_max)
   plot <- plot +
     ggplot2::scale_fill_manual(values = color.risk.cat,

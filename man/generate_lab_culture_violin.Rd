@@ -9,6 +9,9 @@ generate_lab_culture_violin(
   afp_data,
   start_date,
   end_date,
+  priority_level = c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW"),
+  who_region = NULL,
+  rolling = TRUE,
   output_path = Sys.getenv("KPI_FIGURES"),
   y_max = 60
 )
@@ -21,6 +24,14 @@ generate_lab_culture_violin(
 \item{start_date}{\code{str} Start date of the analysis formatted as "YYYY-MM-DD".}
 
 \item{end_date}{\code{str} End date of the analysis formatted as "YYYY-MM-DD".}
+
+\item{priority_level}{\code{list} Priority levels to display. Defaults to
+\code{c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")}.}
+
+\item{who_region}{\code{list} Regions to display. Defaults to \code{NULL}, which shows
+all of the regions.}
+
+\item{rolling}{\code{bool} Using rolling periods or year-to-year? Defaults to \code{TRUE}.}
 
 \item{output_path}{\code{str} Where to output the figure to.}
 

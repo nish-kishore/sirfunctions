@@ -354,7 +354,7 @@ adjust_rolling_years <- function(data, end_date, date_col) {
     ))) |>
     dplyr::filter(year_number == max(year_number, na.rm =  TRUE))
 
-  if (max(data[[date_col]], na.rm = TRUE) <= end_date) {
+  if (max(data[[date_col]], na.rm = TRUE) < end_date) {
     cli::cli_alert_info(paste0("Note: the dataset only contains data up to ",
                                max(data[[date_col]]), ". However, the specified",
                                    " end date is ", end_date,
