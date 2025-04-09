@@ -873,12 +873,12 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
   }
 
   if (rolling) {
-    facets <- ggh4x::facet_nested(rolling_period~whoregion + culture.itd.cat,
+    facets <- ggh4x::facet_nested(rolling_period~culture.itd.lab, #+ culture.itd.cat,
                                   scales = "free", space = "free",
                                   labeller = label_wrap_gen(13),
                                   switch = "y")
   } else {
-    facets <- ggh4x::facet_nested(year~whoregion + culture.itd.cat,
+    facets <- ggh4x::facet_nested(year~culture.itd.lab, #+ culture.itd.cat,
                                   scales = "free", space = "free",
                                   labeller = label_wrap_gen(13),
                                   switch = "y")

@@ -648,9 +648,32 @@ get_lab_locs <- function(path = NULL) {
     )
   } else {
     lab.locs <- readr::read_csv(path)
-    lab.locs <- lab.locs |>
-      dplyr::mutate(country = stringr::str_to_upper(country))
   }
+
+  lab.locs <- lab.locs |>
+    dplyr::mutate(country = stringr::str_to_upper(country))
+
+  # Manual corrections
+  lab.locs.edited <- lab.locs |>
+    dplyr::filter(!is.na(country)) |>
+    dplyr::mutate(`wgs.lab*` = stringr::str_replace_all(`wgs.lab*`, "- ", "-"),
+                  seq.lab = stringr::str_replace_all(seq.lab, "- ", "-"),
+                  culture.itd.lab = stringr::str_replace_all(culture.itd.lab, "- ", "-")) |>
+    dplyr::mutate(`wgs.lab*` = dplyr::case_when(
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Israel",
+      `wgs.lab*` %in% c("-", NA) ~ "Unknown",
+      .default = `wgs.lab*`)) |>
+    dplyr::mutate(culture.itd.lab = dplyr::case_when(
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Jordan",
+      culture.itd.lab %in% c("-", NA) ~ "Unknown",
+      .default = culture.itd.lab
+    )) |>
+    dplyr::mutate(seq.lab = dplyr::case_when(
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Jordan",
+      seq.lab %in% c("-", NA) ~ "Unknown",
+      .default = seq.lab
+    ))
+
 
   return(lab.locs)
 }
