@@ -209,18 +209,22 @@ generate_kpi_template <- function(output_path, name) {
   init <- paste0("init_kpi(", '"', output_path, '"', ",\n",
                  '         "', name, '"', ")")
 
+  # start dates
+  start_date <- '"2022-01-01"'
+  end_date <- '"2024-12-31"'
+
   # Shapefiles
   ctry_sf <- 'ctry_sf <- load_clean_ctry_sp(st_year = 2022, type = "long")'
   dist_sf <- 'dist_sf <- load_clean_dist_sp(st_year = 2022, type = "long")'
 
   # Generate tables
-  c1 <- 'c1 <- generate_c1_table(raw_data, "2022-01-01", "2024-12-31")'
+  c1 <- 'c1 <- generate_c1_table(raw_data, start_date, end_date)'
   c1_rollup <- 'c1_rollup <- generate_c1_rollup(c1)'
-  c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2022-01-01", "2024-12-31", "ctry")'
-  c2_dist <- 'c2_dist <- generate_c2_table(raw_data$afp, raw_data$dist.pop, "2022-01-01", "2024-12-31", "dist")'
-  c3 <- 'c3 <- generate_c3_table(raw_data$es, "2022-01-01", "2024-12-31")'
+  c2 <- 'c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, start_date, end_date, "country")'
+  c2_dist <- 'c2_dist <- generate_c2_table(raw_data$afp, raw_data$dist.pop, start_date, end_date, "dist")'
+  c3 <- 'c3 <- generate_c3_table(raw_data$es, start_date, end_date)'
   c3_rollup <- 'c3_rollup <- generate_c3_rollup(c3)'
-  c4 <- 'c4 <- generate_c4_table(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
+  c4 <- 'c4 <- generate_c4_table(lab_data, raw_data$afp, start_date, end_date)'
 
   # Get years available
   year_list <- 'year_list <- unique(c2$year_label)'
@@ -242,11 +246,11 @@ generate_kpi_template <- function(output_path, name) {
   stool_bar <- "generate_kpi_stoolad_bar(c1, raw_data$afp)"
   ev_bar <- "generate_kpi_evdetect_bar(c1, raw_data$afp)"
 
-  timely_violin <- 'generate_timely_det_violin(raw_data, "2022-01-01", "2024-12-31")'
-  culture_violin <- 'generate_lab_culture_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
-  itd_violin <- 'generate_lab_itd_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
-  seqship_violin <- 'generate_lab_seqship_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
-  seqres_violin <- 'generate_lab_seqres_violin(lab_data, raw_data$afp, "2022-01-01", "2024-12-31")'
+  timely_violin <- 'generate_timely_det_violin(raw_data, start_date, end_date)'
+  culture_violin <- 'generate_lab_culture_violin(lab_data, raw_data$afp, start_date, end_date)'
+  itd_violin <- 'generate_lab_itd_violin(lab_data, raw_data$afp, start_date, end_date)'
+  seqship_violin <- 'generate_lab_seqship_violin(lab_data, raw_data$afp, start_date, end_date)'
+  seqres_violin <- 'generate_lab_seqres_violin(lab_data, raw_data$afp, start_date, end_date)'
 
   export_table <- "export_kpi_table(c1, c2, c3, c4)"
 
@@ -264,7 +268,8 @@ generate_kpi_template <- function(output_path, name) {
     "# Ensure st.year is the year of your start date.",
     ctry_sf, dist_sf, "\n",
     "# Cleaning lab data ----",
-    'lab_data <- clean_lab_data(lab_data, "2022-01-01", "2024-12-31", raw_data$afp)\n',
+    paste0("start_date <- ", start_date), paste0("end_date <- ", end_date), "\n",
+    'lab_data <- clean_lab_data(lab_data, start_date, end_date, raw_data$afp)\n',
     "# Generate GPSAP C1-C4 tables ----",
     "# You may also specify and filter countries based on risk category ",
     c1, c1_rollup, c2, c2_dist, c3, c3_rollup, c4, "\n",

@@ -10,7 +10,7 @@ generate_lab_seqres_violin(
   start_date,
   end_date,
   output_path = Sys.getenv("KPI_FIGURES"),
-  y_max = 250
+  y_max = 60
 )
 }
 \arguments{
