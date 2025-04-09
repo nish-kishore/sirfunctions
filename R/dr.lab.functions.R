@@ -675,7 +675,7 @@ get_lab_locs <- function(path = NULL) {
     ))
 
 
-  return(lab.locs)
+  return(lab.locs.edited)
 }
 
 #' Determines whether lab data is EMRO or AFRO

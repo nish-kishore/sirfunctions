@@ -186,6 +186,15 @@ get_ctry_abbrev <- function(afp_data) {
       !is.na(.data$ctry.short), !is.na(.data$place.admin.0), !str_starts(ctry.short, "-")
     )
 
+  ctry_abbrev <- ctry_abbrev |>
+    dplyr::filter(place.admin.0 == "CAMEROON" & ctry.short == "CHA",
+                  place.admin.0 == "CHINA" & ctry.short == "IND",
+                  place.admin.0 == "ETHIOPIA" & ctry.short == "SOM",
+                  place.admin.0 == "GHANA" & ctry.short == "TOG",
+                  place.admin.0 == "INDIA" & ctry.short == "PAK",
+                  place.admin.0 == "PAKISTAN" & ctry.short == "IND",
+                  place.admin.0 == "ZAMBIA" & ctry.short == "TAN")
+
   return(ctry_abbrev)
 }
 
