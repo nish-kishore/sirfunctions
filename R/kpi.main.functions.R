@@ -187,13 +187,13 @@ get_ctry_abbrev <- function(afp_data) {
     )
 
   ctry_abbrev <- ctry_abbrev |>
-    dplyr::filter(place.admin.0 == "CAMEROON" & ctry.short == "CHA",
-                  place.admin.0 == "CHINA" & ctry.short == "IND",
-                  place.admin.0 == "ETHIOPIA" & ctry.short == "SOM",
-                  place.admin.0 == "GHANA" & ctry.short == "TOG",
-                  place.admin.0 == "INDIA" & ctry.short == "PAK",
-                  place.admin.0 == "PAKISTAN" & ctry.short == "IND",
-                  place.admin.0 == "ZAMBIA" & ctry.short == "TAN")
+    dplyr::filter(!(place.admin.0 == "CAMEROON" & ctry.short == "CHA"),
+                  !(place.admin.0 == "CHINA" & ctry.short == "IND"),
+                  !(place.admin.0 == "ETHIOPIA" & ctry.short == "SOM"),
+                  !(place.admin.0 == "GHANA" & ctry.short == "TOG"),
+                  !(place.admin.0 == "INDIA" & ctry.short == "PAK"),
+                  !(place.admin.0 == "PAKISTAN" & ctry.short == "IND"),
+                  !(place.admin.0 == "ZAMBIA" & ctry.short == "TAN"))
 
   summarize_ctry_abbrev <- ctry_abbrev |>
     dplyr::group_by(place.admin.0) |>
