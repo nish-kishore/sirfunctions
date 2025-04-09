@@ -603,7 +603,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   # available that may or may not be the end date but not go beyond that
   es_site_age <- es_end_dates |>
     dplyr::group_by(year_label, rolling_period) |>
-    dplyr::mutate(es_sites_w_age = list(get_es_site_age(es_data, max(analysis_year_end)))) |>
+    dplyr::mutate(es_sites_w_age = list(get_es_site_age(raw_data$es, max(analysis_year_end)))) |>
     dplyr::ungroup() |>
     # not necessary anymore
     dplyr::select(-analysis_year_start, -analysis_year_end)
@@ -707,7 +707,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   if (nrow(inconsistent_guids) != 0) {
     cli::cli_alert_info(paste0(
-      col_blue(
+      cli::col_blue(
         "There were ", nrow(inconsistent_guids),
         " adm2guids not present for the entirety of their 1 year rolling periods.",
         " This typically occurs when a GUID expires between rolling periods that encompasses multiple years.",

@@ -959,11 +959,11 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
   }
 
   if (rolling) {
-    facets <- ggplot2::facet_wrap(~ .data$culture.itd.lab,
+    facets <- ggplot2::facet_wrap(rolling_period ~ .data$culture.itd.lab,
                                   scales = "free", ncol = 7,
                                   labeller = label_wrap_gen(20))
   } else {
-    facets <- ggplot2::facet_wrap(~ .data$culture.itd.lab,
+    facets <- ggplot2::facet_wrap(year ~ .data$culture.itd.lab,
                                   scales = "free", ncol = 7,
                                   labeller = label_wrap_gen(20))
   }
