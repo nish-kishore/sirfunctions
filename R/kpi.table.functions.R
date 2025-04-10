@@ -612,7 +612,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     dplyr::select(-analysis_year_start, -analysis_year_end)
 
   es_indicators <- es_data |>
-    dplyr::filter(between(analysis_year_end, start_date, end_date)) |>
+    dplyr::filter(dplyr::between(analysis_year_end, start_date, end_date)) |>
     dplyr::group_by(
       .data$year_label, .data$rolling_period,
       analysis_year_start, analysis_year_end
