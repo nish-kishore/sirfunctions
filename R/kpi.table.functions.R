@@ -1207,7 +1207,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 
   if (nrow(inconsistent_guids) != 0) {
     cli::cli_alert_info(paste0(
-      col_blue(
+      cli::col_blue(
         "There were ", nrow(inconsistent_guids),
         " GUIDs not present for the entirety of their 1 year rolling periods.",
         " This typically occurs when a GUID expires between rolling periods that encompasses multiple years.",
