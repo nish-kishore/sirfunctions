@@ -762,7 +762,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
     ) |>
     dplyr::summarise(
       dist_stool = sum(adequacy.denominator >= 5, na.rm = TRUE),
-      met_stool = sum(per.stool.ad >= 0.8 & adequacy.denominator >= 5, na.rm = TRUE),
+      met_stool = sum(per.stool.ad >= 80 & adequacy.denominator >= 5, na.rm = TRUE),
       prop_met_stool = met_stool / dist_stool * 100,
       stool_label = paste0(met_stool, "/", dist_stool)
     )
