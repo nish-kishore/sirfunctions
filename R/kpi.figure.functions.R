@@ -573,14 +573,18 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
 #' plot <- generate_kpi_evdetect_bar(c1, raw_data$afp)
 #' }
 generate_kpi_evdetect_bar <- function(c1, afp_data,
-                                   output_path = Sys.getenv("KPI_FIGURES")) {
+                                   output_path = Sys.getenv("KPI_FIGURES"),
+                                   who_region = NULL) {
 
   ctry_abbrev <- get_ctry_abbrev(afp_data)
   priority_ctry <- c1 |>
     dplyr::left_join(ctry_abbrev,
                      by = c("ctry" = "place.admin.0", "Region" = "whoregion")) |>
-    dplyr::filter(.data$`SG Priority Level` == "HIGH") |>
     dplyr::mutate(prop_met_ev = .data$prop_met_ev)
+
+  if (!is.null(who_region)) {
+    priority_ctry <- priority_ctry |> dplyr::filter(Region %in% who_region)
+  }
 
   bar_plot <- generate_kpi_barchart(priority_ctry,
                                     "prop_met_ev",

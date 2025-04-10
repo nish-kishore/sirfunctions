@@ -202,6 +202,7 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
                                              risk_table, lab_locs)
   pos_summary <- pos |>
     dplyr::mutate(
+      whoregion = get_region(place.admin.0),
       ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
         .data$dateonset),
       timely_cat =
@@ -509,10 +510,12 @@ generate_c1_table <- function(raw_data, start_date, end_date,
       dplyr::between(dateonset, start_date, end_date),
       cdc.classification.all2 != "NOT-AFP"
     ) |>
-    dplyr::select(-dplyr::starts_with("pons"))
+    dplyr::select(-dplyr::starts_with("pons")) |>
+    dplyr::mutate(whoregion = get_region(place.admin.0))
 
   es_data <- raw_data$es |>
-    dplyr::filter(collect.date <= end_date)
+    dplyr::filter(collect.date <= end_date) |>
+    dplyr::mutate(who.region = get_region(ADM0_NAME))
   cli::cli_progress_update()
 
   # Ensure that if using raw_data, required renamed columns are present. Borrowed from
@@ -656,9 +659,6 @@ generate_c1_table <- function(raw_data, start_date, end_date,
   cli::cli_progress_update()
 
   # Calculate meeting indicators
-  region_lookup_table <- raw_data$ctry.pop |>
-    dplyr::select(ctry = ADM0_NAME, adm0guid, whoregion = WHO_REGION) |>
-    dplyr::distinct()
   dist_lookup_table <- raw_data$dist.pop |>
     dplyr::select(ctry = ADM0_NAME, prov = ADM1_NAME, dist = ADM2_NAME, adm2guid) |>
     dplyr::distinct()
@@ -718,7 +718,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   # Summarise
   met_npafp <- dplyr::bind_rows(afp_indicators$npafp_dist) |>
-    dplyr::left_join(region_lookup_table) |>
+    dplyr::mutate(whoregion = get_region(ctry)) |>
     # invalid GUIDS will have consistnet_guid = FALSE while
     # valid ones will be NA
     dplyr::left_join(inconsistent_guids) |>
@@ -749,7 +749,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   met_stool <- dplyr::bind_rows(afp_indicators$stoolad_dist) |>
     dplyr::left_join(dist_lookup_table) |>
-    dplyr::left_join(region_lookup_table) |>
+    dplyr::mutate(whoregion = get_region(ctry)) |>
     # invalid GUIDS will have consistnet_guid = FALSE while
     # valid ones will be NA
     dplyr::left_join(inconsistent_guids) |>
@@ -774,7 +774,7 @@ generate_c1_table <- function(raw_data, start_date, end_date,
       "dist" = ADM2_NAME
     ) |>
     dplyr::left_join(dist_lookup_table) |>
-    dplyr::left_join(region_lookup_table) |>
+    dplyr::mutate(whoregion = get_region(ctry)) |>
     # invalid GUIDS will have consistnet_guid = FALSE while
     # valid ones will be NA
     dplyr::left_join(inconsistent_guids) |>
@@ -1297,6 +1297,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 generate_c3_table <- function(es_data, start_date, end_date,
                               risk_category = NULL) {
 
+  es_original <- es_data
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
   es_data <- es_data |>
@@ -1317,7 +1318,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
   # available that may or may not be the end date but not go beyond that
   es_site_age <- es_end_dates |>
     dplyr::group_by(year_label, rolling_period) |>
-    dplyr::mutate(es_sites_w_age = list(get_es_site_age(es_data, max(analysis_year_end)))) |>
+    dplyr::mutate(es_sites_w_age = list(get_es_site_age(es_original, max(analysis_year_end)))) |>
     dplyr::ungroup() |>
     # not necessary anymore
     dplyr::select(-analysis_year_start, -analysis_year_end) |>
