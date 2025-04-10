@@ -675,7 +675,7 @@ generate_kpi_violin <- function(
     df |> filter(!!rlang::sym(interval) <= y.max, !!rlang::sym(interval) >= 0),
     aes(x = !!rlang::sym(country.label), y = !!rlang::sym(interval), fill = !!rlang::sym(priority_level))
   ) +
-    geom_violin(na.rm = T, scale = "width", linewidth = 0) +
+    geom_violin(na.rm = T, scale = "width", linewidth = 0, show.legend = TRUE) +
     stat_summary(
       fun.y = median, geom = "text",
       size = 2, color = "black", aes(label = round(after_stat(y)))
@@ -686,7 +686,7 @@ generate_kpi_violin <- function(
     }
     } +
     scale_y_continuous(
-      breaks = seq(0, y.max, by = 50),
+      breaks = seq(0, y.max, by = 25),
       limits = c(y.min, y.max + 5),
       expand = c(0, 0)
     ) +
@@ -761,7 +761,7 @@ generate_timely_det_violin <- function(raw_data,
       unique()
   }
 
-  exclude_low <- pos |>
+  pos_filtered <- pos |>
     dplyr::filter(.data$`SG Priority Level` %in% priority_level,
                   .data$whoregion %in% who_region) |>
     dplyr::left_join(ctry_abbrev,
@@ -788,13 +788,35 @@ generate_timely_det_violin <- function(raw_data,
                                     switch = "y")
   }
 
-  plot <- generate_kpi_violin(exclude_low, "ctry.short", "ontonothq",
+  plot_mock <- generate_kpi_violin(pos_filtered, "ctry.short", "ontonothq",
+                                   "sg_priority_level",
+                                   facets,
+                                   35, y.max = y_max) +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level",
+                               na.value = "white")
+
+  plot_mock_legend <- ggpubr::get_legend(plot_mock)
+
+  plot_1 <- generate_kpi_violin(pos_filtered |> filter(seq.capacity == "no"), "ctry.short", "ontonothq",
                               "sg_priority_level",
                               facets,
-                              80, y.max = y_max)
-  plot <- plot +
+                              35, y.max = y_max)
+  plot_1 <- plot_1 +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level",
+                               na.value = "white")
+
+  plot_2 <- generate_kpi_violin(pos_filtered |> filter(seq.capacity == "yes"), "ctry.short", "ontonothq",
+                                "sg_priority_level",
+                                facets,
+                                46, y.max = y_max)
+  plot_2 <- plot_2 +
     ggplot2::scale_fill_manual(values = color.risk.cat,
                                name = "Priority Level", na.value = "white")
+
+  plot <- ggpubr::ggarrange(plot_1, plot_2, widths = c(2, 0.3),
+                            nrow = 1, ncol = 2, legend.grob = plot_mock_legend)
 
   ggplot2::ggsave(file.path(output_path, "kpi_wild_vdpv_timely_det.png"),
                   dpi = 400, height = 5, width = 12, bg = "white")
@@ -924,7 +946,7 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
                                     who_region = NULL,
                                     rolling = TRUE,
                                     output_path = Sys.getenv("KPI_FIGURES"),
-                                    y_max = 60) {
+                                    y_max = 30) {
 
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
@@ -959,11 +981,11 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
   }
 
   if (rolling) {
-    facets <- ggplot2::facet_wrap(rolling_period ~ .data$culture.itd.lab,
+    facets <- ggplot2::facet_nested(rolling_period ~ culture.itd.lab,
                                   scales = "free", ncol = 7,
                                   labeller = label_wrap_gen(20))
   } else {
-    facets <- ggplot2::facet_wrap(year ~ .data$culture.itd.lab,
+    facets <- ggplot2::facet_nested(year ~ culture.itd.lab,
                                   scales = "free", ncol = 7,
                                   labeller = label_wrap_gen(20))
   }
