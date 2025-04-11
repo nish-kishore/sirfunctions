@@ -1164,7 +1164,7 @@ if (!force.new.run) {
   cli::cli_process_start("13) Creating Metadata object")
 
   polis.cache <- sirfunctions_io("read", NULL,
-    file_loc = dplyr::filter(dl_table, grepl("cache", file)) |>
+    file_loc = dplyr::filter(dl_table, grepl("cache.rds", file)) |>
       dplyr::pull(file), edav = use_edav
   ) |>
     dplyr::mutate(last_sync = as.Date(last_sync))
