@@ -783,12 +783,12 @@ generate_timely_det_violin <- function(raw_data,
   if (rolling) {
     facets <- ggh4x::facet_nested(rolling_period~seq_lab+who.region,
                                     scales = "free", space = "free",
-                                    labeller = label_wrap_gen(13),
+                                    labeller = ggplot2::label_wrap_gen(13),
                                     switch = "y")
   } else {
     facets <- ggh4x::facet_nested(year~seq_lab+who.region,
                                     scales = "free", space = "free",
-                                    labeller = label_wrap_gen(13),
+                                    labeller = ggplot2::label_wrap_gen(13),
                                     switch = "y")
   }
 

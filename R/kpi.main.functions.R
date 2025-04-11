@@ -195,7 +195,7 @@ get_ctry_abbrev <- function(afp_data) {
                   !(place.admin.0 == "PAKISTAN" & ctry.short == "IND"),
                   !(place.admin.0 == "ZAMBIA" & ctry.short == "TAN")) |>
     dplyr::mutate(ctry.short = dplyr::case_when(
-      ctry.short == "IND" ~ "IDN",
+      ctry.short == "IND" & place.admin.0 == "INDONESIA" ~ "IDN",
       .default = ctry.short
     ))
 
