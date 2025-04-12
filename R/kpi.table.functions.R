@@ -1050,7 +1050,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     dplyr::select(-"epid") |>
     dplyr::group_by(dplyr::across(dplyr::any_of(group_60_day))) |>
     dplyr::summarize(prop_complete_60_day = sum(.data$ontime.60day == 1, na.rm = TRUE) /
-      sum(adequacy.final2 == "Inadequate") * 100) |>
+      sum(.data$ontime.60day != 99, na.rm = TRUE) * 100) |>
     ungroup()
   cli::cli_progress_update()
 

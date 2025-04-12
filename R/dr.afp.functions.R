@@ -862,7 +862,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
       need60.sys.date = Sys.Date()
     ) |> # needed to record when the table was created
     dplyr::filter(dplyr::between(date, start_date, end_date)) |>
-    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final == "Inadequate" &
+    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final2 == "Inadequate" &
       due.60followup == 1, 1, 0)) |>
     # dplyr::filter(need60day.v2 == 1 |
     #   cdc.classification.all2 == "COMPATIBLE") |>
