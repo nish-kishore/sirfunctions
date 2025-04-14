@@ -2915,10 +2915,12 @@ create_polis_data_folder <- function(data_folder, polis_folder, use_edav) {
   cli::cli_process_start("Adding updated data to polis data folder")
 
   # Delete previous files
-  lapply(1:nrow(current.table), \(i) {
-    sirfunctions_io("delete", NULL,
-                    current.table$src_path[i], edav = use_edav)
-  })
+  if (nrow(current.table) != 0) {
+    lapply(1:nrow(current.table), \(i) {
+      sirfunctions_io("delete", NULL,
+                      current.table$src_path[i], edav = use_edav)
+    })
+  }
 
   # Move all files to core polis data folder
   lapply(1:nrow(source.table), function(i){
