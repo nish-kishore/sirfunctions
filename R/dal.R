@@ -1265,6 +1265,14 @@ if (create.cache) {
   cli::cli_process_done()
 }
 
+if (attach.spatial.data) {
+  raw.data$global.ctry <- spatial.data$global.ctry
+  raw.data$global.prov <- spatial.data$global.prov
+  raw.data$global.dist <- spatial.data$global.dist
+  raw.data$roads <- spatial.data$roads
+  raw.data$cities <- spatial.data$cities
+}
+
 cli::cli_process_start("Checking for duplicates in datasets.")
 raw.data <- duplicate_check(raw.data)
 cli::cli_process_done()
