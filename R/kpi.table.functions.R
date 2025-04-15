@@ -1841,7 +1841,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
       dplyr::rename_with(recode,
                          rolling_period = "Rolling 12 Months",
                          seq_lab = "Sequencing Lab",
-                         prop_timely_seqres = "Timeliness of shipment for sequencing"
+                         prop_timely_seqres = "Timeliness of sequencing results"
       )
 
   }
