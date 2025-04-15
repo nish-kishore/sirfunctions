@@ -802,7 +802,8 @@ generate_timely_det_violin <- function(raw_data,
 
   plot_mock_legend <- ggpubr::get_legend(plot_mock)
 
-  plot_1 <- generate_kpi_violin(pos_filtered |> filter(seq.capacity == "no"), "ctry.short", "ontonothq",
+  plot_1 <- generate_kpi_violin(pos_filtered |>
+                                  filter(seq.capacity == "no"), "ctry.short", "ontonothq",
                               "sg_priority_level",
                               facets,
                               35, y.max = y_max)
@@ -819,7 +820,7 @@ generate_timely_det_violin <- function(raw_data,
     ggplot2::scale_fill_manual(values = color.risk.cat,
                                name = "Priority Level", na.value = "white")
 
-  plot <- ggpubr::ggarrange(plot_1, plot_2, widths = c(2, 0.3),
+  plot <- ggpubr::ggarrange(plot_1, plot_2, widths = c(2, 0.5),
                             nrow = 1, ncol = 2, legend.grob = plot_mock_legend)
 
   ggplot2::ggsave(file.path(output_path, "kpi_wild_vdpv_timely_det.png"),
@@ -985,13 +986,15 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
   }
 
   if (rolling) {
-    facets <- ggplot2::facet_nested(rolling_period ~ culture.itd.lab,
-                                  scales = "free", ncol = 7,
-                                  labeller = label_wrap_gen(20))
+    facets <- ggh4x::facet_nested(rolling_period ~ culture.itd.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(20),
+                                  switch = "y")
   } else {
-    facets <- ggplot2::facet_nested(year ~ culture.itd.lab,
-                                  scales = "free", ncol = 7,
-                                  labeller = label_wrap_gen(20))
+    facets <- ggh4x::facet_nested(year ~ culture.itd.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(20),
+                                  switch = "y")
   }
 
   plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.culture.itd",
