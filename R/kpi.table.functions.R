@@ -84,6 +84,10 @@ add_seq_capacity <- function(df, ctry_col = "ctry", lab_locs = NULL) {
         dplyr::select("country":"num.ship.seq.samples"),
       by = setNames("country", ctry_col)
     )
+  df <- df |>
+    dplyr::mutate(seq.capacity = dplyr::if_else(!!dplyr::sym(ctry_col) == "NEPAL", "no",
+                                                seq.capacity))
+
   cli::cli_process_done()
   return(df)
 }
@@ -251,7 +255,7 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
       "prop_timely_cases",
       "prop_timely_env",
       "prop_timely_wild_vdpv"
-    )), \(x) if_else(x %in% c(Inf, NaN), 0, x))) |>
+    )), \(x) if_else(x %in% c(Inf), 0, x))) |>
     dplyr::ungroup()
 
   return(pos_summary)
@@ -1948,7 +1952,12 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
 
   export_list <- purrr::keep(export_list, \(x) !is.null(x))
 
-  file_name <- paste0("kpi_tables_export_", Sys.Date(), ".xlsx")
+  if (drop_label_cols) {
+    file_name <- paste0("kpi_tables_export_dropped_cols_", Sys.Date(), ".xlsx")
+  } else {
+    file_name <- paste0("kpi_tables_export_", Sys.Date(), ".xlsx")
+  }
+
   openxlsx::write.xlsx(export_list, file.path(output_path, file_name), colWidths = "auto",
                        headerStyle = openxlsx::createStyle(textDecoration = "Bold"))
 }
