@@ -307,9 +307,9 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
                           TRUE, FALSE),
       # Timeliness of sequencing results
       # Start date: arrival at sequencing lab, end.date: sequencing results
-      days.itd.seqres = .data$DateofSequencing - .data$DateIsolateRcvdForSeq,
-      t4 = dplyr::if_else(!is.na(.data$days.itd.seqres) &
-                            (.data$days.itd.seqres >= 0 & .data$days.itd.seqres <= 365),
+      days.seq.rec.res = .data$DateofSequencing - .data$DateIsolateRcvdForSeq,
+      t4 = dplyr::if_else(!is.na(.data$days.seq.rec.res) &
+                            (.data$days.seq.rec.res >= 0 & .data$days.seq.rec.res <= 365),
                           TRUE, FALSE)
     )
 }
@@ -841,6 +841,10 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' AFP and ES indicators.
 #'
 #' @param c1 `tibble` The output of [generate_c1_table()].
+#' @param priority_level `str or list` Priority level. Defaults to `"HIGH"`. Valid
+#' values are `"LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"`
+#' @param who_region `str` WHO region to summarize the data to.
+#' @param .group_by `str` How the rollup should be grouped. Defaults to the column `"rolling_period"`.
 #'
 #' @returns `tibble` A summary rollup
 #' @export
@@ -851,10 +855,25 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' c1 <- generate_c1_table(raw_data, "2022-01-01", "2024-12-31")
 #' c1_rollup <- generate_c1_rollup(c1)
 #' }
-generate_c1_rollup <- function(c1) {
+generate_c1_rollup <- function(c1,
+                               priority_level = "HIGH",
+                               who_region = NULL,
+                               .group_by = "rolling_period") {
+
+
+  if (!is.null(priority_level)) {
+    c1 <- c1 |>
+      dplyr::filter(`SG Priority Level` %in% priority_level)
+  }
+
+  if (!is.null(who_region)) {
+    c1 <- c1 |>
+      dplyr::filter(Region %in% who_region)
+  }
+
   c1_rollup <- c1 |>
-    dplyr::filter(`SG Priority Level` == "HIGH") |>
-    dplyr::group_by(rolling_period) |>
+    dplyr::filter(`SG Priority Level` %in% priority_level) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(
       met_npafp = sum(prop_met_npafp >= 80, na.rm = TRUE),
       npafp_denom = sum(!is.na(prop_met_npafp)),
@@ -1512,12 +1531,17 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
       prop_timely_isolation = timely_isolation / t1 * 100,
 
       # Timeliness of ITD results
-      timely_itd = sum(.data$days.culture.itd <= 7 & t2 == TRUE & (!.data$FinalCellCultureResult %in% c(NA, "Negative")), na.rm = TRUE),
-      t2 = sum(t2 == TRUE & (!.data$FinalCellCultureResult %in% c(NA, "Negative"))),
+      timely_itd = sum(.data$days.culture.itd <= 7 &
+                         t2 == TRUE &
+                         (stringr::str_detect(.data$FinalCellCultureResult, "ITD")), na.rm = TRUE),
+      # only include those with positive culture results referred to an ITD lab
+      t2 = sum(t2 == TRUE & (stringr::str_detect(.data$FinalCellCultureResult, "ITD"))),
       prop_timely_itd = timely_itd / t2 * 100,
 
       # Timeliness of shipment for sequencing
-      timely_seqship = sum(.data$days.seq.ship <= 7 & t3 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE),
+      timely_seqship = sum(.data$days.seq.ship <= 7 &
+                             t3 == TRUE &
+                             (stringr::str_detect(.data$FinalITDResult, )), na.rm = TRUE),
       t3 = sum(t3 == TRUE & !is.na(.data$FinalITDResult)),
       prop_timely_seqship = timely_seqship / t3 * 100,
 
@@ -1534,7 +1558,8 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
     dplyr::summarize(
       # t4 filters for valid samples only for each timeliness interval
       #Timeliness of sequencing results
-      timely_seqres = sum(.data$days.itd.seqres <= 7 & t4 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE),
+      # We only have AFP lab
+      timely_seqres = sum(.data$days.seq.rec.res <= 7 & t4 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE),
       t4 = sum(t4 == TRUE & !is.na(.data$FinalITDResult)),
       prop_timely_seqres = timely_seqres / t4 * 100,
 

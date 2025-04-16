@@ -4,10 +4,20 @@
 \alias{generate_c1_rollup}
 \title{Generate C1 rollup for high-priority countries}
 \usage{
-generate_c1_rollup(c1)
+generate_c1_rollup(
+  c1,
+  priority_level = "HIGH",
+  who_region = NULL,
+  .group_by = "rolling_period"
+)
 }
 \arguments{
 \item{c1}{\code{tibble} The output of \code{\link[=generate_c1_table]{generate_c1_table()}}.}
+
+\item{priority_level}{\verb{str or list} Priority level. Defaults to \code{"HIGH"}. Valid
+values are \verb{"LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"}}
+
+\item{who_region}{\code{str} WHO region to summarize the data to.}
 }
 \value{
 \code{tibble} A summary rollup

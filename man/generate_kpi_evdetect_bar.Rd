@@ -7,7 +7,8 @@
 generate_kpi_evdetect_bar(
   c1,
   afp_data,
-  output_path = Sys.getenv("KPI_FIGURES")
+  output_path = Sys.getenv("KPI_FIGURES"),
+  who_region = NULL
 )
 }
 \arguments{
