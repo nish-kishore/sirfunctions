@@ -526,14 +526,29 @@ clean_lab_data_regional <- function(lab_data,
   cli::cli_process_start("Creating timeliness interval columns")
   lab_data5 <- lab_data4 |>
     dplyr::mutate(
-      # Intervals
+      # Intervals from stool arrival to sequencing ----
+      ## timeliness of stool collection to arrival in lab ----
       days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
+
+      ## timeliness of stool arriving in lab to final culture results ----
       days.lab.culture = DateFinalCellCultureResult - DateStoolReceivedinLab,
+
+      ## timeliness of final culture results to arrival at the sequencing lab ----
       days.seq.ship = DateIsolateRcvdForSeq - DateFinalCellCultureResult,
-      days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
-      days.itd.seqres = DateofSequencing - DateFinalrRTPCRResults,
+
+      ## timeliness of arrival at sequencing lab to sequencing results ----
+      days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,,
+
+      # Interval measuring sequencing results from date of arrival (NOT part of KPI) ----
+      ## timeliness of ITD results to arrival at sequencing lab ----
       days.itd.arriveseq = DateIsolateRcvdForSeq - DateFinalrRTPCRResults,
-      days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,
+
+      ## timeliness of ITD results to sequencing results ----
+      days.itd.seqres = DateofSequencing - DateFinalrRTPCRResults,
+
+      # Measures overall lab timeliness ----
+      ## timeliness of arriving in lab to sequencing ----
+      days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
 
       # Met target yes/no
       met.targ.collect.lab = ifelse(days.collect.lab < 3, 1, 0),
