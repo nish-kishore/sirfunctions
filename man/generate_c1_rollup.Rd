@@ -18,6 +18,8 @@ generate_c1_rollup(
 values are \verb{"LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"}}
 
 \item{who_region}{\code{str} WHO region to summarize the data to.}
+
+\item{.group_by}{\code{str} How the rollup should be grouped. Defaults to the column \code{"rolling_period"}.}
 }
 \value{
 \code{tibble} A summary rollup

@@ -737,7 +737,7 @@ generate_kpi_violin <- function(
 #' @examples
 #' \dontrun{
 #' raw_data <- get_all_polio_data()
-#' generate_timely_det_violin(raw_data, "2021-01-01", "2023-12-31", getwd())
+#' generate_timely_det_violin(raw_data, "2021-01-01", "2023-12-31")
 #' }
 generate_timely_det_violin <- function(raw_data,
                                        start_date, end_date,
@@ -806,7 +806,7 @@ generate_timely_det_violin <- function(raw_data,
                                   filter(seq.capacity == "no"), "ctry.short", "ontonothq",
                               "sg_priority_level",
                               facets,
-                              35, y.max = y_max)
+                              46, y.max = y_max)
   plot_1 <- plot_1 +
     ggplot2::scale_fill_manual(values = color.risk.cat,
                                name = "Priority Level",
@@ -815,7 +815,7 @@ generate_timely_det_violin <- function(raw_data,
   plot_2 <- generate_kpi_violin(pos_filtered |> filter(seq.capacity == "yes"), "ctry.short", "ontonothq",
                                 "sg_priority_level",
                                 facets,
-                                46, y.max = y_max)
+                                35, y.max = y_max)
   plot_2 <- plot_2 +
     ggplot2::scale_fill_manual(values = color.risk.cat,
                                name = "Priority Level", na.value = "white")
@@ -824,6 +824,154 @@ generate_timely_det_violin <- function(raw_data,
                             nrow = 1, ncol = 2, legend.grob = plot_mock_legend)
 
   ggplot2::ggsave(file.path(output_path, "kpi_wild_vdpv_timely_det.png"),
+                  dpi = 400, height = 5, width = 12, bg = "white")
+
+  return(plot)
+
+}
+
+#' Timely shipment of AFP stool samples
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Generates a violin plot highlighting the median detection time of stool shipment to lab.
+#'
+#' @param afp_data `list` AFP data.
+#' @param start_date `str` Analysis start date formatted as "YYYY-MM-DD".
+#' @param end_date `str` Analysis end date formatted as "YYYY-MM-DD".
+#' @param priority_level `list` Priority levels to display. Defaults to
+#' `c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")`.
+#' @param rolling `bool` Using rolling periods or year-to-year? Defaults to `TRUE`.
+#' @param who_region `list` Regions to display. Defaults to `NULL`, which shows
+#' all of the regions.
+#' @param output_path `str` Where to output the figure to.
+#' @param y_max `num` The maximum y-axis value.
+#'
+#' @return `ggplot` A violin plot showing timeliness of detection.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' generate_timely_ship_violin(raw_data$afp, "2021-01-01", "2023-12-31")
+#' }
+generate_timely_ship_violin <- function(afp_data,
+                                       start_date, end_date,
+                                       priority_level = c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW"),
+                                       who_region = NULL,
+                                       rolling = TRUE,
+                                       output_path = Sys.getenv("KPI_FIGURES"),
+                                       y_max = 60) {
+
+  afp_data <- dplyr::rename_with(afp_data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+
+  afp_data <- afp_data |>
+    add_seq_capacity() |>
+    add_risk_category() |>
+    col_to_datecol() |>
+    add_rolling_years(start_date, end_date, "date") |>
+    # Removes years earlier than the start date
+    dplyr::filter(dplyr::between(
+      analysis_year_end, start_date,
+      max(analysis_year_end, na.rm = TRUE)
+    ))
+
+  ctry_abbrev <- get_ctry_abbrev(afp_data |>
+                                   dplyr::rename(place.admin.0 = "ctry"))
+  color.risk.cat <- c(
+    "HIGH" = "#d73027",
+    "MEDIUM" = "orange",
+    "LOW (WATCHLIST)" = "#9ecae1",
+    "LOW" = "#08519c"
+  )
+
+  if (is.null(who_region)) {
+    who_region <- afp_data |>
+      dplyr::filter(!is.na(whoregion)) |>
+      dplyr::pull(whoregion) |>
+      unique()
+  }
+
+  afp_filtered <- afp_data |>
+    dplyr::filter(.data$`SG Priority Level` %in% priority_level,
+                  .data$whoregion %in% who_region) |>
+    dplyr::left_join(ctry_abbrev,
+                     by = c("ctry" = "place.admin.0", "whoregion")) |>
+    dplyr::mutate(
+      year = lubridate::year(datestool2),
+      stool_collection_date = dplyr::if_else(!is.na(datestool2), datestool2, datestool1)
+    ) |>
+    dplyr::filter(.data$`SG Priority Level` %in% priority_level,
+                  !is.na(.data$culture.itd.cat),
+                  dplyr::between(stool_collection_date, start_date, end_date)) |>
+    dplyr::mutate(
+      sg_priority_level = factor(.data$`SG Priority Level`, levels = c(
+        "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
+    )
+
+  if (rolling) {
+    facets <- ggh4x::facet_nested(rolling_period ~ culture.itd.cat + culture.itd.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  } else {
+    facets <- ggh4x::facet_nested(year ~ culture.itd.cat + culture.itd.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  }
+
+  plot_mock <- generate_kpi_violin(afp_filtered,
+                                   "ctry.short", "daysstooltolab",
+                                   "sg_priority_level",
+                                   facets, 3,
+                                   y.max = y_max) +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level",
+                               na.value = "white")
+
+  plot_mock_legend <- ggpubr::get_legend(plot_mock)
+
+  plot_1 <- generate_kpi_violin(afp_filtered |>
+                                  dplyr::filter(culture.itd.cat == "In-country culture/ITD"),
+                               "ctry.short", "daysstooltolab",
+                              "sg_priority_level",
+                              facets, 3,
+                              y.max = y_max)
+  plot_1 <- plot_1 +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                                               name = "Priority Level",
+                                               na.value = "white")
+
+  plot_2 <- generate_kpi_violin(afp_filtered |>
+                                  dplyr::filter(culture.itd.cat == "International culture/ITD"),
+                               "ctry.short", "daysstooltolab",
+                               "sg_priority_level",
+                               facets, 7,
+                               y.max = y_max)
+  plot_2 <- plot_2 +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level",
+                               na.value = "white")
+
+  plot <- ggpubr::ggarrange(plot_1, plot_2, widths = c(1, 1),
+                            nrow = 1, ncol = 2, legend.grob = plot_mock_legend)
+
+  ggplot2::ggsave(file.path(output_path, "kpi_days_stool_to_lab.png"),
                   dpi = 400, height = 5, width = 12, bg = "white")
 
   return(plot)
