@@ -869,25 +869,31 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
     dplyr::mutate(
       got60day =
         dplyr::case_when(
-          need60day.v2 == 1 & is.na(followup.date) == F ~ 1,
+          # not missing follow-up date OR follow-up findings
           need60day.v2 == 1 &
-            is.na(followup.date) == T & is.na(followup.findings) == F ~ 1,
-          # If follow up date is missing, but findings are recorded, counts as getting follow up
+            (!is.na(followup.date) | !is.na(followup.findings)) ~ 1,
+
+          # missing follow-up date AND follow-up findings
           need60day.v2 == 1 &
-            is.na(followup.date) == T & is.na(followup.findings) == T ~ 0,
+            (is.na(followup.date) & is.na(followup.findings)) ~ 0,
+
+          # don't need 60 day
           need60day.v2 == 0 ~ 99
         ),
       timeto60day = followup.date - date,
       ontime.60day =
         dplyr::case_when(
+
+          # cases not needing follow-up
           need60day.v2 == 0 ~ 99,
-          # excluded timely cases
+
+          # on time follow-up
           need60day.v2 == 1 &
-            timeto60day >= 60 & timeto60day <= 90 ~ 1,
-          (
-            need60day == 1 &
-              timeto60day < 60 | timeto60day > 90 | is.na(timeto60day) == T
-          ) ~ 0
+            (timeto60day >= 60 & timeto60day <= 90) ~ 1,
+
+          # not timely
+          need60day == 1 &
+              (timeto60day < 60 | timeto60day > 90 | is.na(timeto60day)) ~ 0
         )
     ) |>
     # note if variables are all missing then this definition needs to be adjusted
