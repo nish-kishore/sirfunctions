@@ -1086,6 +1086,8 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     dplyr::mutate(
       ontonothq = as.numeric(lubridate::as_date(.data$datenotificationtohq) -
         .data$date),
+      # prefer stool 2 unless missing then use stool 1
+      ontostool_final = dplyr::if_else(!is.na(ontostool2), ontostool2, ontostool1),
       ontolab = as.numeric(difftime(
         lubridate::as_date(.data$stooltolabdate),
         .data$date
@@ -1119,7 +1121,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     dplyr::summarize(
       timely_not = sum(.data$ontonot <= 7, na.rm = TRUE) / sum(!is.na(.data$ontonot)) * 100,
       timely_inv = sum(.data$ontoinvest <= 2, na.rm = TRUE) / sum(!is.na(.data$ontoinvest)) * 100,
-      timely_field = sum(.data$ontostool1 <= 11 &
+      timely_field = sum(.data$ontostool_final <= 11 &
         .data$stool1tostool2 >= 1, na.rm = TRUE) / sum(!is.na(.data$ontostool1) & !is.na(.data$stool1tostool2)) * 100,
       timely_stool_shipment = sum(
         (.data$culture.itd.cat == "In-country culture/ITD" & .data$daysstooltolab <= 3) |
@@ -1129,7 +1131,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 
       median_timely_not = median(ontonot, na.rm = TRUE),
       median_timely_inv = median(ontoinvest, na.rm = TRUE),
-      median_timely_field = median(ontostool1, na.rm = TRUE),
+      median_timely_field = median(ontostool_final, na.rm = TRUE),
       median_stool_shipment = median(daysstooltolab, na.rm = TRUE),
       median_onto_lab = median(ontolab, na.rm = TRUE),
 
@@ -1540,8 +1542,8 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
 
       # Timeliness of shipment for sequencing
       timely_seqship = sum(.data$days.seq.ship <= 7 &
-                             t3 == TRUE &
-                             (stringr::str_detect(.data$FinalITDResult, )), na.rm = TRUE),
+                             t3 == TRUE & !is.na(.data$FinalITDResult),
+                           na.rm = TRUE),
       t3 = sum(t3 == TRUE & !is.na(.data$FinalITDResult)),
       prop_timely_seqship = timely_seqship / t3 * 100,
 
@@ -1559,7 +1561,9 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
       # t4 filters for valid samples only for each timeliness interval
       #Timeliness of sequencing results
       # We only have AFP lab
-      timely_seqres = sum(.data$days.seq.rec.res <= 7 & t4 == TRUE & !is.na(.data$FinalITDResult), na.rm = TRUE),
+      timely_seqres = sum(.data$days.seq.rec.res <= 7 &
+                            t4 == TRUE &
+                            !is.na(.data$FinalITDResult), na.rm = TRUE),
       t4 = sum(t4 == TRUE & !is.na(.data$FinalITDResult)),
       prop_timely_seqres = timely_seqres / t4 * 100,
 
