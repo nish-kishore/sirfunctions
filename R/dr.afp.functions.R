@@ -901,15 +901,20 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
     dplyr::mutate(
       pot.compatible = dplyr::if_else(
         (
-          followup.findings == "Residual weakness/paralysis" |
-            followup.findings == "Died before follow-up" |
-            followup.findings == "Lost to follow-up" |
+          # if there is a follow-up date
+          followup.findings %in% c("Residual weakness/paralysis",
+                                   "Died before follow-up",
+                                   "Lost to follow-up") |
             (
+              # if no follow-up date make sure that findings are not
+              # no resid weakness or no follow-up
               is.na(followup.date) &
-                followup.findings != "No residual weakness/paralysis"
+                !(followup.findings %in% c("No residual weakness/paralysis",
+                                           "No follow-up"))
             )
         ) &
-          (doses.total < 3 | is.na(doses.total) == T) &
+          # doses are less than 3 or none
+          (doses.total < 3 | is.na(doses.total)) &
           (
             classification %in% c("Discarded", "Pending") |
               is.na(classification) == T
