@@ -84,6 +84,7 @@ add_seq_capacity <- function(df, ctry_col = "ctry", lab_locs = NULL) {
         dplyr::select("country":"num.ship.seq.samples"),
       by = setNames("country", ctry_col)
     )
+
   df <- df |>
     dplyr::mutate(seq.capacity = dplyr::if_else(!!dplyr::sym(ctry_col) == "NEPAL", "no",
                                                 seq.capacity))
@@ -307,10 +308,18 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
                           TRUE, FALSE),
       # Timeliness of sequencing results
       # Start date: arrival at sequencing lab, end.date: sequencing results
+      # Target: ≤7 days
       days.seq.rec.res = .data$DateofSequencing - .data$DateIsolateRcvdForSeq,
       t4 = dplyr::if_else(!is.na(.data$days.seq.rec.res) &
                             (.data$days.seq.rec.res >= 0 & .data$days.seq.rec.res <= 365),
-                          TRUE, FALSE)
+                          TRUE, FALSE),
+
+      # ALTERNATIVE for Timeliness of sequencing results
+      # Start date: ITD results, end date: sequencing results
+      days.itd.res.seq.res = .data$DateofSequencing - .data$DateFinalrRTPCRResults,
+      t5 =  dplyr::if_else(!is.na(.data$days.itd.res.seq.res) &
+                             (.data$days.itd.res.seq.res >= 0 & .data$days.itd.res.seq.res <= 365),
+                           TRUE, FALSE)
     )
 }
 
@@ -1122,7 +1131,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
       timely_not = sum(.data$ontonot <= 7, na.rm = TRUE) / sum(!is.na(.data$ontonot)) * 100,
       timely_inv = sum(.data$ontoinvest <= 2, na.rm = TRUE) / sum(!is.na(.data$ontoinvest)) * 100,
       timely_field = sum(.data$ontostool_final <= 11 &
-        .data$stool1tostool2 >= 1, na.rm = TRUE) / sum(!is.na(.data$ontostool1) & !is.na(.data$stool1tostool2)) * 100,
+        .data$stool1tostool2 >= 1, na.rm = TRUE) / sum(!is.na(.data$ontostool_final) & !is.na(.data$stool1tostool2)) * 100,
       timely_stool_shipment = sum(
         (.data$culture.itd.cat == "In-country culture/ITD" & .data$daysstooltolab <= 3) |
           (.data$culture.itd.cat == "International culture/ITD" & .data$daysstooltolab <= 7),
@@ -1262,14 +1271,16 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
         .data$npafp_rate < 1 ~ "< 1",
         (.data$npafp_rate >= 1 & .data$npafp_rate < 2) ~ ">= 1 & <2",
         (.data$npafp_rate >= 2 & .data$npafp_rate < 3) ~ ">= 2 & <3",
-        .data$npafp_rate >= 3 ~ ">=3"
+        .data$npafp_rate >= 3 ~ ">=3",
+        .default = "Unable to Assess"
       ),
       stool_cat = dplyr::case_when(
         .data$consistent_guid == FALSE ~ "Area did not exist during the entire rolling period",
         .data$afp.cases == 0 | is.na(.data$afp.cases) ~ "Zero AFP cases",
         .data$afp.cases != 0 & .data$per.stool.ad < 50 ~ "<50%",
         .data$afp.cases != 0 & (.data$per.stool.ad >= 50 & .data$per.stool.ad <= 79) ~ "50%-79%",
-        afp.cases != 0 & per.stool.ad > 79 ~ "80%+"
+        afp.cases != 0 & per.stool.ad > 79 ~ "80%+",
+        .default = "Unable to Assess"
       )
     ) |>
     dplyr::select(
@@ -1533,18 +1544,14 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
       prop_timely_isolation = timely_isolation / t1 * 100,
 
       # Timeliness of ITD results
-      timely_itd = sum(.data$days.culture.itd <= 7 &
-                         t2 == TRUE &
-                         (stringr::str_detect(.data$FinalCellCultureResult, "ITD")), na.rm = TRUE),
+      timely_itd = sum(.data$days.culture.itd <= 7 & t2 == TRUE, na.rm = TRUE),
       # only include those with positive culture results referred to an ITD lab
-      t2 = sum(t2 == TRUE & (stringr::str_detect(.data$FinalCellCultureResult, "ITD"))),
+      t2 = sum(t2 == TRUE, na.rm = TRUE),
       prop_timely_itd = timely_itd / t2 * 100,
 
       # Timeliness of shipment for sequencing
-      timely_seqship = sum(.data$days.seq.ship <= 7 &
-                             t3 == TRUE & !is.na(.data$FinalITDResult),
-                           na.rm = TRUE),
-      t3 = sum(t3 == TRUE & !is.na(.data$FinalITDResult)),
+      timely_seqship = sum(.data$days.seq.ship <= 7 & t3 == TRUE, na.rm = TRUE),
+      t3 = sum(t3 == TRUE, na.rm = TRUE),
       prop_timely_seqship = timely_seqship / t3 * 100,
 
       # Labels
@@ -1561,14 +1568,25 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
       # t4 filters for valid samples only for each timeliness interval
       #Timeliness of sequencing results
       # We only have AFP lab
-      timely_seqres = sum(.data$days.seq.rec.res <= 7 &
-                            t4 == TRUE &
-                            !is.na(.data$FinalITDResult), na.rm = TRUE),
-      t4 = sum(t4 == TRUE & !is.na(.data$FinalITDResult)),
+      timely_seqres = sum(.data$days.seq.rec.res <= 7 & t4 == TRUE, na.rm = TRUE),
+      t4 = sum(t4 == TRUE, na.rm = TRUE),
       prop_timely_seqres = timely_seqres / t4 * 100,
 
       # Labels
-      prop_t4_label = paste0(timely_seqres, "/", t4)
+      prop_t4_label = paste0(timely_seqres, "/", t4),
+
+      #t5
+      #Timeliness of sequencing results using ITD result as start date
+      timely_itdres_seqres = sum((
+        (.data$seq.cat == "Not shipped for sequencing" & .data$days.itd.res.seq.res <= 7) |
+          (.data$seq.cat == "Shipped for sequencing" & .data$days.itd.res.seq.res <= 14)) &
+          t5 == TRUE,
+        na.rm = TRUE),
+      t5 = sum(t5 == TRUE, na.rm = TRUE),
+      prop_timely_itdres_seqres = timely_itdres_seqres / t5 * 100,
+
+      # Labels
+      prop_t5_label = paste0(timely_itdres_seqres, "/", t5),
     ) |>
     dplyr::ungroup()
 
@@ -1855,13 +1873,15 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
 
     export_list$`c4 - seq lab summary` <- export_list$`c4 - seq lab summary` |>
       dplyr::select(dplyr::any_of(
-        c("seq_lab", "rolling_period","prop_timely_seqres")),
+        c("seq_lab", "rolling_period","prop_timely_seqres", "prop_timely_itdres_seqres")),
         dplyr::ends_with("label"), dplyr::ends_with("cat")) %>%
       {
         if (!drop_label_cols) {
           dplyr::mutate(.,
                         prop_timely_seqres = paste0(prop_timely_seqres,
-                                                       " (", prop_t4_label, ")"))
+                                                       " (", prop_t4_label, ")"),
+                        prop_timely_itdres_seqres = paste0(prop_timely_itdres_seqres,
+                                                           " (", prop_t5_label, ")"))
         } else {
           .
         }
@@ -1870,7 +1890,8 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
       dplyr::rename_with(recode,
                          rolling_period = "Rolling 12 Months",
                          seq_lab = "Sequencing Lab",
-                         prop_timely_seqres = "Timeliness of sequencing results"
+                         prop_timely_seqres = "Timeliness of sequencing results (using date arrived at sequencing lab as the start date)",
+                         prop_timely_itdres_seqres = "Timeliness of sequencing results (using date of rRTPCR Results as the start date)"
       )
 
   }
@@ -1950,13 +1971,15 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     "C4. Timeliness of virus isolation results",
     "C4. Timeliness of ITD results",
     "C4. Timeliness of shipment for sequencing",
-    "C4. Timeliness of sequencing results"
+    "C4. Timeliness of sequencing results",
+    "c4. Timeliness of sequencing results (using date of ITD results as start date)"
   )
   c4_indicators_explanation <- c(
     "Proportion of specimens with virus isolation results within 14 days of receipt of AFP specimen or availability of ES concentrate at WHO-accredited lab",
     "Proportion of specimens with ITD results within 7 days of virus isolation results",
     "Proportion of specimens that arrive at the sequencing lab within 7 days of ITD results",
-    "Proportion of specimens with sequencing results available within 7 days (AFP) from arrival at the sequencing lab"
+    "Proportion of specimens with sequencing results available within 7 days (AFP) from arrival at the sequencing lab",
+    "Proportion of specimens with sequencing results available within 14 days (AFP) from date of ITD results"
   )
 
   indicator_tibble <- dplyr::tibble(Indicators = NULL, Description = NULL)
