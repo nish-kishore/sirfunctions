@@ -151,10 +151,6 @@ generate_kpi_map <- function(c2, who_region, indicator, .year_label,
 
   .ctry_sf <- .ctry_sf |>
     dplyr::filter(.data$WHO_REGION %in% who_region)
-  high_risk <- c2 |>
-    dplyr::filter(.data$`SG Priority Level` == "HIGH") |>
-    dplyr::pull(.data$ctry) |>
-    unique()
 
   map <- ggplot2::ggplot() +
     ggplot2::geom_sf(ggplot2::aes(fill = !!rlang::sym(indicator)), c2,
@@ -166,16 +162,8 @@ generate_kpi_map <- function(c2, who_region, indicator, .year_label,
     ) +
     ggplot2::geom_sf(
       data = .ctry_sf, fill = NA, linewidth = 0.5, size = 0.5,
-      color = "grey"
-    ) +
-    ggplot2::geom_sf(
-      data = .ctry_sf |>
-        filter(.data$ADM0_NAME %in% high_risk),
-      fill = NA, linewidth = 0.5, size = 0.5,
       color = "black"
-    ) +
-    ggplot2::labs(caption = "*Countries outlined in black are designated High risk by SG") +
-    plotlooks02
+    ) + plotlooks02
 
   if ("WPRO" %in% who_region & length(who_region) == 1) {
     wpro.aoi <- c(
@@ -924,12 +912,12 @@ generate_timely_ship_violin <- function(afp_data,
     )
 
   if (rolling) {
-    facets <- ggh4x::facet_nested(rolling_period ~ culture.itd.cat + culture.itd.lab,
+    facets <- ggh4x::facet_nested(rolling_period ~ culture.itd.cat,
                                   scales = "free", space = "free",
                                   labeller = label_wrap_gen(13),
                                   switch = "y")
   } else {
-    facets <- ggh4x::facet_nested(year ~ culture.itd.cat + culture.itd.lab,
+    facets <- ggh4x::facet_nested(year ~ culture.itd.cat,
                                   scales = "free", space = "free",
                                   labeller = label_wrap_gen(13),
                                   switch = "y")
@@ -1316,14 +1304,42 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
                                   switch = "y")
   }
 
-  plot <- generate_kpi_violin(lab_filtered, "ctry.short", "days.itd.seqres",
-                              "sg_priority_level",
-                              facets, 7,
-                              y.max = y_max)
-  plot <- plot +
+
+  plot_mock <- generate_kpi_violin(lab_filtered, "ctry.short", "days.itd.res.seq.res",
+                                   "sg_priority_level",
+                                   facets, 14,
+                                   y.max = y_max) +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level",
+                               na.value = "white")
+
+  plot_mock_legend <- ggpubr::get_legend(plot_mock)
+
+  plot_1 <- generate_kpi_violin(lab_filtered |>
+                                  dplyr::filter(seq.cat == "Shipped for sequencing"),
+                                "ctry.short", "days.itd.res.seq.res",
+                                "sg_priority_level",
+                                facets, 14,
+                                y.max = y_max)
+  plot_1 <- plot_1 +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level",
+                               na.value = "white")
+
+  plot_2 <- generate_kpi_violin(lab_filtered |>
+                                  dplyr::filter(seq.cat == "Not shipped for sequencing"),
+                                "ctry.short", "days.itd.res.seq.res",
+                                "sg_priority_level",
+                                facets, 7,
+                                y.max = y_max)
+  plot_2 <- plot_2 +
     ggplot2::scale_fill_manual(values = color.risk.cat,
                                name = "Priority Level", na.value = "white")
-  ggplot2::ggsave(file.path(output_path, "kpi_lab_days_itd_seqres.png"),
+
+  plot <- ggpubr::ggarrange(plot_1, plot_2, widths = c(2, 0.5),
+                            nrow = 1, ncol = 2, legend.grob = plot_mock_legend)
+
+  ggplot2::ggsave(file.path(output_path, "kpi_lab_days_itdres_seqres.png"),
                   dpi = 400, height = 5, width = 12, bg = "white")
 
   return(plot)
@@ -1526,7 +1542,7 @@ generate_kpi_tile <- function(c_table, priority_category = "HIGH",
         legend.position = "bottom",
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
-        axis.text.x = element_text(size = 4.5, face = "bold", color = "grey"),
+        axis.text.x = element_text(size = 6, color = "black"),
         axis.text.y = element_blank(),
         axis.ticks = element_blank(),
         panel.grid.minor = element_blank(),
