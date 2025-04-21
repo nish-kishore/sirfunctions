@@ -1232,13 +1232,13 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
   return(plot)
 }
 
-#' Timeliness of arrival in sequencing lab to sequencing results
+#' Timeliness of arrival at sequencing lab to sequencing results
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
 #' Shows the timeliness of arrival in the sequencing lab to sequencing results.
-#' The target is 7 days or less for AFP cases and 14 days for ES samples.
+#' The target is 7 days for cases shipped for sequencing.
 #'
 #' @inheritParams generate_lab_culture_violin
 #'
@@ -1253,6 +1253,96 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
 #'                            "2021-01-01", "2023-12-31", getwd())
 #' }
 generate_lab_seqres_violin <- function(lab_data, afp_data,
+                                              start_date, end_date,
+                                              priority_level = c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW"),
+                                              who_region = NULL,
+                                              rolling = TRUE,
+                                              output_path = Sys.getenv("KPI_FIGURES"),
+                                              y_max = 60) {
+
+  start_date <- lubridate::as_date(start_date)
+  end_date <- lubridate::as_date(end_date)
+  ctry_abbrev <- get_ctry_abbrev(afp_data)
+  color.risk.cat <- c(
+    "HIGH" = "#d73027",
+    "MEDIUM" = "orange",
+    "LOW (WATCHLIST)" = "#9ecae1",
+    "LOW" = "#08519c"
+  )
+
+  lab_data <- generate_kpi_lab_timeliness(lab_data, start_date, end_date,
+                                          afp_data)
+  lab_filtered <- lab_data |> dplyr::left_join(ctry_abbrev,
+                                               by = c("country" = "place.admin.0",
+                                                      "whoregion")) |>
+    add_risk_category(ctry_col = "country") |>
+    dplyr::mutate(
+      year = lubridate::year(.data$DateStoolCollected)
+    ) |>
+    dplyr::filter(.data$`SG Priority Level` %in% priority_level,
+                  !is.na(.data$culture.itd.cat),
+                  dplyr::between(DateStoolCollected, start_date, end_date)) |>
+    dplyr::mutate(
+      sg_priority_level = factor(.data$`SG Priority Level`, levels = c(
+        "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"))
+    )
+
+  if (!is.null(who_region)) {
+    lab_filtered <- lab_filtered |>
+      dplyr::filter(.data$whoregion %in% who_region)
+  }
+
+  if (rolling) {
+    facets <- ggh4x::facet_nested(rolling_period ~ seq.cat + seq.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  } else {
+    facets <- ggh4x::facet_nested(year ~ seq.cat + seq.lab,
+                                  scales = "free", space = "free",
+                                  labeller = label_wrap_gen(13),
+                                  switch = "y")
+  }
+
+  plot <- generate_kpi_violin(lab_filtered |>
+                                  dplyr::filter(seq.cat == "Shipped for sequencing"),
+                                "ctry.short", "days.seq.rec.res",
+                                "sg_priority_level",
+                                facets, 14,
+                                y.max = y_max)
+  plot <- plot +
+    ggplot2::scale_fill_manual(values = color.risk.cat,
+                               name = "Priority Level",
+                               na.value = "white")
+
+  ggplot2::ggsave(file.path(output_path, "kpi_lab_days_seq_res.png"),
+                  dpi = 400, height = 5, width = 12, bg = "white")
+
+  return(plot)
+}
+
+#' Timeliness of final ITD results to sequencing results
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Shows the timeliness from date of ITD results to sequencing results.
+#' The target is 7 days for cases not shipped for sequencing and 14 days for
+#' samples shipped for sequencing.
+#'
+#' @inheritParams generate_lab_culture_violin
+#'
+#' @return `ggplot` A violin plot showing the timeliness of sequencing results.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data()
+#' lab_data <- edav_io("read", file_loc = get_constant("CLEANED_LAB_DATA"))
+#' generate_lab_itdres_seqres_violin(lab_data, raw_data$afp,
+#'                            "2021-01-01", "2023-12-31", getwd())
+#' }
+generate_lab_itdres_seqres_violin <- function(lab_data, afp_data,
                                        start_date, end_date,
                                        priority_level = c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW"),
                                        who_region = NULL,
