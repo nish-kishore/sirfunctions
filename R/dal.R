@@ -96,7 +96,7 @@ get_azure_storage_connection <- function(
 #' @export
 sirfunctions_io <- function(
     io,
-    default_dir = "GID/PEB/SIR",
+    default_folder = "GID/PEB/SIR",
     file_loc,
     obj = NULL,
     edav = TRUE,
@@ -104,13 +104,13 @@ sirfunctions_io <- function(
     full_names = T,
     ...) {
   if (!is.null(file_loc)) {
-    if (is.null(default_dir)) {
+    if (is.null(default_folder)) {
       file_loc <- file_loc
     } else {
-      file_loc <- file.path(default_dir, file_loc)
+      file_loc <- file.path(default_folder, file_loc)
     }
   } else {
-    file_loc <- default_dir
+    file_loc <- default_folder
   }
 
   opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create.dir")

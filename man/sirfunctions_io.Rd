@@ -6,7 +6,7 @@
 \usage{
 sirfunctions_io(
   io,
-  default_dir = "GID/PEB/SIR",
+  default_folder = "GID/PEB/SIR",
   file_loc,
   obj = NULL,
   edav = TRUE,
@@ -27,6 +27,8 @@ sirfunctions_io(
 \item \code{"delete"}: deletes a file or folder in the specified \code{file_path}.
 }}
 
+\item{default_folder}{\code{str} The default folder to use. Defaults to \verb{"GID/PEB/SIR}.}
+
 \item{file_loc}{\code{str} Path of file relative to the \code{default_folder}.}
 
 \item{obj}{\code{str} Object to be loaded into EDAV}
@@ -40,8 +42,6 @@ Defaults to \code{TRUE}, otherwise, interacts with files locally.}
 \item{full_names}{\code{bool} If \code{io="list"}, include the full reference path. Default \code{TRUE}.}
 
 \item{...}{Optional parameters that work with \code{\link[readr:read_delim]{readr::read_delim()}} or \code{\link[readxl:read_excel]{readxl::read_excel()}}.}
-
-\item{default_folder}{\code{str} The default folder to use. Defaults to \verb{"GID/PEB/SIR}.}
 }
 \value{
 Conditional on \code{io}. If \code{io} is \code{"read"}, then it will return a tibble. If \code{io} is \code{"list"}, it will return a
