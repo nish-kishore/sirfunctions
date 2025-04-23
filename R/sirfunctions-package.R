@@ -192,5 +192,5 @@ utils::globalVariables(c(
   "vaccine.type", "value", "vdpv", "vdpv.1", "vdpv.2", "vdpv.3", "virus.type",
   "virustype", "vtype_mod", "weight", "who.region", "WHO_CODE", "WHO_REGION",
   "wild.1", "wild.3", "wpv", "year2", "years_active", "yr.end", "yr.sia",
-  "yr.st", "yronset"
+  "yr.st", "yronset","nums", "diffs", "set_iterator"
 ))
