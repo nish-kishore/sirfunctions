@@ -121,8 +121,8 @@ get_cdc_childvaxview_data <- function(geo_level=NULL, vaccines=NULL,
       ),
       # simplify where dose value included under 'vaccine' field
       dose = dplyr::case_when(
-        vaccine == "\u22651 Dose MMR" ~ "≥1 Dose",
-        vaccine == "\u22651 Dose Varicella" ~ "≥1 Dose",
+        vaccine == "\u22651 Dose MMR" ~ "\u22651 Dose",
+        vaccine == "\u22651 Dose Varicella" ~ "\u22651 Dose",
         vaccine == "Combined 7 Series" ~ "Full series",
         TRUE ~ dose
       ),
