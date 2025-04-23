@@ -192,5 +192,23 @@ utils::globalVariables(c(
   "vaccine.type", "value", "vdpv", "vdpv.1", "vdpv.2", "vdpv.3", "virus.type",
   "virustype", "vtype_mod", "weight", "who.region", "WHO_CODE", "WHO_REGION",
   "wild.1", "wild.3", "wpv", "year2", "years_active", "yr.end", "yr.sia",
-  "yr.st", "yronset","nums", "diffs", "set_iterator"
+  "yr.st", "yronset","nums", "diffs", "set_iterator",
+
+  # From calc_hr_range()
+  "set",
+
+  # From create_polis_data_folder()
+  "src_path", "dest_path", "isdir", "size",
+
+  # From get_cdc_childvaxview_data()
+  "geography", "coverage_estimate",
+  "population_sample_size", "vaccine", "_95_ci",
+
+  # From get_vpd_data()
+  "country_name", "vpd", "variable", "iso3_code", "vpd_short_name",
+
+  # From sirfunctions_io()
+  "isdir", "lastModified"
+
+
 ))
