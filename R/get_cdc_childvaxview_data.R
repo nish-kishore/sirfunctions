@@ -107,11 +107,11 @@ get_cdc_childvaxview_data <- function(geo_level=NULL, vaccines=NULL,
       # Assign VPDs (matching vpd_ref data to each vaccine)
       vpd = dplyr::case_when(
         vaccine == "Hib" ~ "H. influenza type B disease",
-        vaccine == "≥1 Dose MMR" ~ "Multiple", # Measles, Mumps, Rubella
+        vaccine == "\u22651 Dose MMR" ~ "Multiple", # Measles, Mumps, Rubella
         vaccine == "Influenza" ~ "Influenza",
         vaccine == "Rotavirus" ~ "Rotavirus",
         vaccine == "PCV" ~ "Pneumococcal disease",
-        vaccine == "≥1 Dose Varicella" ~ "Varicella",
+        vaccine == "\u22651 Dose Varicella" ~ "Varicella",
         vaccine == "Hep B" ~ "Hepatitis B",
         vaccine == "Hep A" ~ "Hepatitis A",
         vaccine == "Polio" ~ "Poliomyelitis",
@@ -121,15 +121,15 @@ get_cdc_childvaxview_data <- function(geo_level=NULL, vaccines=NULL,
       ),
       # simplify where dose value included under 'vaccine' field
       dose = dplyr::case_when(
-        vaccine == "≥1 Dose MMR" ~ "≥1 Dose",
-        vaccine == "≥1 Dose Varicella" ~ "≥1 Dose",
+        vaccine == "\u22651 Dose MMR" ~ "\u22651 Dose",
+        vaccine == "\u22651 Dose Varicella" ~ "\u22651 Dose",
         vaccine == "Combined 7 Series" ~ "Full series",
         TRUE ~ dose
       ),
       # Simplify values by separating dose from vaccine, where together
       vaccine = dplyr::case_when(
-        vaccine == "≥1 Dose MMR" ~ "MMR",
-        vaccine == "≥1 Dose Varicella" ~ "Varicella",
+        vaccine == "\u22651 Dose MMR" ~ "MMR",
+        vaccine == "\u22651 Dose Varicella" ~ "Varicella",
         TRUE ~ vaccine
       ),
       # convert to numeric values and extract upper and lower CI bounds
