@@ -6,11 +6,12 @@
 \usage{
 get_all_polio_data(
   size = "small",
-  folder = "GID/PEB/SIR/Data/",
+  data_folder = "GID/PEB/SIR/Data",
+  polis_folder = "GID/PEB/SIR/POLIS",
   force.new.run = F,
   recreate.static.files = F,
   attach.spatial.data = T,
-  azcontainer = suppressMessages(get_azure_storage_connection())
+  use_edav = TRUE
 )
 }
 \arguments{
@@ -21,7 +22,10 @@ get_all_polio_data(
 \item \code{"large"}: Data from 2001-present.
 }}
 
-\item{folder}{\code{str} Location of the CDC pre-processed endpoint, defaults to \code{"GID/PEB/SIR/Data"}.}
+\item{data_folder}{\code{str} Location of the data folder containing pre-processed POLIS data,
+spatial files, coverage data, and population data. Defaults to \code{"GID/PEB/SIR/Data"}.}
+
+\item{polis_folder}{\code{str} Location of the POLIS folder. Defaults to \code{"GID/PEB/SIR/POLIS"}.}
 
 \item{force.new.run}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run recent data and cache.}
 
@@ -29,7 +33,7 @@ get_all_polio_data(
 
 \item{attach.spatial.data}{\code{bool} Default \code{TRUE}, adds spatial data to downloaded object.}
 
-\item{azcontainer}{Azure storage container provided by \code{\link[=get_azure_storage_connection]{get_azure_storage_connection()}}.}
+\item{use_edav}{\code{bool} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
 }
 \value{
 Named \code{list} containing polio data that is relevant to CDC.
