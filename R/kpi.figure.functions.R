@@ -10,6 +10,7 @@
 #' @param ctry_risk_cat `tibble` Risk category for each country.
 #' Defaults to `NULL`, which downloads the SG risk category data set from EDAV.
 #' @param year `tibble` Active year for the country shape files.
+#' @param ctry_sf `sf` Country shapefile in long format.
 #' @param output_path `str` Where to output the figure to. Defaults to the
 #' path to the figures folder set when running [init_kpi()].
 #'
@@ -22,6 +23,7 @@
 #' }
 generate_sg_priority_map <- function(ctry_risk_cat = NULL,
                             year = lubridate::year(Sys.Date()),
+                            ctry_sf = NULL,
                             output_path = Sys.getenv("KPI_FIGURES")) {
 
   if (is.null(ctry_risk_cat)) {
@@ -57,8 +59,13 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
     )
   )
 
-  ctry_sf <- load_clean_ctry_sp(type = "long") |>
+  if (is.null(ctry_sf)) {
+    ctry_sf <- load_clean_ctry_sp(type = "long")
+  }
+
+  ctry_sf <- ctry_sf |>
     dplyr::filter(.data$active.year.01 == year)
+
   ctry_sf <- ctry_sf |>
     dplyr::left_join(ctry_risk_cat, by = c("ADM0_NAME" = "Country"))
 

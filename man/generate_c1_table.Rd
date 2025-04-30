@@ -9,8 +9,8 @@ generate_c1_table(
   start_date,
   end_date,
   risk_category = NULL,
-  lab_locs = NULL,
-  risk_table = NULL
+  risk_table = NULL,
+  lab_locs = NULL
 )
 }
 \arguments{
@@ -24,11 +24,12 @@ Output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 \item{risk_category}{\code{str} Risk category or a list of categories.
 Defaults to \code{NULL}. Valid values are: \verb{"LOW, LOW (WATCHLIST), MEDIUM, HIGH}.}
 
+\item{risk_table}{\code{tibble} Priority level of each country. Defaults to \code{NULL},
+which will download the information directly from EDAV.}
+
 \item{lab_locs}{\code{tibble} Summary of the sequencing capacities of labs.
 Output of \code{\link[=get_lab_locs]{get_lab_locs()}}. Defaults to \code{NULL}, which will download the information
-directly from EDAV.}
-
-\item{risk_table}{\code{tibble} GPSAP risk categorization for each country
+directly from EDAV.
 .}
 }
 \value{

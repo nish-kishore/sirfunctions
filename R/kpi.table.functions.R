@@ -496,10 +496,11 @@ add_rolling_years <- function(df, start_date, end_date, date_col, period = month
 #' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
 #' @param risk_category `str` Risk category or a list of categories.
 #' Defaults to `NULL`. Valid values are: `"LOW, LOW (WATCHLIST), MEDIUM, HIGH`.
+#' @param risk_table `tibble` Priority level of each country. Defaults to `NULL`,
+#' which will download the information directly from EDAV.
 #' @param lab_locs `tibble` Summary of the sequencing capacities of labs.
 #' Output of [get_lab_locs()]. Defaults to `NULL`, which will download the information
 #' directly from EDAV.
-#' @param risk_table `tibble` GPSAP risk categorization for each country
 #' .
 #' @return `tibble` Summary table of GPSAP KPIs.
 #'
@@ -510,8 +511,8 @@ add_rolling_years <- function(df, start_date, end_date, date_col, period = month
 #' c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
 generate_c1_table <- function(raw_data, start_date, end_date,
                               risk_category = NULL,
-                              lab_locs = NULL,
-                              risk_table = NULL) {
+                              risk_table = NULL,
+                              lab_locs = NULL) {
   cli::cli_progress_bar("Creating C1 table", total = 8)
 
   start_date <- lubridate::as_date(start_date)
@@ -547,9 +548,9 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 
   if (!is.null(risk_category)) {
     risk_category <- stringr::str_trim(stringr::str_to_upper(risk_category))
-    afp_data <- suppressMessages(add_risk_category(afp_data)) |>
+    afp_data <- suppressMessages(add_risk_category(afp_data, risk_table)) |>
       dplyr::filter(.data$`SG Priority Level` %in% risk_category)
-    es_data <- suppressMessages(add_risk_category(es_data,
+    es_data <- suppressMessages(add_risk_category(es_data, risk_table,
       ctry_col = "ADM0_NAME"
     )) |>
       dplyr::filter(.data$`SG Priority Level` %in% risk_category)
@@ -914,9 +915,8 @@ generate_c1_rollup <- function(c1,
 #'
 #' @param afp_data `tibble` AFP linelist data.
 #' @param pop_data `tibble` Population data.
-#' @param start_date `str` Start date of analysis in YYYY-MM-DD format.
-#' @param end_date `str` End date of analysis in YYYY-MM-DD format.
 #' @param spatial_scale `str` Either `"ctry", "prov", "dist"`.
+#' @inheritParams generate_c1_table
 #'
 #' @return `tibble` Summary table containing AFP KPIs.
 #' @export
@@ -926,7 +926,9 @@ generate_c1_rollup <- function(c1,
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31", "ctry")
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
                               spatial_scale,
-                              risk_category = NULL) {
+                              risk_category = NULL,
+                              lab_locs = NULL,
+                              risk_table = NULL) {
   check_spatial_scale(pop_data, spatial_scale)
 
   cli::cli_progress_bar("Creating C2 table", total = 5)
@@ -958,7 +960,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
   # Add required columns
   # NOTE: NAs are removed from rolling calculations as they can't be tagged
   afp_data <- afp_data |>
-    add_seq_capacity() |>
+    add_seq_capacity(lab_locs = lab_locs) |>
     col_to_datecol() |>
     add_rolling_years(start_date, end_date, "date") |>
     # Removes years earlier than the start date
@@ -1302,7 +1304,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
     dplyr::select(dplyr::any_of(c("ctry", "prov", "dist", "who_region"))) |>
     dplyr::distinct()
 
-  results <- add_risk_category(results) |>
+  results <- add_risk_category(results, risk_table) |>
     dplyr::left_join(region_lookup_table) |>
     dplyr::select(-Region) |>
     dplyr::rename(Region = who_region) |>
@@ -1321,8 +1323,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 #'
 #'
 #' @param es_data `tibble` Environmental surveillance data.
-#' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
-#' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
+#' @inheritParams generate_c1_table
 #'
 #' @return `tibble` A summary table of environmental surveillance KPIs.
 #' @export
@@ -1331,13 +1332,15 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
 generate_c3_table <- function(es_data, start_date, end_date,
-                              risk_category = NULL) {
+                              risk_category = NULL,
+                              lab_locs = NULL,
+                              risk_table = NULL) {
 
   es_original <- es_data
   start_date <- lubridate::as_date(start_date)
   end_date <- lubridate::as_date(end_date)
   es_data <- es_data |>
-    add_seq_capacity("ADM0_NAME") |>
+    add_seq_capacity("ADM0_NAME", lab_locs) |>
     add_rolling_years(start_date, end_date, "collect.date")
 
   # Get established ES sites first and then filter to appropriate start and end dates
@@ -1424,7 +1427,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
                                       levels = c("<5 samples collected", "<50%",
                                                  "50% to <80%", "80-100%")))
 
-  es_summary <- add_risk_category(es_summary, ctry_col = "ADM0_NAME") |>
+  es_summary <- add_risk_category(es_summary, risk_table, ctry_col = "ADM0_NAME") |>
     dplyr::mutate(`SG Priority Level` = dplyr::if_else(is.na(`SG Priority Level`),
                                                        "LOW", `SG Priority Level`),
                   Region = get_region(ADM0_NAME))

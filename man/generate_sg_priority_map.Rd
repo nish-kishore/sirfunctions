@@ -7,6 +7,7 @@
 generate_sg_priority_map(
   ctry_risk_cat = NULL,
   year = lubridate::year(Sys.Date()),
+  ctry_sf = NULL,
   output_path = Sys.getenv("KPI_FIGURES")
 )
 }
@@ -15,6 +16,8 @@ generate_sg_priority_map(
 Defaults to \code{NULL}, which downloads the SG risk category data set from EDAV.}
 
 \item{year}{\code{tibble} Active year for the country shape files.}
+
+\item{ctry_sf}{\code{sf} Country shapefile in long format.}
 
 \item{output_path}{\code{str} Where to output the figure to. Defaults to the
 path to the figures folder set when running \code{\link[=init_kpi]{init_kpi()}}.}

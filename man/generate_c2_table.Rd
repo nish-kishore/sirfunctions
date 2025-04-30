@@ -10,7 +10,9 @@ generate_c2_table(
   start_date,
   end_date,
   spatial_scale,
-  risk_category = NULL
+  risk_category = NULL,
+  lab_locs = NULL,
+  risk_table = NULL
 )
 }
 \arguments{
@@ -18,11 +20,22 @@ generate_c2_table(
 
 \item{pop_data}{\code{tibble} Population data.}
 
-\item{start_date}{\code{str} Start date of analysis in YYYY-MM-DD format.}
+\item{start_date}{\code{str} Start date of the analysis in YYYY-MM-DD format.}
 
-\item{end_date}{\code{str} End date of analysis in YYYY-MM-DD format.}
+\item{end_date}{\code{str} End date of the analysis in YYYY-MM-DD format.}
 
 \item{spatial_scale}{\code{str} Either \verb{"ctry", "prov", "dist"}.}
+
+\item{risk_category}{\code{str} Risk category or a list of categories.
+Defaults to \code{NULL}. Valid values are: \verb{"LOW, LOW (WATCHLIST), MEDIUM, HIGH}.}
+
+\item{lab_locs}{\code{tibble} Summary of the sequencing capacities of labs.
+Output of \code{\link[=get_lab_locs]{get_lab_locs()}}. Defaults to \code{NULL}, which will download the information
+directly from EDAV.
+.}
+
+\item{risk_table}{\code{tibble} Priority level of each country. Defaults to \code{NULL},
+which will download the information directly from EDAV.}
 }
 \value{
 \code{tibble} Summary table containing AFP KPIs.

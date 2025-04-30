@@ -4,7 +4,14 @@
 \alias{generate_c3_table}
 \title{Environmental surveillance KPIs by site}
 \usage{
-generate_c3_table(es_data, start_date, end_date, risk_category = NULL)
+generate_c3_table(
+  es_data,
+  start_date,
+  end_date,
+  risk_category = NULL,
+  lab_locs = NULL,
+  risk_table = NULL
+)
 }
 \arguments{
 \item{es_data}{\code{tibble} Environmental surveillance data.}
@@ -12,6 +19,17 @@ generate_c3_table(es_data, start_date, end_date, risk_category = NULL)
 \item{start_date}{\code{str} Start date of the analysis in YYYY-MM-DD format.}
 
 \item{end_date}{\code{str} End date of the analysis in YYYY-MM-DD format.}
+
+\item{risk_category}{\code{str} Risk category or a list of categories.
+Defaults to \code{NULL}. Valid values are: \verb{"LOW, LOW (WATCHLIST), MEDIUM, HIGH}.}
+
+\item{lab_locs}{\code{tibble} Summary of the sequencing capacities of labs.
+Output of \code{\link[=get_lab_locs]{get_lab_locs()}}. Defaults to \code{NULL}, which will download the information
+directly from EDAV.
+.}
+
+\item{risk_table}{\code{tibble} Priority level of each country. Defaults to \code{NULL},
+which will download the information directly from EDAV.}
 }
 \value{
 \code{tibble} A summary table of environmental surveillance KPIs.
