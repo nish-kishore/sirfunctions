@@ -12,6 +12,8 @@
 #' Defaults to current working directory.
 #' @param name `str` Name of the KPI analysis folder. If not given any names, the
 #' folder will be named the date the function is ran.
+#' @param edav `bool` Whether to use EDAV to load the raw_data and lab_data files.
+#' Defaults to `TRUE`.
 #'
 #' @return Does not return anything
 #' @export
@@ -20,7 +22,7 @@
 #' \dontrun{
 #' init_kpi(name = "kpi_jan_2024")
 #' }
-init_kpi <- function(path = getwd(), name = NULL) {
+init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
   # Date created
   today <- Sys.Date()
 
@@ -61,7 +63,7 @@ init_kpi <- function(path = getwd(), name = NULL) {
   # Create KPI template
   if (!file.exists(file.path(analysis_path, "kpi_template.R"))) {
     cli::cli_process_start("Generating KPI code template")
-    generate_kpi_template(path, name)
+    generate_kpi_template(path, name, edav)
     cli::cli_process_done()
   }
 
@@ -77,9 +79,14 @@ init_kpi <- function(path = getwd(), name = NULL) {
 
   # Load global polio data
   cli::cli_process_start("Loading global polio dataset")
-  if (length(global_files) == 0) {
+  if (length(global_files) == 0 & edav == TRUE) {
     raw_data <<- get_all_polio_data()
     saveRDS(raw_data, file.path(Sys.getenv("KPI_DATA"), paste0("raw_data_", today, ".rds")))
+  } else if (length(global_files) == 0 & edav == FALSE) {
+    cli::cli_alert_info(paste0("Please run get_all_polio_data() locally to build raw_data.",
+                               " You may save the raw_data Rds to: ", Sys.getenv("KPI_DATA"),
+                               ".\nEnsure this file begins with 'raw_data' so it can be detected in the next init."))
+
   } else if (length(global_files) == 1) {
     raw_data <<- readRDS(file.path(Sys.getenv("KPI_DATA"), global_files[1]))
   } else {
@@ -111,9 +118,14 @@ init_kpi <- function(path = getwd(), name = NULL) {
 
   # Load lab data
   cli::cli_process_start("Loading lab data")
-  if (length(lab_files) == 0) {
+  if (length(lab_files) == 0 & edav == TRUE) {
     lab_data <<- edav_io("read", file_loc = get_constant("RAW_LAB_DATA"))
     saveRDS(lab_data, file.path(Sys.getenv("KPI_DATA"), paste0("lab_data_", today, ".rds")))
+  } else if (length(lab_files) == 0 & edav == FALSE) {
+    cli::cli_alert_info(paste0("Please load the lab data manually into the environment. ",
+                               " You may save the lab_data Rds to: ", Sys.getenv("KPI_DATA"),
+                               ".\nEnsure this file begins with 'lab_data' so it can be detected in the next init."))
+
   } else if (length(lab_files) == 1) {
     lab_data <<- readRDS(file.path(Sys.getenv("KPI_DATA"), lab_files[1]))
   } else {
@@ -217,6 +229,7 @@ get_ctry_abbrev <- function(afp_data) {
 #'
 #' @param output_path `str` Where to output the script to.
 #' @param name `str` Name of the KPI folder.
+#' @edav `bool` Whether the init pulled data from EDAV or not.
 #'
 #' @return None.
 #'
@@ -225,13 +238,13 @@ get_ctry_abbrev <- function(afp_data) {
 #' generate_kpi_template(getwd(), "test_folder")
 #' }
 #' @keywords internal
-generate_kpi_template <- function(output_path, name) {
+generate_kpi_template <- function(output_path, name, edav) {
 
   conn <- file(file.path(output_path, name, "kpi_template.R"))
 
   # Initialization path
   init <- paste0("init_kpi(", '"', output_path, '"', ",\n",
-                 '         "', name, '"', ")")
+                 '         "', name, '", ', edav, ")")
 
   # start dates
   start_date <- '"2022-01-01"'

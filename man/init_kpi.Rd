@@ -4,7 +4,7 @@
 \alias{init_kpi}
 \title{Initialize the KPI analysis pipeline}
 \usage{
-init_kpi(path = getwd(), name = NULL)
+init_kpi(path = getwd(), name = NULL, edav = TRUE)
 }
 \arguments{
 \item{path}{\code{str} Path to the folder containing the KPI analysis folders.
@@ -12,6 +12,9 @@ Defaults to current working directory.}
 
 \item{name}{\code{str} Name of the KPI analysis folder. If not given any names, the
 folder will be named the date the function is ran.}
+
+\item{edav}{\code{bool} Whether to use EDAV to load the raw_data and lab_data files.
+Defaults to \code{TRUE}.}
 }
 \value{
 Does not return anything

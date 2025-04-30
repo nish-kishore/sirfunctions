@@ -3172,6 +3172,12 @@ create_polis_data_folder <- function(data_folder, polis_folder, use_edav) {
              "positives_2001-01-01",
              "sia_2000")
 
+  if (!sirfunctions_io("exists.dir", NULL,
+                      file.path(polis_folder, "data", "Core_Ready_Files"),
+                      edav = use_edav)) {
+    cli::cli_abort("Core Ready folder not found in the POLIS folder. Please run preprocessing and try again.")
+  }
+
   source.table <- sirfunctions_io("list", NULL,
                                   file.path(polis_folder, "data", "Core_Ready_Files"),
                                   edav = use_edav) |>
