@@ -4,12 +4,14 @@
 \alias{generate_kpi_template}
 \title{Create the KPI template}
 \usage{
-generate_kpi_template(output_path, name)
+generate_kpi_template(output_path, name, edav)
 }
 \arguments{
 \item{output_path}{\code{str} Where to output the script to.}
 
 \item{name}{\code{str} Name of the KPI folder.}
+
+\item{edav}{\code{bool} Whether the init pulled data from EDAV or not.}
 }
 \value{
 None.

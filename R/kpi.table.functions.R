@@ -2013,3 +2013,34 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
   openxlsx::write.xlsx(export_list, file.path(output_path, file_name), colWidths = "auto",
                        headerStyle = openxlsx::createStyle(textDecoration = "Bold"))
 }
+
+# Helper functions to diagnose datasets ----
+
+
+#' Get missingness of date variables in the lab dataset
+#' @description
+#' Obtains the percentage of missingness in date variables within the lab dataset
+#'
+#' @param lab_data `tibble` Lab data.
+#' @param group_by `str` A column or a vector of columns to group results by.
+#'
+#' @return `tibble` Summary of missingness of date variables
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get_lab_date_col_missingness(lab_data)
+#' }
+get_lab_date_col_missingness <- function(lab_data, group_by = NULL) {
+  lab_data |>
+    mutate(wild_vdpv = if_else(!is.na(WILD1) |  !is.na(VDPV1) |
+                                 !is.na(VDPV2) | !is.na(VDPV3), 1, 0)) |>
+    filter(wild_vdpv == 1) |>
+    tidyr::pivot_longer(cols = contains("Date", ignore.case = FALSE), names_to = "date_column",
+                        values_to = "value") |>
+    dplyr::group_by(dplyr::across(dplyr::any_of(c(group_by, "date_column")))) |>
+    dplyr::summarise(n = n(),
+                     n_na = sum(is.na(value)),
+                     prop_na = paste0(round(n_na / n * 100, 2), "%")
+    )
+}

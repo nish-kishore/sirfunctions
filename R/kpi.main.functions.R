@@ -229,7 +229,7 @@ get_ctry_abbrev <- function(afp_data) {
 #'
 #' @param output_path `str` Where to output the script to.
 #' @param name `str` Name of the KPI folder.
-#' @edav `bool` Whether the init pulled data from EDAV or not.
+#' @param edav `bool` Whether the init pulled data from EDAV or not.
 #'
 #' @return None.
 #'
