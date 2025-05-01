@@ -174,7 +174,7 @@ sirfunctions_io <- function(
       get_file_info <- function(file) {
         info <- file.info(file) |>
           dplyr::as_tibble() |>
-          dplyr::select(size, isdir, lastModified = ctime) |>
+          dplyr::select(size, isdir, lastModified = mtime) |>
           dplyr::mutate(
             name = file,
             lastModified = lubridate::as_datetime(lastModified)
