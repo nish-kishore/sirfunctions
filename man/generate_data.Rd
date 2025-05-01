@@ -9,7 +9,10 @@ generate_data(
   data_size,
   country_name,
   dr_data_path,
-  attach_spatial_data
+  attach_spatial_data,
+  .data_folder,
+  .polis_folder,
+  .use_edav
 )
 }
 \arguments{
@@ -22,6 +25,12 @@ generate_data(
 \item{dr_data_path}{\code{str} path to the dataset}
 
 \item{attach_spatial_data}{whether to attach spatial data}
+
+\item{.data_folder}{\code{str} Path to the data folder.}
+
+\item{.polis_folder}{\code{str} Path to the POLIS folder.}
+
+\item{.use_edav}{\code{bool} Whether to use EDAV or not.}
 }
 \value{
 \code{list} large list containing polio data
