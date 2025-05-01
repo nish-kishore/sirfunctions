@@ -14,7 +14,10 @@ init_dr(
   iss_data_path = NULL,
   attach_spatial_data = T,
   branch = "main",
-  source = T
+  source = T,
+  data_folder = "GID/PEB/SIR/Data",
+  polis_folder = "GID/PEB/SIR/POLIS",
+  use_edav = TRUE
 )
 }
 \arguments{
@@ -42,6 +45,13 @@ Defaults to the current working directory.}
 like \code{"dev"} may contain experimental features not yet available in the \code{"main"} branch.}
 
 \item{source}{\code{bool} Whether to source local functions or use sirfunctions. Defaults to \code{TRUE}.}
+
+\item{data_folder}{\code{str} Location of the data folder containing pre-processed POLIS data,
+spatial files, coverage data, and population data. Defaults to \code{"GID/PEB/SIR/Data"}.}
+
+\item{polis_folder}{\code{str} Location of the POLIS folder. Defaults to \code{"GID/PEB/SIR/POLIS"}.}
+
+\item{use_edav}{\code{bool} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
 }
 \value{
 \code{list} A list containing all dataframe for all polio data.

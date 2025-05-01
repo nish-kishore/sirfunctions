@@ -223,6 +223,9 @@ set_data_size <- function(year) {
 #' @param dr_data_path `str` path to save the data set to.
 #' Expected path is ./country/year/data
 #' @param attach_spatial_data whether to attach spatial data
+#' @param .data_folder `str` Path to the data folder.
+#' @param .polis_folder `str` Path to the POLIS folder.
+#' @param .use_edav `bool` Whether to use EDAV or not.
 #' @keywords internal
 #'
 #' @returns `list` large list containing polio data
@@ -230,7 +233,10 @@ update_data <-
   function(data_size,
            country_name,
            dr_data_path,
-           attach_spatial_data) {
+           attach_spatial_data,
+           .data_folder,
+           .polis_folder,
+           .use_edav) {
     message("Saving a new copy of the dataset.")
     path_to_save <-
       paste0(paste(dr_data_path, "saved_on", Sys.Date(), sep = "_"), ".Rds")
@@ -241,7 +247,12 @@ update_data <-
     }
 
     raw_data <-
-      sirfunctions::get_all_polio_data(size = data_size, attach.spatial.data = attach_spatial_data)
+      sirfunctions::get_all_polio_data(size = data_size,
+                                       attach.spatial.data = attach_spatial_data,
+                                       data_folder = .data_folder,
+                                       polis_folder = .polis_folder,
+                                       use_edav = .use_edav
+                                       )
     country_data <- sirfunctions::extract_country_data(country_name, raw_data)
     readr::write_rds(country_data, path_to_save)
     message(paste0("Data saved at:\n", dr_data_path))
@@ -309,6 +320,7 @@ create_metadata <- function(path) {
 #' @param country_name `str` name of the country
 #' @param data_path path of the data folder used in the desk review
 #' @param attach_spatial_data whether to attach spatial data
+#' @inheritParams update_data
 #' @keywords internal
 #'
 #' @returns `list` large list containing polio data
@@ -317,7 +329,10 @@ generate_data <-
            data_size,
            country_name,
            dr_data_path,
-           attach_spatial_data) {
+           attach_spatial_data,
+           .data_folder,
+           .polis_folder,
+           .use_edav) {
     file_names <- list.files(data_path, pattern = "\\.rds$", ignore.case = T)
 
     data_exists <- length(file_names) != 0
@@ -341,7 +356,10 @@ generate_data <-
             data_size,
             country_name,
             dr_data_path,
-            attach_spatial_data
+            attach_spatial_data,
+            .data_folder,
+            .polis_folder,
+            .use_edav
           ))
         } else if (create_new_save == "n") {
           return(load_data(data_path))
@@ -358,7 +376,10 @@ generate_data <-
         data_size,
         country_name,
         dr_data_path,
-        attach_spatial_data
+        attach_spatial_data,
+        .data_folder,
+        .polis_folder,
+        .use_edav
       ))
     }
   }
@@ -471,6 +492,7 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 #' `"main"` is the default, which contains the official version of the package. Other branches,
 #' like `"dev"` may contain experimental features not yet available in the `"main"` branch.
 #' @param source `bool` Whether to source local functions or use sirfunctions. Defaults to `TRUE`.
+#' @inheritParams get_all_polio_data
 #'
 #' @returns `list` A list containing all dataframe for all polio data.
 #' @examples
@@ -490,7 +512,10 @@ init_dr <-
            iss_data_path = NULL,
            attach_spatial_data = T,
            branch = "main",
-           source = T) {
+           source = T,
+           data_folder = "GID/PEB/SIR/Data",
+           polis_folder = "GID/PEB/SIR/POLIS",
+           use_edav = TRUE) {
     country_name <-
       stringr::str_trim(stringr::str_to_upper(country_name))
 
@@ -577,7 +602,10 @@ init_dr <-
       data_size,
       country_name,
       dr_data_path,
-      attach_spatial_data
+      attach_spatial_data,
+      data_folder,
+      polis_folder,
+      use_edav
     )
 
     # Attaching lab data if available and creating a copy to data folder
