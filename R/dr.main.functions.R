@@ -602,7 +602,10 @@ init_dr <-
       data_size,
       country_name,
       dr_data_path,
-      attach_spatial_data
+      attach_spatial_data,
+      data_folder,
+      polis_folder,
+      use_edav
     )
 
     # Attaching lab data if available and creating a copy to data folder
