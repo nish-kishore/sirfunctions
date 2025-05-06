@@ -799,6 +799,8 @@ global_dist_sf_name <- "global.dist.rds"
 
 # Perform check to build using the archived polis folder
 if (use_archived_data) {
+  cli::cli_alert_info("Using archived data")
+  cli::cli_alert_info("NOTE: the metadata will be for the most recent pull")
   polis_data_folder <- get_archived_polis_data(data_folder, use_edav)
 }
 
@@ -1395,6 +1397,15 @@ if (create.cache) {
 
   cli::cli_process_done()
 }
+
+raw_data_cut_size <- switch(size,
+                            "small" = 2019,
+                            "medium" = 2016,
+                            "large" = 2000)
+
+raw.data_check <- split_concat_raw_data(action = "split",
+                                  split.years = raw_data_cut_size,
+                                  raw.data.all = raw.data)[[1]]
 
 if (attach.spatial.data) {
   raw.data$global.ctry <- spatial.data$global.ctry
