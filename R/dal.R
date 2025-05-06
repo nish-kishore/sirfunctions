@@ -751,6 +751,8 @@ get_constant <- function(constant_name = NULL) {
 #'   (e.g., 3) to automatically delete older archives beyond the N most recent.
 #'
 #'
+#' @param use_archived_data `bool` Allows the ability to recreate the raw data file using previous
+#' preprocessed data. If
 #' @returns Named `list` containing polio data that is relevant to CDC.
 #' @examples
 #' \dontrun{
@@ -764,10 +766,11 @@ get_all_polio_data <- function(
     data_folder = "GID/PEB/SIR/Data",
     polis_folder = "GID/PEB/SIR/POLIS",
     core_ready_folder = "Core_Ready_Files",
-    force.new.run = F,
-    recreate.static.files = F,
-    attach.spatial.data = T,
+    force.new.run = FALSE,
+    recreate.static.files = FALSE,
+    attach.spatial.data = TRUE,
     use_edav = TRUE,
+    use_archived_data = FALSE,
     archive = TRUE,
     keep_n_archives = Inf) {
 
@@ -793,6 +796,9 @@ spatial_data_name <- "spatial.data.rds"
 global_ctry_sf_name <- "global.ctry.rds"
 global_prov_sf_name <- "global.prov.rds"
 global_dist_sf_name <- "global.dist.rds"
+
+# Perform check to build using the archived polis folder
+if ( )
 
 # look to see if the recent raw data rds is in the analytic folder
 prev_table <- sirfunctions_io("list", NULL, analytic_folder,
@@ -3360,3 +3366,49 @@ if (nrow(current.table) != 0) {
 
   return(NULL)
 }
+
+#' Gets the path to the archived version of the polis folder
+#'
+#' @description
+#' Obtains the path to the archived version of a polis folder within the
+#' data folder.
+#'
+#' @param data_folder_path `str` Path to the data folder
+#' @param edav `bool` Whether to use EDAV or  not.
+#'
+#' @returns `str` Path to the archived polis folder
+#' @keywords internal
+#'
+get_archived_polis_data <- function(data_folder_path, edav) {
+  # Check if there's an archived folder
+  if (!sirfunctions_io("exists.dir", NULL,
+    file.path(data_folder_path, "polis", "archive"),
+    edav = edav
+  )) {
+    cli::cli_abort("No archive found, unable to build archived raw_data.")
+  } else {
+    cli::cli_alert_info("Enter the row number for the archive to build raw_data from: ")
+    polio_data_path <- NULL
+    while (TRUE) {
+      archive_folders <- sirfunctions_io("list", NULL,
+        file.path(data_folder_path, "polis", "archive"),
+        edav = edav
+      )
+
+      archive_folders |>
+        dplyr::mutate(archived_data = basename(name)) |>
+        dplyr::select(archived_data) |>
+        print()
+
+      response <- readline("> ")
+      response <- as.numeric(stringr::str_trim(response))
+
+      if (is.na(response) | response > nrow(archive_folders) | response <= 0) {
+        cli::cli_alert_info("Invalid response, please try again.")
+      } else {
+        return(archive_folders[response, ] |> pull(name))
+      }
+    }
+  }
+}
+

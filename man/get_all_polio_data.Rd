@@ -9,12 +9,13 @@ get_all_polio_data(
   data_folder = "GID/PEB/SIR/Data",
   polis_folder = "GID/PEB/SIR/POLIS",
   core_ready_folder = "Core_Ready_Files",
-  force.new.run = F,
-  recreate.static.files = F,
-  attach.spatial.data = T,
+  force.new.run = FALSE,
+  recreate.static.files = FALSE,
+  attach.spatial.data = TRUE,
   use_edav = TRUE,
   archive = TRUE,
-  keep_n_archives = Inf
+  keep_n_archives = Inf,
+  use_archived_data = TRUE
 )
 }
 \arguments{
@@ -46,6 +47,9 @@ before overwriting. Default is \code{TRUE}.}
 \item{keep_n_archives}{Numeric. Number of archive folders to retain.
 Defaults to \code{Inf}, which keeps all archives. Set to a finite number
 (e.g., 3) to automatically delete older archives beyond the N most recent.}
+
+\item{use_archived_data}{\code{bool} Allows the ability to recreate the raw data file using previous
+preprocessed data.}
 }
 \value{
 Named \code{list} containing polio data that is relevant to CDC.
