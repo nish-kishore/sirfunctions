@@ -802,6 +802,7 @@ if (use_archived_data) {
   cli::cli_alert_info("Using archived data")
   cli::cli_alert_info("NOTE: the metadata will be for the most recent pull")
   polis_data_folder <- get_archived_polis_data(data_folder, use_edav)
+  recreate.static.files <- TRUE
 }
 
 # look to see if the recent raw data rds is in the analytic folder
@@ -1403,7 +1404,7 @@ raw_data_cut_size <- switch(size,
                             "medium" = 2016,
                             "large" = 2000)
 
-raw.data_check <- split_concat_raw_data(action = "split",
+raw.data <- split_concat_raw_data(action = "split",
                                   split.years = raw_data_cut_size,
                                   raw.data.all = raw.data)[[1]]
 
@@ -1419,7 +1420,13 @@ cli::cli_process_start("Checking for duplicates in datasets.")
 raw.data <- duplicate_check(raw.data)
 cli::cli_process_done()
 
+if (use_archived_data) {
+  cli::cli_alert_success(paste0("Successfully recreated global polio data from ",
+                                basename(polis_data_folder)))
+}
+
 return(raw.data)
+
 }
 
 #' Extract country specific information from raw polio data
