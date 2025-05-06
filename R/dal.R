@@ -798,7 +798,9 @@ global_prov_sf_name <- "global.prov.rds"
 global_dist_sf_name <- "global.dist.rds"
 
 # Perform check to build using the archived polis folder
-if ( )
+if (use_archived_data) {
+  polis_data_folder <- get_archived_polis_data(data_folder, use_edav)
+}
 
 # look to see if the recent raw data rds is in the analytic folder
 prev_table <- sirfunctions_io("list", NULL, analytic_folder,
@@ -1376,18 +1378,20 @@ if (create.cache) {
     out_files <- out_files |> dplyr::filter(grepl("recent", file_name))
   }
 
-  for (i in 1:nrow(out_files)) {
+  if (!use_archived_data) {
+    for (i in 1:nrow(out_files)) {
+      sirfunctions_io("write", NULL,
+                      file_loc = file.path(analytic_folder, dplyr::pull(out_files[i, ], file_name)),
+                      obj = out[[dplyr::pull(out_files[i, ], tag)]],
+                      edav = use_edav
+      )
+    }
+
     sirfunctions_io("write", NULL,
-      file_loc = file.path(analytic_folder, dplyr::pull(out_files[i, ], file_name)),
-      obj = out[[dplyr::pull(out_files[i, ], tag)]],
-      edav = use_edav
+                    file_loc = file.path(analytic_folder, "spatial.data.rds"),
+                    obj = spatial.data, edav = use_edav
     )
   }
-
-  sirfunctions_io("write", NULL,
-    file_loc = file.path(analytic_folder, "spatial.data.rds"),
-    obj = spatial.data, edav = use_edav
-  )
 
   cli::cli_process_done()
 }

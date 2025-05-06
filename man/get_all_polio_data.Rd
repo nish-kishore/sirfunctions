@@ -15,7 +15,7 @@ get_all_polio_data(
   use_edav = TRUE,
   archive = TRUE,
   keep_n_archives = Inf,
-  use_archived_data = TRUE
+  use_archived_data = FALSE
 )
 }
 \arguments{
@@ -49,7 +49,7 @@ Defaults to \code{Inf}, which keeps all archives. Set to a finite number
 (e.g., 3) to automatically delete older archives beyond the N most recent.}
 
 \item{use_archived_data}{\code{bool} Allows the ability to recreate the raw data file using previous
-preprocessed data.}
+preprocessed data. If}
 }
 \value{
 Named \code{list} containing polio data that is relevant to CDC.
