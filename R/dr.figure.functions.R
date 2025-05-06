@@ -1285,9 +1285,9 @@ generate_afp_case_map <- function(afp.all,
     ) +
     ggplot2::ggtitle(paste(
       "Paralytic Polio and Compatible Cases",
-      lubridate::year(min(as.numeric(afp.case.map.filter$year))),
+      min(as.numeric(as.character(afp.case.map.filter$year))),
       "-",
-      lubridate::year(max(as.numeric(afp.case.map.filter$year)))
+      max(as.numeric(as.character(afp.case.map.filter$year)))
     )) +
     # NOTE: IF THERE ARE NONE IT NEEDS TO THROW AN ERROR
     sirfunctions::f.plot.looks("epicurve") +

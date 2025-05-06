@@ -8,10 +8,11 @@ get_all_polio_data(
   size = "small",
   data_folder = "GID/PEB/SIR/Data",
   polis_folder = "GID/PEB/SIR/POLIS",
-  force.new.run = F,
-  recreate.static.files = F,
-  attach.spatial.data = T,
-  use_edav = TRUE
+  force.new.run = FALSE,
+  recreate.static.files = FALSE,
+  attach.spatial.data = TRUE,
+  use_edav = TRUE,
+  use_archived_data = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,9 @@ spatial files, coverage data, and population data. Defaults to \code{"GID/PEB/SI
 \item{attach.spatial.data}{\code{bool} Default \code{TRUE}, adds spatial data to downloaded object.}
 
 \item{use_edav}{\code{bool} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
+
+\item{use_archived_data}{\code{bool} Allows the ability to recreate the raw data file using previous
+preprocessed data. If}
 }
 \value{
 Named \code{list} containing polio data that is relevant to CDC.
