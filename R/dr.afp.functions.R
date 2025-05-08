@@ -1156,7 +1156,7 @@ clean_ctry_data <- function(ctry.data) {
   ctry.data$afp.all.2 <- ctry.data$afp.all.2 |>
     dplyr::mutate(age_group = add_age_group(age.months))
   ctry.data$afp.all.2 <- add_zero_dose_col(ctry.data$afp.all.2)
-  ctry.data$es <- clean_es_data(ctry.data$es, ctry.data$dist)
+  ctry.data$es <- clean_es_data(ctry.data$es, ctry.data[["dist"]])
 
   return(ctry.data)
 }

@@ -25,6 +25,7 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
       details = "Please pass es.data and dist.shape directly instead of a list."
     )
   }
+
   # Add column to flag imputed coordinates
   es.data <- es.data |>
     dplyr::mutate(imputed_coord = dplyr::if_else(is.na(lat) | is.na(lng),
