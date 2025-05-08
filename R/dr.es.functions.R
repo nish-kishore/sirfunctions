@@ -143,6 +143,11 @@ clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated
     )
   }
 
+  if (nrow(es.data) == 0) {
+    cli::cli_alert_info("No ES data found. Skipping ES data cleaning.")
+    return(es.data)
+  }
+
   cli::cli_process_start("Checking for missing site coordinates")
 
   df01 <- es.data |>
