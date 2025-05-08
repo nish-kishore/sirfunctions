@@ -46,6 +46,9 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
     return(NULL)
   }
 
+  dist.shape <- dplyr::rename_with(dist.shape, recode,
+                              Shape = "SHAPE")
+
   dist.shape <- dist.shape |>
     dplyr::filter(
       !sf::st_is_empty(SHAPE),
