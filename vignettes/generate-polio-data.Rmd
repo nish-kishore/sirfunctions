@@ -26,15 +26,15 @@ All of the analysis conducted by the SIR team begin by creating a global polio d
 
 `polio_data <- sirfunctions::get_all_polio_data()`
 
-If you are a CDC employee, reach out to Stephanie Kovacs at [uvx4\@cdc.gov](mailto:uvx4@cdc.gov){.email} to ensure proper permissions are set for loading `polio_data`.
+If you are a CDC employee, reach out to **Stephanie Kovacs** at [uvx4\@cdc.gov](mailto:uvx4@cdc.gov){.email} to ensure proper permissions are set for loading `polio_data`.
 
 This guide is tailored for collaborators, who may not have CDC credentials, but do have access to data in POLIS.
 
 ## Prerequisites
 
-### Setting up the data folder
+### Setting up the data folder {#data-folder-setup}
 
-In your local machine, preferably in the Desktop, create a folder called `polio_data`. Within this folder, create three subdirectories: `coverage`, `spatial`, and `pop`. These folders contain datasets required to build `polio_data`.
+In your local machine, preferably in the Desktop, create a folder called `polio_data`. Within this folder, create three subdirectories: `coverage`, `spatial`, and `pop`. These folders contain datasets required to build the global polio dataset `polio_data`.
 
 #### coverage folder
 
@@ -57,7 +57,7 @@ The spatial folder requires five files to be present:
 
 <span style="color:darkgrey"> ***Building the global geographic shapefiles*** </span>
 
-These are built from the polio geodatabase maintained at the World Health Organization (WHO). It will be a `.gdb` file, which is an ESRI GeoDatabase file. Please request this file from Oluwadamilola Obafemi Sonoiki at  [sonoikio\@who.int](mailto:sonoikio@who.int){.email}.
+These are built from the polio geodatabase maintained at the World Health Organization (WHO). It will be a `.gdb` file, which is an ESRI GeoDatabase file. Please request this file from **Oluwadamilola Obafemi Sonoiki** at  [sonoikio\@who.int](mailto:sonoikio@who.int){.email}.
 
 To build the three global geographic spatial files, please install [tidypolis](https://github.com/nish-kishore/tidypolis). Once tidypolis is installed, run the following lines:
 
@@ -73,17 +73,17 @@ Upon completion, the `spatial` folder should contain the following three spatial
 
 <span style="color:darkgrey"> **Building the roads rds file**
 
-This file is maintained by the SIR team. Please request this file from Stephanie Kovacs. Details on building the roads `.Rds` file is in the Index section called [Building the roads dataset](#build-roads).
+This file is maintained by the SIR team. Please request this file from **Stephanie Kovacs**. Details on building the roads `.Rds` file is in the Index section called [Building the roads dataset](#build-roads).
 
 <span style="color:darkgrey"> ***Building the cities rds file*** </span>
 
-This file is maintained by the SIR team. Please request this file from Stephanie Kovacs. Details on building the roads `.Rds` file is in the Index section called [Building the cities dataset](#build-cities).
+This file is maintained by the SIR team. Please request this file from **Stephanie Kovacs**. Details on building the roads `.Rds` file is in the Index section called [Building the cities dataset](#build-cities).
 
 #### pop folder
 
-The pop folder contains country, province, and district level population counts. It comes from several sources. Due to the complexity of building the population files, please reach out directly to Stephanie Kovacs for the  population files and place this in the pop folder. Please see the index
+The pop folder contains country, province, and district level population counts. It comes from several sources. Due to the complexity of building the population files, please reach out directly to **Stephanie Kovacs** for the  population files and place this in the pop folder. Please see the index
 
-### POLIS data
+### POLIS data {#polis-data}
 
 We source several information from POLIS, including case, environmental surveillance, and immunization activity (SIA) data and perform several data cleaning steps for each source, which the SIR team refers to as "preprocessing of POLIS datasets." The [tidypolis](https://github.com/nish-kishore/tidypolis) package is required for preprocessing. In general, preprocessing involves the following steps to be followed in sequential order:
 
@@ -91,18 +91,49 @@ We source several information from POLIS, including case, environmental surveill
 2. Get all the POLIS tables via `tidypolis::get_polis_data()`.
 3. Run the preprocessing pipeline via `tidypolis::preprocess_data(type = "cdc")`. Only `type = "cdc"` is supported at this time.
 
-To ensure comparible data as those produced by the SIR team, please use the following schedule:
+To ensure comparable data as those produced by the SIR team, please use the following schedule:
 
 1. Download of POLIS tables (step 2): Tuesdays at 6:00PM Eastern Time.
 2. Running preprocessing (step 3): Wednesdays at 9:00AM Eastern Time.
 
 ## Creating `polio_data` locally
-Once the data folder is set up and preprocessing is complete, we now have all the required data to build `polio_data`.
+Once the data folder is set up and preprocessing is complete, we now have all the required data to build `polio_data`. Creating `polio_data` locally is done through `get_all_polio_data()`.
 
 ### First run
 
+There are four required arguments to pass onto `get_all_polio_data()` when building `polio_data` locally: 
+
+1. `data_folder`: This is the absolute path to the `polio_data` folder built in the [Setting up the data folder](#data-folder-setup) section.
+2. `polis_folder`: This is the absolute path to the POLIS folder containing the preprocessed data produced in the [POLIS data](#polis-data) section. In the first run, it will transfer all the preprocessed datasets from the POLIS folder unto a folder called `polis` within the data folder.
+3. `use_edav`: set this to `FALSE`. The SIR team stores `polio_data` in an Azure Datalake within the CDC Enterprise Data, Analytics, and Visualization (EDAV) platform.
+4. `recreate.static.files`: set this to `TRUE`. This will create another folder called `analytics` within the data folder. This stores the cached polio data and spatial data `.Rds` files. The spatial data `.Rds` file has the country, province, and district shapefiles. 
+
+Now, run the following line:
+```
+polio_data <- get_all_polio_data(
+data_folder = "C:/Users/ABC1/path/to/data_folder", # replace with actual path
+polis_folder = "C:/Users/ABC1/path/to/polis_folder", # replace with actual path
+use_edav = FALSE,
+recreate.static.files = TRUE
+)
+```
+
+You have now successfully built `polis_data`!
 
 ### Ensuring `polio_data` is updated
+
+In future runs of `get_all_polio_data()`, you only need to specify the parameters for `data_folder`, `polis_folder`, and `use_edav`. 
+
+However, it is important to make sure to run `get_all_polio_data()` with `recreate.static.files = TRUE` preferable right after completing the preprocessing of POLIS data. This will ensure the data cache located in the `analytics` folder remains updated.
+
+### Arguments of interest within `get_all_polio_data()`
+
+You can choose to exclude spatial data within `polio_data` by setting `attach.spatial.data = FALSE`. You can also choose to download pre-2019 data by setting `size = "medium"` for data 2016-present or `size = "large"` for data 2001-present, although these depend on whether the data obtained from running `tidypolis::get_polis_data()` contain them.
+
+### Filtering `polio_data` for a specific country
+
+You can filter `polio_data` to only contain values for a specific country by running:
+`ctry_data <- sirfunctions::extract_country_data("country name", polio_data)`
 
 ## Index
 
