@@ -47,6 +47,10 @@ generate_ctry_timeliness_graph <- function(int.data,
   int.data <- int.data |>
     dplyr::filter(medi >= 0 | !is.na(medi))
 
+  if (nrow(int.data) == 0) {
+    return(output_empty_image(output_path, "timely_nation.png"))
+  }
+
   timely_nation <- ggplot2::ggplot() +
     ggplot2::geom_bar(
       data = int.data,
@@ -91,7 +95,6 @@ generate_ctry_timeliness_graph <- function(int.data,
     height = 4
   )
 
-  # test commit
   return(timely_nation)
 }
 
@@ -140,6 +143,10 @@ generate_prov_timeliness_graph <- function(int.data,
 
   int.data <- int.data |>
     dplyr::filter(medi >= 0 | !is.na(medi))
+
+  if (nrow(int.data) == 0) {
+    return(output_empty_image(output_path, "timely_prov.png"))
+  }
 
   timely_prov <- ggplot2::ggplot(int.data |>
     dplyr::filter(is.na(medi) == F &
@@ -236,6 +243,10 @@ generate_afp_epicurve <- function(ctry.data,
     by = c("yronset" = "yronset")
   )
 
+  if (nrow(afp.epi.date.filter1) == 0) {
+    return(output_empty_image(output_path, "afp.epi.curve.png"))
+  }
+
   afp.epi.curve <- ggplot2::ggplot(
     afp.epi.date.filter1,
     ggplot2::aes(fill = cdc.classification.all2, y = afp.cases, x = epi.week)
@@ -303,6 +314,10 @@ generate_afp_prov_year <- function(afp.by.month.prov,
     dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)), !is.na(prov))
 
   afp.month.prov.g$case.cat <- factor(afp.month.prov.g$case.cat, levels = c(c("0", "1", "2-5", "6-9", "10+")))
+
+  if (nrow(afp.month.prov.g) == 0) {
+    return(output_empty_image(output_path, "afp.dets.prov.year.png"))
+  }
 
   # add a point to indicate cVDPV2 detections
 
@@ -404,11 +419,19 @@ generate_es_site_det <- function(sia.data,
   es.data <- es.data |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
+  if (nrow(es.data) == 0) {
+    return(output_empty_image(output_path, "es.site.det.png"))
+  }
+
   sias <- sia.data %>%
     dplyr::filter(status == "Done") %>%
     dplyr::filter(yr.sia >= lubridate::year(es_start_date) &
       yr.sia <= lubridate::year(es_end_date)) %>%
     dplyr::filter(province %in% es.data$ADM1_NAME)
+
+  if (nrow(sia.data) == 0) {
+    cli::cli_alert_info("No SIAs in the specified date range")
+  }
 
   sias$activity.start.date <- as.Date(sias$activity.start.date)
   sias$activity.end.date <- as.Date(sias$activity.end.date)
@@ -577,6 +600,10 @@ generate_es_timely <- function(es.data,
   es.data <- es.data |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
+  if (nrow(es.data) == 0) {
+    return(output_empty_image(output_path, "es.timely.png"))
+  }
+
   es.data$timely <-
     difftime(
       as.Date(es.data$date.received.in.lab, format = "%d/%m/%Y"),
@@ -707,6 +734,10 @@ generate_case_num_dose_g <- function(ctry.data,
     dplyr::group_by(dose.cat, year, prov) |>
     dplyr::summarise(freq = dplyr::n())
 
+  if (nrow(dcat.yr.prov) == 0) {
+    return(output_empty_image(output_path, "case.num.dose.g.png"))
+  }
+
   # case num by year and province by vaccination status
   case.num.dose.g <- ggplot2::ggplot() +
     ggplot2::geom_bar(
@@ -789,6 +820,10 @@ generate_iss_barplot <- function(iss.data = NULL,
     dplyr::group_by(month, year, priority_level) %>%
     dplyr::summarize(freq = dplyr::n()) %>%
     dplyr::filter(dplyr::between(year, lubridate::year(start_date), lubridate::year(end_date)))
+
+  if (nrow(iss.data3) == 0) {
+    return(output_empty_image(output_path, "iss.barplot.png"))
+  }
 
   iss.data3$labs <- month.abb[iss.data3$month] %>%
     factor(
@@ -929,6 +964,10 @@ generate_pop_map <- function(ctry.data,
   shape.prov.pop <-
     dplyr::left_join(prov.shape, ctry.data$prov.pop, by = c("GUID" = "adm1guid", "year")) |>
     dplyr::filter(year == lubridate::year(end_date))
+
+  if (nrow(shape.prov.pop) == 0) {
+    return(output_empty_image(output_path, "pop.map.png"))
+  }
 
   pop.map <- ggplot2::ggplot() +
     ggplot2::geom_sf(
@@ -1073,6 +1112,9 @@ generate_dist_pop_map <- function(ctry.data,
     dplyr::left_join(dist.shape, ctry.data$dist.pop, by = c("GUID" = "adm2guid", "year")) |>
     dplyr::filter(year == lubridate::year(end_date))
 
+  if (nrow(shape.dist.pop) == 0) {
+    return(output_empty_image(output_path, "pop.map.prov.png"))
+  }
 
   pop.map.provn <- ggplot2::ggplot() +
     ggplot2::geom_sf(
@@ -1199,7 +1241,7 @@ generate_afp_case_map <- function(afp.all,
   }
 
   if (nrow(afp.case.map.filter) == 0) {
-    cli::cli_abort("No data available for the specified date range.")
+    return(output_empty_image(output_path, "afp.case.map.png"))
   }
 
   if (min(afp.case.map.filter$year) > year(start_date)) {
@@ -1285,9 +1327,9 @@ generate_afp_case_map <- function(afp.all,
     ) +
     ggplot2::ggtitle(paste(
       "Paralytic Polio and Compatible Cases",
-      lubridate::year(min(as.numeric(afp.case.map.filter$year))),
+      min(as.numeric(as.character(afp.case.map.filter$year)), na.rm = TRUE),
       "-",
-      lubridate::year(max(as.numeric(afp.case.map.filter$year)))
+      max(as.numeric(as.character(afp.case.map.filter$year)), na.rm = TRUE)
     )) +
     # NOTE: IF THERE ARE NONE IT NEEDS TO THROW AN ERROR
     sirfunctions::f.plot.looks("epicurve") +
@@ -1384,6 +1426,10 @@ generate_npafp_maps <- function(prov.extract,
   provnpafp <- prov.extract |>
     filter(!is.na(prov))
 
+  if (nrow(provnpafp) == 0) {
+    return(output_empty_image(output_path, "npafp.map.png"))
+  }
+
   provnpafp$cats <- cut(
     provnpafp$npafp_rate,
     breaks = c(-1, 0, 1, 2, 3, Inf),
@@ -1403,7 +1449,6 @@ generate_npafp_maps <- function(prov.extract,
       )
     ) %>%
     dplyr::filter(year >= lubridate::year(start_date) & year <= lubridate::year(end_date))
-
 
   prov.cut$cats <- factor(
     prov.cut$cats,
@@ -1625,6 +1670,10 @@ generate_npafp_maps_dist <- function(dist.extract,
 
   distnpafp <- dist.extract |>
     filter(!is.na(dist))
+
+  if (nrow(distnpafp) == 0) {
+    return(output_empty_image(output_path, "npafp.map.dist.png"))
+  }
 
   distnpafp$cats <- cut(
     distnpafp$npafp_rate,
@@ -1873,6 +1922,10 @@ generate_stool_ad_maps <- function(ctry.data,
       "adm1guid" = "adm1guid"
     )
   )
+
+  if (nrow(stoolad.p) == 0) {
+    return(output_empty_image(output_path, "stool.ad.maps.png"))
+  }
 
   stoolad.p <- stoolad.p %>%
     filter(!is.na(prov)) %>%
@@ -2142,6 +2195,10 @@ generate_stool_ad_maps_dist <- function(ctry.data,
       levels = c("Zero AFP cases", "<40%", "40-59%", "60-79%", "80%+")
     ))
 
+  if (nrow(stoolad.d) == 0) {
+    return(output_empty_image(output_path, "stool.ad.maps.dist.png"))
+  }
+
   stoolad.nums.d <- stoolad.d %>%
     dplyr::group_by(year, adm2guid, dist) %>%
     dplyr::summarize(meet.stool = sum(per.stool.ad >= 80, na.rm = T)) %>%
@@ -2342,6 +2399,9 @@ generate_timeliness_maps <- function(ctry.data,
       year <= lubridate::year(end_date)) %>%
     tidyr::complete(year, prov, type)
 
+  if (nrow(long.timely) == 0) {
+    return(output_empty_image(output_path, "mapt_all.png"))
+  }
 
   for (i in 1:nrow(long.timely)) {
     if (is.na(long.timely$adm1guid[i])) {
@@ -2823,6 +2883,10 @@ generate_es_det_map <- function(es.data,
   es.data <- es.data |>
     dplyr::filter(dplyr::between(collect.date, es_start_date, es_end_date))
 
+  if (nrow(es.data) == 0) {
+    return(output_empty_image(output_path, "es.det.map.png"))
+  }
+
   det.rate <- dplyr::summarise(
     dplyr::group_by(es.data, site.name),
     det.rate = 100 * sum(as.numeric(ev.detect), na.rm = TRUE) / dplyr::n(),
@@ -3048,6 +3112,10 @@ generate_iss_map <- function(iss.data,
       dplyr::between(`_gps_ending_longitude`, bbox$xmin, bbox$xmax),
       dplyr::between(`_gps_ending_latitude`, bbox$ymin, bbox$ymax)
     )
+
+  if (nrow(iss.data) == 0) {
+    return(output_empty_image(output_path, "iss.map.png"))
+  }
 
   pryr <- dplyr::count(iss.data, priority_level, year) |>
     dplyr::filter(priority_level == "High")
@@ -4050,4 +4118,25 @@ generate_es_tab <- function(es.data,
   }
 
   return(es.table)
+}
+
+
+# Helper functions ----
+
+#' Output an empty image
+#'
+#' @param output_path `str` Output path.
+#' @param img_title `str` Title of the image.
+#'
+#' @returns `NULL` silently upon success.
+#' @keywords internal
+#'
+output_empty_image <- function(output_path, img_title) {
+  cli::cli_alert_info(paste0("No data to create the figure for: ", img_title))
+  ggplot2::ggplot() +
+    ggplot2::theme_void() +
+    ggplot2::annotate("text", x = 1, y = 1, label = "No data to produce the figure.")
+  ggplot2::ggsave(img_title, path = output_path, bg = "white", width = 4, height = 4)
+
+  invisible()
 }
