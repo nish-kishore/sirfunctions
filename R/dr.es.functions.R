@@ -25,6 +25,7 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
       details = "Please pass es.data and dist.shape directly instead of a list."
     )
   }
+
   # Add column to flag imputed coordinates
   es.data <- es.data |>
     dplyr::mutate(imputed_coord = dplyr::if_else(is.na(lat) | is.na(lng),
@@ -45,6 +46,9 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
     message("Please attach spatial data")
     return(NULL)
   }
+
+  dist.shape <- dplyr::rename_with(dist.shape, recode,
+                              Shape = "SHAPE")
 
   dist.shape <- dist.shape |>
     dplyr::filter(
@@ -138,6 +142,11 @@ clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated
       what = "clean_es_data(ctry.data)",
       details = "Please pass ES data directly using the es.data parameter."
     )
+  }
+
+  if (nrow(es.data) == 0) {
+    cli::cli_alert_info("No ES data found. Skipping ES data cleaning.")
+    return(es.data)
   }
 
   cli::cli_process_start("Checking for missing site coordinates")
