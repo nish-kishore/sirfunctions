@@ -636,22 +636,43 @@ test_EDAV_connection <- function(
 #' - `"SIRFUNCTIONS_GITHUB_TREE"`
 #' - `"AFRO_LAB_DATA"`
 #' - `"EMRO_LAB_DATA"`
+#' - `"CLEANED_LAB_DATA"`
 #'
 #' @returns `str` A string, typically a file path or a URL.
 #' @export
 #'
 #' @examples
 #' get_constant("DEFAULT_EDAV_FOLDER")
-get_constant <- function(constant_name) {
-  switch(constant_name,
+get_constant <- function(constant_name = NULL) {
+  supported_args <- c(
+    '"DEFAULT_EDAV_FOLDER"',
+    '"CTRY_RISK_CAT"',
+    '"LAB_LOCATIONS"',
+    '"DR_TEMPLATE"',
+    '"SIRFUNCTIONS_GITHUB_TREE"',
+    '"AFRO_LAB_DATA"',
+    '"EMRO_LAB_DATA"',
+    '"CLEANED_LAB_DATA"'
+  )
+
+  if (is.null(constant_name)) {
+    cli::cli_alert_info(paste0("The following arguments are supported:\n",
+                                      paste0(supported_args, collapse = "\n")))
+    cli::cli_abort("Please pass a valid argument.")
+  }
+
+  switch(
+    constant_name,
     "DEFAULT_EDAV_FOLDER" = "GID/PEB/SIR",
-    "CTRY_RISK_CAT" = "Data/misc/country_prioritization/SG_country_prioritization_update_21_june_2023.csv",
+    "CTRY_RISK_CAT" = "Data/misc/country_prioritization/SG_country_prioritization_GPSAP2025-2026_04Dec2024.csv",
     "LAB_LOCATIONS" = "Data/lab/Routine_lab_testing_locations.csv",
     "DR_TEMPLATE" = "https://raw.githubusercontent.com/nish-kishore/sg-desk-reviews/main/resources/desk_review_template.Rmd",
     "SIRFUNCTIONS_GITHUB_TREE" = "https://api.github.com/repos/nish-kishore/sirfunctions/git/trees",
     "AFRO_LAB_DATA" = "Data/lab/2024-09-20 AFRO Lab Extract (AFP only since 2022).csv",
     "EMRO_LAB_DATA" = "Data/lab/2024-09-20 EMRO Lab Extract (AFP only since 2022).csv",
-    "CLEANED_LAB_DATA" = "Data/lab/emro_afro_cleaned_2016_2024_20240920.csv"
+    "CLEANED_LAB_DATA" = "Data/lab/emro_afro_cleaned_2016_2024_20240920.csv",
+    "RAW_LAB_DATA" = "Data/lab/afro_emro_20220101_20250401.csv",
+    cli::cli_abort("Please pass a valid argument.")
   )
 }
 
@@ -2498,6 +2519,127 @@ split_concat_raw_data <- function(
   }
 }
 
+
+#' Check whether the AFP geography matches those of the population dataset
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' In rare cases, the GUIDs assigned for a case may be incorrect. For example,
+#' it may have a GUID that is incorrect for a specific year. This function checks
+#' each AFP record for such instances.
+#'
+#' @param afp_data `tibble` AFP dataset
+#' @param pop_data `tibble` Population dataset
+#' @param spatial_scale `str` Any of the following: `"ctry", "prov", "dist`
+#'
+#' @return `tibble` Tibble with a column used for checking accuracy
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
+#' check_afp <- check_afp_geographies(raw_data$afp, raw_data$ctry.pop, "ctry")
+#' }
+check_afp_geographies <- function(afp_data, pop_data, spatial_scale, fix_afp=FALSE) {
+
+  afp_data <- dplyr::rename_with(afp_data, recode,
+                                 place.admin.0 = "ctry",
+                                 place.admin.1 = "prov",
+                                 place.admin.2 = "dist",
+                                 person.sex = "sex",
+                                 dateonset = "date",
+                                 yronset = "year",
+                                 datenotify = "date.notify",
+                                 dateinvest = "date.invest",
+                                 cdc.classification.all = "cdc.class"
+  )
+  pop_data <- dplyr::rename_with(pop_data, recode,
+                                 ADM0_NAME = "ctry",
+                                 ADM1_NAME = "prov",
+                                 ADM2_NAME = "dist",
+                                 ADM0_GUID = "adm0guid",
+                                 u15pop.prov = "u15pop"
+  )
+
+  check_spatial_scale(pop_data, spatial_scale)
+
+  if (!fix_afp) {
+    afp_data <- afp_data |>
+      dplyr::select(dplyr::any_of(c("epid", "year", "ctry", "prov", "dist",
+                                    "adm0guid", "adm1guid", "adm2guid")))
+  }
+
+  pop_data <- pop_data |>
+    dplyr::select(dplyr::any_of(c("adm0guid", "adm1guid", "adm2guid", "year",
+                                  "ctry", "prov", "dist")))
+
+  cols_to_join <- switch(
+    spatial_scale,
+    "ctry" = c("ctry", "year"),
+    "prov" = c("ctry", "prov", "year", "adm0guid"),
+    "dist" = c("ctry", "prov", "dist", "year", "adm0guid", "adm1guid")
+  )
+
+  joined <- dplyr::left_join(afp_data, pop_data,
+                             by = cols_to_join,
+                             suffix = c("_afp", "_pop"))
+  summary <- switch(
+    spatial_scale,
+    "ctry" = {
+      joined |>
+        dplyr::mutate(correct_adm0guid = dplyr::if_else(adm0guid_afp == adm0guid_pop, TRUE, FALSE))
+    },
+    "prov" = {
+      joined |>
+        dplyr::mutate(correct_adm1guid = dplyr::if_else(adm1guid_afp == adm1guid_pop, TRUE, FALSE))
+    },
+    "dist" = {
+      joined |>
+        dplyr::mutate(correct_adm2guid = dplyr::if_else(adm2guid_afp == adm2guid_pop, TRUE, FALSE))
+    }
+  )
+
+  if (fix_afp) {
+    cli::cli_process_start(paste0("Fixing GUIDs at the ", spatial_scale, " level."))
+    summary <- switch(
+      spatial_scale,
+      "ctry" = {
+        summary |>
+          dplyr::select(-adm0guid_afp) |>
+          dplyr::rename(adm0guid = "adm0guid_pop")
+        },
+      "prov" = {
+        summary |>
+          dplyr::select(-adm1guid_afp) |>
+          dplyr::rename(adm1guid = "adm1guid_pop")
+      },
+      "dist" = {
+        summary |>
+          dplyr::select(-adm2guid_afp) |>
+          dplyr::rename(adm2guid = "adm2guid_pop")
+      }
+    )
+    cli::cli_process_done()
+
+    cli::cli_alert_info(paste(
+      "Please note the following column name changes if running global AFP (i.e., raw_data$afp):",
+      'place.admin.0 -> "ctry"',
+      'place.admin.1 -> "prov"',
+      'place.admin.2 -> "dist"',
+      'person.sex -> "sex"',
+      'dateonset -> "date"',
+      'yronset -> "year"',
+      'datenotify -> "date.notify"',
+      'dateinvest -> "date.invest"',
+      'cdc.classification.all -> "cdc.class"',
+      sep = "\n"
+    ))
+  }
+
+  return(summary)
+}
+
 #' Check GUIDs present in the AFP linelist but not in the pop files
 #'
 #' The function will run a check in the AFP linelist for GUIDs that are not part
@@ -3029,6 +3171,12 @@ create_polis_data_folder <- function(data_folder, polis_folder, use_edav) {
              "other_surveillance_type_linelist_2016_",
              "positives_2001-01-01",
              "sia_2000")
+
+  if (!sirfunctions_io("exists.dir", NULL,
+                      file.path(polis_folder, "data", "Core_Ready_Files"),
+                      edav = use_edav)) {
+    cli::cli_abort("Core Ready folder not found in the POLIS folder. Please run preprocessing and try again.")
+  }
 
   source.table <- sirfunctions_io("list", NULL,
                                   file.path(polis_folder, "data", "Core_Ready_Files"),
