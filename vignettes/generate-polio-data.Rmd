@@ -1,0 +1,123 @@
+---
+title: "Generating Global Polio Data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Generating Global Polio Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo=FALSE}
+library(sirfunctions)
+```
+
+## Introduction
+
+The Surveillance, Innovation, and Research (SIR) Team within the Polio Eradication Branch at CDC obtains global polio data (referred to in this guide as `polio_data`) from [POLIS](https://extranet.who.int/polis/Account/Login). Collaborators outside of CDC who wish to pull global polio data using the sirfunctions package must have access to POLIS beforehand, as well obtain a POLIS API key.
+
+All of the analysis conducted by the SIR team begin by creating a global polio dataset. For those with CDC credentials, loading this dataset can be as simple as running: 
+
+`polio_data <- sirfunctions::get_all_polio_data()`
+
+If you are a CDC employee, reach out to Stephanie Kovacs at [uvx4\@cdc.gov](mailto:uvx4@cdc.gov){.email} to ensure proper permissions are set for loading `polio_data`.
+
+This guide is tailored for collaborators, who may not have CDC credentials, but do have access to data in POLIS.
+
+## Prerequisites
+
+### Setting up the data folder
+
+In your local machine, preferably in the Desktop, create a folder called `polio_data`. Within this folder, create three subdirectories: `coverage`, `spatial`, and `pop`. These folders contain datasets required to build `polio_data`.
+
+#### coverage folder
+
+The vaccine coverage information are sourced from [IHME](https://www.healthdata.org/research-analysis/health-risks-issues/vaccine-coverage-data).To access the data folder and download vaccine coverage data, you need to enter an email and agree to the terms and conditions of use. The folder must contain the following files:
+
+1. `dpt.rds`: vaccine coverage estimates of the DPT vaccine.
+2. `mcv1.rds`: vaccine coverage estimates of the MCV1 vaccine.
+
+The SIR team maintains these files. Please request these files from Stephanie Kovacs. Details on how to build these `.Rds` files are located in the Index section called [Building the coverage datasets](#build-coverage).
+
+#### spatial folder
+
+The spatial folder requires five files to be present:
+
+1.  `global.ctry.rds`: global country shapefiles
+2.  `global.prov.rds`: global province shapefiles
+3.  `global.dist.rds`: global district shapefiles
+4. `roads.rds`: lines outlining roads
+5. `cities.rds`: coordinates of city centroids
+
+<span style="color:darkgrey"> ***Building the global geographic shapefiles*** </span>
+
+These are built from the polio geodatabase maintained at the World Health Organization (WHO). It will be a `.gdb` file, which is an ESRI GeoDatabase file. Please request this file from Oluwadamilola Obafemi Sonoiki at  [sonoikio\@who.int](mailto:sonoikio@who.int){.email}.
+
+To build the three global geographic spatial files, please install [tidypolis](https://github.com/nish-kishore/tidypolis). Once tidypolis is installed, run the following lines:
+
+```
+library(tidypolis)
+preprocess_spatial(
+gdb_folder = "path/to/gdb_file.gdb", # replace with real path to the GDB file
+output_folder = "path/to/data/spatial", # replace with real path to the spatial folder
+edav = FALSE
+)
+```
+Upon completion, the `spatial` folder should contain the following three spatial files as well as some diagnostic files, including duplicate GUIDS and geographic names, as well as duplicated shapes.
+
+<span style="color:darkgrey"> **Building the roads rds file**
+
+This file is maintained by the SIR team. Please request this file from Stephanie Kovacs. Details on building the roads `.Rds` file is in the Index section called [Building the roads dataset](#build-roads).
+
+<span style="color:darkgrey"> ***Building the cities rds file*** </span>
+
+This file is maintained by the SIR team. Please request this file from Stephanie Kovacs. Details on building the roads `.Rds` file is in the Index section called [Building the cities dataset](#build-cities).
+
+#### pop folder
+
+The pop folder contains country, province, and district level population counts. It comes from several sources. Due to the complexity of building the population files, please reach out directly to Stephanie Kovacs for the  population files and place this in the pop folder. Please see the index
+
+### POLIS data
+
+We source several information from POLIS, including case, environmental surveillance, and immunization activity (SIA) data and perform several data cleaning steps for each source, which the SIR team refers to as "preprocessing of POLIS datasets." The [tidypolis](https://github.com/nish-kishore/tidypolis) package is required for preprocessing. In general, preprocessing involves the following steps to be followed in sequential order:
+
+1. Initialize preprocessing via `tidypolis::init_tidypolis()`. This involves designating a folder in your local machine to store the POLIS data. We recommend creating a folder called `POLIS` in your desktop. The first time this function is ran, it will ask for a POLIS API key. Please ensure that you have a POLIS API key beforehand.
+2. Get all the POLIS tables via `tidypolis::get_polis_data()`.
+3. Run the preprocessing pipeline via `tidypolis::preprocess_data(type = "cdc")`. Only `type = "cdc"` is supported at this time.
+
+To ensure comparible data as those produced by the SIR team, please use the following schedule:
+
+1. Download of POLIS tables (step 2): Tuesdays at 6:00PM Eastern Time.
+2. Running preprocessing (step 3): Wednesdays at 9:00AM Eastern Time.
+
+## Creating `polio_data` locally
+Once the data folder is set up and preprocessing is complete, we now have all the required data to build `polio_data`.
+
+### First run
+
+
+### Ensuring `polio_data` is updated
+
+## Index
+
+### Population file processing
+
+To be completed by Nick
+
+### Building vaccine coverage datasets {#build-coverage}
+
+To be completed by Nishant
+
+### Building the roads dataset {#build-roads}
+
+To be completed by Nishant
+
+### Building the cities dataset {#build-cities}
+
+To be completed by Nishant
