@@ -163,11 +163,28 @@ Note: attaching to shapes is key in this process because population files need t
 5a.	Use the growth rate again but only apply to districts that are missing data and haven’t been filled in by previous extracts and patches. This fills in places where we either aren’t provided data in a WHO extract or for which we are provided data but with an expired GUID or when a shape changes between years so the growth factor is not applied 
 6. Repeat steps 5 and 5a but using POLIS population data from the API
 
-Assumptions/miscellaneous 
+Assumptions/miscellaneous:
 - WHO file is assumed to be the “golden record”. Only patching when the original methodology leaves a district with a missing pop that is in one of the patch files
 - Datasource types (if a population for a given year is based on the growth factor being applied that records inherits the datasource from the anchor year, this is also the hierarchy of data, 1. worldpop/WHO, 2. Pakistan, Somalia and Kenya Patches, 3. WHO patch, 4. POLIS API)
 
 #### Province Populations
+
+Similar to distict populations, provinces start off using WHO population estimates and then patch from other sources and apply a growth factor. 
+
+Data sources: 
+-	WHO extracts from 2020, 2021, 2022 and 2024
+-	POLIS indicators (NPAFP rate indicator) 2023
+-	District roll-ups from dist.pop.long (created in district population processing)
+
+Methods:
+1. Use all WHO extracts to create a dataframe that is 2020 – 2024
+2. Use extracts to determine a max anchor year for each adm1guid and use growth factor to fill forwards and backwards for those shapes
+3. After using WHO extracts, we identify shapes with missing pops and use the POLIS NPAFP indicator denominators to fill and apply the growth factor on those shapes with missing pops
+4. Finally, for any adm1guids still missing pops, use the district pop file to roll up numbers (as long as districts aren’t missing data) to fill adm1guid pop numbers (no growth factor applied here)
+
+Assumptions/miscellaneous:
+-	Hierarchy of data sources: 1. WHO extracts, 2. POLIS npafp rate indicators 2023, 3. district roll ups from dist.pop.long only in cases where pop is missing after other sources have been used to apply growth rates where applicable
+
 
 
 ### Building vaccine coverage datasets {#build-coverage}
