@@ -139,7 +139,36 @@ You can filter `polio_data` to only contain values for a specific country by run
 
 ### Population file processing
 
-To be completed by Nick
+Population files are built for global districts, provinces and countries, and are anchored to the latest release of WHO's global geodatabase. 
+
+When creating population files they are created in the following order: Districts -> Provinces -> Countries
+
+#### District Populations
+
+CDC creates district populations from WHO district population estimates and then uses a variety of patches from other data sources to fill in missingness.
+
+Data sources: 
+- WHO population estimates from 2015, 2019, 2020, 2021, 2022 and 2024
+- additional patches received: 2018 Kenya patch, supplemental WHO 2018 - 2022 population file, 2021/22 Pakistan population file from CDC Pakistan team, Somalia 2022-2024 patch from EMRO team
+- POLIS API population data
+
+Methods: 
+1. Use all WHO provided extracts to create a dataframe that is 2015 – 24 pops 
+2. Then patch in missingness with the Pakistan and Somalia patches
+3. Determine Anchor Year by identifying the max year for which each adm2GUID has a population number
+3a.	Then patch in Kenya and attach to shapes – Kenyan pops aren’t assigned to adm2GUIDs but rather district name and year so we only use when missing data. 
+Note: attaching to shapes is key in this process because population files need to be compatible with WHO global district shapes
+4. Attach to growth rates (growth rates can be obtained by contacting **Stephanie Kovacs**) and fill using that rate from the max year’s pop number
+5. After growth rate has been applied, determine which districts are missing pops and join in the supplemental WHO file
+5a.	Use the growth rate again but only apply to districts that are missing data and haven’t been filled in by previous extracts and patches. This fills in places where we either aren’t provided data in a WHO extract or for which we are provided data but with an expired GUID or when a shape changes between years so the growth factor is not applied 
+6. Repeat steps 5 and 5a but using POLIS population data from the API
+
+Assumptions/miscellaneous 
+- WHO file is assumed to be the “golden record”. Only patching when the original methodology leaves a district with a missing pop that is in one of the patch files
+- Datasource types (if a population for a given year is based on the growth factor being applied that records inherits the datasource from the anchor year, this is also the hierarchy of data, 1. worldpop/WHO, 2. Pakistan, Somalia and Kenya Patches, 3. WHO patch, 4. POLIS API)
+
+#### Province Populations
+
 
 ### Building vaccine coverage datasets {#build-coverage}
 
