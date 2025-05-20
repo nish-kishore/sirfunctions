@@ -185,6 +185,16 @@ Methods:
 Assumptions/miscellaneous:
 -	Hierarchy of data sources: 1. WHO extracts, 2. POLIS npafp rate indicators 2023, 3. district roll ups from dist.pop.long only in cases where pop is missing after other sources have been used to apply growth rates where applicable
 
+#### Country Populations
+
+Country populations are unique to districts and provinces, rather than use WHO estimates, UN population figures are used. 
+
+Data source: UN World Population Prospectus
+
+Methods: 
+1. UN numbers pulled from their data portal API for all geographies 2010 – 2025
+2. Using “median” population variant from UN file to determine each county pop 2010-2025
+2a.	Correct some country names to conform with shape files
 
 
 ### Building vaccine coverage datasets {#build-coverage}
