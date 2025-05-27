@@ -487,13 +487,17 @@ edav_io <- function(
   }
 
   if (io == "write") {
-    if (!grepl(".rds$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$|.parquet$", file_loc)) {
+    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$|.parquet$", file_loc)) {
       cli::cli_abort(paste0("Please pass a path including the file name in file_loc.",
                             " (i.e., folder/data.csv)"))
     }
 
     if (endsWith(file_loc, ".rds")) {
       AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
+    }
+
+    if (endsWith(file_loc, ".rda")) {
+      AzureStor::storage_save_rdata(object = obj, container = azcontainer, file = file_loc)
     }
 
     if (endsWith(file_loc, ".csv")) {
