@@ -46,6 +46,7 @@ Imports:
     withr,
     yaml
 Suggests:
+    arrow,
     blastula,
     forcats,
     ggspatial,

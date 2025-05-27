@@ -419,8 +419,8 @@ edav_io <- function(
       stop("File does not exist")
     }
 
-    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$", file_loc)) {
-      stop("At the moment only 'rds' 'rda', 'csv', 'xls', and 'xlsx' are supported for reading.")
+    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$", file_loc)) {
+      stop("At the moment only 'rds' 'rda', 'csv', 'xls', 'xlsx' and 'parquet' are supported for reading.")
     }
 
     if (endsWith(file_loc, ".rds")) {
@@ -465,11 +465,25 @@ edav_io <- function(
         }
         )
       return(output)
+    } else if (endsWith(file_loc, ".parquet")) {
+      output <- NULL
+      withr::with_tempdir(
+        {
+          AzureStor::storage_download(azcontainer,
+                                      file_loc,
+                                      file.path(tempdir(), basename(file_loc)),
+                                      overwrite = TRUE
+          )
+          output <- arrow::read_parquet(file.path(tempdir(),
+                                                         basename(file_loc)))
+        }
+      )
+      return(output)
     }
   }
 
   if (io == "write") {
-    if (!grepl(".rds$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$", file_loc)) {
+    if (!grepl(".rds$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$|.parquet$", file_loc)) {
       cli::cli_abort(paste0("Please pass a path including the file name in file_loc.",
                             " (i.e., folder/data.csv)"))
     }
@@ -496,6 +510,22 @@ edav_io <- function(
         )
     }
 
+    if (endsWith(file_loc, ".parquet")) {
+      withr::with_tempdir(
+        {
+
+          arrow::write_parquet(obj,
+                               file.path(tempdir(), basename(file_loc))
+                               )
+
+          AzureStor::storage_upload(
+            container = azcontainer, dest = file_loc,
+            src = file.path(tempdir(), basename(file_loc))
+          )
+        }
+      )
+    }
+
     if ("gg" %in% class(obj)) {
       temp <- tempfile()
       ggplot2::ggsave(filename = paste0(temp, "/", sub(".*\\/", "", file_loc)), plot = obj)
@@ -515,6 +545,7 @@ edav_io <- function(
       )
       unlink(temp)
     }
+
   }
 
   if (io == "upload") {
