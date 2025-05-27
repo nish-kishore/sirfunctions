@@ -234,8 +234,8 @@ sirfunctions_io <- function(
         file_loc, azcontainer = azcontainer
       ))
     } else {
-      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$", file_loc)) {
-        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx' and 'xls' are supported for reading.")
+      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$", file_loc)) {
+        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx', 'xls', 'parquet' are supported for reading.")
       }
 
       if (endsWith(file_loc, ".rds")) {
@@ -246,6 +246,8 @@ sirfunctions_io <- function(
         return(readr::read_csv(file_loc))
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         return(read_excel_from_edav(src = file_loc, ...))
+      } else if (endsWith(file_loc, ".parquet")) {
+        return(arrow::read_parquet(file_loc))
       }
     }
   }
@@ -268,6 +270,8 @@ sirfunctions_io <- function(
         readr::write_csv(x = obj, file = file_loc)
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         writexl::write_xlsx(obj, path = file_loc)
+      } else if (endsWith(file_loc, ".parquet")) {
+        arrow::write_parquet(obj, file_loc)
       }
     }
   }
