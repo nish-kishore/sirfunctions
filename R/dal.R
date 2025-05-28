@@ -643,6 +643,7 @@ get_constant <- function(constant_name) {
 #' @param data_folder `str` Location of the data folder containing pre-processed POLIS data,
 #' spatial files, coverage data, and population data. Defaults to `"GID/PEB/SIR/Data"`.
 #' @param polis_folder `str` Location of the POLIS folder. Defaults to `"GID/PEB/SIR/POLIS"`.
+#' @param core_ready_folder `str` Which core ready folder to use. Defaults to `"Core_Ready_Files"`.
 #' @param force.new.run `bool` Default `FALSE`, if `TRUE` will run recent data and cache.
 #' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
 #' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.
@@ -659,6 +660,7 @@ get_all_polio_data <- function(
     size = "small",
     data_folder = "GID/PEB/SIR/Data",
     polis_folder = "GID/PEB/SIR/POLIS",
+    core_ready_folder = "Core_Ready_Files",
     force.new.run = F,
     recreate.static.files = F,
     attach.spatial.data = T,
@@ -2856,7 +2858,7 @@ create_polis_data_folder <- function(data_folder, polis_folder, use_edav) {
              "sia_2000")
 
   source.table <- sirfunctions_io("list", NULL,
-                                  file.path(polis_folder, "data", "Core_Ready_Files"),
+                                  file.path(polis_folder, "data", core_ready_folder),
                                   edav = use_edav) |>
     dplyr::select(src_path = name) |>
     dplyr::mutate(
