@@ -1174,10 +1174,11 @@ if (!force.new.run) {
   raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
 
   raw.data$metadata$processed_time <- sirfunctions_io("list", NULL,
-    polis_folder,
+    file.path(polis_folder, "data", core_ready_folder),
     edav = use_edav
   ) |>
-    dplyr::filter(grepl("positives", name)) |>
+    dplyr::filter(grepl("positives", name),
+                  endsWith(name, ".rds")) |>
     dplyr::select("ctime" = "lastModified") |>
     dplyr::mutate(ctime = as.Date(ctime)) |>
     dplyr::pull(ctime)
