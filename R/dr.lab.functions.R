@@ -282,7 +282,7 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
         # Intervals
         days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
         days.lab.culture = DateFinalCellCultureResults - DateStoolReceivedinLab,
-        days.seq.ship = DateIsolateRcvdForSeq - DateSeqResultsEntered,
+        days.seq.ship = DateIsolateRcvdForSeq - DateFinalCellCultureResults,
         days.lab.seq = DateSeqResult - DateStoolReceivedinLab,
         days.itd.seqres = DateSeqResult - DateFinalrRTPCRResults,
         days.itd.arriveseq = DateIsolateRcvdForSeq - DateFinalrRTPCRResults,
@@ -526,14 +526,29 @@ clean_lab_data_regional <- function(lab_data,
   cli::cli_process_start("Creating timeliness interval columns")
   lab_data5 <- lab_data4 |>
     dplyr::mutate(
-      # Intervals
+      # Intervals from stool arrival to sequencing ----
+      ## timeliness of stool collection to arrival in lab ----
       days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
+
+      ## timeliness of stool arriving in lab to final culture results ----
       days.lab.culture = DateFinalCellCultureResult - DateStoolReceivedinLab,
-      days.seq.ship = DateIsolateRcvdForSeq - ReportDateSequenceResultSent,
-      days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
-      days.itd.seqres = DateofSequencing - DateFinalrRTPCRResults,
+
+      ## timeliness of final culture results to arrival at the sequencing lab ----
+      days.seq.ship = DateIsolateRcvdForSeq - DateFinalCellCultureResult,
+
+      ## timeliness of arrival at sequencing lab to sequencing results ----
+      days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,,
+
+      # Interval measuring sequencing results from date of arrival (NOT part of KPI) ----
+      ## timeliness of ITD results to arrival at sequencing lab ----
       days.itd.arriveseq = DateIsolateRcvdForSeq - DateFinalrRTPCRResults,
-      days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,
+
+      ## timeliness of ITD results to sequencing results ----
+      days.itd.seqres = DateofSequencing - DateFinalrRTPCRResults,
+
+      # Measures overall lab timeliness ----
+      ## timeliness of arriving in lab to sequencing ----
+      days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
 
       # Met target yes/no
       met.targ.collect.lab = ifelse(days.collect.lab < 3, 1, 0),
@@ -648,11 +663,34 @@ get_lab_locs <- function(path = NULL) {
     )
   } else {
     lab.locs <- readr::read_csv(path)
-    lab.locs <- lab.locs |>
-      dplyr::mutate(country = stringr::str_to_upper(country))
   }
 
-  return(lab.locs)
+  lab.locs <- lab.locs |>
+    dplyr::mutate(country = stringr::str_to_upper(country))
+
+  # Manual corrections
+  lab.locs.edited <- lab.locs |>
+    dplyr::filter(!is.na(country)) |>
+    dplyr::mutate(`wgs.lab*` = stringr::str_replace_all(`wgs.lab*`, "- ", "-"),
+                  seq.lab = stringr::str_replace_all(seq.lab, "- ", "-"),
+                  culture.itd.lab = stringr::str_replace_all(culture.itd.lab, "- ", "-")) |>
+    dplyr::mutate(`wgs.lab*` = dplyr::case_when(
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Unknown",
+      `wgs.lab*` %in% c("-", NA) ~ "Unknown",
+      .default = `wgs.lab*`)) |>
+    dplyr::mutate(culture.itd.lab = dplyr::case_when(
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Jordan",
+      culture.itd.lab %in% c("-", NA) ~ "Unknown",
+      .default = culture.itd.lab
+    )) |>
+    dplyr::mutate(seq.lab = dplyr::case_when(
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Jordan",
+      seq.lab %in% c("-", NA) ~ "Unknown",
+      .default = seq.lab
+    ))
+
+
+  return(lab.locs.edited)
 }
 
 #' Determines whether lab data is EMRO or AFRO
@@ -681,7 +719,7 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
     "SIERRA LEONE", "ZIMBABWE", "EQUATORIAL GUINEA", "MAURITIUS", "RWANDA",
     "ESWATINI", "COTE D'IVOIRE", "COTE D IVOIRE",
     "DEMOCRATIC REPUBLIC OF THE CONGO", "GHANA", "GAMBIA", "MALI",
-    "SEYCHELLES"
+    "SEYCHELLES", "COMOROS"
   )
 
   amro_ctry <- c(
@@ -701,7 +739,7 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
     "SOMALIA", "BAHRAIN", "LEBANON",
     "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM",
     "QATAR", "SUDAN", "SAUDI ARABIA", "UNITED ARAB EMIRATES",
-    "DJIBOUTI", "JORDAN"
+    "DJIBOUTI", "JORDAN", "TUNISIA", "LIBYA", "OMAN"
   )
 
   euro_ctry <- c(
@@ -1223,21 +1261,18 @@ clean_lab_data <- function(lab_data, start_date, end_date,
       return(NULL)
     }
 
-    lab_data <- clean_lab_data_who(
-      lab_data, start_date, end_date,
-      afp_data, ctry_name
-    )
-    # lab_data <- add_rolling_years(lab_data, start_date, "DateOfOnset")
+    lab_data <- clean_lab_data_who(lab_data, start_date, end_date,
+                                   afp_data, ctry_name
+                                   )
+    lab_data <- add_rolling_years(lab_data, start_date, end_date, "DateOfOnset")
   } else {
     if ("prov" %in% lab_data_cols) {
       cli::cli_alert_warning("Lab data already cleaned.")
       return(lab_data)
     }
-    lab_data <- clean_lab_data_regional(
-      lab_data, start_date, end_date,
-      afp_data, ctry_name, lab_locs_path
-    )
-    # lab_data <- add_rolling_years(lab_data, start_date, "CaseDate")
+    lab_data <- clean_lab_data_regional(lab_data, start_date, end_date,
+                                        afp_data, ctry_name, lab_locs_path)
+    lab_data <- add_rolling_years(lab_data, start_date, end_date, "CaseDate")
   }
 
   return(lab_data)

@@ -862,32 +862,38 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
       need60.sys.date = Sys.Date()
     ) |> # needed to record when the table was created
     dplyr::filter(dplyr::between(date, start_date, end_date)) |>
-    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final == "Inadequate" &
+    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final2 == "Inadequate" &
       due.60followup == 1, 1, 0)) |>
     # dplyr::filter(need60day.v2 == 1 |
     #   cdc.classification.all2 == "COMPATIBLE") |>
     dplyr::mutate(
       got60day =
         dplyr::case_when(
-          need60day.v2 == 1 & is.na(followup.date) == F ~ 1,
+          # not missing follow-up date OR follow-up findings
           need60day.v2 == 1 &
-            is.na(followup.date) == T & is.na(followup.findings) == F ~ 1,
-          # If follow up date is missing, but findings are recorded, counts as getting follow up
+            (!is.na(followup.date) | !is.na(followup.findings)) ~ 1,
+
+          # missing follow-up date AND follow-up findings
           need60day.v2 == 1 &
-            is.na(followup.date) == T & is.na(followup.findings) == T ~ 0,
+            (is.na(followup.date) & is.na(followup.findings)) ~ 0,
+
+          # don't need 60 day
           need60day.v2 == 0 ~ 99
         ),
       timeto60day = followup.date - date,
       ontime.60day =
         dplyr::case_when(
+
+          # cases not needing follow-up
           need60day.v2 == 0 ~ 99,
-          # excluded timely cases
+
+          # on time follow-up
           need60day.v2 == 1 &
-            timeto60day >= 60 & timeto60day <= 90 ~ 1,
-          (
-            need60day == 1 &
-              timeto60day < 60 | timeto60day > 90 | is.na(timeto60day) == T
-          ) ~ 0
+            (timeto60day >= 60 & timeto60day <= 90) ~ 1,
+
+          # not timely
+          need60day == 1 &
+              (timeto60day < 60 | timeto60day > 90 | is.na(timeto60day)) ~ 0
         )
     ) |>
     # note if variables are all missing then this definition needs to be adjusted
@@ -895,15 +901,20 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
     dplyr::mutate(
       pot.compatible = dplyr::if_else(
         (
-          followup.findings == "Residual weakness/paralysis" |
-            followup.findings == "Died before follow-up" |
-            followup.findings == "Lost to follow-up" |
+          # if there is a follow-up date
+          followup.findings %in% c("Residual weakness/paralysis",
+                                   "Died before follow-up",
+                                   "Lost to follow-up") |
             (
+              # if no follow-up date make sure that findings are not
+              # no resid weakness or no follow-up
               is.na(followup.date) &
-                followup.findings != "No residual weakness/paralysis"
+                !(followup.findings %in% c("No residual weakness/paralysis",
+                                           "No follow-up"))
             )
         ) &
-          (doses.total < 3 | is.na(doses.total) == T) &
+          # doses are less than 3 or none
+          (doses.total < 3 | is.na(doses.total)) &
           (
             classification %in% c("Discarded", "Pending") |
               is.na(classification) == T
