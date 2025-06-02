@@ -1628,6 +1628,9 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
 #' initiated after running [init_kpi()].
 #' @param drop_label_cols `bool` Keep or discard label columns. Defaults to
 #' `TRUE`.
+#' @param sc_targets `bool` Whether to use SC targets when exporting the table. Defaults to FALSE.
+#' @param pos_data `tibble` Positives dataset.
+#' @param risk_table `tibble` The risk table. Required if using sc_targets and outside of CDC.
 #'
 #' @return None.
 #' @export
@@ -1643,7 +1646,31 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
 #' }
 export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                              output_path = Sys.getenv("KPI_TABLES"),
-                             drop_label_cols = FALSE) {
+                             drop_label_cols = FALSE,
+                             sc_targets = FALSE, pos_data = NULL,
+                             risk_table = NULL) {
+
+  if (sc_targets) {
+    if (is.null(pos_data)) {
+      cli::cli_abort("Please pass the positives dataset (i.e., raw_data$pos) to the pos_data param.")
+    } else {
+      pos_data <- add_risk_category(pos_data, risk_table, "place.admin.0")
+      high_risk <- pos_data |> dplyr::filter(`SG Priority Level` == "HIGH") |>
+        dplyr::pull(place.admin.0)
+      ctry_pos_wpv_vdpv <- raw_data$pos |>
+        mutate(is_target = dplyr::if_else(
+          stringr::str_detect(measurement, "WILD|VDPV"),
+          TRUE, FALSE)) |>
+        filter(source %in% c("AFP", "ENV"),
+               is_target == TRUE,
+               yronset >= 2022,
+               `SG Priority Level` != "LOW") |>
+        pull(place.admin.0) |>
+        unique()
+      combined_ctry <- c(high_risk, ctry_pos_wpv_vdpv) |> unique()
+    }
+  }
+
   format_table <- function(x) {
 
     tryCatch(
@@ -1675,13 +1702,35 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
   }
 
   if (!is.null(c1)) {
-    c1_rollup <- generate_c1_rollup(c1)
+    if (sc_targets) {
+      c1 <- c1 |>
+        dplyr::filter(ctry %in% combined_ctry)
+      c1_rollup <- generate_c1_rollup(c1,
+                                      priority_level = c("LOW (WATCHLIST)", "MEDIUM", "HIGH"),
+                                      npafp_target = 90,
+                                      stool_target = 90,
+                                      ev_target = 90,
+                                      timely_wpv_vdpv_target = 90)
+    } else {
+      c1_rollup <- generate_c1_rollup(c1)
+    }
   } else {
     c1_rollup <- NULL
   }
 
+  if (!is.null(c2)) {
+    if (sc_targets) {
+      c2 <- c2 |> dplyr::filter(ctry %in% combined_ctry)
+    }
+  }
+
   if (!is.null(c3)) {
-    c3 <- generate_c3_rollup(c3)
+    if (sc_targets) {
+      c3 <- c3 |> dplyr::filter(ADM0NAME %in% combined_ctry)
+      c3 <- generate_c3_rollup(c3, timely_wpv_vdpv_target = 90)
+    } else {
+      c3 <- generate_c3_rollup(c3)
+    }
   } else {
     c3 <- NULL
   }
@@ -1694,11 +1743,6 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     c4_seq <- NULL
   }
 
-  export_list <- list(`c1 - kpi` = c1, `c1 - high risk summary` = c1_rollup,
-                      `c2 -  national AFP indicators` = c2,
-                      `c3 - es indicators by site` = c3,
-                      `c4 - culture itd lab summary` = c4_itd,
-                      `c4 - seq lab summary` = c4_seq)
   export_list <- export_list |>
     purrr::keep(\(x) !is.null(x)) |>
     purrr::map(format_table)
