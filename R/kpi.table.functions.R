@@ -1655,9 +1655,10 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
       cli::cli_abort("Please pass the positives dataset (i.e., raw_data$pos) to the pos_data param.")
     } else {
       pos_data <- add_risk_category(pos_data, risk_table, "place.admin.0")
-      high_risk <- pos_data |> dplyr::filter(`SG Priority Level` == "HIGH") |>
+      high_risk <- pos_data |>
+        dplyr::filter(`SG Priority Level` == "HIGH") |>
         dplyr::pull(place.admin.0)
-      ctry_pos_wpv_vdpv <- raw_data$pos |>
+      ctry_pos_wpv_vdpv <- pos_data |>
         mutate(is_target = dplyr::if_else(
           stringr::str_detect(measurement, "WILD|VDPV"),
           TRUE, FALSE)) |>
