@@ -855,6 +855,14 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' values are `"LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"`
 #' @param who_region `str` WHO region to summarize the data to.
 #' @param .group_by `str` How the rollup should be grouped. Defaults to the column `"rolling_period"`.
+#' @param npafp_target `num` Target used when calculating the proportion of districts in a country
+#' that meets NPAFP rate.
+#' @param stool_target `num` Target used when calculating the proportion of districts in a country
+#' that meets stool adequacy rate.
+#' @param ev_target `num` Target used when calculating the proportion of ES sites in a country
+#' that meets EV detection rate.
+#' @param timely_wpv_vdpv_target `num` Target used when calculating the proportion of ES sites in a country
+#' that meets timeliness of detection of WPV and VDPV cases.
 #'
 #' @returns `tibble` A summary rollup
 #' @export
@@ -868,7 +876,11 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 generate_c1_rollup <- function(c1,
                                priority_level = "HIGH",
                                who_region = NULL,
-                               .group_by = "rolling_period") {
+                               .group_by = "rolling_period",
+                               npafp_target = 80,
+                               stool_target = 80,
+                               ev_target = 80,
+                               timely_wpv_vdpv_target = 80) {
 
 
   if (!is.null(priority_level)) {
@@ -885,14 +897,14 @@ generate_c1_rollup <- function(c1,
     dplyr::filter(`SG Priority Level` %in% priority_level) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(
-      met_npafp = sum(prop_met_npafp >= 80, na.rm = TRUE),
+      met_npafp = sum(prop_met_npafp >= npafp_target, na.rm = TRUE),
       npafp_denom = sum(!is.na(prop_met_npafp)),
       stool_denom = sum(!is.na(prop_met_stool)),
       ev_denom = sum(!is.na(prop_met_ev)),
       det_denom = sum(!is.na(prop_timely_wild_vdpv)),
-      met_stool = sum(prop_met_stool >= 80, na.rm = TRUE),
-      met_ev = sum(prop_met_ev >= 80, na.rm = TRUE),
-      met_timely_wild_vdpv = sum(prop_timely_wild_vdpv >= 80, na.rm = TRUE),
+      met_stool = sum(prop_met_stool >= stool_target, na.rm = TRUE),
+      met_ev = sum(prop_met_ev >= ev_target, na.rm = TRUE),
+      met_timely_wild_vdpv = sum(prop_timely_wild_vdpv >= timely_wpv_vdpv_target, na.rm = TRUE),
       prop_met_npafp = met_npafp / npafp_denom * 100,
       prop_met_stool = met_stool / stool_denom * 100,
       prop_met_ev = met_ev / ev_denom * 100,
@@ -1455,6 +1467,8 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #' @param include_labels `bool` Include columns for the labels? Default TRUE.
 #' @param min_sample `num` Only consider sites with at least this number
 #' of ES samples. Default is `10`.
+#' @param timely_spv_vdpv_target Target used when determining whether a country
+#' meets EV detection target.
 #'
 #' @return `tibble` A summary of the c3 table at the country level
 #' @export
@@ -1465,7 +1479,8 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
 #' c3_rollup <- generate_c3_rollup(c3)
 #' }
-generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
+generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10,
+                               timely_wpv_vdpv_target = 80) {
 
   if (!"site.name" %in% names(c3)) {
     cli::cli_abort("Please summarize c3 at the site level and try again.")
@@ -1482,7 +1497,7 @@ generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
       met_ev = sum(ev_rate >= 50 & n_samples_12_mo >= min_sample & site_age >= 12, na.rm = TRUE),
       met_ev_5_samples = sum(ev_rate >= 50 & n_samples_12_mo >= 5, na.rm = TRUE),
       met_good_samples = sum(prop_good_es >= 80, na.rm = TRUE),
-      met_timely_wpv_vdpv_det = sum(prop_timely_det_wpv_vdpv >= 80, na.rm = TRUE),
+      met_timely_wpv_vdpv_det = sum(prop_timely_det_wpv_vdpv >= timely_wpv_vdpv_target, na.rm = TRUE),
       median_timely_shipment_per_site = median(prop_timely_ship, na.rm = TRUE),
       es_sites = sum(n_samples_12_mo >= 1, na.rm = TRUE),
       active_sites = sum(n_samples_12_mo >= min_sample & site_age >= 12, na.rm = TRUE),
