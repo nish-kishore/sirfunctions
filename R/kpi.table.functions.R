@@ -1727,7 +1727,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
 
   if (!is.null(c3)) {
     if (sc_targets) {
-      c3 <- c3 |> dplyr::filter(ADM0NAME %in% combined_ctry)
+      c3 <- c3 |> dplyr::filter(ADM0_NAME %in% combined_ctry)
       c3 <- generate_c3_rollup(c3, timely_wpv_vdpv_target = 90)
     } else {
       c3 <- generate_c3_rollup(c3)
