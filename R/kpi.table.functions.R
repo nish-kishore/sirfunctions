@@ -1743,6 +1743,11 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     c4_seq <- NULL
   }
 
+  export_list <- list(`c1 - kpi` = c1, `c1 - high risk summary` = c1_rollup,
+                      `c2 -  national AFP indicators` = c2,
+                      `c3 - es indicators by site` = c3,
+                      `c4 - culture itd lab summary` = c4_itd,
+                      `c4 - seq lab summary` = c4_seq)
   export_list <- export_list |>
     purrr::keep(\(x) !is.null(x)) |>
     purrr::map(format_table)
