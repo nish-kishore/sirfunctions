@@ -844,7 +844,7 @@ if (!force.new.run) {
              } else {
                cli::cli_alert_info("Moving updated polis data to the data folder")
              }
-             create_polis_data_folder(data_folder, polis_folder, use_edav)
+             create_polis_data_folder(data_folder, polis_folder, core_ready_folder, use_edav)
            },
            "spatial" = {
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
@@ -2844,12 +2844,14 @@ read_excel_from_edav <- function(src, ...) {
 #'
 #' @param data_folder `str` Path to the data folder.
 #' @param polis_folder `str` Path to the core ready folder
+#' @param core_ready_folder `str` Which core ready folder to use. Defaults to `"Core_Ready_Files"`.
 #' @param use_edav `bool` Are file paths on EDAV?
 #'
 #' @return NULL
 #' @keywords internal
 #'
-create_polis_data_folder <- function(data_folder, polis_folder, use_edav) {
+create_polis_data_folder <- function(data_folder, polis_folder,
+                                    core_ready_folder, use_edav) {
 
   files <- c("afp_linelist_2001-01-01",
              "afp_linelist_2019-01-01",
