@@ -643,6 +643,7 @@ get_constant <- function(constant_name) {
 #' @param data_folder `str` Location of the data folder containing pre-processed POLIS data,
 #' spatial files, coverage data, and population data. Defaults to `"GID/PEB/SIR/Data"`.
 #' @param polis_folder `str` Location of the POLIS folder. Defaults to `"GID/PEB/SIR/POLIS"`.
+#' @param core_ready_folder `str` Which core ready folder to use. Defaults to `"Core_Ready_Files"`.
 #' @param force.new.run `bool` Default `FALSE`, if `TRUE` will run recent data and cache.
 #' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
 #' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.
@@ -659,6 +660,7 @@ get_all_polio_data <- function(
     size = "small",
     data_folder = "GID/PEB/SIR/Data",
     polis_folder = "GID/PEB/SIR/POLIS",
+    core_ready_folder = "Core_Ready_Files",
     force.new.run = F,
     recreate.static.files = F,
     attach.spatial.data = T,
@@ -842,7 +844,7 @@ if (!force.new.run) {
              } else {
                cli::cli_alert_info("Moving updated polis data to the data folder")
              }
-             create_polis_data_folder(data_folder, polis_folder, use_edav)
+             create_polis_data_folder(data_folder, polis_folder, core_ready_folder, use_edav)
            },
            "spatial" = {
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
@@ -1172,10 +1174,11 @@ if (!force.new.run) {
   raw.data$metadata$download_time <- max(polis.cache$last_sync, na.rm = TRUE)
 
   raw.data$metadata$processed_time <- sirfunctions_io("list", NULL,
-    polis_folder,
+    file.path(polis_folder, "data", core_ready_folder),
     edav = use_edav
   ) |>
-    dplyr::filter(grepl("positives", name)) |>
+    dplyr::filter(grepl("positives", name),
+                  endsWith(name, ".rds")) |>
     dplyr::select("ctime" = "lastModified") |>
     dplyr::mutate(ctime = as.Date(ctime)) |>
     dplyr::pull(ctime)
@@ -2841,12 +2844,14 @@ read_excel_from_edav <- function(src, ...) {
 #'
 #' @param data_folder `str` Path to the data folder.
 #' @param polis_folder `str` Path to the core ready folder
+#' @param core_ready_folder `str` Which core ready folder to use. Defaults to `"Core_Ready_Files"`.
 #' @param use_edav `bool` Are file paths on EDAV?
 #'
 #' @return NULL
 #' @keywords internal
 #'
-create_polis_data_folder <- function(data_folder, polis_folder, use_edav) {
+create_polis_data_folder <- function(data_folder, polis_folder,
+                                    core_ready_folder, use_edav) {
 
   files <- c("afp_linelist_2001-01-01",
              "afp_linelist_2019-01-01",
@@ -2856,7 +2861,7 @@ create_polis_data_folder <- function(data_folder, polis_folder, use_edav) {
              "sia_2000")
 
   source.table <- sirfunctions_io("list", NULL,
-                                  file.path(polis_folder, "data", "Core_Ready_Files"),
+                                  file.path(polis_folder, "data", core_ready_folder),
                                   edav = use_edav) |>
     dplyr::select(src_path = name) |>
     dplyr::mutate(
