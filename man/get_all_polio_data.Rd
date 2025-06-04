@@ -8,6 +8,7 @@ get_all_polio_data(
   size = "small",
   data_folder = "GID/PEB/SIR/Data",
   polis_folder = "GID/PEB/SIR/POLIS",
+  core_ready_folder = "Core_Ready_Files",
   force.new.run = F,
   recreate.static.files = F,
   attach.spatial.data = T,
@@ -26,6 +27,8 @@ get_all_polio_data(
 spatial files, coverage data, and population data. Defaults to \code{"GID/PEB/SIR/Data"}.}
 
 \item{polis_folder}{\code{str} Location of the POLIS folder. Defaults to \code{"GID/PEB/SIR/POLIS"}.}
+
+\item{core_ready_folder}{\code{str} Which core ready folder to use. Defaults to \code{"Core_Ready_Files"}.}
 
 \item{force.new.run}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run recent data and cache.}
 
