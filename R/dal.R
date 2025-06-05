@@ -705,6 +705,13 @@ get_constant <- function(constant_name = NULL) {
 #' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
 #' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.
 #' @param use_edav `bool` Build raw data list using EDAV files. Defaults to `TRUE`.
+#' @param archive Logical. Whether to archive previous output directories
+#'    before overwriting. Default is `TRUE`.
+#' @param keep_n_archives Numeric. Number of archive folders to retain.
+#'   Defaults to `Inf`, which keeps all archives. Set to a finite number
+#'   (e.g., 3) to automatically delete older archives beyond the N most recent.
+#'
+#'
 #' @returns Named `list` containing polio data that is relevant to CDC.
 #' @examples
 #' \dontrun{
@@ -721,10 +728,15 @@ get_all_polio_data <- function(
     force.new.run = F,
     recreate.static.files = F,
     attach.spatial.data = T,
-    use_edav = TRUE) {# check to see that size parameter is appropriate
-if (!size %in% c("small", "medium", "large")) {
-  stop("The parameter 'size' must be either 'small', 'medium', or 'large'")
-}
+    use_edav = TRUE,
+    archive = TRUE,
+    keep_n_archives = 3) {
+
+  # check to see that size parameter is appropriate
+  if (!size %in% c("small", "medium", "large")) {
+    stop("The parameter 'size' must be either 'small', 'medium', or 'large'")
+  }
+
 
 # Constant variables
 # Each file comes out of these folders
@@ -783,6 +795,10 @@ if (nrow(prev_table) > 0) {
 if (recreate.static.files) {
   force.new.run <- T
   create.cache <- T
+}
+
+if (!archive) {
+  create.cache <- FALSE
 }
 
 if (!force.new.run) {
@@ -901,7 +917,24 @@ if (!force.new.run) {
              } else {
                cli::cli_alert_info("Moving updated polis data to the data folder")
              }
+
+             if (archive) {
              create_polis_data_folder(data_folder, polis_folder, core_ready_folder, use_edav)
+
+               if (is.finite(keep_n_archives)) {
+                 archive_dirs <- list.dirs(
+                   file.path(data_folder, "polis", "archive"),
+                   full.names = TRUE, recursive = FALSE
+                 )
+                 if (length(archive_dirs) > keep_n_archives) {
+                   dir_times    <- file.info(archive_dirs)$ctime
+                   sorted_dirs  <- archive_dirs[order(dir_times, decreasing = TRUE)]
+                   dirs_to_remove <- sorted_dirs[(keep_n_archives + 1):length(sorted_dirs)]
+                   lapply(dirs_to_remove, unlink, recursive = TRUE)
+                 }
+               }
+
+             }
            },
            "spatial" = {
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
@@ -1035,12 +1068,12 @@ if (!force.new.run) {
   raw.data$afp.epi <- raw.data$afp |>
     dplyr::mutate(epi.week = lubridate::epiweek(dateonset)) |>
     dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
-    dplyr::summarize(afp.cases = dplyr::n()) |>
+    dplyr::summarize(afp.cases = dplyr::n(),
+                     .groups = "drop") |>
     dplyr::mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
     # manual fix of epi week
     dplyr::mutate(epi.week = ifelse(epi.week == 52 &
-      yronset == 2022, 1, epi.week)) |>
-    dplyr::ungroup()
+      yronset == 2022, 1, epi.week))
 
   # factoring cdc classification to have an order we like in stacked bar chart
   raw.data$afp.epi$cdc.classification.all2 <-
