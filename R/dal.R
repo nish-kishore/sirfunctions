@@ -2123,7 +2123,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 
   if (!is.null(type) && type == "long") {
     df.list <- lapply(st_year:end_year, function(i) f.yrs.01(out, i))
-    out <- do.call(rbind, df.list)
+    out <- dplyr::bind_rows(df.list)
   }
 
   return(out)
@@ -2251,7 +2251,7 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 
   if (!is.null(type) && type == "long") {
     df.list <- lapply(st_year:end_year, function(i) f.yrs.01(out, i))
-    out <- do.call(rbind, df.list)
+    out <- dplyr::bind_rows(df.list)
   }
 
   return(out)
@@ -2368,7 +2368,7 @@ load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 
   if (!is.null(type) && type == "long") {
     df.list <- lapply(st_year:end_year, function(i) f.yrs.01(out, i))
-    out <- do.call(rbind, df.list)
+    out <- dplyr::bind_rows(df.list)
   }
 
   return(out)
