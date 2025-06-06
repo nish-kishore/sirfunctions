@@ -54,6 +54,8 @@ Run the following: `init_kpi("path_to_kpi_folder", edav = FALSE)`
 
 Upon running, it will set up the folder structure but not download the lab and polio data. There will be several warnings about needing to create the polio data list locally, as well as saving the lab data locally. Please follow the instructions included in these warnings. To create the global polio dataset, please see the `Generating Global Polio Data` vignette.
 
+Once `init_kpi()` completely runs, open the template file. The function will link to the location of this template file and it can be linked if running the code in RStudio.
+
 ### Loading the spatial data
 Lines 19-20 of the template loads the country and district shapefiles. For CDC employees, run the lines as-is. However, for non-CDC employees, see below:
 
