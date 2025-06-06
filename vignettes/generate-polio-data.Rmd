@@ -199,12 +199,12 @@ Methods:
 
 ### Building vaccine coverage datasets {#build-coverage}
 
-To be completed by Nishant
+Method will be included soon. In the mean time, please request this dataset from Stephanie Kovacs.
 
 ### Building the roads dataset {#build-roads}
 
-To be completed by Nishant
+Method will be included soon. In the mean time, please request this dataset from Stephanie Kovacs.
 
 ### Building the cities dataset {#build-cities}
 
-To be completed by Nishant
+Method will be included soon. In the mean time, please request this dataset from Stephanie Kovacs.
