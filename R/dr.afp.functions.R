@@ -632,38 +632,42 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     }
   )
 
+  int.data <- tidyr::pivot_longer(int.data,
+    cols = dplyr::all_of(c(stool_to_lab_name, "ontonot",
+                    "nottoinvest", "investtostool1",
+                    "stool1tostool2")),
+    names_to = "type",
+    values_to = "value"
+  )
+
   int.data <- switch(spatial_scale,
     "ctry" = {
       int.data <- int.data |>
-        tidyr::pivot_longer(!c("epid", "year", "adm0guid", "ctry"),
-          names_to = "type",
-          values_to = "value"
-        ) |>
-        dplyr::group_by(year, type, adm0guid, ctry) |>
+        dplyr::group_by(year, type, adm0guid) |>
         dplyr::summarize(
-          medi = median(value, na.rm = T),
+          medi = median(value, na.rm = TRUE),
           freq = sum(!is.na(value))
-        )
+        ) |>
+        dplyr::left_join(pop_data |>
+                           dplyr::select(ctry, adm0guid, year)) |>
+        dplyr::ungroup()
     },
     "prov" = {
       int.data <- int.data |>
-        tidyr::pivot_longer(
-          !c("epid", "year", "adm0guid", "adm1guid", "prov", "ctry"),
-          names_to = "type",
-          values_to = "value"
-        ) |>
         dplyr::group_by(
-          year, type, adm1guid,
-          prov, ctry
-        ) |>
+          year, type, adm1guid) |>
         dplyr::summarize(
-          medi = median(value, na.rm = T),
+          medi = median(value, na.rm = TRUE),
           freq = sum(!is.na(value))
-        )
+        ) |>
+        dplyr::left_join(pop_data |>
+                           dplyr::select(ctry, prov, adm0guid, adm1guid, year)) |>
+        dplyr::ungroup()
     }
   )
 
   if (!is.null(lab_data_summary)) {
+
     tryCatch(
       {
         int.data <- dplyr::bind_rows(lab_data_summary, int.data)
@@ -679,13 +683,9 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     )
   }
 
-  if (spatial_scale == "prov") {
-    int.data$prov <- pop_data$prov[match(int.data$adm1guid, pop_data$adm1guid)]
-  } else if (spatial_scale == "ctry") {
-    int.data$ctry <- pop_data$ctry[match(int.data$adm0guid, pop_data$adm0guid)]
-  }
-
   # Filtering based on whether labs are attached
+
+  # Without lab data
   if (is.null(lab_data_summary)) {
     int.data <- int.data |>
       dplyr::filter(type %in% c(
@@ -696,6 +696,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
         "daysstooltolab"
       ))
   } else {
+    # With lab data
     who.additional.cols <- c(
       "days.coll.sent.field",
       "days.sent.field.rec.nat",
@@ -703,6 +704,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
       "days.sent.lab.rec.lab",
       "days.rec.lab.culture"
     )
+
     int.data.filter <- int.data |>
       dplyr::filter(type %in% who.additional.cols) |>
       dplyr::summarise(sum = sum(medi)) |>

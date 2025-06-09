@@ -1305,7 +1305,7 @@ generate_lab_timeliness <-
            end.date) {
     spatial_groupby <- switch(spatial.scale,
       "ctry" = c("year", "ctry", "adm0guid"),
-      "prov" = c("year", "ctry", "prov", "adm1guid")
+      "prov" = c("year", "ctry", "prov", "adm0guid", "adm1guid")
     )
 
 
