@@ -633,7 +633,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
   )
 
   int.data <- tidyr::pivot_longer(int.data,
-    cols = dplyr::all_of(c(stool_to_lab_name, "ontonot",
+    cols = dplyr::any_of(c(stool_to_lab_name, "ontonot",
                     "nottoinvest", "investtostool1",
                     "stool1tostool2")),
     names_to = "type",
@@ -670,7 +670,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 
     tryCatch(
       {
-        int.data <- dplyr::bind_rows(lab_data_summary, int.data)
+        int.data <- dplyr::bind_rows(dplyr::ungroup(lab_data_summary), int.data)
       },
       error = function(e) {
         error_message <- paste0(
@@ -706,19 +706,33 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     )
 
     int.data.filter <- int.data |>
-      dplyr::filter(type %in% who.additional.cols) |>
-      dplyr::summarise(sum = sum(medi)) |>
-      dplyr::pull()
+      dplyr::select(type, medi) |>
+      dplyr::filter(type %in% who.additional.cols,
+                    !is.na(medi)) |>
+      dplyr::select(type) |>
+      dplyr::distinct() |>
+      pull(type)
 
-    if (is.na(sum(int.data.filter))) {
-      int.data <- int.data |>
+    # If only the lab timeliness are present
+    if (identical(int.data.filter,
+                  c("days.sent.lab.rec.lab", "days.rec.lab.culture"))) {
+      int.data |>
+        dplyr::filter(type %in% c("days.coll.sent.field",
+                                  "days.sent.field.rec.nat",
+                                  "days.rec.nat.sent.lab",
+                                  "days.collect.lab",
+                                  "days.lab.culture"))
+
+      # If some are filled, other than ONLY lab timeliness
+    } else if (length(int.data.filter) != 0) {
+      int.data |>
+        dplyr::filter(!type %in% c("days.collect.lab",
+                                  "days.lab.culture"))
+
+      # If none of the WHO columns are filled
+    } else if (length(int.data.filter) == 0) {
+      int.data |>
         dplyr::filter(!type %in% who.additional.cols)
-    } else {
-      int.data <- int.data |>
-        dplyr::filter(!type %in% c(
-          "days.collect.lab",
-          "days.lab.culture"
-        ))
     }
   }
 
