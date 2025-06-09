@@ -1131,7 +1131,7 @@ generate_dist_pop_map <- function(ctry.data,
     ) +
     ggrepel::geom_label_repel(
       data = shape.prov.pop,
-      ggplot2::aes(label = ADM1_NAME, geometry = SHAPE),
+      ggplot2::aes(label = ADM1_NAME, geometry = Shape),
       stat = "sf_coordinates",
       force = 80
     ) +
