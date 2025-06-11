@@ -145,7 +145,7 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
           data = m_data_prov,
           ggplot2::aes(
             label = ADM1_NAME,
-            geometry = SHAPE
+            geometry = Shape
           ),
           stat = "sf_coordinates",
           size = 2,
