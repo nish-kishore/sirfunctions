@@ -797,10 +797,6 @@ if (recreate.static.files) {
   create.cache <- T
 }
 
-if (!archive) {
-  create.cache <- FALSE
-}
-
 if (!force.new.run) {
   # determine all raw data files to be downloaded
   if (use_edav) {
@@ -3231,19 +3227,19 @@ create_polis_data_folder <- function(data_folder, polis_folder,
   if (!sirfunctions_io("exists.dir", NULL, file.path(data_folder, "polis", "archive"), edav = use_edav)) {
     sirfunctions_io("create.dir", NULL, file.path(data_folder, "polis", "archive"), edav = use_edav)
   }
-  # Move previous files to archive in polis data folder
 
-  # Explicitly create since Sys.Date() could potentially vary when ran overnight
+  current.table <- sirfunctions_io(io = "list", NULL,
+                                   file.path(data_folder, "polis"),
+                                   edav = use_edav) |>
+                                    dplyr::filter(isdir != TRUE)
+
+# Move previous files to archive in polis data folder
 if (archive) {
+   # Explicitly create since Sys.Date() could potentially vary when ran overnight
   archive_folder_name <- Sys.Date()
   sirfunctions_io("create.dir", NULL,
                   file.path(data_folder, "polis", "archive", archive_folder_name),
                   edav = use_edav)
-
-  current.table <- sirfunctions_io(io = "list", NULL,
-                                 file.path(data_folder, "polis"),
-                                 edav = use_edav) |>
-    dplyr::filter(isdir != TRUE)
 
   if (nrow(current.table) == 0) {
     cli::cli_alert_success("No data to archive")
@@ -3305,13 +3301,12 @@ if (archive && is.finite(keep_n_archives)) {
 
   cli::cli_process_start("Adding updated data to polis data folder")
 
-  # Delete previous files
-  if (nrow(current.table) != 0) {
-    lapply(1:nrow(current.table), \(i) {
-      sirfunctions_io("delete", NULL,
-                      current.table$src_path[i], edav = use_edav)
-    })
-  }
+# Delete previous files
+if (nrow(current.table) != 0) {
+  lapply(1:nrow(current.table), \(i) {
+    sirfunctions_io("delete", NULL, current.table$src_path[i], edav = use_edav)
+  })
+}
 
   # Move all files to core polis data folder
   lapply(1:nrow(source.table), function(i){
