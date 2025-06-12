@@ -3196,7 +3196,7 @@ read_excel_from_edav <- function(src, ...) {
 #'
 create_polis_data_folder <- function(data_folder, polis_folder,
                                     core_ready_folder, use_edav,
-                                    archive = TRUE, keep_n_archives = 3) {
+                                    archive = TRUE, keep_n_archives = Inf) {
 
   files <- c("afp_linelist_2001-01-01",
              "afp_linelist_2019-01-01",

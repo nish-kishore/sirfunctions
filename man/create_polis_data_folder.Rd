@@ -10,7 +10,7 @@ create_polis_data_folder(
   core_ready_folder,
   use_edav,
   archive = TRUE,
-  keep_n_archives = 3
+  keep_n_archives = Inf
 )
 }
 \arguments{
