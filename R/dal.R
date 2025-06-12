@@ -142,10 +142,10 @@ sirfunctions_io <- function(
     file_loc <- default_folder
   }
 
-  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create.dir")
+  opts <- c("read", "write", "delete", "delete.dir", "list", "exists.dir", "exists.file", "create.dir")
 
   if (!io %in% opts) {
-    stop("io: must be 'read', 'write', 'delete', 'create.dir', 'exists.dir', 'exists.file' or 'list'")
+    stop("io: must be 'read', 'write', 'delete', 'delete.dir', 'create.dir', 'exists.dir', 'exists.file' or 'list'")
   }
 
   if (io == "write" & is.null(obj)) {
@@ -274,7 +274,8 @@ sirfunctions_io <- function(
 
   if (io == "delete") {
     if (edav) {
-      edav_io("delete", NULL, file_loc = file_loc, force_delete = T, azcontainer = azcontainer)
+      edav_io("delete", NULL, file_loc = file_loc, force_delete = T,
+              azcontainer = azcontainer)
     } else {
       file.remove(file_loc)
     }
@@ -289,6 +290,15 @@ sirfunctions_io <- function(
       } else {
         dir.create(file_loc)
       }
+    }
+  }
+
+  if (io == "delete.dir") {
+    if (edav) {
+      edav_io(io = "delete.dir", NULL, force_delete = T, azcontainer = azcontainer,
+              file_loc = file_loc)
+    } else {
+      unlink(file_loc, recursive = TRUE)
     }
   }
 
@@ -312,6 +322,7 @@ sirfunctions_io <- function(
 #' - `"list"` Returns a tibble with all objects in a folder.
 #' - `"upload"` Moves a file of any type to EDAV.
 #' - `"delete"` Deletes a file.
+#' - `"delete.dir"` Deletes a folder.
 #' @param default_dir `str` The default directory in EDAV. `"GID/PEB/SIR"` is the default directory
 #' for all SIR data in EDAV. Can be set to `NULL` if you provide the full directory path in `file_loc`.
 #' @param file_loc `str` Location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
@@ -359,10 +370,11 @@ edav_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create", "upload")
+  opts <- c("read", "write", "delete", "delete.dir",
+            "list", "exists.dir", "exists.file", "create", "upload")
 
   if (!io %in% opts) {
-    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' 'list' or 'upload'")
+    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' 'delete.dir' 'list' or 'upload'")
   }
 
   if (io == "write" & is.null(obj)) {
@@ -515,15 +527,15 @@ edav_io <- function(
     }
 
     if (force_delete) {
-      AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
+      AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F, recursive = TRUE)
     } else {
-      x <- readline(prompt = "Are you sure you want to delete this file? It can only be recovered by an administrator. [Y/N]")
+      x <- readline(prompt = "Are you sure you want to delete this folder? It can only be recovered by an administrator. [Y/N]")
       x <- tolower(x)
 
 
       if (grepl("y|n", x)) {
         if (x == "y") {
-          AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
+          AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F, recursive = TRUE)
           cli::cli_alert_info("File deleted!")
         } else {
           cli::cli_alert_info("Deletion canceled.")
@@ -533,6 +545,33 @@ edav_io <- function(
       }
     }
   }
+
+  if (io == "delete.dir") {
+    if (!AzureStor::storage_file_exists(azcontainer, file_loc)) {
+      stop("Folder does not exist")
+    }
+
+    if (force_delete) {
+      AzureStor::delete_adls_dir(azcontainer, file_loc, recursive = TRUE, confirm = FALSE)
+    } else {
+      x <- readline(prompt = "Are you sure you want to delete this folder? It can only be recovered by an administrator. [Y/N]")
+      x <- tolower(x)
+
+      if (grepl("y|n", x)) {
+        if (x == "y") {
+          AzureStor::delete_adls_dir(azcontainer, file_loc, recursive = TRUE, confirm = FALSE)
+          cli::cli_alert_info("Folder deleted!")
+        } else {
+          cli::cli_alert_info("Deletion canceled.")
+        }
+      } else {
+        stop("Response must be 'Y' or 'N'")
+      }
+    }
+
+    invisible()
+  }
+
 }
 
 #' Test network connection to the EDAV
@@ -3297,7 +3336,7 @@ if (archive & is.finite(keep_n_archives)) {
     ))
 
     lapply(dirs_to_remove$name,
-           \(x) sirfunctions_io("delete", NULL, file_loc = x, edav = use_edav))
+           \(x) sirfunctions_io("delete.dir", NULL, file_loc = x, edav = use_edav))
   }
 }
 
