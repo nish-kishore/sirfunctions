@@ -918,23 +918,16 @@ if (!force.new.run) {
                cli::cli_alert_info("Moving updated polis data to the data folder")
              }
 
-             if (archive) {
-             create_polis_data_folder(data_folder, polis_folder, core_ready_folder, use_edav)
 
-               if (is.finite(keep_n_archives)) {
-                 archive_dirs <- list.dirs(
-                   file.path(data_folder, "polis", "archive"),
-                   full.names = TRUE, recursive = FALSE
-                 )
-                 if (length(archive_dirs) > keep_n_archives) {
-                   dir_times    <- file.info(archive_dirs)$ctime
-                   sorted_dirs  <- archive_dirs[order(dir_times, decreasing = TRUE)]
-                   dirs_to_remove <- sorted_dirs[(keep_n_archives + 1):length(sorted_dirs)]
-                   lapply(dirs_to_remove, unlink, recursive = TRUE)
-                 }
-               }
+             create_polis_data_folder(
+              data_folder,
+              polis_folder,
+              core_ready_folder,
+              use_edav,
+              archive,
+              keep_n_archives
+            )
 
-             }
            },
            "spatial" = {
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
@@ -3196,12 +3189,18 @@ read_excel_from_edav <- function(src, ...) {
 #' @param polis_folder `str` Path to the core ready folder
 #' @param core_ready_folder `str` Which core ready folder to use. Defaults to `"Core_Ready_Files"`.
 #' @param use_edav `bool` Are file paths on EDAV?
+#' @param archive Logical. Whether to archive previous output directories
+#'    before overwriting. Default is `TRUE`.
+#' @param keep_n_archives Numeric. Number of archive folders to retain.
+#'   Defaults to `Inf`, which keeps all archives. Set to a finite number
+#'   (e.g., 3) to automatically delete older archives beyond the N most recent.
 #'
 #' @return NULL
 #' @keywords internal
 #'
 create_polis_data_folder <- function(data_folder, polis_folder,
-                                    core_ready_folder, use_edav) {
+                                    core_ready_folder, use_edav,
+                                    archive = TRUE, keep_n_archives = 3) {
 
   files <- c("afp_linelist_2001-01-01",
              "afp_linelist_2019-01-01",
@@ -3235,6 +3234,7 @@ create_polis_data_folder <- function(data_folder, polis_folder,
   # Move previous files to archive in polis data folder
 
   # Explicitly create since Sys.Date() could potentially vary when ran overnight
+if (archive) {
   archive_folder_name <- Sys.Date()
   sirfunctions_io("create.dir", NULL,
                   file.path(data_folder, "polis", "archive", archive_folder_name),
@@ -3280,6 +3280,28 @@ create_polis_data_folder <- function(data_folder, polis_folder,
     })
     cli::cli_process_done()
   }
+}
+
+# handle number of archives to keep
+if (archive && is.finite(keep_n_archives)) {
+  archive_dirs <- list.dirs(
+    file.path(data_folder, "polis", "archive"),
+    full.names = TRUE,
+    recursive = FALSE
+  )
+
+  if (length(archive_dirs) > keep_n_archives) {
+    dir_times <- file.info(archive_dirs)$ctime
+    sorted_dirs <- archive_dirs[order(dir_times, decreasing = TRUE)]
+    dirs_to_remove <- sorted_dirs[(keep_n_archives + 1):length(sorted_dirs)]
+    cli::cli_alert_info(paste0(
+      "Removing ",
+      length(dirs_to_remove),
+      " old archive folders"
+    ))
+    lapply(dirs_to_remove, unlink, recursive = TRUE)
+  }
+}
 
   cli::cli_process_start("Adding updated data to polis data folder")
 
