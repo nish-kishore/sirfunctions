@@ -3233,6 +3233,14 @@ create_polis_data_folder <- function(data_folder, polis_folder,
                                    edav = use_edav) |>
                                     dplyr::filter(isdir != TRUE)
 
+  current.table <- current.table |>
+    dplyr::select(src_path = name) |>
+    dplyr::mutate(
+      name = basename(src_path)
+    ) |>
+    dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
+    dplyr::select(name, src_path)
+
 # Move previous files to archive in polis data folder
 if (archive) {
    # Explicitly create since Sys.Date() could potentially vary when ran overnight
@@ -3245,14 +3253,6 @@ if (archive) {
     cli::cli_alert_success("No data to archive")
     cli::cli_process_done()
   } else {
-    current.table <- current.table |>
-      dplyr::select(src_path = name) |>
-      dplyr::mutate(
-        name = basename(src_path)
-      ) |>
-      dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
-      dplyr::select(name, src_path)
-
     current.table.size <- sirfunctions_io(io = "list", NULL,
                                           file.path(data_folder, "polis"),
                                           edav = use_edav) |>
@@ -3280,22 +3280,24 @@ if (archive) {
 
 # handle number of archives to keep
 if (archive && is.finite(keep_n_archives)) {
-  archive_dirs <- list.dirs(
-    file.path(data_folder, "polis", "archive"),
-    full.names = TRUE,
-    recursive = FALSE
-  )
 
-  if (length(archive_dirs) > keep_n_archives) {
-    dir_times <- file.info(archive_dirs)$ctime
-    sorted_dirs <- archive_dirs[order(dir_times, decreasing = TRUE)]
-    dirs_to_remove <- sorted_dirs[(keep_n_archives + 1):length(sorted_dirs)]
+  # Obtain archive folders
+  archive_dirs <- sirfunctions_io("list", NULL, file.path(data_folder, "polis", "archive"),
+                                  edav = use_edav) |>
+    dplyr::mutate(date = lubridate::as_date(basename(name))) |>
+    dplyr::arrange(dplyr::desc(lastModified))
+
+  if (nrow(archive_dirs) > keep_n_archives) {
+    dirs_to_remove <- archive_dirs[(keep_n_archives + 1):nrow(archive_dirs), ]
+
     cli::cli_alert_info(paste0(
       "Removing ",
-      length(dirs_to_remove),
+      nrow(dirs_to_remove),
       " old archive folders"
     ))
-    lapply(dirs_to_remove, unlink, recursive = TRUE)
+
+    lapply(dirs_to_remove$name,
+           \(x) sirfunctions_io("delete", NULL, file_loc = x, edav = use_edav))
   }
 }
 
