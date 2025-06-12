@@ -730,7 +730,7 @@ get_all_polio_data <- function(
     attach.spatial.data = T,
     use_edav = TRUE,
     archive = TRUE,
-    keep_n_archives = 3) {
+    keep_n_archives = Inf) {
 
   # check to see that size parameter is appropriate
   if (!size %in% c("small", "medium", "large")) {

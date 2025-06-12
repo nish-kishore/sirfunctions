@@ -14,7 +14,7 @@ get_all_polio_data(
   attach.spatial.data = T,
   use_edav = TRUE,
   archive = TRUE,
-  keep_n_archives = 3
+  keep_n_archives = Inf
 )
 }
 \arguments{
