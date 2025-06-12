@@ -3279,7 +3279,7 @@ if (archive) {
 }
 
 # handle number of archives to keep
-if (archive && is.finite(keep_n_archives)) {
+if (archive & is.finite(keep_n_archives)) {
 
   # Obtain archive folders
   archive_dirs <- sirfunctions_io("list", NULL, file.path(data_folder, "polis", "archive"),
