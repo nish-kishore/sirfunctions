@@ -527,7 +527,7 @@ edav_io <- function(
     }
 
     if (force_delete) {
-      AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F, recursive = TRUE)
+      AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
     } else {
       x <- readline(prompt = "Are you sure you want to delete this folder? It can only be recovered by an administrator. [Y/N]")
       x <- tolower(x)
@@ -535,7 +535,7 @@ edav_io <- function(
 
       if (grepl("y|n", x)) {
         if (x == "y") {
-          AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F, recursive = TRUE)
+          AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
           cli::cli_alert_info("File deleted!")
         } else {
           cli::cli_alert_info("Deletion canceled.")
