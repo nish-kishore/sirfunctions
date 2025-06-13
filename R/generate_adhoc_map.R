@@ -605,6 +605,11 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
     )
   }
 
+  # Check if shape files are attached to raw.data
+  if (!"global.ctry" %in% names(raw.data)) {
+    cli::cli_abort("Spatial data not attached to raw.data. Use get_all_polio_data(attach.spatial.data = TRUE)")
+  }
+
   # Standardize inputs
   country <- stringr::str_trim(stringr::str_to_upper(country))
   surv <- stringr::str_trim(stringr::str_to_upper(surv))
