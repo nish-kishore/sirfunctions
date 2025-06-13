@@ -534,7 +534,7 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
                         faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$Region,
                                               scales = "free", space = "free",
                                               switch = "y",
-                                              labeller = label_wrap_gen(13)),
+                                              labeller = ggplot2::label_wrap_gen(13)),
                         y.axis.title = "% Districts w/ U15Pop>=100k, NPAFP >= 3 (ENDEMICS),\n NPAFP >=2 (AFRO, EMRO, SEARO), NPAFP >= 1 (WPRO)") +
     ggplot2::theme(
       axis.title.y = ggplot2::element_text(size = 8)
@@ -588,7 +588,7 @@ generate_kpi_evdetect_bar <- function(c1, afp_data,
                                     faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$Region,
                                                                    scales = "free", space = "free",
                                                                    switch = "y",
-                                                                   labeller = label_wrap_gen(13)),
+                                                                   labeller = ggplot2::label_wrap_gen(13)),
                                     y.axis.title = "% sites meeting EV detection rate of 50%")
 
   ggplot2::ggsave(file.path(output_path, "kpi_bar_es.png"),
@@ -633,7 +633,7 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
                                     faceting = ggplot2::facet_grid(.data$rolling_period ~ .data$Region,
                                                                    scales = "free", space = "free",
                                                                    switch = "y",
-                                                                   labeller = label_wrap_gen(13)),
+                                                                   labeller = ggplot2::label_wrap_gen(13)),
                                     y.axis.title = "% Stool Adequacy")
 
   ggplot2::ggsave(file.path(output_path, "kpi_bar_stoolad.png"),
@@ -921,12 +921,12 @@ generate_timely_ship_violin <- function(afp_data,
   if (rolling) {
     facets <- ggh4x::facet_nested(rolling_period ~ culture.itd.cat,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   } else {
     facets <- ggh4x::facet_nested(year ~ culture.itd.cat,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   }
 
@@ -1045,12 +1045,12 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
   if (rolling) {
     facets <- ggh4x::facet_nested(rolling_period~culture.itd.lab, #+ culture.itd.cat,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   } else {
     facets <- ggh4x::facet_nested(year~culture.itd.lab, #+ culture.itd.cat,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   }
 
@@ -1131,12 +1131,12 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
   if (rolling) {
     facets <- ggh4x::facet_nested(rolling_period ~ culture.itd.lab,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(20),
+                                  labeller = ggplot2::label_wrap_gen(20),
                                   switch = "y")
   } else {
     facets <- ggh4x::facet_nested(year ~ culture.itd.lab,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(20),
+                                  labeller = ggplot2::label_wrap_gen(20),
                                   switch = "y")
   }
 
@@ -1217,12 +1217,12 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
   if (rolling) {
     facets <- ggh4x::facet_nested(rolling_period ~ seq.lab,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   } else {
     facets <- ggh4x::facet_nested(year ~ seq.lab,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   }
 
@@ -1304,12 +1304,12 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
   if (rolling) {
     facets <- ggh4x::facet_nested(rolling_period ~ seq.cat + seq.lab,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   } else {
     facets <- ggh4x::facet_nested(year ~ seq.cat + seq.lab,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   }
 
@@ -1417,12 +1417,12 @@ generate_lab_itdres_seqres_violin <- function(lab_data, afp_data,
   if (rolling) {
     facets <- ggh4x::facet_nested(rolling_period ~ seq.cat + seq.lab,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   } else {
     facets <- ggh4x::facet_nested(year ~ seq.cat + seq.lab,
                                   scales = "free", space = "free",
-                                  labeller = label_wrap_gen(13),
+                                  labeller = ggplot2::label_wrap_gen(13),
                                   switch = "y")
   }
 
