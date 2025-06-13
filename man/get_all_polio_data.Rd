@@ -13,9 +13,9 @@ get_all_polio_data(
   recreate.static.files = FALSE,
   attach.spatial.data = TRUE,
   use_edav = TRUE,
+  use_archived_data = FALSE,
   archive = TRUE,
-  keep_n_archives = Inf,
-  use_archived_data = FALSE
+  keep_n_archives = Inf
 )
 }
 \arguments{
@@ -41,15 +41,15 @@ spatial files, coverage data, and population data. Defaults to \code{"GID/PEB/SI
 
 \item{use_edav}{\code{bool} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
 
+\item{use_archived_data}{\code{bool} Allows the ability to recreate the raw data file using previous
+preprocessed data. If}
+
 \item{archive}{Logical. Whether to archive previous output directories
 before overwriting. Default is \code{TRUE}.}
 
 \item{keep_n_archives}{Numeric. Number of archive folders to retain.
 Defaults to \code{Inf}, which keeps all archives. Set to a finite number
 (e.g., 3) to automatically delete older archives beyond the N most recent.}
-
-\item{use_archived_data}{\code{bool} Allows the ability to recreate the raw data file using previous
-preprocessed data. If}
 }
 \value{
 Named \code{list} containing polio data that is relevant to CDC.

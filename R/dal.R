@@ -3405,32 +3405,57 @@ get_archived_polis_data <- function(data_folder_path, edav) {
   # Check if there's an archived folder
   if (!sirfunctions_io("exists.dir", NULL,
     file.path(data_folder_path, "polis", "archive"),
-    edav = edav
-  )) {
+    edav = edav)) {
+
     cli::cli_abort("No archive found, unable to build archived raw_data.")
-  } else {
-    cli::cli_alert_info("Enter the row number for the archive to build raw_data from: ")
+
+    }
+
     polio_data_path <- NULL
+    archive_folders <- sirfunctions_io("list", NULL,
+                                       file.path(data_folder_path, "polis", "archive"),
+                                       edav = edav
+    )
+
+  if (nrow(archive_folders) == 0) {
+
+    cli::cli_abort("The data/polis/archive folder does not contain any archived data.")
+
+    } else {
+
+    archive_tbl <- archive_folders |>
+      dplyr::mutate(archived_data = basename(name)) |>
+      dplyr::select(archived_data)
+
+    n <- nrow(archive_tbl)
+
+    cli::cli_alert_info("{n} archive {.strong folder{?s}} found:")
+    cli::cli_ul()
+    cli::cli_ol(archive_tbl$archived_data)
+    cli::cli_end()
+
+    cli::cli_alert_info(
+      "Select the row number of the archive to use for building {.field raw_data}."
+    )
+
     while (TRUE) {
-      archive_folders <- sirfunctions_io("list", NULL,
-        file.path(data_folder_path, "polis", "archive"),
-        edav = edav
-      )
-
-      archive_folders |>
-        dplyr::mutate(archived_data = basename(name)) |>
-        dplyr::select(archived_data) |>
-        print()
-
-      response <- readline("> ")
+      response <- readline("Enter row number: ")
       response <- as.numeric(stringr::str_trim(response))
 
-      if (is.na(response) | response > nrow(archive_folders) | response <= 0) {
-        cli::cli_alert_info("Invalid response, please try again.")
+      if (is.na(response) | response > n | response <= 0) {
+        cli::cli_alert_warning(
+          "Invalid input. Please enter a number between 1 and {n}."
+        )
       } else {
-        return(archive_folders[response, ] |> pull(name))
+        cli::cli_alert_success(paste0("Creating polio dataset from the ",
+                                      archive_folders[response, ] |>
+                                        dplyr::pull(name) |>
+                                        basename(),
+                                      " archive."))
+        return(archive_folders[response, ] |> dplyr::pull(name))
       }
     }
+
   }
 }
 
