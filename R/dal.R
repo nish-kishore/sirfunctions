@@ -3324,7 +3324,7 @@ if (archive & is.finite(keep_n_archives)) {
   archive_dirs <- sirfunctions_io("list", NULL, file.path(data_folder, "polis", "archive"),
                                   edav = use_edav) |>
     dplyr::mutate(date = lubridate::as_date(basename(name))) |>
-    dplyr::arrange(dplyr::desc(lastModified))
+    dplyr::arrange(dplyr::desc(date))
 
   if (nrow(archive_dirs) > keep_n_archives) {
     dirs_to_remove <- archive_dirs[(keep_n_archives + 1):nrow(archive_dirs), ]
