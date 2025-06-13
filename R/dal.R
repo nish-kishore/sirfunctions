@@ -298,7 +298,7 @@ sirfunctions_io <- function(
       edav_io(io = "delete.dir", NULL, force_delete = T, azcontainer = azcontainer,
               file_loc = file_loc)
     } else {
-      unlink(file_loc, recursive = TRUE)
+      unlink(file_loc, recursive = TRUE, force = TRUE)
     }
   }
 
