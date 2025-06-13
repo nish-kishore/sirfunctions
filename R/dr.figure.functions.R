@@ -3728,7 +3728,7 @@ generate_inad_tab <- function(ctry.data,
     )
 
   inad.tab <- allinadstool |>
-    dplyr::select(-dplyr::any_of(c(
+    dplyr::select(-dplyr::any_of(c("weight",
       "days_in_year", "days.at.risk",
       "adm0guid", "earliest_date", "latest_date",
       "datasource", "ctry", "u15pop"
