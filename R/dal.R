@@ -3262,7 +3262,6 @@ create_polis_data_folder <- function(data_folder, polis_folder,
     dplyr::select(name, src_path, dest_path)
 
   # Archive previous versions in the core polis data folder
-  cli::cli_process_start("Archiving previous data in the polis folder")
   if (!sirfunctions_io("exists.dir", NULL, file.path(data_folder, "polis", "archive"), edav = use_edav)) {
     sirfunctions_io("create.dir", NULL, file.path(data_folder, "polis", "archive"), edav = use_edav)
   }
@@ -3282,6 +3281,7 @@ create_polis_data_folder <- function(data_folder, polis_folder,
 
 # Move previous files to archive in polis data folder
 if (archive) {
+  cli::cli_process_start("Archiving previous data in the polis folder")
    # Explicitly create since Sys.Date() could potentially vary when ran overnight
   archive_folder_name <- Sys.Date()
   sirfunctions_io("create.dir", NULL,
