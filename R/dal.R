@@ -142,10 +142,10 @@ sirfunctions_io <- function(
     file_loc <- default_folder
   }
 
-  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create.dir")
+  opts <- c("read", "write", "delete", "delete.dir", "list", "exists.dir", "exists.file", "create.dir")
 
   if (!io %in% opts) {
-    stop("io: must be 'read', 'write', 'delete', 'create.dir', 'exists.dir', 'exists.file' or 'list'")
+    stop("io: must be 'read', 'write', 'delete', 'delete.dir', 'create.dir', 'exists.dir', 'exists.file' or 'list'")
   }
 
   if (io == "write" & is.null(obj)) {
@@ -274,7 +274,8 @@ sirfunctions_io <- function(
 
   if (io == "delete") {
     if (edav) {
-      edav_io("delete", NULL, file_loc = file_loc, force_delete = T, azcontainer = azcontainer)
+      edav_io("delete", NULL, file_loc = file_loc, force_delete = T,
+              azcontainer = azcontainer)
     } else {
       file.remove(file_loc)
     }
@@ -289,6 +290,15 @@ sirfunctions_io <- function(
       } else {
         dir.create(file_loc)
       }
+    }
+  }
+
+  if (io == "delete.dir") {
+    if (edav) {
+      edav_io(io = "delete.dir", NULL, force_delete = T, azcontainer = azcontainer,
+              file_loc = file_loc)
+    } else {
+      unlink(file_loc, recursive = TRUE, force = TRUE)
     }
   }
 
@@ -312,6 +322,7 @@ sirfunctions_io <- function(
 #' - `"list"` Returns a tibble with all objects in a folder.
 #' - `"upload"` Moves a file of any type to EDAV.
 #' - `"delete"` Deletes a file.
+#' - `"delete.dir"` Deletes a folder.
 #' @param default_dir `str` The default directory in EDAV. `"GID/PEB/SIR"` is the default directory
 #' for all SIR data in EDAV. Can be set to `NULL` if you provide the full directory path in `file_loc`.
 #' @param file_loc `str` Location to "read", "write", "exists.dir", "exists.file", "create" or "list", can include
@@ -359,10 +370,11 @@ edav_io <- function(
     file_loc <- default_dir
   }
 
-  opts <- c("read", "write", "delete", "list", "exists.dir", "exists.file", "create", "upload")
+  opts <- c("read", "write", "delete", "delete.dir",
+            "list", "exists.dir", "exists.file", "create", "upload")
 
   if (!io %in% opts) {
-    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' 'list' or 'upload'")
+    stop("io: must be 'read', 'write', 'exists.dir', 'exists.file','create', 'delete' 'delete.dir' 'list' or 'upload'")
   }
 
   if (io == "write" & is.null(obj)) {
@@ -517,7 +529,7 @@ edav_io <- function(
     if (force_delete) {
       AzureStor::delete_storage_file(azcontainer, file_loc, confirm = F)
     } else {
-      x <- readline(prompt = "Are you sure you want to delete this file? It can only be recovered by an administrator. [Y/N]")
+      x <- readline(prompt = "Are you sure you want to delete this folder? It can only be recovered by an administrator. [Y/N]")
       x <- tolower(x)
 
 
@@ -533,6 +545,33 @@ edav_io <- function(
       }
     }
   }
+
+  if (io == "delete.dir") {
+    if (!AzureStor::storage_file_exists(azcontainer, file_loc)) {
+      stop("Folder does not exist")
+    }
+
+    if (force_delete) {
+      AzureStor::delete_adls_dir(azcontainer, file_loc, recursive = TRUE, confirm = FALSE)
+    } else {
+      x <- readline(prompt = "Are you sure you want to delete this folder? It can only be recovered by an administrator. [Y/N]")
+      x <- tolower(x)
+
+      if (grepl("y|n", x)) {
+        if (x == "y") {
+          AzureStor::delete_adls_dir(azcontainer, file_loc, recursive = TRUE, confirm = FALSE)
+          cli::cli_alert_info("Folder deleted!")
+        } else {
+          cli::cli_alert_info("Deletion canceled.")
+        }
+      } else {
+        stop("Response must be 'Y' or 'N'")
+      }
+    }
+
+    invisible()
+  }
+
 }
 
 #' Test network connection to the EDAV
@@ -705,6 +744,13 @@ get_constant <- function(constant_name = NULL) {
 #' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
 #' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.
 #' @param use_edav `bool` Build raw data list using EDAV files. Defaults to `TRUE`.
+#' @param archive Logical. Whether to archive previous output directories
+#'    before overwriting. Default is `TRUE`.
+#' @param keep_n_archives Numeric. Number of archive folders to retain.
+#'   Defaults to `Inf`, which keeps all archives. Set to a finite number
+#'   (e.g., 3) to automatically delete older archives beyond the N most recent.
+#'
+#'
 #' @returns Named `list` containing polio data that is relevant to CDC.
 #' @examples
 #' \dontrun{
@@ -721,10 +767,15 @@ get_all_polio_data <- function(
     force.new.run = F,
     recreate.static.files = F,
     attach.spatial.data = T,
-    use_edav = TRUE) {# check to see that size parameter is appropriate
-if (!size %in% c("small", "medium", "large")) {
-  stop("The parameter 'size' must be either 'small', 'medium', or 'large'")
-}
+    use_edav = TRUE,
+    archive = TRUE,
+    keep_n_archives = Inf) {
+
+  # check to see that size parameter is appropriate
+  if (!size %in% c("small", "medium", "large")) {
+    stop("The parameter 'size' must be either 'small', 'medium', or 'large'")
+  }
+
 
 # Constant variables
 # Each file comes out of these folders
@@ -901,7 +952,17 @@ if (!force.new.run) {
              } else {
                cli::cli_alert_info("Moving updated polis data to the data folder")
              }
-             create_polis_data_folder(data_folder, polis_folder, core_ready_folder, use_edav)
+
+
+             create_polis_data_folder(
+              data_folder,
+              polis_folder,
+              core_ready_folder,
+              use_edav,
+              archive,
+              keep_n_archives
+            )
+
            },
            "spatial" = {
              if (!sirfunctions_io("exists.dir", NULL, folder, edav = use_edav)) {
@@ -1035,12 +1096,12 @@ if (!force.new.run) {
   raw.data$afp.epi <- raw.data$afp |>
     dplyr::mutate(epi.week = lubridate::epiweek(dateonset)) |>
     dplyr::group_by(place.admin.0, epi.week, yronset, cdc.classification.all2) |>
-    dplyr::summarize(afp.cases = dplyr::n()) |>
+    dplyr::summarize(afp.cases = dplyr::n(),
+                     .groups = "drop") |>
     dplyr::mutate(epiweek.year = paste(yronset, epi.week, sep = "-")) |>
     # manual fix of epi week
     dplyr::mutate(epi.week = ifelse(epi.week == 52 &
-      yronset == 2022, 1, epi.week)) |>
-    dplyr::ungroup()
+      yronset == 2022, 1, epi.week))
 
   # factoring cdc classification to have an order we like in stacked bar chart
   raw.data$afp.epi$cdc.classification.all2 <-
@@ -3163,12 +3224,18 @@ read_excel_from_edav <- function(src, ...) {
 #' @param polis_folder `str` Path to the core ready folder
 #' @param core_ready_folder `str` Which core ready folder to use. Defaults to `"Core_Ready_Files"`.
 #' @param use_edav `bool` Are file paths on EDAV?
+#' @param archive Logical. Whether to archive previous output directories
+#'    before overwriting. Default is `TRUE`.
+#' @param keep_n_archives Numeric. Number of archive folders to retain.
+#'   Defaults to `Inf`, which keeps all archives. Set to a finite number
+#'   (e.g., 3) to automatically delete older archives beyond the N most recent.
 #'
 #' @return NULL
 #' @keywords internal
 #'
 create_polis_data_folder <- function(data_folder, polis_folder,
-                                    core_ready_folder, use_edav) {
+                                    core_ready_folder, use_edav,
+                                    archive = TRUE, keep_n_archives = Inf) {
 
   files <- c("afp_linelist_2001-01-01",
              "afp_linelist_2019-01-01",
@@ -3178,7 +3245,7 @@ create_polis_data_folder <- function(data_folder, polis_folder,
              "sia_2000")
 
   if (!sirfunctions_io("exists.dir", NULL,
-                      file.path(polis_folder, "data", "Core_Ready_Files"),
+                      file.path(polis_folder, "data", core_ready_folder),
                       edav = use_edav)) {
     cli::cli_abort("Core Ready folder not found in the POLIS folder. Please run preprocessing and try again.")
   }
@@ -3195,35 +3262,36 @@ create_polis_data_folder <- function(data_folder, polis_folder,
     dplyr::select(name, src_path, dest_path)
 
   # Archive previous versions in the core polis data folder
-  cli::cli_process_start("Archiving previous data in the polis folder")
   if (!sirfunctions_io("exists.dir", NULL, file.path(data_folder, "polis", "archive"), edav = use_edav)) {
     sirfunctions_io("create.dir", NULL, file.path(data_folder, "polis", "archive"), edav = use_edav)
   }
-  # Move previous files to archive in polis data folder
 
-  # Explicitly create since Sys.Date() could potentially vary when ran overnight
+  current.table <- sirfunctions_io(io = "list", NULL,
+                                   file.path(data_folder, "polis"),
+                                   edav = use_edav) |>
+                                    dplyr::filter(isdir != TRUE)
+
+  current.table <- current.table |>
+    dplyr::select(src_path = name) |>
+    dplyr::mutate(
+      name = basename(src_path)
+    ) |>
+    dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
+    dplyr::select(name, src_path)
+
+# Move previous files to archive in polis data folder
+if (archive) {
+  cli::cli_process_start("Archiving previous data in the polis folder")
+   # Explicitly create since Sys.Date() could potentially vary when ran overnight
   archive_folder_name <- Sys.Date()
   sirfunctions_io("create.dir", NULL,
                   file.path(data_folder, "polis", "archive", archive_folder_name),
                   edav = use_edav)
 
-  current.table <- sirfunctions_io(io = "list", NULL,
-                                 file.path(data_folder, "polis"),
-                                 edav = use_edav) |>
-    dplyr::filter(isdir != TRUE)
-
   if (nrow(current.table) == 0) {
     cli::cli_alert_success("No data to archive")
     cli::cli_process_done()
   } else {
-    current.table <- current.table |>
-      dplyr::select(src_path = name) |>
-      dplyr::mutate(
-        name = basename(src_path)
-      ) |>
-      dplyr::filter(stringr::str_starts(name, paste0(files, collapse = "|"))) |>
-      dplyr::select(name, src_path)
-
     current.table.size <- sirfunctions_io(io = "list", NULL,
                                           file.path(data_folder, "polis"),
                                           edav = use_edav) |>
@@ -3247,16 +3315,39 @@ create_polis_data_folder <- function(data_folder, polis_folder,
     })
     cli::cli_process_done()
   }
+}
+
+# handle number of archives to keep
+if (archive & is.finite(keep_n_archives)) {
+
+  # Obtain archive folders
+  archive_dirs <- sirfunctions_io("list", NULL, file.path(data_folder, "polis", "archive"),
+                                  edav = use_edav) |>
+    dplyr::mutate(date = lubridate::as_date(basename(name))) |>
+    dplyr::arrange(dplyr::desc(date))
+
+  if (nrow(archive_dirs) > keep_n_archives) {
+    dirs_to_remove <- archive_dirs[(keep_n_archives + 1):nrow(archive_dirs), ]
+
+    cli::cli_alert_info(paste0(
+      "Removing ",
+      nrow(dirs_to_remove),
+      " old archive folders"
+    ))
+
+    lapply(dirs_to_remove$name,
+           \(x) sirfunctions_io("delete.dir", NULL, file_loc = x, edav = use_edav))
+  }
+}
 
   cli::cli_process_start("Adding updated data to polis data folder")
 
-  # Delete previous files
-  if (nrow(current.table) != 0) {
-    lapply(1:nrow(current.table), \(i) {
-      sirfunctions_io("delete", NULL,
-                      current.table$src_path[i], edav = use_edav)
-    })
-  }
+# Delete previous files
+if (nrow(current.table) != 0) {
+  lapply(1:nrow(current.table), \(i) {
+    sirfunctions_io("delete", NULL, current.table$src_path[i], edav = use_edav)
+  })
+}
 
   # Move all files to core polis data folder
   lapply(1:nrow(source.table), function(i){

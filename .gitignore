@@ -51,3 +51,4 @@ rsconnect/
 #files 
 R/nish_sandbox.R
 inst/doc
+.DS_Store

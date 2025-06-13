@@ -28,6 +28,7 @@ of interest. See examples.
 \item \code{"list"} Returns a tibble with all objects in a folder.
 \item \code{"upload"} Moves a file of any type to EDAV.
 \item \code{"delete"} Deletes a file.
+\item \code{"delete.dir"} Deletes a folder.
 }}
 
 \item{default_dir}{\code{str} The default directory in EDAV. \code{"GID/PEB/SIR"} is the default directory
