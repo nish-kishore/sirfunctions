@@ -1974,9 +1974,14 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     "C1. ES EV detection rate – national, %",
     "C1. Timeliness of detection for WPV/VDPV, %"
   )
+
+  c1_stool_description <- switch(as.character(sc_targets),
+                                 "TRUE" = "Proportion of districts with >=5 AFP cases and stool adequacy >= 90%",
+                                 "FALSE" = "Proportion of districts with >=5 AFP cases and stool adequacy >= 80%")
+
   c1_indicators_explanation <- c(
     "Proportion of districts with >=100K U15 population meeting regional NPAFP rate targets (AFR, EMR, SEAR: >=2, AMR, EUR, WPR: >=1, Endemics: >=3)",
-    "Proportion of districts with >=5 AFP cases and stool adequacy >= 80%",
+    c1_stool_description,
     "Proportion of active surveillance sites (sites open >=12 months with >=10 samples collected in the last 12 months) meeting EV detection sensitivity target of >=50%",
     "Proportion of WPVs and VDPVs with final lab results within 35 days (full laboratory capacity) or 46 days (without full laboratory capacity) of onset for AFP cases or collection date for ES samples"
   )
@@ -2026,14 +2031,22 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
       "C3. Median Timeliness of ES sample, %",
       "C3. Timeliness of detection for WPV/VDPV – ES, %"
     )
+
+  es_cond_description <- switch(as.character(sc_targets),
+                                "TRUE" = "Proportion of ES sites with 90% of samples arriving the lab in good condition",
+                                "FALSE" = "Proportion of ES sites with 80% of samples arriving the lab in good condition")
+  es_vdpv_description <- switch(as.character(sc_targets),
+                                "TRUE" = "Proportion of ES sites with >=90% of samples having WPV/VDPV final lab results within 35 (full laboratory capacity) or 46 days (without full laboratory capacity) of collection",
+                                "FALSE" = "Proportion of ES sites with >=80% of samples having WPV/VDPV final lab results within 35 (full laboratory capacity) or 46 days (without full laboratory capacity) of collection")
+
   c3_indicators_explanation <- c(
     "ES Sites with at least one collection in the past twelve months",
     "ES Sites open >=12 months with >=10 samples collected in the last 12 months",
     "Proportion of active ES sites that met an EV detection rate of >=50%",
     "Proportion of ES sites with >=5 samples collected in the last 12 months that met an EV detection rate of >=50%",
-    "Proportion of ES sites with 80% of samples arriving the lab in good condition",
+    es_cond_description,
     "Median proportion of samples across ES sites that arrive at a WHO-accredited lab within 3 days (domestic shipment) or 7 days (international) of sample collection",
-    "Proportion of ES sites with >=80% of samples having WPV/VDPV final lab results within 35 (full laboratory capacity) or 46 days (without full laboratory capacity) of collection"
+    es_vdpv_description
   )
   c4_indicators <- c(
     "C4. Timeliness of virus isolation results",
