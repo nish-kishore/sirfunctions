@@ -801,7 +801,11 @@ global_dist_sf_name <- "global.dist.rds"
 if (use_archived_data) {
   cli::cli_alert_info("Using archived data")
   cli::cli_alert_info("NOTE: the metadata will be for the most recent pull")
-  polis_data_folder <- get_archived_polis_data(data_folder, use_edav)
+  polis_data_folder <- get_archived_polis_data(
+    data_folder,
+    use_edav,
+    keep_n_archives
+  )
   recreate.static.files <- TRUE
 }
 
@@ -3397,11 +3401,14 @@ if (nrow(current.table) != 0) {
 #'
 #' @param data_folder_path `str` Path to the data folder
 #' @param edav `bool` Whether to use EDAV or  not.
+#' @param keep_n_archives Numeric. Number of archive folders to retain.
+#'   Defaults to `Inf`, which keeps all archives. Set to a finite number
+#'   (e.g., 3) to automatically delete older archives beyond the N most recent.
 #'
 #' @returns `str` Path to the archived polis folder
 #' @keywords internal
 #'
-get_archived_polis_data <- function(data_folder_path, edav) {
+get_archived_polis_data <- function(data_folder_path, edav, keep_n_archives = Inf) {
   # Check if there's an archived folder
   if (!sirfunctions_io("exists.dir", NULL,
     file.path(data_folder_path, "polis", "archive"),
@@ -3423,15 +3430,44 @@ get_archived_polis_data <- function(data_folder_path, edav) {
 
     } else {
 
-    archive_tbl <- archive_folders |>
-      dplyr::mutate(archived_data = basename(name)) |>
-      dplyr::select(archived_data)
+        # remove older folders if necessary
+        if (nrow(archive_folders) > keep_n_archives) {
+          dirs_to_remove <- archive_folders[
+            (keep_n_archives + 1):nrow(archive_folders),
+          ]
+
+          cli::cli_alert_info(
+            "Removing {nrow(dirs_to_remove)} old POLIS archive folder{?s}."
+          )
+
+          purrr::walk(dirs_to_remove$name, \(x) {
+            sirfunctions_io("delete.dir", NULL, x, edav = edav)
+          })
+
+          archive_folders <- archive_folders[seq_len(keep_n_archives), ]
+        }
+
+      archive_tbl <- archive_folders |>
+        dplyr::mutate(
+          archived_data = basename(name),
+          date = lubridate::as_date(archived_data),
+          days_ago = as.integer(lubridate::today() - date),
+          label = glue::glue(
+            "Archived from {format(date, '%d %B %Y')} ",
+            "({days_ago} day{ifelse(days_ago == 1, '', 's')} ago)"
+          )
+        ) |>
+        dplyr::select(name, archived_data, label)
 
     n <- nrow(archive_tbl)
 
     cli::cli_alert_info("{n} archive {.strong folder{?s}} found:")
     cli::cli_ul()
-    cli::cli_ol(archive_tbl$archived_data)
+    purrr::walk2(
+      seq_len(n),
+      archive_tbl$label,
+      ~ cli::cli_li("{.strong {.val {.x}}}: {.emph {.y}}")
+    )
     cli::cli_end()
 
     cli::cli_alert_info(
@@ -3458,4 +3494,3 @@ get_archived_polis_data <- function(data_folder_path, edav) {
 
   }
 }
-
