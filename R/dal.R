@@ -234,8 +234,8 @@ sirfunctions_io <- function(
         file_loc, azcontainer = azcontainer
       ))
     } else {
-      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$", file_loc)) {
-        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx', 'xls', 'parquet' are supported for reading.")
+      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$|.qs2$", file_loc)) {
+        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx' 'xls' 'parquet' and 'qs2' are supported for reading.")
       }
 
       if (endsWith(file_loc, ".rds")) {
@@ -244,6 +244,8 @@ sirfunctions_io <- function(
         return(load(file_loc))
       } else if (endsWith(file_loc, ".csv")) {
         return(readr::read_csv(file_loc))
+      } else if (endsWith(file_loc, ".qs") | endsWith(file_loc, ".qs2")) {
+        return(qs2::qs_read(file_loc))
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         return(read_excel_from_edav(src = file_loc, ...))
       } else if (endsWith(file_loc, ".parquet")) {
@@ -260,14 +262,16 @@ sirfunctions_io <- function(
     if (edav) {
       edav_io(io = "write", NULL, file_loc = file_loc, obj = obj, azcontainer = azcontainer)
     } else {
-      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$", file_loc)) {
-        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx', 'xls' and 'parquet' are supported for reading.")
+      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$|.qs2$", file_loc)) {
+        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx', 'xls' 'parquet' and 'qs2' are supported for reading.")
       } else if (endsWith(file_loc, ".rds")) {
         readr::write_rds(x = obj, file = file_loc)
       } else if (endsWith(file_loc, ".rda")) {
         save(list = obj, file = file_loc)
       } else if (endsWith(file_loc, ".csv")) {
         readr::write_csv(x = obj, file = file_loc)
+      } else if (endsWith(file_loc, ".qs") | endsWith(file_loc, ".qs2")) {
+        qs2::qs_save(obj, file_loc)
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         writexl::write_xlsx(obj, path = file_loc)
       } else if (endsWith(file_loc, ".parquet")) {
@@ -754,9 +758,30 @@ get_constant <- function(constant_name = NULL) {
   )
 }
 
+#' Normalize and validate file output format
+#'
+#' Ensures the format has a leading dot and is lowercase (e.g., '.rds'),
+#' and checks that it is one of the supported formats.
+#'
+#' @param fmt A character string specifying the output format
+#'            (e.g., 'rds', '.qs2', 'CSV').
+#'
+#' @return A normalized format string with a leading dot (e.g., '.qs2').
+#' @noRd
+normalize_format <- function(fmt) {
+  # Ensure lowercase and leading dot
+  fmt <- tolower(gsub("^([^\\.])", ".\\1", fmt))
 
+  # Check if supported
+  valid_formats <- c(".rds", ".rda", ".csv", ".qs", ".qs2", ".parquet")
+  if (!fmt %in% valid_formats) {
+    stop(
+      "Currently, only 'rds', 'rda', 'csv', 'qs', 'qs2', and 'parquet' are supported."
+    )
+  }
 
-
+  return(fmt)
+}
 
 #### 2) Key data pull functions ####
 
@@ -788,6 +813,8 @@ get_constant <- function(constant_name = NULL) {
 #' @param keep_n_archives Numeric. Number of archive folders to retain.
 #'   Defaults to `Inf`, which keeps all archives. Set to a finite number
 #'   (e.g., 3) to automatically delete older archives beyond the N most recent.
+#' @param output_format str: output_format to save files as.
+#' Available formats include 'rds' 'rda' 'csv' 'qs2' and 'parquet', Defaults is #' 'rds'.
 #'
 #'
 #' @param use_archived_data `bool` Allows the ability to recreate the raw data file using previous
@@ -811,13 +838,16 @@ get_all_polio_data <- function(
     use_edav = TRUE,
     use_archived_data = FALSE,
     archive = TRUE,
-    keep_n_archives = Inf) {
+    keep_n_archives = Inf,
+    output_format = "rds") {
 
   # check to see that size parameter is appropriate
   if (!size %in% c("small", "medium", "large")) {
     stop("The parameter 'size' must be either 'small', 'medium', or 'large'")
   }
 
+# normalize and validate both output formats
+output_format <- normalize_format(output_format)
 
 # Constant variables
 # Each file comes out of these folders
@@ -828,9 +858,9 @@ coverage_folder <- file.path(data_folder, "coverage")
 pop_folder <- file.path(data_folder, "pop")
 
 # Required files
-raw_data_recent_name <- "raw.data.recent.rds"
-raw_data_2016_2018_name <- "raw.data.2016.2018.rds"
-raw_data_2000_name <- "raw.data.2000.2015.rds"
+raw_data_recent_name <- paste0("raw.data. recent.", output_format)
+raw_data_2016_2018_name <- paste0("raw.data.2016.2018.", output_format)
+raw_data_2000_name <- paste0("raw.data. 2000.2015.", output_format)
 spatial_data_name <- "spatial.data.rds"
 global_ctry_sf_name <- "global.ctry.rds"
 global_prov_sf_name <- "global.prov.rds"
@@ -1417,7 +1447,7 @@ if (create.cache) {
   out_files <- out$split.years |>
     dplyr::mutate(
       file_name = ifelse(grepl(current.year, tag), "recent", stringr::str_replace_all(tag, "-", ".")),
-      file_name = paste0("raw.data.", file_name, ".rds")
+      file_name = paste0("raw.data.", file_name, output_format)
     )
 
   if (!recreate.static.files) {
@@ -1433,11 +1463,17 @@ if (create.cache) {
       )
     }
 
-    sirfunctions_io("write", NULL,
-                    file_loc = file.path(analytic_folder, "spatial.data.rds"),
-                    obj = spatial.data, edav = use_edav
-    )
+# set up path for spatial df
+  sp_file_path <- if (output_format %in% c(".qs2", ".qs")) {
+    file.path(analytic_folder, paste0("spatial.data", output_format))
+  } else {
+    file.path(analytic_folder, "spatial.data.rds")
   }
+
+  sirfunctions_io("write", NULL,
+    file_loc = sp_file_path,
+    obj = spatial.data, edav = use_edav
+  )
 
   cli::cli_process_done()
 }
