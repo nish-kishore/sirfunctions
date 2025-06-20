@@ -236,10 +236,10 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
       wild_vdpv_cases = sum(.data$source == "AFP" & .data$is_target, na.rm = TRUE),
       wild_vdpv_env = sum(.data$source == "ENV" & .data$is_target, na.rm = TRUE),
       wild_vdpv_samples = sum(.data$is_target, na.rm = TRUE),
-      timely_samples = sum(.data$is_timely, na.rm = TRUE),
-      timely_cases = sum(.data$source == "AFP" & .data$is_timely),
-      timely_env = sum(.data$source == "ENV" & .data$is_timely),
-      timely_wild_vdpv_samples = sum(.data$is_target & .data$is_timely),
+      timely_samples = sum(.data$is_timely & timely_cat != "Missing or bad data", na.rm = TRUE),
+      timely_cases = sum(.data$source == "AFP" & .data$is_timely & timely_cat != "Missing or bad data"),
+      timely_env = sum(.data$source == "ENV" & .data$is_timely & timely_cat != "Missing or bad data"),
+      timely_wild_vdpv_samples = sum(.data$is_target & .data$is_timely & timely_cat != "Missing or bad data"),
       prop_timely_samples = .data$timely_samples / dplyr::n() * 100,
       prop_timely_samples_label = paste0(.data$timely_samples, "/", dplyr::n()),
       prop_timely_cases = .data$timely_cases / .data$wild_vdpv_cases * 100,
@@ -855,6 +855,14 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 #' values are `"LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH"`
 #' @param who_region `str` WHO region to summarize the data to.
 #' @param .group_by `str` How the rollup should be grouped. Defaults to the column `"rolling_period"`.
+#' @param npafp_target `num` Target used when calculating the proportion of districts in a country
+#' that meets NPAFP rate.
+#' @param stool_target `num` Target used when calculating the proportion of districts in a country
+#' that meets stool adequacy rate.
+#' @param ev_target `num` Target used when calculating the proportion of ES sites in a country
+#' that meets EV detection rate.
+#' @param timely_wpv_vdpv_target `num` Target used when calculating the proportion of ES sites in a country
+#' that meets timeliness of detection of WPV and VDPV cases.
 #'
 #' @returns `tibble` A summary rollup
 #' @export
@@ -868,7 +876,11 @@ generate_c1_table <- function(raw_data, start_date, end_date,
 generate_c1_rollup <- function(c1,
                                priority_level = "HIGH",
                                who_region = NULL,
-                               .group_by = "rolling_period") {
+                               .group_by = "rolling_period",
+                               npafp_target = 80,
+                               stool_target = 80,
+                               ev_target = 80,
+                               timely_wpv_vdpv_target = 80) {
 
 
   if (!is.null(priority_level)) {
@@ -885,14 +897,14 @@ generate_c1_rollup <- function(c1,
     dplyr::filter(`SG Priority Level` %in% priority_level) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(.group_by))) |>
     dplyr::summarize(
-      met_npafp = sum(prop_met_npafp >= 80, na.rm = TRUE),
+      met_npafp = sum(prop_met_npafp >= npafp_target, na.rm = TRUE),
       npafp_denom = sum(!is.na(prop_met_npafp)),
       stool_denom = sum(!is.na(prop_met_stool)),
       ev_denom = sum(!is.na(prop_met_ev)),
       det_denom = sum(!is.na(prop_timely_wild_vdpv)),
-      met_stool = sum(prop_met_stool >= 80, na.rm = TRUE),
-      met_ev = sum(prop_met_ev >= 80, na.rm = TRUE),
-      met_timely_wild_vdpv = sum(prop_timely_wild_vdpv >= 80, na.rm = TRUE),
+      met_stool = sum(prop_met_stool >= stool_target, na.rm = TRUE),
+      met_ev = sum(prop_met_ev >= ev_target, na.rm = TRUE),
+      met_timely_wild_vdpv = sum(prop_timely_wild_vdpv >= timely_wpv_vdpv_target, na.rm = TRUE),
       prop_met_npafp = met_npafp / npafp_denom * 100,
       prop_met_stool = met_stool / stool_denom * 100,
       prop_met_ev = met_ev / ev_denom * 100,
@@ -1455,6 +1467,8 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #' @param include_labels `bool` Include columns for the labels? Default TRUE.
 #' @param min_sample `num` Only consider sites with at least this number
 #' of ES samples. Default is `10`.
+#' @param timely_spv_vdpv_target Target used when determining whether a country
+#' meets EV detection target.
 #'
 #' @return `tibble` A summary of the c3 table at the country level
 #' @export
@@ -1465,7 +1479,8 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
 #' c3_rollup <- generate_c3_rollup(c3)
 #' }
-generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
+generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10,
+                               timely_wpv_vdpv_target = 80) {
 
   if (!"site.name" %in% names(c3)) {
     cli::cli_abort("Please summarize c3 at the site level and try again.")
@@ -1482,7 +1497,7 @@ generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10) {
       met_ev = sum(ev_rate >= 50 & n_samples_12_mo >= min_sample & site_age >= 12, na.rm = TRUE),
       met_ev_5_samples = sum(ev_rate >= 50 & n_samples_12_mo >= 5, na.rm = TRUE),
       met_good_samples = sum(prop_good_es >= 80, na.rm = TRUE),
-      met_timely_wpv_vdpv_det = sum(prop_timely_det_wpv_vdpv >= 80, na.rm = TRUE),
+      met_timely_wpv_vdpv_det = sum(prop_timely_det_wpv_vdpv >= timely_wpv_vdpv_target, na.rm = TRUE),
       median_timely_shipment_per_site = median(prop_timely_ship, na.rm = TRUE),
       es_sites = sum(n_samples_12_mo >= 1, na.rm = TRUE),
       active_sites = sum(n_samples_12_mo >= min_sample & site_age >= 12, na.rm = TRUE),
@@ -1613,6 +1628,9 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
 #' initiated after running [init_kpi()].
 #' @param drop_label_cols `bool` Keep or discard label columns. Defaults to
 #' `TRUE`.
+#' @param sc_targets `bool` Whether to use SC targets when exporting the table. Defaults to FALSE.
+#' @param pos_data `tibble` Positives dataset.
+#' @param risk_table `tibble` The risk table. Required if using sc_targets and outside of CDC.
 #'
 #' @return None.
 #' @export
@@ -1628,7 +1646,32 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
 #' }
 export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                              output_path = Sys.getenv("KPI_TABLES"),
-                             drop_label_cols = FALSE) {
+                             drop_label_cols = FALSE,
+                             sc_targets = FALSE, pos_data = NULL,
+                             risk_table = NULL) {
+
+  if (sc_targets) {
+    if (is.null(pos_data)) {
+      cli::cli_abort("Please pass the positives dataset (i.e., raw_data$pos) to the pos_data param.")
+    } else {
+      pos_data <- add_risk_category(pos_data, risk_table, "place.admin.0")
+      high_risk <- pos_data |>
+        dplyr::filter(`SG Priority Level` == "HIGH") |>
+        dplyr::pull(place.admin.0)
+      ctry_pos_wpv_vdpv <- pos_data |>
+        mutate(is_target = dplyr::if_else(
+          stringr::str_detect(measurement, "WILD|VDPV"),
+          TRUE, FALSE)) |>
+        filter(source %in% c("AFP", "ENV"),
+               is_target == TRUE,
+               yronset >= 2022,
+               `SG Priority Level` != "LOW") |>
+        pull(place.admin.0) |>
+        unique()
+      combined_ctry <- c(high_risk, ctry_pos_wpv_vdpv) |> unique()
+    }
+  }
+
   format_table <- function(x) {
 
     tryCatch(
@@ -1660,13 +1703,35 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
   }
 
   if (!is.null(c1)) {
-    c1_rollup <- generate_c1_rollup(c1)
+    if (sc_targets) {
+      c1 <- c1 |>
+        dplyr::filter(ctry %in% combined_ctry)
+      c1_rollup <- generate_c1_rollup(c1,
+                                      priority_level = c("LOW (WATCHLIST)", "MEDIUM", "HIGH"),
+                                      npafp_target = 90,
+                                      stool_target = 90,
+                                      ev_target = 90,
+                                      timely_wpv_vdpv_target = 90)
+    } else {
+      c1_rollup <- generate_c1_rollup(c1)
+    }
   } else {
     c1_rollup <- NULL
   }
 
+  if (!is.null(c2)) {
+    if (sc_targets) {
+      c2 <- c2 |> dplyr::filter(ctry %in% combined_ctry)
+    }
+  }
+
   if (!is.null(c3)) {
-    c3 <- generate_c3_rollup(c3)
+    if (sc_targets) {
+      c3 <- c3 |> dplyr::filter(ADM0_NAME %in% combined_ctry)
+      c3 <- generate_c3_rollup(c3, timely_wpv_vdpv_target = 90)
+    } else {
+      c3 <- generate_c3_rollup(c3)
+    }
   } else {
     c3 <- NULL
   }
@@ -1909,9 +1974,14 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     "C1. ES EV detection rate – national, %",
     "C1. Timeliness of detection for WPV/VDPV, %"
   )
+
+  c1_stool_description <- switch(as.character(sc_targets),
+                                 "TRUE" = "Proportion of districts with >=5 AFP cases and stool adequacy >= 90%",
+                                 "FALSE" = "Proportion of districts with >=5 AFP cases and stool adequacy >= 80%")
+
   c1_indicators_explanation <- c(
     "Proportion of districts with >=100K U15 population meeting regional NPAFP rate targets (AFR, EMR, SEAR: >=2, AMR, EUR, WPR: >=1, Endemics: >=3)",
-    "Proportion of districts with >=5 AFP cases and stool adequacy >= 80%",
+    c1_stool_description,
     "Proportion of active surveillance sites (sites open >=12 months with >=10 samples collected in the last 12 months) meeting EV detection sensitivity target of >=50%",
     "Proportion of WPVs and VDPVs with final lab results within 35 days (full laboratory capacity) or 46 days (without full laboratory capacity) of onset for AFP cases or collection date for ES samples"
   )
@@ -1961,14 +2031,22 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
       "C3. Median Timeliness of ES sample, %",
       "C3. Timeliness of detection for WPV/VDPV – ES, %"
     )
+
+  es_cond_description <- switch(as.character(sc_targets),
+                                "TRUE" = "Proportion of ES sites with 90% of samples arriving the lab in good condition",
+                                "FALSE" = "Proportion of ES sites with 80% of samples arriving the lab in good condition")
+  es_vdpv_description <- switch(as.character(sc_targets),
+                                "TRUE" = "Proportion of ES sites with >=90% of samples having WPV/VDPV final lab results within 35 (full laboratory capacity) or 46 days (without full laboratory capacity) of collection",
+                                "FALSE" = "Proportion of ES sites with >=80% of samples having WPV/VDPV final lab results within 35 (full laboratory capacity) or 46 days (without full laboratory capacity) of collection")
+
   c3_indicators_explanation <- c(
     "ES Sites with at least one collection in the past twelve months",
     "ES Sites open >=12 months with >=10 samples collected in the last 12 months",
     "Proportion of active ES sites that met an EV detection rate of >=50%",
     "Proportion of ES sites with >=5 samples collected in the last 12 months that met an EV detection rate of >=50%",
-    "Proportion of ES sites with 80% of samples arriving the lab in good condition",
+    es_cond_description,
     "Median proportion of samples across ES sites that arrive at a WHO-accredited lab within 3 days (domestic shipment) or 7 days (international) of sample collection",
-    "Proportion of ES sites with >=80% of samples having WPV/VDPV final lab results within 35 (full laboratory capacity) or 46 days (without full laboratory capacity) of collection"
+    es_vdpv_description
   )
   c4_indicators <- c(
     "C4. Timeliness of virus isolation results",

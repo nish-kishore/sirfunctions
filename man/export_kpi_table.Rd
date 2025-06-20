@@ -10,7 +10,10 @@ export_kpi_table(
   c3 = NULL,
   c4 = NULL,
   output_path = Sys.getenv("KPI_TABLES"),
-  drop_label_cols = FALSE
+  drop_label_cols = FALSE,
+  sc_targets = FALSE,
+  pos_data = NULL,
+  risk_table = NULL
 )
 }
 \arguments{
@@ -27,6 +30,12 @@ initiated after running \code{\link[=init_kpi]{init_kpi()}}.}
 
 \item{drop_label_cols}{\code{bool} Keep or discard label columns. Defaults to
 \code{TRUE}.}
+
+\item{sc_targets}{\code{bool} Whether to use SC targets when exporting the table. Defaults to FALSE.}
+
+\item{pos_data}{\code{tibble} Positives dataset.}
+
+\item{risk_table}{\code{tibble} The risk table. Required if using sc_targets and outside of CDC.}
 }
 \value{
 None.

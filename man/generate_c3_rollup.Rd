@@ -4,7 +4,12 @@
 \alias{generate_c3_rollup}
 \title{Create a country level rollup of the C3 label}
 \usage{
-generate_c3_rollup(c3, include_labels = TRUE, min_sample = 10)
+generate_c3_rollup(
+  c3,
+  include_labels = TRUE,
+  min_sample = 10,
+  timely_wpv_vdpv_target = 80
+)
 }
 \arguments{
 \item{c3}{\code{tibble} Output of \code{\link[=generate_c3_table]{generate_c3_table()}}.}
@@ -13,6 +18,9 @@ generate_c3_rollup(c3, include_labels = TRUE, min_sample = 10)
 
 \item{min_sample}{\code{num} Only consider sites with at least this number
 of ES samples. Default is \code{10}.}
+
+\item{timely_spv_vdpv_target}{Target used when determining whether a country
+meets EV detection target.}
 }
 \value{
 \code{tibble} A summary of the c3 table at the country level
