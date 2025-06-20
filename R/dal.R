@@ -234,8 +234,8 @@ sirfunctions_io <- function(
         file_loc, azcontainer = azcontainer
       ))
     } else {
-      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$", file_loc)) {
-        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx' and 'xls' are supported for reading.")
+      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$", file_loc)) {
+        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx', 'xls', 'parquet' are supported for reading.")
       }
 
       if (endsWith(file_loc, ".rds")) {
@@ -246,6 +246,8 @@ sirfunctions_io <- function(
         return(readr::read_csv(file_loc))
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         return(read_excel_from_edav(src = file_loc, ...))
+      } else if (endsWith(file_loc, ".parquet")) {
+        return(arrow::read_parquet(file_loc))
       }
     }
   }
@@ -258,8 +260,8 @@ sirfunctions_io <- function(
     if (edav) {
       edav_io(io = "write", NULL, file_loc = file_loc, obj = obj, azcontainer = azcontainer)
     } else {
-      if (!grepl(".rds$|.rda$|.csv$", file_loc)) {
-        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx' and 'xls' are supported for reading.")
+      if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$", file_loc)) {
+        stop("At the moment only 'rds' 'rda' 'csv' 'xlsx', 'xls' and 'parquet' are supported for reading.")
       } else if (endsWith(file_loc, ".rds")) {
         readr::write_rds(x = obj, file = file_loc)
       } else if (endsWith(file_loc, ".rda")) {
@@ -268,6 +270,8 @@ sirfunctions_io <- function(
         readr::write_csv(x = obj, file = file_loc)
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         writexl::write_xlsx(obj, path = file_loc)
+      } else if (endsWith(file_loc, ".parquet")) {
+        arrow::write_parquet(obj, sink = file_loc)
       }
     }
   }
@@ -419,8 +423,8 @@ edav_io <- function(
       stop("File does not exist")
     }
 
-    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$", file_loc)) {
-      stop("At the moment only 'rds' 'rda', 'csv', 'xls', and 'xlsx' are supported for reading.")
+    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$", file_loc)) {
+      stop("At the moment only 'rds' 'rda', 'csv', 'xls', 'xlsx' and 'parquet' are supported for reading.")
     }
 
     if (endsWith(file_loc, ".rds")) {
@@ -465,17 +469,35 @@ edav_io <- function(
         }
         )
       return(output)
+    } else if (endsWith(file_loc, ".parquet")) {
+      output <- NULL
+      withr::with_tempdir(
+        {
+          AzureStor::storage_download(azcontainer,
+                                      file_loc,
+                                      file.path(tempdir(), basename(file_loc)),
+                                      overwrite = TRUE
+          )
+          output <- arrow::read_parquet(file.path(tempdir(),
+                                                         basename(file_loc)))
+        }
+      )
+      return(output)
     }
   }
 
   if (io == "write") {
-    if (!grepl(".rds$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$", file_loc)) {
+    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$|.parquet$", file_loc)) {
       cli::cli_abort(paste0("Please pass a path including the file name in file_loc.",
                             " (i.e., folder/data.csv)"))
     }
 
     if (endsWith(file_loc, ".rds")) {
       AzureStor::storage_save_rds(object = obj, container = azcontainer, file = file_loc)
+    }
+
+    if (endsWith(file_loc, ".rda")) {
+      AzureStor::storage_save_rdata(object = obj, container = azcontainer, file = file_loc)
     }
 
     if (endsWith(file_loc, ".csv")) {
@@ -494,6 +516,22 @@ edav_io <- function(
           )
         }
         )
+    }
+
+    if (endsWith(file_loc, ".parquet")) {
+      withr::with_tempdir(
+        {
+
+          arrow::write_parquet(obj,
+                               file.path(tempdir(), basename(file_loc))
+                               )
+
+          AzureStor::storage_upload(
+            container = azcontainer, dest = file_loc,
+            src = file.path(tempdir(), basename(file_loc))
+          )
+        }
+      )
     }
 
     if ("gg" %in% class(obj)) {
@@ -515,6 +553,7 @@ edav_io <- function(
       )
       unlink(temp)
     }
+
   }
 
   if (io == "upload") {

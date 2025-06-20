@@ -209,7 +209,7 @@ utils::globalVariables(c(
   "country_name", "vpd", "variable", "iso3_code", "vpd_short_name",
 
   # From sirfunctions_io()
-  "isdir", "lastModified"
+  "isdir", "lastModified", "mtime", "uid"
 
 
 ))
