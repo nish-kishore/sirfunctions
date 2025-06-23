@@ -244,7 +244,7 @@ sirfunctions_io <- function(
         return(load(file_loc))
       } else if (endsWith(file_loc, ".csv")) {
         return(readr::read_csv(file_loc))
-      } else if (endsWith(file_loc, ".qs") | endsWith(file_loc, ".qs2")) {
+      } else if (endsWith(file_loc, ".qs2")) {
         return(qs2::qs_read(file_loc))
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         return(read_excel_from_edav(src = file_loc, ...))
@@ -270,7 +270,7 @@ sirfunctions_io <- function(
         save(list = obj, file = file_loc)
       } else if (endsWith(file_loc, ".csv")) {
         readr::write_csv(x = obj, file = file_loc)
-      } else if (endsWith(file_loc, ".qs") | endsWith(file_loc, ".qs2")) {
+      } else if (endsWith(file_loc, ".qs2")) {
         qs2::qs_save(obj, file_loc)
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         writexl::write_xlsx(obj, path = file_loc)
@@ -529,6 +529,20 @@ edav_io <- function(
           arrow::write_parquet(obj,
                                file.path(tempdir(), basename(file_loc))
                                )
+
+          AzureStor::storage_upload(
+            container = azcontainer, dest = file_loc,
+            src = file.path(tempdir(), basename(file_loc))
+          )
+        }
+      )
+    }
+
+    if (endsWith(file_loc, ".qs2")) {
+      withr::with_tempdir(
+        {
+
+          qs2::qs_save(obj, file.path(tempdir(), basename(file_loc)))
 
           AzureStor::storage_upload(
             container = azcontainer, dest = file_loc,
@@ -1460,11 +1474,11 @@ if (create.cache) {
                       file_loc = file.path(analytic_folder, dplyr::pull(out_files[i, ], file_name)),
                       obj = out[[dplyr::pull(out_files[i, ], tag)]],
                       edav = use_edav
-      )
+      )}
     }
 
 # set up path for spatial df
-  sp_file_path <- if (output_format %in% c(".qs2", ".qs")) {
+  sp_file_path <- if (output_format %in% c(".qs2")) {
     file.path(analytic_folder, paste0("spatial.data", output_format))
   } else {
     file.path(analytic_folder, "spatial.data.rds")
@@ -3304,7 +3318,7 @@ explore_edav <- function(path = get_constant("DEFAULT_EDAV_FOLDER"),
 #' @param src `str` Path to the Excel file.
 #' @param ... Additional parameters of [readxl::read_excel()].
 #'
-#' @return `tibble` or `list` A tibble or a list of tibbles containing data from
+#' @returns `tibble` or `list` A tibble or a list of tibbles containing data from
 #' the Excel file.
 #' @keywords internal
 #'
@@ -3337,7 +3351,7 @@ read_excel_from_edav <- function(src, ...) {
 #'   Defaults to `Inf`, which keeps all archives. Set to a finite number
 #'   (e.g., 3) to automatically delete older archives beyond the N most recent.
 #'
-#' @return NULL
+#' @returns NULL
 #' @keywords internal
 #'
 create_polis_data_folder <- function(data_folder, polis_folder,
