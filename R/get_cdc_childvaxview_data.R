@@ -13,8 +13,10 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' cdc_data <- get_cdc_childvaxview_data(geo_level="substate")
 #' cdc_data <- get_cdc_childvaxview_data(geo_level="national", vaccines=c("Polio","MMR"))
+#' }
 #'
 get_cdc_childvaxview_data <- function(geo_level=NULL, vaccines=NULL,
                                       limit = 1000,

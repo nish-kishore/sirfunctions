@@ -507,8 +507,10 @@ add_rolling_years <- function(df, start_date, end_date, date_col, period = month
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
+#' }
 generate_c1_table <- function(raw_data, start_date, end_date,
                               risk_category = NULL,
                               risk_table = NULL,
@@ -934,8 +936,10 @@ generate_c1_rollup <- function(c1,
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31", "ctry")
+#' }
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
                               spatial_scale,
                               risk_category = NULL,
@@ -1341,8 +1345,10 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
+#' }
 generate_c3_table <- function(es_data, start_date, end_date,
                               risk_category = NULL,
                               lab_locs = NULL,

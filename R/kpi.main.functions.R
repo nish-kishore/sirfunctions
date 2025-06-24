@@ -174,8 +174,10 @@ init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry_abbrev <- get_ctry_abbrev(raw_data$afp)
+#' }
 get_ctry_abbrev <- function(afp_data) {
   ctry_abbrev <- afp_data |>
     dplyr::mutate(
