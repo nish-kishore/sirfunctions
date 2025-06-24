@@ -243,6 +243,7 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
         values = emg_cols
       )
     }
+  return(g1)
 }
 
 #' Identifying new detections
