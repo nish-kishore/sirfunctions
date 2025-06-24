@@ -720,7 +720,7 @@ generate_kpi_violin <- function(
 #' @param end_date `str` Analysis end date formatted as "YYYY-MM-DD".
 #' @param priority_level `list` Priority levels to display. Defaults to
 #' `c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")`.
-#' @param rolling `bool` Using rolling periods or year-to-year? Defaults to `TRUE`.
+#' @param rolling `logical` Using rolling periods or year-to-year? Defaults to `TRUE`.
 #' @param who_region `list` Regions to display. Defaults to `NULL`, which shows
 #' all of the regions.
 #' @param output_path `str` Where to output the figure to.
@@ -837,7 +837,7 @@ generate_timely_det_violin <- function(raw_data,
 #' @param end_date `str` Analysis end date formatted as "YYYY-MM-DD".
 #' @param priority_level `list` Priority levels to display. Defaults to
 #' `c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")`.
-#' @param rolling `bool` Using rolling periods or year-to-year? Defaults to `TRUE`.
+#' @param rolling `logical` Using rolling periods or year-to-year? Defaults to `TRUE`.
 #' @param who_region `list` Regions to display. Defaults to `NULL`, which shows
 #' all of the regions.
 #' @param output_path `str` Where to output the figure to.
@@ -988,7 +988,7 @@ generate_timely_ship_violin <- function(afp_data,
 #' `c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")`.
 #' @param who_region `list` Regions to display. Defaults to `NULL`, which shows
 #' all of the regions.
-#' @param rolling `bool` Using rolling periods or year-to-year? Defaults to `TRUE`.
+#' @param rolling `logical` Using rolling periods or year-to-year? Defaults to `TRUE`.
 #' @param output_path `str` Where to output the figure to.
 #' @param y_max `num` Maximum value in the y-axis.
 #'

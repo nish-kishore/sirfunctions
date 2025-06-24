@@ -46,8 +46,8 @@ get_vpd_vars <- function() {
 #' which returns all the countries in the dataset.
 #' @param iso3_codes `str` An ISO3 code or a list of ISO3 codes. Defaults to `NULL`,
 #' which returns all the ISO3 codes in the dataset.
-#' @param add_ctry_sf `bool` Attach the country shapefile? Defaults to `TRUE`.
-#' @param add_ctry_pop `bool` Attach the country population data? Defaults to `TRUE`.
+#' @param add_ctry_sf `logical` Attach the country shapefile? Defaults to `TRUE`.
+#' @param add_ctry_pop `logical` Attach the country population data? Defaults to `TRUE`.
 #'
 #' @returns `list` A list containing the VPD data, and optionally the shapefile
 #' and population data.

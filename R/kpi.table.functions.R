@@ -1470,7 +1470,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #'
 #'
 #' @param c3 `tibble` Output of [generate_c3_table()].
-#' @param include_labels `bool` Include columns for the labels? Default TRUE.
+#' @param include_labels `logical` Include columns for the labels? Default TRUE.
 #' @param min_sample `num` Only consider sites with at least this number
 #' of ES samples. Default is `10`.
 #' @param timely_spv_vdpv_target Target used when determining whether a country
@@ -1632,9 +1632,9 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
 #' @param c4 `tibble` Output of [generate_c4_table()]. Defaults to `NULL`.
 #' @param output_path `str` Path to output the table to. Defaults to the path
 #' initiated after running [init_kpi()].
-#' @param drop_label_cols `bool` Keep or discard label columns. Defaults to
+#' @param drop_label_cols `logical` Keep or discard label columns. Defaults to
 #' `TRUE`.
-#' @param sc_targets `bool` Whether to use SC targets when exporting the table. Defaults to FALSE.
+#' @param sc_targets `logical` Whether to use SC targets when exporting the table. Defaults to FALSE.
 #' @param pos_data `tibble` Positives dataset.
 #' @param risk_table `tibble` The risk table. Required if using sc_targets and outside of CDC.
 #'

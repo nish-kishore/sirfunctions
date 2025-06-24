@@ -8,8 +8,8 @@
 #' output of [get_all_polio_data()].
 #' @param dist `sf` Shapefile of all districts.
 #' @param ctry `sf` Shapefile of all countries.
-#' @param include_env `bool` To include environmental detections in analysis. Defaults to `TRUE`.
-#' @param cumulative `bool` To display cases as cumulative. Defaults to `TRUE`.
+#' @param include_env `logical` To include environmental detections in analysis. Defaults to `TRUE`.
+#' @param cumulative `logical` To display cases as cumulative. Defaults to `TRUE`.
 #' @param out_gif `str` Location where gif should be saved.
 #'
 #' @returns GIF written out to location of `out_gif`.

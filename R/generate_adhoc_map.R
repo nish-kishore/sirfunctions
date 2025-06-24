@@ -79,7 +79,7 @@ set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
 #' @param m_base_prov  `sf` Map base for provinces.
 #' @param data_p `tibble` Data for map creation.
 #' @param m_data_prov `tibble` Map data for provinces.
-#' @param new_detect `bool` Whether to include new detections.
+#' @param new_detect `logical` Whether to include new detections.
 #' @param virus_type `str` or `list` Virus type to display.
 #' @param surv_options `str` or `list` Surveillance options.
 #' @param start_date `date` Start date.
@@ -87,7 +87,7 @@ set_zoom_level <- function(g1, map_ref, country, m_base_ctry) {
 #' @param download_date `date` Date global polio data was downloaded.
 #' @param emg_cols `list` Emergence colors.
 #' @param country `str` Country or countries of interest.
-#' @param labels `bool` Whether to label provinces.
+#' @param labels `logical` Whether to label provinces.
 #' @param clean_maps `ggplot` Clean maps.
 #' @param data_r `tibble` Reported detections.
 #' @param .owner `str` Entity that produced the map.
@@ -313,7 +313,7 @@ last_detections_prov <- function(data_p, .start_date, .end_date) {
 #' areguments from [generate_adhoc_map()].
 #'
 #' @param raw.data `list` global polio data output from [get_all_polio_data()]
-#' @param .vdpv `bool` Whether to include VDPV in maps.
+#' @param .vdpv `logical` Whether to include VDPV in maps.
 #' @param country `str` or `list` Name of the country or countries.
 #' @param virus_type `str` or `list` Virus type to map.
 #' @param .start_date `date` Start date.
@@ -442,7 +442,7 @@ load_sharepoint_env <- function(raw.data) {
 #' @param country `str` or `list` Countries of interest.
 #' @param start_date `str` Start date of the time span to look for emergences. Defaults to 13 months from the end date.
 #' @param end_date  `str` End date of the time span to look for emergences Defaults to download date of `raw.data`.
-#' @param get_unassigned `bool` Get a list of emergence without a color mapped. This parameter is
+#' @param get_unassigned `logical` Get a list of emergence without a color mapped. This parameter is
 #' useful for ensuring that emergences are all accounted for when making a map.
 #'
 #' @returns `list` A named list containing the mapping of emergence and corresponding colors.
@@ -531,8 +531,8 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 #' @param country `str` or `list` Country name or a list of country names.
 #' @param start_date `str` Start date. If not specified, defaults to 13 months prior to the download date of raw.data.
 #' @param end_date `str` End date. If not specified, defaults to the download date of raw.data.
-#' @param vdpv `bool` Whether to include VPDV in maps. Default `TRUE`.
-#' @param new_detect `bool` Whether to highlight new detections based on WHO HQ report date. Default `TRUE`.
+#' @param vdpv `logical` Whether to include VPDV in maps. Default `TRUE`.
+#' @param new_detect `logical` Whether to highlight new detections based on WHO HQ report date. Default `TRUE`.
 #' @param output `str` Either a path to a local folder to save the map to, `"sharepoint"`, or `NULL`. Defaults to `NULL`.
 #' @param emg_cols `list` A named list with all of the emergence colors. Defaults to `NULL`, which will download
 #' using [set_emergence_colors()].
@@ -551,7 +551,7 @@ set_emergence_colors <- function(raw.data, country, start_date = NULL, end_date 
 #' - `"ALL"`: All regions
 #' - `"YES"`: Recent Detections - <13 months
 #' @param owner `str` Who produced the map. Defaults to `"CDC-GID-PEB"`.
-#' @param new_detect_expand `bool` Whether to expand the reporting window. Defaults to `FALSE`.
+#' @param new_detect_expand `logical` Whether to expand the reporting window. Defaults to `FALSE`.
 #' @param image_size `str` Standard sizes of the map outputs. Options are:
 #' - `"full_slide"`
 #' - `"soco_slide"`

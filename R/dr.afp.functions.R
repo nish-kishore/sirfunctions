@@ -1010,7 +1010,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #'
 #' @param cases.need60day `tibble` Summary table of cases that need 60-day follow-up.
 #' This is the output of [generate_60_day_table_data()].
-#' @param create_cluster `bool` Add column for clusters? Default to `FALSE`.
+#' @param create_cluster `logical` Add column for clusters? Default to `FALSE`.
 #' @returns `tibble` A summary table of cases.
 #' @examples
 #' \dontrun{

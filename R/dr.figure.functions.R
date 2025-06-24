@@ -2306,7 +2306,7 @@ generate_stool_ad_maps_dist <- function(ctry.data,
 #' @param prov.shape `sf` Province shapefile in long format.
 #' @param start_date `str` Start date of analysis.
 #' @param end_date `str` End date of analysis.
-#' @param mark_x `bool` Mark where there are less than 5 AFP cases? Defaults to `TRUE`.
+#' @param mark_x `logical` Mark where there are less than 5 AFP cases? Defaults to `TRUE`.
 #' @param pt_size `numeric` Size of the marks.
 #' @param output_path `str` Local path where to save the figure to.
 #'

@@ -12,7 +12,7 @@
 #' Defaults to current working directory.
 #' @param name `str` Name of the KPI analysis folder. If not given any names, the
 #' folder will be named the date the function is ran.
-#' @param edav `bool` Whether to use EDAV to load the raw_data and lab_data files.
+#' @param edav `logical` Whether to use EDAV to load the raw_data and lab_data files.
 #' Defaults to `TRUE`.
 #'
 #' @returns Does not return anything
@@ -231,7 +231,7 @@ get_ctry_abbrev <- function(afp_data) {
 #'
 #' @param output_path `str` Where to output the script to.
 #' @param name `str` Name of the KPI folder.
-#' @param edav `bool` Whether the init pulled data from EDAV or not.
+#' @param edav `logical` Whether the init pulled data from EDAV or not.
 #'
 #' @returns None.
 #'

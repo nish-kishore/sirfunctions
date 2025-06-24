@@ -225,7 +225,7 @@ set_data_size <- function(year) {
 #' @param attach_spatial_data whether to attach spatial data
 #' @param .data_folder `str` Path to the data folder.
 #' @param .polis_folder `str` Path to the POLIS folder.
-#' @param .use_edav `bool` Whether to use EDAV or not.
+#' @param .use_edav `logical` Whether to use EDAV or not.
 #' @keywords internal
 #'
 #' @returns `list` large list containing polio data
@@ -484,14 +484,14 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 #' the function is ran.
 #' @param local_dr_folder `str` Folder where the desk review code is located.
 #' Defaults to the current working directory.
-#' @param attach_spatial_data `bool` Whether to include spatial data. Defaults to `TRUE`.
+#' @param attach_spatial_data `logical` Whether to include spatial data. Defaults to `TRUE`.
 #' @param sg_dr_folder `str` Folder where the local git repository is located. Defaults to `NULL`.
 #' @param lab_data_path `str` Location of the lab data. Defaults to `NULL`.
 #' @param iss_data_path `str` Location of the ISS data. Defaults to `NULL`.
 #' @param branch `str` What branch to download the DR functions from GitHub.
 #' `"main"` is the default, which contains the official version of the package. Other branches,
 #' like `"dev"` may contain experimental features not yet available in the `"main"` branch.
-#' @param source `bool` Whether to source local functions or use sirfunctions. Defaults to `TRUE`.
+#' @param source `logical` Whether to source local functions or use sirfunctions. Defaults to `TRUE`.
 #' @inheritParams get_all_polio_data
 #'
 #' @returns `list` A list containing all dataframe for all polio data.

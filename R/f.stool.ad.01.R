@@ -351,8 +351,8 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #' - `"exclude"` uses `adequacy.02`
 #' @param bad.data `str` How to  treat bad data. Valid values are:`"remove", "inadequate"`. Defaults to `"inadequate"`.
 #' `"inadequate"` treats samples with bad data as inadequate.
-#' @param rolling `bool` Should data be analyzed on a rolling bases? Defaults to `FALSE`.
-#' @param sp_continuity_validation `bool` Should GUIDs not present in all years of the dataset be excluded? Default `TRUE`.
+#' @param rolling `logical` Should data be analyzed on a rolling bases? Defaults to `FALSE`.
+#' @param sp_continuity_validation `logical` Should GUIDs not present in all years of the dataset be excluded? Default `TRUE`.
 #' @param admin.data `tibble` Population data. Renamed in favor of `pop.data`.
 #' @returns `tibble` Long format stool adequacy evaluations.
 #' @examples
