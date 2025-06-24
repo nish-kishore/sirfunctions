@@ -3,6 +3,9 @@
 
 <br>
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/nish-kishore/sirfunctions/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/nish-kishore/sirfunctions/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
 
 ## Overview
 
