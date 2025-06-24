@@ -97,14 +97,14 @@ get_azure_storage_connection <- function(
 #' - `"delete"`: deletes a file or folder in the specified `file_path`.
 #' @param file_loc `str` Path of file relative to the `default_folder`.
 #' @param default_folder `str` The default folder to use. Defaults to `"GID/PEB/SIR`.
-#' @param edav `bool` Whether the function should interact with the EDAV environment.
+#' @param edav `logical` Whether the function should interact with the EDAV environment.
 #' Defaults to `TRUE`, otherwise, interacts with files locally.
 #' @param azcontainer `Azure container` A container object returned by
 #' [get_azure_storage_connection()].
-#' @param full_names `bool` If `io="list"`, include the full reference path. Default `TRUE`.
+#' @param full_names `logical` If `io="list"`, include the full reference path. Default `TRUE`.
 #' @param ... Optional parameters that work with [readr::read_delim()] or [readxl::read_excel()].
 #' @returns Conditional on `io`. If `io` is `"read"`, then it will return a tibble. If `io` is `"list"`, it will return a
-#' list of file names. Otherwise, the function will return `NULL`. `exists.dir` and `exists.file` will return a `bool`.
+#' list of file names. Otherwise, the function will return `NULL`. `exists.dir` and `exists.file` will return a `logical`.
 #'
 #' @examples
 #' \dontrun{
@@ -337,7 +337,7 @@ sirfunctions_io <- function(
 #' the information in `default_dir` if you set that parameter to `NULL`.
 #' @param obj `robj` Object to be saved, needed for `"write"`. Defaults to `NULL`.
 #' @param azcontainer Azure container object returned from [get_azure_storage_connection()].
-#' @param force_delete `bool` Use delete io without verification in the command line.
+#' @param force_delete `logical` Use delete io without verification in the command line.
 #' @param local_path `str` Local file pathway to upload a file to EDAV. Default is `NULL`.
 #' This parameter is only required when passing `"upload"` in the `io` parameter.
 #' @param ... Optional parameters that work with [readr::read_delim()] or [readxl::read_excel()].
@@ -653,10 +653,12 @@ edav_io <- function(
 #' @param folder `str` Location of folder in the EDAV environment that you want to download
 #' and upload data from.
 #' @param test_size `int` byte size of a theoretical file to be uploaded or downloaded.
-#' @param return_list `bool` return a list of download time estimates. Defaults to `FALSE`.
+#' @param return_list `logical` return a list of download time estimates. Defaults to `FALSE`.
 #' @returns System message with download and update time, potentially a list.
 #' @examples
+#' \dontrun{
 #' test_EDAV_connection()
+#' }
 #'
 #' @export
 test_EDAV_connection <- function(
@@ -793,7 +795,7 @@ get_constant <- function(constant_name = NULL) {
 #' @param fmt A character string specifying the output format
 #'            (e.g., 'rds', '.qs2', 'CSV').
 #'
-#' @return A normalized format string with a leading dot (e.g., '.qs2').
+#' @returns A normalized format string with a leading dot (e.g., '.qs2').
 #' @noRd
 normalize_format <- function(fmt) {
   # Ensure lowercase and leading dot
@@ -831,10 +833,10 @@ normalize_format <- function(fmt) {
 #' spatial files, coverage data, and population data. Defaults to `"GID/PEB/SIR/Data"`.
 #' @param polis_folder `str` Location of the POLIS folder. Defaults to `"GID/PEB/SIR/POLIS"`.
 #' @param core_ready_folder `str` Which core ready folder to use. Defaults to `"Core_Ready_Files"`.
-#' @param force.new.run `bool` Default `FALSE`, if `TRUE` will run recent data and cache.
-#' @param recreate.static.files `bool` Default `FALSE`, if `TRUE` will run all data and cache.
-#' @param attach.spatial.data `bool` Default `TRUE`, adds spatial data to downloaded object.
-#' @param use_edav `bool` Build raw data list using EDAV files. Defaults to `TRUE`.
+#' @param force.new.run `logical` Default `FALSE`, if `TRUE` will run recent data and cache.
+#' @param recreate.static.files `logical` Default `FALSE`, if `TRUE` will run all data and cache.
+#' @param attach.spatial.data `logical` Default `TRUE`, adds spatial data to downloaded object.
+#' @param use_edav `logical` Build raw data list using EDAV files. Defaults to `TRUE`.
 #' @param archive Logical. Whether to archive previous output directories
 #'    before overwriting. Default is `TRUE`.
 #' @param keep_n_archives Numeric. Number of archive folders to retain.
@@ -844,7 +846,7 @@ normalize_format <- function(fmt) {
 #' Available formats include 'rds' 'rda' 'csv' 'qs2' and 'parquet', Defaults is #' 'rds'.
 #'
 #'
-#' @param use_archived_data `bool` Allows the ability to recreate the raw data file using previous
+#' @param use_archived_data `logical` Allows the ability to recreate the raw data file using previous
 #' preprocessed data. If
 #' @returns Named `list` containing polio data that is relevant to CDC.
 #' @examples
@@ -1539,8 +1541,10 @@ return(raw.data)
 #' @param .country `str` Country name of interest. Case insensitive.
 #' @returns Named `list` with country specific datasets.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("nigeria", raw.data)
+#' }
 #'
 #' @export
 extract_country_data <- function(
@@ -1950,8 +1954,10 @@ extract_country_data <- function(
 #'
 #' @param .raw.data Named `list` output of [get_all_polio_data()]
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' raw.data <- duplicate_check(raw.data)
+#' }
 #' @export
 #'
 duplicate_check <- function(.raw.data = raw.data) {
@@ -2042,7 +2048,7 @@ duplicate_check <- function(.raw.data = raw.data) {
 #' Update a local global polio data (raw.data) with new data.
 #'
 #' @param local_dataset `str` File path to the global polio data RDS file.
-#' @param overwrite `bool` Should the file be overwritten? Default `TRUE`.
+#' @param overwrite `logical` Should the file be overwritten? Default `TRUE`.
 #' @returns None.
 #' @export
 #' @examples
@@ -2180,7 +2186,7 @@ update_polio_data <- function(local_dataset, overwrite = T) {
 #' @param dist_name `str array` Array of all dist names that you want to pull.
 #' @param end_year `int` Last year you want to pull information for. Default is current year.
 #' @param st_year `int` Earlier year of spatial data you want to pull. Default is 2000.
-#' @param data_only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
+#' @param data_only `logical` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
 #' @param type `str` Whether to return a spatial object for every year group. Defaults to `NULL`.
 #' - `"long"` Return a dataset for every year group.
 #' - `NULL` Return a dataset only with unique GUIDs and when they were active.
@@ -2188,18 +2194,20 @@ update_polio_data <- function(local_dataset, overwrite = T) {
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
-#' @param edav `bool` Load from EDAV? Defaults to `TRUE`.
+#' @param edav `logical` Load from EDAV? Defaults to `TRUE`.
 #' @param end.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `end_year`.
 #' @param st.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `st_year`.
-#' @param data.only `bool` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' @param data.only `logical` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `data_only`.
 #'
 #' @returns `tibble` or `sf` Dataframe containing spatial data.
 #' @examples
+#' \dontrun{
 #' dist <- load_clean_dist_sp(ctry_name = c("ALGERIA", "NIGERIA"), st.year = 2019)
 #' dist.long <- load_clean_dist_sp(ctry_name = "ALGERIA", st.year = 2019, type = "long")
+#' }
 #'
 #' @export
 load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
@@ -2331,7 +2339,7 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' @param ctry_name `str array` Array of all country names that you want to pull.
 #' @param end_year `int` Last year you want to pull information for. Default is current year.
 #' @param st_year `int` Earlier year of spatial data you want to pull. Default is 2000.
-#' @param data_only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
+#' @param data_only `logical` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
 #' @param type `str` Whether to return a spatial object for every year group. Defaults to `NULL`.
 #' - `"long"` Return a dataset for every year group.
 #' - `NULL` Return a dataset only with unique GUIDs and when they were active.
@@ -2339,12 +2347,12 @@ load_clean_dist_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
-#' @param edav `bool` Load from EDAV? Defaults to `TRUE`.
+#' @param edav `logical` Load from EDAV? Defaults to `TRUE`.
 #' @param end.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `end_year`.
 #' @param st.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `st_year`.
-#' @param data.only `bool` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' @param data.only `logical` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `data_only`.
 #'
 #' @returns `tibble` or `sf` Dataframe containing spatial data.
@@ -2458,7 +2466,7 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' @param ctry_name `str array` Array of all country names that you want to pull.
 #' @param end_year `int` Last year you want to pull information for. Default is current year.
 #' @param st_year `int` Earlier year of spatial data you want to pull. Default is 2000.
-#' @param data_only `bool` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
+#' @param data_only `logical` Whether to return a tibble with shapefiles or not. Defaults to `FALSE`.
 #' @param type `str` Whether to return a spatial object for every year group. Defaults to `NULL`.
 #' - `"long"` Return a dataset for every year group.
 #' - `NULL` Return a dataset only with unique GUIDs and when they were active.
@@ -2466,18 +2474,20 @@ load_clean_prov_sp <- function(azcontainer = suppressMessages(get_azure_storage_
 #' still under evaluation/development. Default is `"standard"`.
 #' - `"standard"` Standard shapefiles.
 #' - `"dev"`  New shapefiles still under evaluation/development.
-#' @param edav `bool` Load data from EDAV? Defaults to TRUE.
+#' @param edav `logical` Load data from EDAV? Defaults to TRUE.
 #' @param end.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `end_year`.
 #' @param st.year `int` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `st_year`.
-#' @param data.only `bool` `r lifecycle::badge("deprecated")` Renamed in favor of
+#' @param data.only `logical` `r lifecycle::badge("deprecated")` Renamed in favor of
 #' `data_only`.
 #'
 #' @returns `tibble` or `sf` Dataframe containing spatial data.
 #' @examples
+#' \dontrun{
 #' ctry <- load_clean_ctry_sp(ctry_name = "ALGERIA")
 #' ctry.long <- load_clean_ctry_sp(ctry_name = "ALGERIA", type = "long")
+#' }
 #' @export
 load_clean_ctry_sp <- function(azcontainer = suppressMessages(get_azure_storage_connection()),
                                fp = "GID/PEB/SIR/Data/spatial/global.ctry.rds",
@@ -2846,9 +2856,11 @@ check_afp_geographies <- function(afp_data, pop_data, spatial_scale, fix_afp=FAL
 #'
 #' @returns `list` A list containing errors in province and district GUIDs.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data() # must contain spatial data to run the function
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' error.list <- check_afp_guid_ctry_data(ctry.data)
+#' }
 #'
 #' @export
 check_afp_guid_ctry_data <- function(ctry.data) {
@@ -2931,6 +2943,7 @@ check_afp_guid_ctry_data <- function(ctry.data) {
 #'
 #' @returns `tibble` AFP data with corrected GUIDs based on the population files.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data()
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' error.list <- check_afp_guid_ctry_data(ctry.data)
@@ -2940,6 +2953,7 @@ check_afp_guid_ctry_data <- function(ctry.data) {
 #'   error.list$dist_mismatches_pop,
 #'   "dist"
 #' )
+#' }
 #'
 #' @export
 fix_ctry_data_missing_guids <- function(afp.data, pop.data, guid_list, spatial_scale) {
@@ -3042,8 +3056,10 @@ get_diff_cols <- function(df, id_col) {
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' missing <- check_missing_rows(raw.data$afp, "age.months", c("place.admin.0", "yronset"))
+#' }
 check_missing_rows <- function(df,
                                .col_name,
                                .group_by) {
@@ -3353,7 +3369,7 @@ read_excel_from_edav <- function(src, ...) {
 #' @param data_folder `str` Path to the data folder.
 #' @param polis_folder `str` Path to the core ready folder
 #' @param core_ready_folder `str` Which core ready folder to use. Defaults to `"Core_Ready_Files"`.
-#' @param use_edav `bool` Are file paths on EDAV?
+#' @param use_edav `logical` Are file paths on EDAV?
 #' @param archive Logical. Whether to archive previous output directories
 #'    before overwriting. Default is `TRUE`.
 #' @param keep_n_archives Numeric. Number of archive folders to retain.
@@ -3498,7 +3514,7 @@ if (nrow(current.table) != 0) {
 #' data folder.
 #'
 #' @param data_folder_path `str` Path to the data folder
-#' @param edav `bool` Whether to use EDAV or  not.
+#' @param edav `logical` Whether to use EDAV or  not.
 #' @param keep_n_archives Numeric. Number of archive folders to retain.
 #'   Defaults to `Inf`, which keeps all archives. Set to a finite number
 #'   (e.g., 3) to automatically delete older archives beyond the N most recent.
