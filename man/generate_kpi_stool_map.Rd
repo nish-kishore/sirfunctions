@@ -29,15 +29,18 @@ generate_kpi_stool_map(
 \item \code{"WPRO"}:Western Pacific Region
 }}
 
+\item{risk_category}{\code{str} A string or a list of strings with priority categories. Valid values
+are: "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH".}
+
 \item{output_path}{\code{str} Where to output the figure to. Defaults to the path
 initialized when \code{\link[=init_kpi]{init_kpi()}} was ran.}
 
 \item{ctry_sf}{\code{sf} Country shapefile in long format. Output of
-\link{load_clean_ctry_sp(type = "long")}. Defaults to \code{NULL}, which will download
+\code{\link[=load_clean_ctry_sp]{load_clean_ctry_sp()}} with \code{type = "long"}. Defaults to \code{NULL}, which will download
 the required country shapefile when the function is ran.}
 
 \item{dist_sf}{\code{sf} District shapefile in long format. Output of
-\link{load_clean_dist_sp(type = "long")}. Defaults to \code{NULL}, which will download
+\code{\link[=load_clean_dist_sp]{load_clean_dist_sp()}} with \code{type = "long"}. Defaults to \code{NULL}, which will download
 the required district shapefile when the function is ran.}
 }
 \value{

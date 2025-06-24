@@ -201,13 +201,15 @@ generate_kpi_map <- function(c2, who_region, indicator, .year_label,
 #' - `"EURO"`: European Region
 #' - `"SEARO"`:South-East Asia Region
 #' - `"WPRO"`:Western Pacific Region
+#' @param risk_category `str` A string or a list of strings with priority categories. Valid values
+#' are: "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH".
 #' @param output_path `str` Where to output the figure to. Defaults to the path
 #' initialized when [init_kpi()] was ran.
 #' @param ctry_sf `sf` Country shapefile in long format. Output of
-#' [load_clean_ctry_sp(type = "long")]. Defaults to `NULL`, which will download
+#' [load_clean_ctry_sp()] with `type = "long"`. Defaults to `NULL`, which will download
 #' the required country shapefile when the function is ran.
 #' @param dist_sf `sf` District shapefile in long format. Output of
-#' [load_clean_dist_sp(type = "long")]. Defaults to `NULL`, which will download
+#' [load_clean_dist_sp()] with `type = "long"`. Defaults to `NULL`, which will download
 #' the required district shapefile when the function is ran.
 #'
 #' @returns `ggplot` A district NPAFP map.
@@ -327,6 +329,9 @@ generate_kpi_stool_map <- function(c2, year_label, who_region = NULL,
 #' @param output_path `str` Where to output the figure to. Defaults to the
 #' figure path assigned after running [init_kpi()].
 #' @param dot_size `num` Point size.
+#' @param ctry_sf `sf` Country shapefile in long format. Output of
+#' [load_clean_ctry_sp()] with `type = "long"`. Defaults to `NULL`, which will download
+#' the required country shapefile when the function is ran.
 #'
 #' @returns `ggplot` A map showing EV detection rate by site.
 #' @export
@@ -507,6 +512,7 @@ generate_kpi_barchart <- function(df, indicator, target, label, faceting,
 #' @param c1 `tibble` Output of [generate_c1_table()].
 #' @param afp_data `tibble` AFP dataset. List item of the output of
 #' [get_all_polio_data()].
+#' @param output_path `str` Folder location to output the image to.
 #'
 #' @returns `ggplot2` A barplot.
 #' @export
@@ -557,6 +563,13 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
 #' 10 collections in the last 12 months.
 #'
 #' @inheritParams generate_kpi_npafp_bar
+#' @param who_region `str` A WHO region or a list of regions. Valid values are:
+#' - `"AFRO"`: African Region
+#' - `"AMRO"`: Region of the Americas
+#' - `"EMRO"`: Eastern Mediterranean Region
+#' - `"EURO"`: European Region
+#' - `"SEARO"`:South-East Asia Region
+#' - `"WPRO"`:Western Pacific Region
 #'
 #' @returns `ggplot2` A barplot.
 #' @export
@@ -1482,6 +1495,9 @@ generate_lab_itdres_seqres_violin <- function(lab_data, afp_data,
 #'
 #'
 #' @param c_table `tibble` Either C1, C2, C3, C4
+#' @param priority_category `str` A string or a list of priority category. Valid values
+#' are: "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH".
+#' @param output_path `str` Where to output the figure to.
 #'
 #' @returns `ggplot2` A tile plot for each indicator for each geography
 #' @export

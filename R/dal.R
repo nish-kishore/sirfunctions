@@ -2735,9 +2735,11 @@ split_concat_raw_data <- function(
 #'
 #' @param afp_data `tibble` AFP dataset
 #' @param pop_data `tibble` Population dataset
-#' @param spatial_scale `str` Any of the following: `"ctry", "prov", "dist`
+#' @param spatial_scale `str` Any of the following: `"ctry", "prov", "dist`.
+#' @param fix_afp `logical` Whether to update the results to show corrected GUIDs
+#' based on the population dataset.
 #'
-#' @returns `tibble` Tibble with a column used for checking accuracy
+#' @returns `tibble` Tibble with a column used for checking accuracy.
 #' @export
 #'
 #' @examples

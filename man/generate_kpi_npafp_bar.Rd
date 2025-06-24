@@ -11,6 +11,8 @@ generate_kpi_npafp_bar(c1, afp_data, output_path = Sys.getenv("KPI_FIGURES"))
 
 \item{afp_data}{\code{tibble} AFP dataset. List item of the output of
 \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
+
+\item{output_path}{\code{str} Folder location to output the image to.}
 }
 \value{
 \code{ggplot2} A barplot.

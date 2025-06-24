@@ -1473,7 +1473,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #' @param include_labels `logical` Include columns for the labels? Default TRUE.
 #' @param min_sample `num` Only consider sites with at least this number
 #' of ES samples. Default is `10`.
-#' @param timely_spv_vdpv_target Target used when determining whether a country
+#' @param timely_wpv_vdpv_target Target used when determining whether a country
 #' meets EV detection target.
 #'
 #' @returns `tibble` A summary of the c3 table at the country level

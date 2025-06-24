@@ -26,6 +26,10 @@ at the site level (i.e., use the default \code{.group_by}) param of the
 figure path assigned after running \code{\link[=init_kpi]{init_kpi()}}.}
 
 \item{dot_size}{\code{num} Point size.}
+
+\item{ctry_sf}{\code{sf} Country shapefile in long format. Output of
+\code{\link[=load_clean_ctry_sp]{load_clean_ctry_sp()}} with \code{type = "long"}. Defaults to \code{NULL}, which will download
+the required country shapefile when the function is ran.}
 }
 \value{
 \code{ggplot} A map showing EV detection rate by site.

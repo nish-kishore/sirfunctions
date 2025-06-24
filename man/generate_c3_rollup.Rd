@@ -19,7 +19,7 @@ generate_c3_rollup(
 \item{min_sample}{\code{num} Only consider sites with at least this number
 of ES samples. Default is \code{10}.}
 
-\item{timely_spv_vdpv_target}{Target used when determining whether a country
+\item{timely_wpv_vdpv_target}{Target used when determining whether a country
 meets EV detection target.}
 }
 \value{

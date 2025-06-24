@@ -33,6 +33,9 @@ generate_kpi_map(
 
 \item{.year_label}{\code{str} Year of the rollup.}
 
+\item{risk_category}{\code{str} A string or a list of strings with priority categories. Valid values
+are: "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH".}
+
 \item{color_scheme}{\code{list} Named list with color mappings.}
 
 \item{legend_title}{\code{str} Title of the legend.}
