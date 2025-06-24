@@ -1286,8 +1286,10 @@ clean_lab_data <- function(lab_data, start_date, end_date,
 #' @param lab_data `tibble` Lab data. Ensure that this lab data is cleaned using
 #' [clean_lab_data()] before running the function.
 #' @param spatial.scale `str` Spatial scale to analyze the data. Valid values are `"ctry", "prov", "dist"`.
-#' @param start.date `str` Start date of analysis.
-#' @param end.date `str` End date of analysis.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @param start.date `str` `r lifecycle::badge("deprecated")` renamed in favor of `start_date`.
+#' @param end.date `str` `r lifecycle::badge("deprecated")` renamed in favor of `end_date`.
 #'
 #' @returns `tibble` A table with timeliness data summary.
 #' @examples
@@ -1301,16 +1303,33 @@ clean_lab_data <- function(lab_data, start_date, end_date,
 generate_lab_timeliness <-
   function(lab_data,
            spatial.scale,
-           start.date,
-           end.date) {
+           start_date,
+           end_date,
+           start.date = lifecycle::deprecated(),
+           end.date = lifecycle::deprecated()) {
     spatial_groupby <- switch(spatial.scale,
       "ctry" = c("year", "ctry", "adm0guid"),
-      "prov" = c("year", "ctry", "prov", "adm1guid")
+      "prov" = c("year", "ctry", "prov", "adm0guid", "adm1guid")
     )
 
+    if (lifecycle::is_present(start.date)) {
+      lifecycle::deprecate_warn(
+        "1.3.0", "generate_int_data(start.date)",
+        "generate_int_data(start_date)"
+      )
+      start_date <- start.date
+    }
 
-    start.date <- lubridate::as_date(start.date)
-    end.date <- lubridate::as_date(end.date)
+    if (lifecycle::is_present(end.date)) {
+      lifecycle::deprecate_warn(
+        "1.3.0", "generate_int_data(end.date)",
+        "generate_int_data(end_date)"
+      )
+      end_date <- end.date
+    }
+
+    start_date <- lubridate::as_date(start_date)
+    end_date <- lubridate::as_date(end_date)
 
     # Check if the lab data is attached
     if (is.null(lab_data)) {
@@ -1322,7 +1341,7 @@ generate_lab_timeliness <-
     )
 
     lab_medians <- lab_data |>
-      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
+      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start_date, end_date)) |>
       dplyr::group_by(dplyr::across(dplyr::all_of(spatial_groupby))) |>
       dplyr::summarise(dplyr::across(
         dplyr::starts_with("days."),
@@ -1333,7 +1352,7 @@ generate_lab_timeliness <-
         names_to = "type", values_to = "medi"
       )
     lab_counts <- lab_data |>
-      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
+      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start_date, end_date)) |>
       dplyr::group_by(dplyr::across(dplyr::all_of(spatial_groupby))) |>
       dplyr::summarise(dplyr::across(
         dplyr::starts_with("days."),

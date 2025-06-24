@@ -145,7 +145,7 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
           data = m_data_prov,
           ggplot2::aes(
             label = ADM1_NAME,
-            geometry = SHAPE
+            geometry = Shape
           ),
           stat = "sf_coordinates",
           size = 2,
@@ -243,6 +243,7 @@ build_detection_map <- function(m_base_region, m_base_prov, data_p, m_data_prov,
         values = emg_cols
       )
     }
+  return(g1)
 }
 
 #' Identifying new detections
@@ -603,6 +604,11 @@ generate_adhoc_map <- function(raw.data, country, virus_type = "cVDPV 2",
     stop('Package "tibble" must be installed to use this function.',
       .call = FALSE
     )
+  }
+
+  # Check if shape files are attached to raw.data
+  if (!"global.ctry" %in% names(raw.data)) {
+    cli::cli_abort("Spatial data not attached to raw.data. Use get_all_polio_data(attach.spatial.data = TRUE)")
   }
 
   # Standardize inputs
