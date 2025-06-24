@@ -89,6 +89,7 @@
 #' @importFrom sf st_sample
 #' @importFrom sf st_touches
 #' @importFrom sf st_transform
+#' @importFrom stats setNames
 #' @importFrom stringr regex
 #' @importFrom stringr str_c
 #' @importFrom stringr str_count
@@ -209,7 +210,35 @@ utils::globalVariables(c(
   "country_name", "vpd", "variable", "iso3_code", "vpd_short_name",
 
   # From sirfunctions_io()
-  "isdir", "lastModified", "mtime", "uid"
+  "isdir", "lastModified", "mtime", "uid",
 
+  # From KPI
+  "CaseDate",  "Region",  "SG",  "Priority",  "Level",  "Shape",  "VDPV1",  "VDPV2",  "VDPV3",  "WILD1",
+  "active_sites",  "adequacy.denominator",  "adm0guid_afp",  "adm0guid_pop",
+  "adm1guid_afp",  "adm1guid_pop",  "adm2guid_afp",  "adm2guid_pop",  "afp_cases",
+  "analysis_year_end",  "analysis_year_start",  "archived_data",  "category",
+  "consistent_guid",  "ctry.short",  "culture.itd.cat",  "culture_itd_lab",
+  "date_interval",  "det_denom",  "dist_stool",  "dist_w_100k",  "es_samples",  "es_sites",
+  "es_sites_w_age",  "ev_denom",  "ev_label",  "ev_rate",  "good_samples",  "indicator",
+  "is_target",  "label",  "met_ev",  "met_ev_5_samples",  "met_ev_label",  "met_good_samples",
+  "met_npafp",  "met_npafp_label",  "met_stool",  "met_stool_label",
+  "met_timely_wild_vdpv",  "met_timely_wild_vdpv_label",
+  "met_timely_wpv_vdpv_det",  "n_na",  "n_samples_12_mo",  "npafp_cat",  "npafp_denom",
+  "npafp_label",  "ontoinvest",  "ontolab",  "ontostool_final",  "per_stool_ad",
+  "prop_good_es",  "prop_met_ev",  "prop_met_ev_5_samples",
+  "prop_met_ev_5_samples_label",  "prop_met_ev_label",  "prop_met_good_samples",
+  "prop_met_good_samples_label",  "prop_met_npafp",  "prop_met_stool",
+  "prop_met_timely_wild_vdpv",  "prop_met_timely_wpv_vdpv_det",
+  "prop_met_timely_wpv_vdpv_det_label",  "prop_t1_label",  "prop_t2_label",
+  "prop_t3_label",  "prop_t4_label",  "prop_t5_label",  "prop_timely_det_wpv_vdpv",
+  "prop_timely_isolation",  "prop_timely_itd",  "prop_timely_itdres_seqres",
+  "prop_timely_seqres",  "prop_timely_seqship",  "prop_timely_ship",
+  "prop_timely_wild_vdpv",  "prop_timely_wild_vdpv_label",  "raw_data",  "region",
+  "rolling_period",  "sampling_interval",  "seq.cat",  "seq.lab",  "seq_lab",  "setNames",
+  "sg_priority_level", "SG Priority Level", "site_age",  "stool_collection_date",  "stool_denom",
+  "stool_label",  "t1",  "t2",  "t3",  "t4",  "t5",  "timely_cat",  "timely_det",  "timely_isolation",
+  "timely_itd",  "timely_itdres_seqres",  "timely_seqres",  "timely_seqship",
+  "timely_ship",  "timely_wpv_vdpv_detections",  "wgs.lab*",  "who_region",  "whoregion",
+  "wild_vdpv",  "wpv_vdpv_detections",  "y",  "year_label",  "year_num",  "year_number"
 
 ))

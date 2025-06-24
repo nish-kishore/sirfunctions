@@ -44,12 +44,14 @@ Imports:
     jsonlite,
     purrr,
     withr,
-    yaml
+    yaml,
+    stats
 Suggests:
     arrow,
     qs2,
     blastula,
     forcats,
+    ggh4x,
     ggspatial,
     git2r,
     officer,
@@ -63,6 +65,7 @@ Suggests:
     tools,
     knitr,
     magick,
+    openxlsx,
     vctrs,
     rmarkdown,
     Microsoft365R,

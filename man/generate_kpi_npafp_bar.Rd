@@ -21,7 +21,7 @@ generate_kpi_npafp_bar(c1, afp_data, output_path = Sys.getenv("KPI_FIGURES"))
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 
 Generates a bar chart highlighting percentage of priority countries with 80\%
-of 100,000+ under 15y pop districts achieving npAFP rate of  ≥2/100,000.
+of 100,000+ under 15y pop districts achieving npAFP rate of >= 2/100,000.
 }
 \examples{
 \dontrun{

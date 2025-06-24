@@ -507,7 +507,7 @@ generate_kpi_barchart <- function(df, indicator, target, label, faceting,
 #' `r lifecycle::badge("experimental")`
 #'
 #' Generates a bar chart highlighting percentage of priority countries with 80%
-#' of 100,000+ under 15y pop districts achieving npAFP rate of  ≥2/100,000.
+#' of 100,000+ under 15y pop districts achieving npAFP rate of >= 2/100,000.
 #'
 #' @param c1 `tibble` Output of [generate_c1_table()].
 #' @param afp_data `tibble` AFP dataset. List item of the output of
@@ -1577,9 +1577,9 @@ generate_kpi_tile <- function(c_table, priority_category = "HIGH",
     ) |>
     dplyr::rename_with(recode,
       # c1
-      prop_met_npafp = "Non-polio AFP rate – subnational, %",
-      prop_met_stool = "Stool adequacy – subnational, %",
-      prop_met_ev = "ES EV detection rate – national, %",
+      prop_met_npafp = "Non-polio AFP rate \u2013 subnational, %",
+      prop_met_stool = "Stool adequacy \u2013 subnational, %",
+      prop_met_ev = "ES EV detection rate \u2013 national, %",
       prop_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %",
       prop_met_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %",
       # c2
@@ -1597,14 +1597,14 @@ generate_kpi_tile <- function(c_table, priority_category = "HIGH",
       median_stool_shipment = "Median timeliness of stool shipment",
       timely_opt_field_shipment = "Timeliness of optimized field and shipment, %",
       median_onto_lab = "Median timeliness of optimized field and shipment",
-      timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV – AFP, %",
+      timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV \u2013 AFP, %",
       median_ontonothq = "Median timeliness of detection for WPV/VDPV",
       # c3
       prop_met_ev = "ES EV detection rate, % ",
       prop_met_ev_5_samples = "ES EV detection rate, % (>= 5 samples)",
       prop_met_good_samples = "Condition of ES sample, %",
       median_timely_shipment_per_site = "Median Timeliness of ES sample, %",
-      prop_met_timely_wpv_vdpv_det = "Timeliness of detection for WPV/VDPV – ES, %",
+      prop_met_timely_wpv_vdpv_det = "Timeliness of detection for WPV/VDPV \u2013 ES, %",
       # c4 - itd
       prop_timely_isolation = "Timeliness of virus isolation results",
       prop_timely_itd = "Timeliness of ITD results",
