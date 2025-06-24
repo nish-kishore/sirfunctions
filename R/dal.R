@@ -427,8 +427,8 @@ edav_io <- function(
       stop("File does not exist")
     }
 
-    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$", file_loc)) {
-      stop("At the moment only 'rds' 'rda', 'csv', 'xls', 'xlsx' and 'parquet' are supported for reading.")
+    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.parquet$|.qs2$", file_loc)) {
+      stop("At the moment only 'rds' 'rda', 'csv', 'xls', 'xlsx' 'parquet' and 'qs2' are supported for reading.")
     }
 
     if (endsWith(file_loc, ".rds")) {
@@ -487,11 +487,24 @@ edav_io <- function(
         }
       )
       return(output)
+    } else if (endsWith(file_loc, ".qs2")) {
+      output <- NULL
+      withr::with_tempdir(
+        {
+          AzureStor::storage_download(azcontainer,
+                                      file_loc,
+                                      file.path(tempdir(), basename(file_loc)),
+                                      overwrite = TRUE
+          )
+          output <- qs2::qs_read(file.path(tempdir(), basename(file_loc)))
+        }
+      )
+      return(output)
     }
   }
 
   if (io == "write") {
-    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$|.parquet$", file_loc)) {
+    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$|.parquet$|.qs2", file_loc)) {
       cli::cli_abort(paste0("Please pass a path including the file name in file_loc.",
                             " (i.e., folder/data.csv)"))
     }
@@ -787,10 +800,10 @@ normalize_format <- function(fmt) {
   fmt <- tolower(gsub("^([^\\.])", ".\\1", fmt))
 
   # Check if supported
-  valid_formats <- c(".rds", ".rda", ".csv", ".qs", ".qs2", ".parquet")
+  valid_formats <- c(".rds", ".rda", ".csv", ".qs2", ".parquet")
   if (!fmt %in% valid_formats) {
     stop(
-      "Currently, only 'rds', 'rda', 'csv', 'qs', 'qs2', and 'parquet' are supported."
+      "Currently, only 'rds', 'rda', 'csv', 'qs2', and 'parquet' are supported."
     )
   }
 
@@ -872,10 +885,10 @@ coverage_folder <- file.path(data_folder, "coverage")
 pop_folder <- file.path(data_folder, "pop")
 
 # Required files
-raw_data_recent_name <- paste0("raw.data. recent.", output_format)
-raw_data_2016_2018_name <- paste0("raw.data.2016.2018.", output_format)
-raw_data_2000_name <- paste0("raw.data. 2000.2015.", output_format)
-spatial_data_name <- "spatial.data.rds"
+raw_data_recent_name <- paste0("raw.data.recent", output_format)
+raw_data_2016_2018_name <- paste0("raw.data.2016.2018", output_format)
+raw_data_2000_name <- paste0("raw.data.2000.2015", output_format)
+spatial_data_name <- paste0("spatial.data", output_format)
 global_ctry_sf_name <- "global.ctry.rds"
 global_prov_sf_name <- "global.prov.rds"
 global_dist_sf_name <- "global.dist.rds"
@@ -1478,11 +1491,7 @@ if (create.cache) {
     }
 
 # set up path for spatial df
-  sp_file_path <- if (output_format %in% c(".qs2")) {
-    file.path(analytic_folder, paste0("spatial.data", output_format))
-  } else {
-    file.path(analytic_folder, "spatial.data.rds")
-  }
+  sp_file_path <- file.path(analytic_folder, paste0("spatial.data", output_format))
 
   sirfunctions_io("write", NULL,
     file_loc = sp_file_path,
