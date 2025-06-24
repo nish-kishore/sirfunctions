@@ -15,7 +15,8 @@ get_all_polio_data(
   use_edav = TRUE,
   use_archived_data = FALSE,
   archive = TRUE,
-  keep_n_archives = Inf
+  keep_n_archives = Inf,
+  output_format = "rds"
 )
 }
 \arguments{
@@ -50,6 +51,9 @@ before overwriting. Default is \code{TRUE}.}
 \item{keep_n_archives}{Numeric. Number of archive folders to retain.
 Defaults to \code{Inf}, which keeps all archives. Set to a finite number
 (e.g., 3) to automatically delete older archives beyond the N most recent.}
+
+\item{output_format}{str: output_format to save files as.
+Available formats include 'rds' 'rda' 'csv' 'qs2' and 'parquet', Defaults is #' 'rds'.}
 }
 \value{
 Named \code{list} containing polio data that is relevant to CDC.
