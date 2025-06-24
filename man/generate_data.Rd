@@ -30,7 +30,7 @@ generate_data(
 
 \item{.polis_folder}{\code{str} Path to the POLIS folder.}
 
-\item{.use_edav}{\code{bool} Whether to use EDAV or not.}
+\item{.use_edav}{\code{logical} Whether to use EDAV or not.}
 }
 \value{
 \code{list} large list containing polio data

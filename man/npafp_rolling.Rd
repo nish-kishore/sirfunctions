@@ -26,7 +26,7 @@ inside \code{\link[=f.npafp.rate.01]{f.npafp.rate.01()}}.}
 
 \item{spatial_scale}{Spatial scale. Valid arguments are: \verb{"ctry", "prov", "dist}.}
 
-\item{pending}{\code{bool} Should cases classified as \code{PENDING} or \verb{LAB PENDING} be included in calculations? Default \code{TRUE}.}
+\item{pending}{\code{logical} Should cases classified as \code{PENDING} or \verb{LAB PENDING} be included in calculations? Default \code{TRUE}.}
 }
 \value{
 A summary table including NPAFP rates and population data.

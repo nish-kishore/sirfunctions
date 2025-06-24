@@ -33,7 +33,7 @@ This table is the output of \code{\link[=get_lab_locs]{get_lab_locs()}}.}
 
 \item{end.date}{\code{str} End date for evaluation with format \code{"YYYY-MM-DD"}.}
 
-\item{rolling}{\code{bool} Should timeliness be calculated in a rolling basis? Default \code{FALSE}.}
+\item{rolling}{\code{logical} Should timeliness be calculated in a rolling basis? Default \code{FALSE}.}
 }
 \value{
 \code{list} A list with two \code{tibble}s with global and sub-global

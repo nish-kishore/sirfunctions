@@ -18,7 +18,9 @@ Named \code{list} with country specific datasets.
 Filters country specific data from the CDC generated \code{raw.data} object from \code{\link[=get_all_polio_data]{get_all_polio_data()}}.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("nigeria", raw.data)
+}
 
 }

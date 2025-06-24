@@ -42,6 +42,8 @@ Monitoring surveillance KPIs for Certification of Poliomyelitis Eradication at c
 regional and global levels.
 }
 \examples{
+\dontrun{
 raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
+}
 }

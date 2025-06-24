@@ -37,9 +37,9 @@ Make sure the spatial data is attached, otherwise, it will not work.}
 
 Can pass as a list.}
 
-\item{vdpv}{\code{bool} Whether to include VPDV in maps. Default \code{TRUE}.}
+\item{vdpv}{\code{logical} Whether to include VPDV in maps. Default \code{TRUE}.}
 
-\item{new_detect}{\code{bool} Whether to highlight new detections based on WHO HQ report date. Default \code{TRUE}.}
+\item{new_detect}{\code{logical} Whether to highlight new detections based on WHO HQ report date. Default \code{TRUE}.}
 
 \item{surv}{\code{str} or \code{list} Surveillance options. Valid values are:
 
@@ -56,7 +56,7 @@ Options:
 
 \item{owner}{\code{str} Who produced the map. Defaults to \code{"CDC-GID-PEB"}.}
 
-\item{new_detect_expand}{\code{bool} Whether to expand the reporting window. Defaults to \code{FALSE}.}
+\item{new_detect_expand}{\code{logical} Whether to expand the reporting window. Defaults to \code{FALSE}.}
 
 \item{start_date}{\code{str} Start date. If not specified, defaults to 13 months prior to the download date of raw.data.}
 

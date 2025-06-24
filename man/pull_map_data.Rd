@@ -17,7 +17,7 @@ pull_map_data(
 \arguments{
 \item{raw.data}{\code{list} global polio data output from \code{\link[=get_all_polio_data]{get_all_polio_data()}}}
 
-\item{.vdpv}{\code{bool} Whether to include VDPV in maps.}
+\item{.vdpv}{\code{logical} Whether to include VDPV in maps.}
 
 \item{country}{\code{str} or \code{list} Name of the country or countries.}
 

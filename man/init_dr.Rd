@@ -38,20 +38,20 @@ Defaults to the current working directory.}
 
 \item{iss_data_path}{\code{str} Location of the ISS data. Defaults to \code{NULL}.}
 
-\item{attach_spatial_data}{\code{bool} Whether to include spatial data. Defaults to \code{TRUE}.}
+\item{attach_spatial_data}{\code{logical} Whether to include spatial data. Defaults to \code{TRUE}.}
 
 \item{branch}{\code{str} What branch to download the DR functions from GitHub.
 \code{"main"} is the default, which contains the official version of the package. Other branches,
 like \code{"dev"} may contain experimental features not yet available in the \code{"main"} branch.}
 
-\item{source}{\code{bool} Whether to source local functions or use sirfunctions. Defaults to \code{TRUE}.}
+\item{source}{\code{logical} Whether to source local functions or use sirfunctions. Defaults to \code{TRUE}.}
 
 \item{data_folder}{\code{str} Location of the data folder containing pre-processed POLIS data,
 spatial files, coverage data, and population data. Defaults to \code{"GID/PEB/SIR/Data"}.}
 
 \item{polis_folder}{\code{str} Location of the POLIS folder. Defaults to \code{"GID/PEB/SIR/POLIS"}.}
 
-\item{use_edav}{\code{bool} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
+\item{use_edav}{\code{logical} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
 }
 \value{
 \code{list} A list containing all dataframe for all polio data.

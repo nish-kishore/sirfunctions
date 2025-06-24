@@ -18,6 +18,8 @@ get_ctry_abbrev(afp_data)
 Gets the country abbreviation from the AFP dataset.
 }
 \examples{
+\dontrun{
 raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry_abbrev <- get_ctry_abbrev(raw_data$afp)
+}
 }

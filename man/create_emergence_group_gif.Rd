@@ -24,9 +24,9 @@ output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 
 \item{ctry}{\code{sf} Shapefile of all countries.}
 
-\item{include_env}{\code{bool} To include environmental detections in analysis. Defaults to \code{TRUE}.}
+\item{include_env}{\code{logical} To include environmental detections in analysis. Defaults to \code{TRUE}.}
 
-\item{cumulative}{\code{bool} To display cases as cumulative. Defaults to \code{TRUE}.}
+\item{cumulative}{\code{logical} To display cases as cumulative. Defaults to \code{TRUE}.}
 
 \item{out_gif}{\code{str} Location where gif should be saved.}
 }

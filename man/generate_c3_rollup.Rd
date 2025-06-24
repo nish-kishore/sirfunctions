@@ -14,7 +14,7 @@ generate_c3_rollup(
 \arguments{
 \item{c3}{\code{tibble} Output of \code{\link[=generate_c3_table]{generate_c3_table()}}.}
 
-\item{include_labels}{\code{bool} Include columns for the labels? Default TRUE.}
+\item{include_labels}{\code{logical} Include columns for the labels? Default TRUE.}
 
 \item{min_sample}{\code{num} Only consider sites with at least this number
 of ES samples. Default is \code{10}.}

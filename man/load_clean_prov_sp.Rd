@@ -36,7 +36,7 @@ load_clean_prov_sp(
 
 \item{st_year}{\code{int} Earlier year of spatial data you want to pull. Default is 2000.}
 
-\item{data_only}{\code{bool} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
+\item{data_only}{\code{logical} Whether to return a tibble with shapefiles or not. Defaults to \code{FALSE}.}
 
 \item{type}{\code{str} Whether to return a spatial object for every year group. Defaults to \code{NULL}.
 \itemize{
@@ -51,7 +51,7 @@ still under evaluation/development. Default is \code{"standard"}.
 \item \code{"dev"}  New shapefiles still under evaluation/development.
 }}
 
-\item{edav}{\code{bool} Load from EDAV? Defaults to \code{TRUE}.}
+\item{edav}{\code{logical} Load from EDAV? Defaults to \code{TRUE}.}
 
 \item{end.year}{\code{int} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
 \code{end_year}.}
@@ -59,7 +59,7 @@ still under evaluation/development. Default is \code{"standard"}.
 \item{st.year}{\code{int} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
 \code{st_year}.}
 
-\item{data.only}{\code{bool} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
+\item{data.only}{\code{logical} \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Renamed in favor of
 \code{data_only}.}
 }
 \value{

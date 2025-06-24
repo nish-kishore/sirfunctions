@@ -24,10 +24,12 @@ The function serves to collate and return plot looks. Depending on the parameter
 specific values in a \code{ggplot2} theme object will be returned.
 }
 \examples{
+\dontrun{
 epicurve_looks <- f.plot.looks("epicurve")
 df <- datasets::iris
 p1 <- ggplot2::ggplot() +
   ggplot2::geom_col(data = df, ggplot2::aes(x = Sepal.Length, y = Sepal.Width))
 p2 <- p1 + epicurve_looks
+}
 
 }

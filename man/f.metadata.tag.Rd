@@ -21,11 +21,13 @@ Add metadata tags to figures and tables. These include the download date of the 
 The function will return an error if both \code{raw_data} and \code{time_tag} parameters are \code{NULL}.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 df <- datasets::iris
 p1 <- ggplot2::ggplot() +
   ggplot2::geom_col(data = df, ggplot2::aes(x = Sepal.Length, y = Sepal.Width))
 p2 <- f.metadata.tag(p1, raw.data) # use raw.data download time
 p3 <- f.metadata.tag(p1, time_tag = "2021-01-01") # use custom time tag
+}
 
 }

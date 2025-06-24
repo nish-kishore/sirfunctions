@@ -18,6 +18,8 @@ or downloaded from EDAV. If no argument is passed, the function will download
 the table from EDAV.
 }
 \examples{
+\dontrun{
 ctry.seq <- get_lab_locs()
+}
 
 }

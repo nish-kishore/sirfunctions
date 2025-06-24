@@ -9,7 +9,7 @@ update_polio_data(local_dataset, overwrite = T)
 \arguments{
 \item{local_dataset}{\code{str} File path to the global polio data RDS file.}
 
-\item{overwrite}{\code{bool} Should the file be overwritten? Default \code{TRUE}.}
+\item{overwrite}{\code{logical} Should the file be overwritten? Default \code{TRUE}.}
 }
 \value{
 None.
