@@ -195,7 +195,7 @@ get_vpd_data <- function(vpd_name = NULL, variable_name = NULL, years = NULL,
 #' @param min_year `int` Minimum year to analyze. Defaults to `1980`.
 #' @param max_year `int` Maximum year to analyze. Defaults to the current year.
 #'
-#' @return `tibble` A summary table of years with missing data for each country
+#' @returns `tibble` A summary table of years with missing data for each country
 #' for a particular VPD and variable name.
 #' @export
 #'

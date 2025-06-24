@@ -2737,7 +2737,7 @@ split_concat_raw_data <- function(
 #' @param pop_data `tibble` Population dataset
 #' @param spatial_scale `str` Any of the following: `"ctry", "prov", "dist`
 #'
-#' @return `tibble` Tibble with a column used for checking accuracy
+#' @returns `tibble` Tibble with a column used for checking accuracy
 #' @export
 #'
 #' @examples

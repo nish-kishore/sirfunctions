@@ -11,7 +11,7 @@
 #'
 #' @param es_data `tibble` ES data
 #' @param end_date `str` End date to anchor analysis to
-#' @return `tibble` A summary of established ES sites
+#' @returns `tibble` A summary of established ES sites
 #' @keywords internal
 get_es_site_age <- function(es_data, end_date) {
   end_date <- lubridate::as_date(end_date)
@@ -45,7 +45,7 @@ get_es_site_age <- function(es_data, end_date) {
 #' @param risk_table  `tibble` Risk category table for each country. Defaults to `NULL`.
 #' When set to `NULL`, attempts to download the risk category table from EDAV.
 #'
-#' @return `tibble` A dataframe with risk category columns added.
+#' @returns `tibble` A dataframe with risk category columns added.
 #' @keywords internal
 #'
 add_risk_category <- function(df, risk_table = NULL, ctry_col = "ctry") {
@@ -104,7 +104,7 @@ add_seq_capacity <- function(df, ctry_col = "ctry", lab_locs = NULL) {
 #'
 #' @inheritParams generate_wild_vdpv_summary
 #'
-#' @return `tibble` Columns added
+#' @returns `tibble` Columns added
 #' @keywords internal
 generate_pos_timeliness <- function(raw_data, start_date, end_date,
                                         risk_table = NULL, lab_locs = NULL) {
@@ -190,7 +190,7 @@ generate_pos_timeliness <- function(raw_data, start_date, end_date,
 #' @inheritParams generate_c1_table
 #' @param .group_by How to group the results by.
 #'
-#' @return `tibble` Summary of wild and VDPV cases
+#' @returns `tibble` Summary of wild and VDPV cases
 #' @keywords internal
 generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
                                        risk_table = NULL, lab_locs = NULL,
@@ -274,7 +274,7 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
 #'
 #' @inheritParams generate_c4_table
 #'
-#' @return `tibble` lab data with timeliness columns.
+#' @returns `tibble` lab data with timeliness columns.
 #'
 #' @keywords internal
 generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data) {
@@ -339,7 +339,7 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 #' @param end_date `str` The specified end date.
 #' @param date_col `str` Column used when filtering by the end date.
 #'
-#' @return `tibble` Tibble with adjusted rolling period for the final year.
+#' @returns `tibble` Tibble with adjusted rolling period for the final year.
 #' @keywords internal
 #'
 #' @examples
@@ -502,7 +502,7 @@ add_rolling_years <- function(df, start_date, end_date, date_col, period = month
 #' Output of [get_lab_locs()]. Defaults to `NULL`, which will download the information
 #' directly from EDAV.
 #' .
-#' @return `tibble` Summary table of GPSAP KPIs.
+#' @returns `tibble` Summary table of GPSAP KPIs.
 #'
 #' @export
 #'
@@ -932,7 +932,7 @@ generate_c1_rollup <- function(c1,
 #' @param spatial_scale `str` Either `"ctry", "prov", "dist"`.
 #' @inheritParams generate_c1_table
 #'
-#' @return `tibble` Summary table containing AFP KPIs.
+#' @returns `tibble` Summary table containing AFP KPIs.
 #' @export
 #'
 #' @examples
@@ -1341,7 +1341,7 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 #' @param es_data `tibble` Environmental surveillance data.
 #' @inheritParams generate_c1_table
 #'
-#' @return `tibble` A summary table of environmental surveillance KPIs.
+#' @returns `tibble` A summary table of environmental surveillance KPIs.
 #' @export
 #'
 #' @examples
@@ -1476,7 +1476,7 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #' @param timely_spv_vdpv_target Target used when determining whether a country
 #' meets EV detection target.
 #'
-#' @return `tibble` A summary of the c3 table at the country level
+#' @returns `tibble` A summary of the c3 table at the country level
 #' @export
 #'
 #' @examples
@@ -1536,7 +1536,7 @@ generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10,
 #' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
 #' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
 #'
-#' @return `list` A summary of timeliness KPIs for lab data.
+#' @returns `list` A summary of timeliness KPIs for lab data.
 #' @export
 #'
 #' @examples
@@ -1638,7 +1638,7 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
 #' @param pos_data `tibble` Positives dataset.
 #' @param risk_table `tibble` The risk table. Required if using sc_targets and outside of CDC.
 #'
-#' @return None.
+#' @returns None.
 #' @export
 #'
 #' @examples
@@ -2111,7 +2111,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
 #' @param lab_data `tibble` Lab data.
 #' @param group_by `str` A column or a vector of columns to group results by.
 #'
-#' @return `tibble` Summary of missingness of date variables
+#' @returns `tibble` Summary of missingness of date variables
 #' @export
 #'
 #' @examples

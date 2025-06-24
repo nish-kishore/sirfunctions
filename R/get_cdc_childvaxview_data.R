@@ -9,7 +9,7 @@
 #' @param base_url `str` URL to US CDC NCIRD API endpoint.
 #' Defaults to "https://data.cdc.gov/resource/fhky-rtsk.json".
 #'
-#' @return `tibble` Dataframe of vaccine coverage estimates for all VPDs.
+#' @returns `tibble` Dataframe of vaccine coverage estimates for all VPDs.
 #' @export
 #'
 #' @examples

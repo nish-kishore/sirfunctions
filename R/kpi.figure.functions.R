@@ -14,7 +14,7 @@
 #' @param output_path `str` Where to output the figure to. Defaults to the
 #' path to the figures folder set when running [init_kpi()].
 #'
-#' @return `ggplot` A map.
+#' @returns `ggplot` A map.
 #' @export
 #'
 #' @examples
@@ -102,7 +102,7 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 #' @param .ctry_sf `sf` Country shapefile.
 #' @param .dist_sf `sf` District shapefile.
 #'
-#' @return `ggplot` A ggplot object.
+#' @returns `ggplot` A ggplot object.
 #' @export
 generate_kpi_map <- function(c2, who_region, indicator, .year_label,
                              risk_category,
@@ -210,7 +210,7 @@ generate_kpi_map <- function(c2, who_region, indicator, .year_label,
 #' [load_clean_dist_sp(type = "long")]. Defaults to `NULL`, which will download
 #' the required district shapefile when the function is ran.
 #'
-#' @return `ggplot` A district NPAFP map.
+#' @returns `ggplot` A district NPAFP map.
 #' @export
 #'
 #' @examples
@@ -265,7 +265,7 @@ generate_kpi_npafp_map <- function(c2, year_label, who_region = NULL,
 #'
 #' @inheritParams generate_kpi_npafp_map
 #'
-#' @return `ggplot` A stool adequacy map.
+#' @returns `ggplot` A stool adequacy map.
 #' @export
 #'
 #' @examples
@@ -328,7 +328,7 @@ generate_kpi_stool_map <- function(c2, year_label, who_region = NULL,
 #' figure path assigned after running [init_kpi()].
 #' @param dot_size `num` Point size.
 #'
-#' @return `ggplot` A map showing EV detection rate by site.
+#' @returns `ggplot` A map showing EV detection rate by site.
 #' @export
 #'
 #' @examples
@@ -439,7 +439,7 @@ generate_kpi_ev_map <- function(c3, .year_label, who_region = NULL,
 #' Either using [ggplot2::facet_grid()] or [ggplot2::facet_wrap()].
 #' @param y.axis.title `Str` Title of the y axis.
 #'
-#' @return `ggplot2` A bar chart.
+#' @returns `ggplot2` A bar chart.
 #' @export
 generate_kpi_barchart <- function(df, indicator, target, label, faceting,
                                   y.axis.title) {
@@ -508,7 +508,7 @@ generate_kpi_barchart <- function(df, indicator, target, label, faceting,
 #' @param afp_data `tibble` AFP dataset. List item of the output of
 #' [get_all_polio_data()].
 #'
-#' @return `ggplot2` A barplot.
+#' @returns `ggplot2` A barplot.
 #' @export
 #'
 #' @examples
@@ -558,7 +558,7 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
 #'
 #' @inheritParams generate_kpi_npafp_bar
 #'
-#' @return `ggplot2` A barplot.
+#' @returns `ggplot2` A barplot.
 #' @export
 #'
 #' @examples
@@ -607,7 +607,7 @@ generate_kpi_evdetect_bar <- function(c1, afp_data,
 #'
 #' @inheritParams generate_kpi_npafp_bar
 #'
-#' @return `ggplot2` A barplot.
+#' @returns `ggplot2` A barplot.
 #' @export
 #'
 #' @examples
@@ -659,7 +659,7 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
 #' @param y.min `num` Minimum used in the y-axis.
 #' @param y.max `num` Maximum used in the y-axis.
 #'
-#' @return `ggplot` A plot object.
+#' @returns `ggplot` A plot object.
 #' @export
 generate_kpi_violin <- function(
     df,
@@ -726,7 +726,7 @@ generate_kpi_violin <- function(
 #' @param output_path `str` Where to output the figure to.
 #' @param y_max `num` The maximum y-axis value.
 #'
-#' @return `ggplot` A violin plot showing timeliness of detection.
+#' @returns `ggplot` A violin plot showing timeliness of detection.
 #' @export
 #'
 #' @examples
@@ -843,7 +843,7 @@ generate_timely_det_violin <- function(raw_data,
 #' @param output_path `str` Where to output the figure to.
 #' @param y_max `num` The maximum y-axis value.
 #'
-#' @return `ggplot` A violin plot showing timeliness of detection.
+#' @returns `ggplot` A violin plot showing timeliness of detection.
 #' @export
 #'
 #' @examples
@@ -992,7 +992,7 @@ generate_timely_ship_violin <- function(afp_data,
 #' @param output_path `str` Where to output the figure to.
 #' @param y_max `num` Maximum value in the y-axis.
 #'
-#' @return `ggplot` A violin plot showing timeliness of lab culture.
+#' @returns `ggplot` A violin plot showing timeliness of lab culture.
 #' @export
 #'
 #' @examples
@@ -1077,7 +1077,7 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
 #'
 #' @inheritParams generate_lab_culture_violin
 #'
-#' @return `ggplot` A violin plot showing timeliness of ITD results from lab
+#' @returns `ggplot` A violin plot showing timeliness of ITD results from lab
 #' culture.
 #' @export
 #'
@@ -1163,7 +1163,7 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
 #'
 #' @inheritParams generate_lab_culture_violin
 #'
-#' @return `ggplot` A violin plot showing the timeliness of shipment to
+#' @returns `ggplot` A violin plot showing the timeliness of shipment to
 #' sequencing results.
 #' @export
 #'
@@ -1251,7 +1251,7 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
 #'
 #' @inheritParams generate_lab_culture_violin
 #'
-#' @return `ggplot` A violin plot showing the timeliness of sequencing results.
+#' @returns `ggplot` A violin plot showing the timeliness of sequencing results.
 #' @export
 #'
 #' @examples
@@ -1364,7 +1364,7 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
 #'
 #' @inheritParams generate_lab_culture_violin
 #'
-#' @return `ggplot` A violin plot showing the timeliness of sequencing results.
+#' @returns `ggplot` A violin plot showing the timeliness of sequencing results.
 #' @export
 #'
 #' @examples
@@ -1483,7 +1483,7 @@ generate_lab_itdres_seqres_violin <- function(lab_data, afp_data,
 #'
 #' @param c_table `tibble` Either C1, C2, C3, C4
 #'
-#' @return `ggplot2` A tile plot for each indicator for each geography
+#' @returns `ggplot2` A tile plot for each indicator for each geography
 #' @export
 #'
 #' @examples

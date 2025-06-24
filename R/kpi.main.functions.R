@@ -15,7 +15,7 @@
 #' @param edav `bool` Whether to use EDAV to load the raw_data and lab_data files.
 #' Defaults to `TRUE`.
 #'
-#' @return Does not return anything
+#' @returns Does not return anything
 #' @export
 #'
 #' @examples
@@ -170,7 +170,7 @@ init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
 #'
 #' @param afp_data `tibble` AFP dataset
 #'
-#' @return `tibble` A tibble with the country, abbreviation, and WHO region
+#' @returns `tibble` A tibble with the country, abbreviation, and WHO region
 #' @export
 #'
 #' @examples
@@ -233,7 +233,7 @@ get_ctry_abbrev <- function(afp_data) {
 #' @param name `str` Name of the KPI folder.
 #' @param edav `bool` Whether the init pulled data from EDAV or not.
 #'
-#' @return None.
+#' @returns None.
 #'
 #' @examples
 #' \dontrun{
