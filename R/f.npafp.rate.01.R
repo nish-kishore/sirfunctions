@@ -393,7 +393,7 @@ f.npafp.rate.01 <- function(
   }
 
   numeric_cols <- c("n_npafp",
-                    # "u15pop", "npafp_rate", "par", making sure these are NaNs
+                    "u15pop", "npafp_rate", "par",
                     "afp.case", "num.wpv.cases",
                     "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases")
   int.data <- int.data |>
