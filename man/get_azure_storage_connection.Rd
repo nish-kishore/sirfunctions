@@ -37,6 +37,8 @@ validates that the individual still has access. The current tenant ID
 is hard coded for CDC resources.
 }
 \examples{
+\dontrun{
 azcontainer <- get_azure_storage_connection()
+}
 
 }

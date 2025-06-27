@@ -22,7 +22,9 @@
 #' @param ... additional parameters passed to [AzureAuth::get_azure_token()].
 #' @returns Azure container verification
 #' @examples
+#' \dontrun{
 #' azcontainer <- get_azure_storage_connection()
+#' }
 #'
 #' @export
 get_azure_storage_connection <- function(
