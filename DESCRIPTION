@@ -71,8 +71,6 @@ Suggests:
     writexl,
     rvg,
     testthat (>= 3.0.0)
-Remotes: 
-    davidgohel/rvg
 VignetteBuilder:
     knitr
 Config/testthat/edition: 3
