@@ -251,9 +251,7 @@ sirfunctions_io <- function(
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         return(read_excel_from_edav(src = file_loc, ...))
       } else if (endsWith(file_loc, ".parquet")) {
-        file <- arrow::read_parquet(file_loc)
-        gc()
-        return(file)
+        return(arrow::read_parquet(file_loc))
       }
     }
   }
@@ -279,6 +277,7 @@ sirfunctions_io <- function(
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         writexl::write_xlsx(obj, path = file_loc)
       } else if (endsWith(file_loc, ".parquet")) {
+        gc()
         arrow::write_parquet(obj, sink = file_loc)
       }
     }
@@ -490,7 +489,6 @@ edav_io <- function(
                                                          basename(file_loc)))
         }
       )
-      gc()
       return(output)
     } else if (endsWith(file_loc, ".qs2")) {
       output <- NULL
@@ -543,7 +541,7 @@ edav_io <- function(
     if (endsWith(file_loc, ".parquet")) {
       withr::with_tempdir(
         {
-
+          gc()
           arrow::write_parquet(obj,
                                file.path(tempdir(), basename(file_loc))
                                )
