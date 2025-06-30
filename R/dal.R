@@ -251,7 +251,9 @@ sirfunctions_io <- function(
       } else if (endsWith(file_loc, ".xlsx") | endsWith(file_loc, ".xls")) {
         return(read_excel_from_edav(src = file_loc, ...))
       } else if (endsWith(file_loc, ".parquet")) {
-        return(arrow::read_parquet(file_loc))
+        file <- arrow::read_parquet(file_loc)
+        gc()
+        return(file)
       }
     }
   }
@@ -486,6 +488,7 @@ edav_io <- function(
           )
           output <- arrow::read_parquet(file.path(tempdir(),
                                                          basename(file_loc)))
+          gc()
         }
       )
       return(output)
@@ -506,7 +509,7 @@ edav_io <- function(
   }
 
   if (io == "write") {
-    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$|.parquet$|.qs2", file_loc)) {
+    if (!grepl(".rds$|.rda$|.csv$|.xlsx$|.xls$|.png$|.jpg$|.jpeg$|.parquet$|.qs2$", file_loc)) {
       cli::cli_abort(paste0("Please pass a path including the file name in file_loc.",
                             " (i.e., folder/data.csv)"))
     }
