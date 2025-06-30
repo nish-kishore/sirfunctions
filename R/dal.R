@@ -488,9 +488,9 @@ edav_io <- function(
           )
           output <- arrow::read_parquet(file.path(tempdir(),
                                                          basename(file_loc)))
-          gc()
         }
       )
+      gc()
       return(output)
     } else if (endsWith(file_loc, ".qs2")) {
       output <- NULL
