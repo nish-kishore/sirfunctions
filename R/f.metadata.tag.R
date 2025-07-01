@@ -69,6 +69,12 @@ f.metadata.tag <- function(object,
 
   # if flextable
   if ("flextable" %in% class(object)) {
+    if (!requireNamespace("flextable", quietly = TRUE)) {
+      stop('Package "flextable" must be installed to edit flextables.',
+           .call = FALSE
+      )
+    }
+
     object <-
       flextable::add_footer_lines(
         object,

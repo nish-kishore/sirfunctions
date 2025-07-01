@@ -3261,6 +3261,12 @@ generate_surv_ind_tab <- function(ctry.data,
     )
   }
 
+  if (!requireNamespace("flextable", quietly = TRUE)) {
+    stop('Package "flextable" must be installed to use this function.',
+         .call = FALSE
+    )
+  }
+
   dist.ind.afp <- dplyr::left_join(
     dist.extract,
     dstool
@@ -3424,6 +3430,13 @@ generate_pop_tab <- function(pnpafp,
                              start_date,
                              end_date,
                              prov.case.ind = lifecycle::deprecated()) {
+
+  if (!requireNamespace("flextable", quietly = TRUE)) {
+    stop('Package "flextable" must be installed to use this function.',
+         .call = FALSE
+    )
+  }
+
   if (lifecycle::is_present(prov.case.ind)) {
     lifecycle::deprecate_warn(
       "1.3.0",
@@ -3672,6 +3685,12 @@ generate_inad_tab <- function(ctry.data,
     )
   }
 
+  if (!requireNamespace("flextable", quietly = TRUE)) {
+    stop('Package "flextable" must be installed to use this function.',
+         .call = FALSE
+    )
+  }
+
   # All AFP cases
   afps.all <- ctry.data$afp.all.2 %>%
     dplyr::filter(
@@ -3823,6 +3842,13 @@ generate_inad_tab <- function(ctry.data,
 #'
 #' @export
 generate_60_day_tab <- function(cases.need60day) {
+
+  if (!requireNamespace("flextable", quietly = TRUE)) {
+    stop('Package "flextable" must be installed to use this function.',
+         .call = FALSE
+    )
+  }
+
   comp.by.year <- cases.need60day |>
     dplyr::group_by(year) |>
     dplyr::summarize(
@@ -3935,6 +3961,13 @@ generate_60_day_tab <- function(cases.need60day) {
 generate_es_tab <- function(es.data,
                             es_start_date = (lubridate::as_date(es_end_date) - lubridate::years(1)),
                             es_end_date = end_date) {
+
+  if (!requireNamespace("flextable", quietly = TRUE)) {
+    stop('Package "flextable" must be installed to use this function.',
+         .call = FALSE
+    )
+  }
+
   es_start_date <- lubridate::as_date(es_start_date)
   es_end_date <- lubridate::as_date(es_end_date)
 

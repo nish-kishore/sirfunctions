@@ -579,6 +579,11 @@ edav_io <- function(
     }
 
     if ("flextable" %in% class(obj)) {
+      if (!requireNamespace("flextable", quietly = TRUE)) {
+        stop('Package "flextable" must be installed to write flextable objects.',
+             .call = FALSE
+        )
+      }
       temp <- tempfile()
       flextable::save_as_image(obj, path = paste0(temp, "/", sub(".*\\/", "", file_loc)))
       AzureStor::storage_upload(
