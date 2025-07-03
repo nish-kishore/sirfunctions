@@ -8,11 +8,12 @@
 #' output of [get_all_polio_data()].
 #' @param dist `sf` Shapefile of all districts.
 #' @param ctry `sf` Shapefile of all countries.
-#' @param include_env `logical` To include environmental detections in analysis. Defaults to `TRUE`.
-#' @param cumulative `logical` To display cases as cumulative. Defaults to `TRUE`.
-#' @param out_gif `str` Location where gif should be saved.
+#' @param include_env `bool` To include environmental detections in analysis. Defaults to `TRUE`.
+#' @param cumulative `bool` To display cases as cumulative. Defaults to `TRUE`.
+#' @param output_dir `str` Directory where gif should be saved.
+#' @param fps `int` Frames per second. Defaults to 2.
 #'
-#' @returns GIF written out to location of `out_gif`.
+#' @returns GIF written out to location of `output_dir`.
 #' @examples
 #' \dontrun{
 #'
@@ -23,11 +24,11 @@
 #' ctry <- data$global.ctry
 #' include_env <- T
 #' cumulative <- F
-#' out_gif <- getwd()
+#' output_dir <- getwd()
 #'
 #' create_emergence_group_gif(
 #'   emergence_group, pos, dist, ctry, include_env,
-#'   cumulative, out_gif
+#'   cumulative, output_dir
 #' )
 #' }
 #'
@@ -37,9 +38,10 @@ create_emergence_group_gif <- function(
     pos,
     dist,
     ctry,
-    include_env = T,
-    cumulative = T,
-    out_gif) {
+    output_dir,
+    include_env = TRUE,
+    cumulative = TRUE,
+    fps = 2) {
   if (!requireNamespace("magick", quietly = TRUE)) {
     stop('Package "magick" must be installed to use this function.',
       .call = FALSE
@@ -57,7 +59,7 @@ create_emergence_group_gif <- function(
 
   # set up data structures
   emergence_group_pos <- pos |>
-    dplyr::filter(emergencegroup == emergence_group) |>
+    dplyr::filter(emergencegroup %in% emergence_group) |>
     dplyr::select(adm0guid, admin2guid, dateonset, epid, source)
 
   if (!include_env) {
@@ -97,8 +99,11 @@ create_emergence_group_gif <- function(
     ) |>
       left_join(monthly_pos, by = c("adm0guid", "admin2guid", "month_date")) |>
       dplyr::group_by(adm0guid, admin2guid) |>
-      dplyr::arrange(month_date) |>
-      dplyr::mutate(n_det = sum(n_det, dplyr::lag(n_det, default = 0), na.rm = T))
+      dplyr::arrange(month_date)
+
+    monthly_pos <- monthly_pos |>
+      dplyr::mutate(n_det = if_else(is.na(n_det), 0, n_det)) |>
+      dplyr::mutate(n_det = cumsum(n_det))
   }
 
   cli::cli_process_start("Parsing spatial information")
@@ -123,7 +128,7 @@ create_emergence_group_gif <- function(
     print()
 
   cli::cli_alert_info("The distribution of detections (incidence or cumulative) is presented above. Please provide a numeric vector of values to bin the # of detections.")
-
+  cli::cli_alert_info("It is recommended to use 9 bins maximum.")
   x <- readline(prompt = "Vector: ")
 
   x <- eval(parse(text = x))
@@ -132,6 +137,12 @@ create_emergence_group_gif <- function(
     dplyr::mutate(n_det_cat = cut(n_det, breaks = x, include.lowest = T))
 
   cli::cli_h1(paste0("Generating individual images - Start Date: ", min_date, " - End Date: ", max_date))
+  # remove images from previous runs
+  imgs <- list.files(tempdir(), pattern = "-01.png", full.names = T)
+  if (length(imgs) > 0) {
+    lapply(imgs, \(x) file.remove(x))
+  }
+
   for (date_of_eval in date_seq) {
     date_of_eval <- lubridate::as_date(date_of_eval)
 
@@ -178,7 +189,7 @@ create_emergence_group_gif <- function(
       ggpubr::annotate_figure(top = paste0(
         ifelse(cumulative, "Cumulative", "Incident"),
         " detections of ",
-        emergence_group,
+        paste(emergence_group, collapse = ", "),
         ": ",
         lubridate::month(date_of_eval, label = T),
         ", ",
@@ -206,12 +217,16 @@ create_emergence_group_gif <- function(
 
   cli::cli_process_start("Generating gif")
   ## animate at 2 frames per second
-  img_animated <- magick::image_animate(img_joined, fps = 2)
+  img_animated <- magick::image_animate(img_joined, fps = fps)
 
   ## save to disk
   magick::image_write(
     image = img_animated,
-    path = out_gif
+    path = file.path(output_dir,
+                     paste0(paste(emergence_group, collapse = ", "),
+                            " emergences from ", min_date, " to ", max_date, ".gif"
+                     ))
   )
+
   cli::cli_process_done()
 }
