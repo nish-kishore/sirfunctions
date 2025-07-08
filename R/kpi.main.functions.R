@@ -12,10 +12,10 @@
 #' Defaults to current working directory.
 #' @param name `str` Name of the KPI analysis folder. If not given any names, the
 #' folder will be named the date the function is ran.
-#' @param edav `bool` Whether to use EDAV to load the raw_data and lab_data files.
+#' @param edav `logical` Whether to use EDAV to load the raw_data and lab_data files.
 #' Defaults to `TRUE`.
 #'
-#' @return Does not return anything
+#' @returns Does not return anything
 #' @export
 #'
 #' @examples
@@ -80,7 +80,8 @@ init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
   # Load global polio data
   cli::cli_process_start("Loading global polio dataset")
   if (length(global_files) == 0 & edav == TRUE) {
-    raw_data <<- get_all_polio_data()
+    raw_data <- get_all_polio_data()
+    raw_data <<- raw_data
     saveRDS(raw_data, file.path(Sys.getenv("KPI_DATA"), paste0("raw_data_", today, ".rds")))
   } else if (length(global_files) == 0 & edav == FALSE) {
     cli::cli_alert_info(paste0("Please run get_all_polio_data() locally to build raw_data.",
@@ -88,7 +89,8 @@ init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
                                ".\nEnsure this file begins with 'raw_data' so it can be detected in the next init."))
 
   } else if (length(global_files) == 1) {
-    raw_data <<- readRDS(file.path(Sys.getenv("KPI_DATA"), global_files[1]))
+    raw_data <- readRDS(file.path(Sys.getenv("KPI_DATA"), global_files[1]))
+    raw_data <<- raw_data
   } else {
     for (i in 1:length(global_files)) {
       print(paste0(i, ". ", global_files[i]))
@@ -104,7 +106,8 @@ init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
             "Invalid response."
             next
           } else {
-            raw_data <<- readRDS(file.path(Sys.getenv("KPI_DATA"), global_files[response]))
+            raw_data <- readRDS(file.path(Sys.getenv("KPI_DATA"), global_files[response]))
+            raw_data <<- raw_data
             break
           }
         },
@@ -119,7 +122,8 @@ init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
   # Load lab data
   cli::cli_process_start("Loading lab data")
   if (length(lab_files) == 0 & edav == TRUE) {
-    lab_data <<- edav_io("read", file_loc = get_constant("RAW_LAB_DATA"))
+    lab_data <- edav_io("read", file_loc = get_constant("RAW_LAB_DATA"))
+    lab_data <<- lab_data
     saveRDS(lab_data, file.path(Sys.getenv("KPI_DATA"), paste0("lab_data_", today, ".rds")))
   } else if (length(lab_files) == 0 & edav == FALSE) {
     cli::cli_alert_info(paste0("Please load the lab data manually into the environment. ",
@@ -127,7 +131,8 @@ init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
                                ".\nEnsure this file begins with 'lab_data' so it can be detected in the next init."))
 
   } else if (length(lab_files) == 1) {
-    lab_data <<- readRDS(file.path(Sys.getenv("KPI_DATA"), lab_files[1]))
+    lab_data <- readRDS(file.path(Sys.getenv("KPI_DATA"), lab_files[1]))
+    lab_data <<- lab_data
   } else {
     for (i in 1:length(lab_files)) {
       print(paste0(i, ". ", lab_files[i]))
@@ -143,7 +148,8 @@ init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
             "Invalid response."
             next
           } else {
-            raw_data <<- readRDS(file.path(Sys.getenv("KPI_DATA"), lab_files[response]))
+            raw_data <- readRDS(file.path(Sys.getenv("KPI_DATA"), lab_files[response]))
+            raw_data <<- raw_data
             break
           }
         },
@@ -170,12 +176,14 @@ init_kpi <- function(path = getwd(), name = NULL, edav = TRUE) {
 #'
 #' @param afp_data `tibble` AFP dataset
 #'
-#' @return `tibble` A tibble with the country, abbreviation, and WHO region
+#' @returns `tibble` A tibble with the country, abbreviation, and WHO region
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry_abbrev <- get_ctry_abbrev(raw_data$afp)
+#' }
 get_ctry_abbrev <- function(afp_data) {
   ctry_abbrev <- afp_data |>
     dplyr::mutate(
@@ -229,9 +237,9 @@ get_ctry_abbrev <- function(afp_data) {
 #'
 #' @param output_path `str` Where to output the script to.
 #' @param name `str` Name of the KPI folder.
-#' @param edav `bool` Whether the init pulled data from EDAV or not.
+#' @param edav `logical` Whether the init pulled data from EDAV or not.
 #'
-#' @return None.
+#' @returns None.
 #'
 #' @examples
 #' \dontrun{

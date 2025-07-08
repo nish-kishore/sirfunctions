@@ -130,9 +130,11 @@ impute_site_coord <- function(es.data, dist.shape, ctry.data = lifecycle::deprec
 #' into the function. This allows for greater flexibility in the function.
 #' @returns `tibble` Cleaned environmental surveillance data.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' ctry.data$es <- clean_es_data(ctry.data$es, ctry.data$dist)
+#' }
 #'
 #' @export
 clean_es_data <- function(es.data, dist.shape, ctry.data = lifecycle::deprecated()) {

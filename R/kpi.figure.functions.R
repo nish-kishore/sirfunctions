@@ -14,7 +14,7 @@
 #' @param output_path `str` Where to output the figure to. Defaults to the
 #' path to the figures folder set when running [init_kpi()].
 #'
-#' @return `ggplot` A map.
+#' @returns `ggplot` A map.
 #' @export
 #'
 #' @examples
@@ -102,7 +102,7 @@ generate_sg_priority_map <- function(ctry_risk_cat = NULL,
 #' @param .ctry_sf `sf` Country shapefile.
 #' @param .dist_sf `sf` District shapefile.
 #'
-#' @return `ggplot` A ggplot object.
+#' @returns `ggplot` A ggplot object.
 #' @export
 generate_kpi_map <- function(c2, who_region, indicator, .year_label,
                              risk_category,
@@ -201,16 +201,18 @@ generate_kpi_map <- function(c2, who_region, indicator, .year_label,
 #' - `"EURO"`: European Region
 #' - `"SEARO"`:South-East Asia Region
 #' - `"WPRO"`:Western Pacific Region
+#' @param risk_category `str` A string or a list of strings with priority categories. Valid values
+#' are: "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH".
 #' @param output_path `str` Where to output the figure to. Defaults to the path
 #' initialized when [init_kpi()] was ran.
 #' @param ctry_sf `sf` Country shapefile in long format. Output of
-#' [load_clean_ctry_sp(type = "long")]. Defaults to `NULL`, which will download
+#' [load_clean_ctry_sp()] with `type = "long"`. Defaults to `NULL`, which will download
 #' the required country shapefile when the function is ran.
 #' @param dist_sf `sf` District shapefile in long format. Output of
-#' [load_clean_dist_sp(type = "long")]. Defaults to `NULL`, which will download
+#' [load_clean_dist_sp()] with `type = "long"`. Defaults to `NULL`, which will download
 #' the required district shapefile when the function is ran.
 #'
-#' @return `ggplot` A district NPAFP map.
+#' @returns `ggplot` A district NPAFP map.
 #' @export
 #'
 #' @examples
@@ -265,7 +267,7 @@ generate_kpi_npafp_map <- function(c2, year_label, who_region = NULL,
 #'
 #' @inheritParams generate_kpi_npafp_map
 #'
-#' @return `ggplot` A stool adequacy map.
+#' @returns `ggplot` A stool adequacy map.
 #' @export
 #'
 #' @examples
@@ -327,8 +329,11 @@ generate_kpi_stool_map <- function(c2, year_label, who_region = NULL,
 #' @param output_path `str` Where to output the figure to. Defaults to the
 #' figure path assigned after running [init_kpi()].
 #' @param dot_size `num` Point size.
+#' @param ctry_sf `sf` Country shapefile in long format. Output of
+#' [load_clean_ctry_sp()] with `type = "long"`. Defaults to `NULL`, which will download
+#' the required country shapefile when the function is ran.
 #'
-#' @return `ggplot` A map showing EV detection rate by site.
+#' @returns `ggplot` A map showing EV detection rate by site.
 #' @export
 #'
 #' @examples
@@ -439,7 +444,7 @@ generate_kpi_ev_map <- function(c3, .year_label, who_region = NULL,
 #' Either using [ggplot2::facet_grid()] or [ggplot2::facet_wrap()].
 #' @param y.axis.title `Str` Title of the y axis.
 #'
-#' @return `ggplot2` A bar chart.
+#' @returns `ggplot2` A bar chart.
 #' @export
 generate_kpi_barchart <- function(df, indicator, target, label, faceting,
                                   y.axis.title) {
@@ -502,13 +507,14 @@ generate_kpi_barchart <- function(df, indicator, target, label, faceting,
 #' `r lifecycle::badge("experimental")`
 #'
 #' Generates a bar chart highlighting percentage of priority countries with 80%
-#' of 100,000+ under 15y pop districts achieving npAFP rate of  ≥2/100,000.
+#' of 100,000+ under 15y pop districts achieving npAFP rate of >= 2/100,000.
 #'
 #' @param c1 `tibble` Output of [generate_c1_table()].
 #' @param afp_data `tibble` AFP dataset. List item of the output of
 #' [get_all_polio_data()].
+#' @param output_path `str` Folder location to output the image to.
 #'
-#' @return `ggplot2` A barplot.
+#' @returns `ggplot2` A barplot.
 #' @export
 #'
 #' @examples
@@ -557,8 +563,15 @@ generate_kpi_npafp_bar <- function(c1, afp_data,
 #' 10 collections in the last 12 months.
 #'
 #' @inheritParams generate_kpi_npafp_bar
+#' @param who_region `str` A WHO region or a list of regions. Valid values are:
+#' - `"AFRO"`: African Region
+#' - `"AMRO"`: Region of the Americas
+#' - `"EMRO"`: Eastern Mediterranean Region
+#' - `"EURO"`: European Region
+#' - `"SEARO"`:South-East Asia Region
+#' - `"WPRO"`:Western Pacific Region
 #'
-#' @return `ggplot2` A barplot.
+#' @returns `ggplot2` A barplot.
 #' @export
 #'
 #' @examples
@@ -607,7 +620,7 @@ generate_kpi_evdetect_bar <- function(c1, afp_data,
 #'
 #' @inheritParams generate_kpi_npafp_bar
 #'
-#' @return `ggplot2` A barplot.
+#' @returns `ggplot2` A barplot.
 #' @export
 #'
 #' @examples
@@ -659,7 +672,7 @@ generate_kpi_stoolad_bar <- function(c1, afp_data,
 #' @param y.min `num` Minimum used in the y-axis.
 #' @param y.max `num` Maximum used in the y-axis.
 #'
-#' @return `ggplot` A plot object.
+#' @returns `ggplot` A plot object.
 #' @export
 generate_kpi_violin <- function(
     df,
@@ -720,13 +733,13 @@ generate_kpi_violin <- function(
 #' @param end_date `str` Analysis end date formatted as "YYYY-MM-DD".
 #' @param priority_level `list` Priority levels to display. Defaults to
 #' `c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")`.
-#' @param rolling `bool` Using rolling periods or year-to-year? Defaults to `TRUE`.
+#' @param rolling `logical` Using rolling periods or year-to-year? Defaults to `TRUE`.
 #' @param who_region `list` Regions to display. Defaults to `NULL`, which shows
 #' all of the regions.
 #' @param output_path `str` Where to output the figure to.
 #' @param y_max `num` The maximum y-axis value.
 #'
-#' @return `ggplot` A violin plot showing timeliness of detection.
+#' @returns `ggplot` A violin plot showing timeliness of detection.
 #' @export
 #'
 #' @examples
@@ -837,13 +850,13 @@ generate_timely_det_violin <- function(raw_data,
 #' @param end_date `str` Analysis end date formatted as "YYYY-MM-DD".
 #' @param priority_level `list` Priority levels to display. Defaults to
 #' `c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")`.
-#' @param rolling `bool` Using rolling periods or year-to-year? Defaults to `TRUE`.
+#' @param rolling `logical` Using rolling periods or year-to-year? Defaults to `TRUE`.
 #' @param who_region `list` Regions to display. Defaults to `NULL`, which shows
 #' all of the regions.
 #' @param output_path `str` Where to output the figure to.
 #' @param y_max `num` The maximum y-axis value.
 #'
-#' @return `ggplot` A violin plot showing timeliness of detection.
+#' @returns `ggplot` A violin plot showing timeliness of detection.
 #' @export
 #'
 #' @examples
@@ -988,11 +1001,11 @@ generate_timely_ship_violin <- function(afp_data,
 #' `c("HIGH", "MEDIUM", "LOW (WATCHLIST)", "LOW")`.
 #' @param who_region `list` Regions to display. Defaults to `NULL`, which shows
 #' all of the regions.
-#' @param rolling `bool` Using rolling periods or year-to-year? Defaults to `TRUE`.
+#' @param rolling `logical` Using rolling periods or year-to-year? Defaults to `TRUE`.
 #' @param output_path `str` Where to output the figure to.
 #' @param y_max `num` Maximum value in the y-axis.
 #'
-#' @return `ggplot` A violin plot showing timeliness of lab culture.
+#' @returns `ggplot` A violin plot showing timeliness of lab culture.
 #' @export
 #'
 #' @examples
@@ -1077,7 +1090,7 @@ generate_lab_culture_violin <- function(lab_data, afp_data,
 #'
 #' @inheritParams generate_lab_culture_violin
 #'
-#' @return `ggplot` A violin plot showing timeliness of ITD results from lab
+#' @returns `ggplot` A violin plot showing timeliness of ITD results from lab
 #' culture.
 #' @export
 #'
@@ -1163,7 +1176,7 @@ generate_lab_itd_violin <- function(lab_data, afp_data,
 #'
 #' @inheritParams generate_lab_culture_violin
 #'
-#' @return `ggplot` A violin plot showing the timeliness of shipment to
+#' @returns `ggplot` A violin plot showing the timeliness of shipment to
 #' sequencing results.
 #' @export
 #'
@@ -1251,7 +1264,7 @@ generate_lab_seqship_violin <- function(lab_data, afp_data,
 #'
 #' @inheritParams generate_lab_culture_violin
 #'
-#' @return `ggplot` A violin plot showing the timeliness of sequencing results.
+#' @returns `ggplot` A violin plot showing the timeliness of sequencing results.
 #' @export
 #'
 #' @examples
@@ -1364,7 +1377,7 @@ generate_lab_seqres_violin <- function(lab_data, afp_data,
 #'
 #' @inheritParams generate_lab_culture_violin
 #'
-#' @return `ggplot` A violin plot showing the timeliness of sequencing results.
+#' @returns `ggplot` A violin plot showing the timeliness of sequencing results.
 #' @export
 #'
 #' @examples
@@ -1482,8 +1495,11 @@ generate_lab_itdres_seqres_violin <- function(lab_data, afp_data,
 #'
 #'
 #' @param c_table `tibble` Either C1, C2, C3, C4
+#' @param priority_category `str` A string or a list of priority category. Valid values
+#' are: "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH".
+#' @param output_path `str` Where to output the figure to.
 #'
-#' @return `ggplot2` A tile plot for each indicator for each geography
+#' @returns `ggplot2` A tile plot for each indicator for each geography
 #' @export
 #'
 #' @examples
@@ -1561,9 +1577,9 @@ generate_kpi_tile <- function(c_table, priority_category = "HIGH",
     ) |>
     dplyr::rename_with(recode,
       # c1
-      prop_met_npafp = "Non-polio AFP rate – subnational, %",
-      prop_met_stool = "Stool adequacy – subnational, %",
-      prop_met_ev = "ES EV detection rate – national, %",
+      prop_met_npafp = "Non-polio AFP rate \u2013 subnational, %",
+      prop_met_stool = "Stool adequacy \u2013 subnational, %",
+      prop_met_ev = "ES EV detection rate \u2013 national, %",
       prop_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %",
       prop_met_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %",
       # c2
@@ -1581,14 +1597,14 @@ generate_kpi_tile <- function(c_table, priority_category = "HIGH",
       median_stool_shipment = "Median timeliness of stool shipment",
       timely_opt_field_shipment = "Timeliness of optimized field and shipment, %",
       median_onto_lab = "Median timeliness of optimized field and shipment",
-      timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV – AFP, %",
+      timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV \u2013 AFP, %",
       median_ontonothq = "Median timeliness of detection for WPV/VDPV",
       # c3
       prop_met_ev = "ES EV detection rate, % ",
       prop_met_ev_5_samples = "ES EV detection rate, % (>= 5 samples)",
       prop_met_good_samples = "Condition of ES sample, %",
       median_timely_shipment_per_site = "Median Timeliness of ES sample, %",
-      prop_met_timely_wpv_vdpv_det = "Timeliness of detection for WPV/VDPV – ES, %",
+      prop_met_timely_wpv_vdpv_det = "Timeliness of detection for WPV/VDPV \u2013 ES, %",
       # c4 - itd
       prop_timely_isolation = "Timeliness of virus isolation results",
       prop_timely_itd = "Timeliness of ITD results",

@@ -13,6 +13,8 @@ duplicate_check(.raw.data = raw.data)
 Checks for duplicate records in AFP, other, SIA, and Virus datasets.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 raw.data <- duplicate_check(raw.data)
+}
 }

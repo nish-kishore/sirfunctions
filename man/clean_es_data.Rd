@@ -23,8 +23,10 @@ The cleaning step will attempt to impute missing site coordinates and create
 standardized columns used in the desk review.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 ctry.data <- extract_country_data("algeria", raw.data)
 ctry.data$es <- clean_es_data(ctry.data$es, ctry.data$dist)
+}
 
 }

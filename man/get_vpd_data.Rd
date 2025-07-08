@@ -30,9 +30,9 @@ which returns all the countries in the dataset.}
 \item{iso3_codes}{\code{str} An ISO3 code or a list of ISO3 codes. Defaults to \code{NULL},
 which returns all the ISO3 codes in the dataset.}
 
-\item{add_ctry_sf}{\code{bool} Attach the country shapefile? Defaults to \code{TRUE}.}
+\item{add_ctry_sf}{\code{logical} Attach the country shapefile? Defaults to \code{TRUE}.}
 
-\item{add_ctry_pop}{\code{bool} Attach the country population data? Defaults to \code{TRUE}.}
+\item{add_ctry_pop}{\code{logical} Attach the country population data? Defaults to \code{TRUE}.}
 }
 \value{
 \code{list} A list containing the VPD data, and optionally the shapefile

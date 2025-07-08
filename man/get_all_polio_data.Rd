@@ -34,15 +34,15 @@ spatial files, coverage data, and population data. Defaults to \code{"GID/PEB/SI
 
 \item{core_ready_folder}{\code{str} Which core ready folder to use. Defaults to \code{"Core_Ready_Files"}.}
 
-\item{force.new.run}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run recent data and cache.}
+\item{force.new.run}{\code{logical} Default \code{FALSE}, if \code{TRUE} will run recent data and cache.}
 
-\item{recreate.static.files}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run all data and cache.}
+\item{recreate.static.files}{\code{logical} Default \code{FALSE}, if \code{TRUE} will run all data and cache.}
 
-\item{attach.spatial.data}{\code{bool} Default \code{TRUE}, adds spatial data to downloaded object.}
+\item{attach.spatial.data}{\code{logical} Default \code{TRUE}, adds spatial data to downloaded object.}
 
-\item{use_edav}{\code{bool} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
+\item{use_edav}{\code{logical} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
 
-\item{use_archived_data}{\code{bool} Allows the ability to recreate the raw data file using previous
+\item{use_archived_data}{\code{logical} Allows the ability to recreate the raw data file using previous
 preprocessed data. If}
 
 \item{archive}{Logical. Whether to archive previous output directories
@@ -70,7 +70,7 @@ creation of the "medium" and "large" static datasets as necessary.
 \examples{
 \dontrun{
 raw.data <- get_all_polio_data() # downloads data since 2019, including spatial files
-}
 raw.data <- get_all_polio_data(size = "small", attach.spatial.data = FALSE) # exclude spatial data
+}
 
 }

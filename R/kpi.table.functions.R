@@ -11,7 +11,7 @@
 #'
 #' @param es_data `tibble` ES data
 #' @param end_date `str` End date to anchor analysis to
-#' @return `tibble` A summary of established ES sites
+#' @returns `tibble` A summary of established ES sites
 #' @keywords internal
 get_es_site_age <- function(es_data, end_date) {
   end_date <- lubridate::as_date(end_date)
@@ -45,7 +45,7 @@ get_es_site_age <- function(es_data, end_date) {
 #' @param risk_table  `tibble` Risk category table for each country. Defaults to `NULL`.
 #' When set to `NULL`, attempts to download the risk category table from EDAV.
 #'
-#' @return `tibble` A dataframe with risk category columns added.
+#' @returns `tibble` A dataframe with risk category columns added.
 #' @keywords internal
 #'
 add_risk_category <- function(df, risk_table = NULL, ctry_col = "ctry") {
@@ -55,7 +55,7 @@ add_risk_category <- function(df, risk_table = NULL, ctry_col = "ctry") {
 
   cli::cli_process_start("Adding country risk categories")
   risk_table <- risk_table |>
-    mutate(Country = if_else(.data$Country == "TÜRKIYE", "TURKEY", .data$Country))
+    mutate(Country = if_else(.data$Country == "T\u00dcRKIYE", "TURKEY", .data$Country))
 
   df <- df |>
     dplyr::left_join(risk_table, by = setNames("Country", ctry_col))
@@ -104,7 +104,7 @@ add_seq_capacity <- function(df, ctry_col = "ctry", lab_locs = NULL) {
 #'
 #' @inheritParams generate_wild_vdpv_summary
 #'
-#' @return `tibble` Columns added
+#' @returns `tibble` Columns added
 #' @keywords internal
 generate_pos_timeliness <- function(raw_data, start_date, end_date,
                                         risk_table = NULL, lab_locs = NULL) {
@@ -190,7 +190,7 @@ generate_pos_timeliness <- function(raw_data, start_date, end_date,
 #' @inheritParams generate_c1_table
 #' @param .group_by How to group the results by.
 #'
-#' @return `tibble` Summary of wild and VDPV cases
+#' @returns `tibble` Summary of wild and VDPV cases
 #' @keywords internal
 generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
                                        risk_table = NULL, lab_locs = NULL,
@@ -274,7 +274,7 @@ generate_wild_vdpv_summary <- function(raw_data, start_date, end_date,
 #'
 #' @inheritParams generate_c4_table
 #'
-#' @return `tibble` lab data with timeliness columns.
+#' @returns `tibble` lab data with timeliness columns.
 #'
 #' @keywords internal
 generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data) {
@@ -286,14 +286,14 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
     dplyr::mutate(
       # Timeliness of virus isolation results
       # Start date: receipt at WHO-accredited lab, end date: culture results
-      # Target: ≤14 days
+      # Target: \u226414 days
       days.lab.culture = .data$DateFinalCellCultureResult - .data$DateStoolReceivedinLab,
       t1 = dplyr::if_else(!is.na(.data$days.lab.culture) &
                             (.data$days.lab.culture >= 0 & .data$days.lab.culture <= 365),
                           TRUE, FALSE),
       # Timeliness of ITD results (Amanda added this)
       # Start date: culture results, end date: ITD results
-      # Target: ≤7 days
+      # Target: \u22647 days
       days.culture.itd = .data$DateFinalrRTPCRResults - .data$DateFinalCellCultureResult,
       t2 = dplyr::if_else(!is.na(.data$days.culture.itd) &
                             (.data$days.culture.itd >= 0 & .data$days.culture.itd <= 365),
@@ -301,14 +301,14 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
       # Timeliness of shipment for sequencing
       # Start date: ITD result, end date: arrival at sequencing lab (
       # (Amanda updated start date here to be consistent with GPSAP 2025-26 indicator)
-      # Target: ≤7 days
+      # Target: \u22647 days
       days.seq.ship = .data$DateIsolateRcvdForSeq - .data$DateFinalrRTPCRResults,
       t3 = dplyr::if_else(!is.na(.data$days.seq.ship) &
                             (.data$days.seq.ship >= 0 & .data$days.seq.ship <= 365),
                           TRUE, FALSE),
       # Timeliness of sequencing results
       # Start date: arrival at sequencing lab, end.date: sequencing results
-      # Target: ≤7 days
+      # Target: \u22647 days
       days.seq.rec.res = .data$DateofSequencing - .data$DateIsolateRcvdForSeq,
       t4 = dplyr::if_else(!is.na(.data$days.seq.rec.res) &
                             (.data$days.seq.rec.res >= 0 & .data$days.seq.rec.res <= 365),
@@ -339,7 +339,7 @@ generate_kpi_lab_timeliness <- function(lab_data, start_date, end_date, afp_data
 #' @param end_date `str` The specified end date.
 #' @param date_col `str` Column used when filtering by the end date.
 #'
-#' @return `tibble` Tibble with adjusted rolling period for the final year.
+#' @returns `tibble` Tibble with adjusted rolling period for the final year.
 #' @keywords internal
 #'
 #' @examples
@@ -502,13 +502,15 @@ add_rolling_years <- function(df, start_date, end_date, date_col, period = month
 #' Output of [get_lab_locs()]. Defaults to `NULL`, which will download the information
 #' directly from EDAV.
 #' .
-#' @return `tibble` Summary table of GPSAP KPIs.
+#' @returns `tibble` Summary table of GPSAP KPIs.
 #'
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c1 <- generate_c1_table(raw_data, "2021-01-01", "2023-12-31")
+#' }
 generate_c1_table <- function(raw_data, start_date, end_date,
                               risk_category = NULL,
                               risk_table = NULL,
@@ -930,12 +932,14 @@ generate_c1_rollup <- function(c1,
 #' @param spatial_scale `str` Either `"ctry", "prov", "dist"`.
 #' @inheritParams generate_c1_table
 #'
-#' @return `tibble` Summary table containing AFP KPIs.
+#' @returns `tibble` Summary table containing AFP KPIs.
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c2 <- generate_c2_table(raw_data$afp, raw_data$ctry.pop, "2021-01-01", "2023-12-31", "ctry")
+#' }
 generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
                               spatial_scale,
                               risk_category = NULL,
@@ -1337,12 +1341,14 @@ generate_c2_table <- function(afp_data, pop_data, start_date, end_date,
 #' @param es_data `tibble` Environmental surveillance data.
 #' @inheritParams generate_c1_table
 #'
-#' @return `tibble` A summary table of environmental surveillance KPIs.
+#' @returns `tibble` A summary table of environmental surveillance KPIs.
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
+#' }
 generate_c3_table <- function(es_data, start_date, end_date,
                               risk_category = NULL,
                               lab_locs = NULL,
@@ -1464,13 +1470,13 @@ generate_c3_table <- function(es_data, start_date, end_date,
 #'
 #'
 #' @param c3 `tibble` Output of [generate_c3_table()].
-#' @param include_labels `bool` Include columns for the labels? Default TRUE.
+#' @param include_labels `logical` Include columns for the labels? Default TRUE.
 #' @param min_sample `num` Only consider sites with at least this number
 #' of ES samples. Default is `10`.
-#' @param timely_spv_vdpv_target Target used when determining whether a country
+#' @param timely_wpv_vdpv_target Target used when determining whether a country
 #' meets EV detection target.
 #'
-#' @return `tibble` A summary of the c3 table at the country level
+#' @returns `tibble` A summary of the c3 table at the country level
 #' @export
 #'
 #' @examples
@@ -1530,7 +1536,7 @@ generate_c3_rollup <- function(c3, include_labels = TRUE, min_sample = 10,
 #' @param start_date `str` Start date of the analysis in YYYY-MM-DD format.
 #' @param end_date `str` End date of the analysis in YYYY-MM-DD format.
 #'
-#' @return `list` A summary of timeliness KPIs for lab data.
+#' @returns `list` A summary of timeliness KPIs for lab data.
 #' @export
 #'
 #' @examples
@@ -1626,13 +1632,13 @@ generate_c4_table <- function(lab_data, afp_data, start_date, end_date) {
 #' @param c4 `tibble` Output of [generate_c4_table()]. Defaults to `NULL`.
 #' @param output_path `str` Path to output the table to. Defaults to the path
 #' initiated after running [init_kpi()].
-#' @param drop_label_cols `bool` Keep or discard label columns. Defaults to
+#' @param drop_label_cols `logical` Keep or discard label columns. Defaults to
 #' `TRUE`.
-#' @param sc_targets `bool` Whether to use SC targets when exporting the table. Defaults to FALSE.
+#' @param sc_targets `logical` Whether to use SC targets when exporting the table. Defaults to FALSE.
 #' @param pos_data `tibble` Positives dataset.
 #' @param risk_table `tibble` The risk table. Required if using sc_targets and outside of CDC.
 #'
-#' @return None.
+#' @returns None.
 #' @export
 #'
 #' @examples
@@ -1780,9 +1786,9 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                        region = "WHO Region",
                        sg_priority_level = "GPSAP Risk Category",
                        ctry = "Country",
-                       prop_met_npafp = "Non-polio AFP rate – subnational, %",
-                       prop_met_stool = "Stool adequacy – subnational, %",
-                       prop_met_ev = "ES EV detection rate – national, %",
+                       prop_met_npafp = "Non-polio AFP rate \u2013 subnational, %",
+                       prop_met_stool = "Stool adequacy \u2013 subnational, %",
+                       prop_met_ev = "ES EV detection rate \u2013 national, %",
                        prop_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %"
                       )
   }
@@ -1806,9 +1812,9 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
       dplyr::arrange(dplyr::desc(rolling_period)) |>
       dplyr::rename_with(recode,
                          rolling_period = "Rolling 12 Months",
-                         prop_met_npafp = "Non-polio AFP rate – subnational, %",
-                         prop_met_stool = "Stool adequacy – subnational, %",
-                         prop_met_ev = "ES EV detection rate – national, %",
+                         prop_met_npafp = "Non-polio AFP rate \u2013 subnational, %",
+                         prop_met_stool = "Stool adequacy \u2013 subnational, %",
+                         prop_met_ev = "ES EV detection rate \u2013 national, %",
                          prop_met_timely_wild_vdpv = "Timeliness of detection for WPV/VDPV, %"
       ) |>
       dplyr::select(-dplyr::starts_with("met"), -dplyr::ends_with("denom"))
@@ -1854,7 +1860,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                          median_stool_shipment = "Median timeliness of stool shipment",
                          timely_opt_field_shipment = "Timeliness of optimized field and shipment, %",
                          median_onto_lab = "Median timeliness of optimized field and shipment",
-                         timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV – AFP, %",
+                         timely_wpv_vdpv = "Timeliness of detection for WPV/VDPV \u2013 AFP, %",
                          median_ontonothq = "Median timeliness of detection for WPV/VDPV"
       )
   }
@@ -1901,7 +1907,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
                          prop_met_ev_5_samples = "ES EV detection rate, % (>= 5 samples)",
                          prop_met_good_samples = "Condition of ES sample, %",
                          median_timely_shipment_per_site = "Median Timeliness of ES sample, %",
-                         prop_met_timely_wpv_vdpv_det = "Timeliness of detection for WPV/VDPV – ES, %"
+                         prop_met_timely_wpv_vdpv_det = "Timeliness of detection for WPV/VDPV \u2013 ES, %"
       )
 
   }
@@ -1969,9 +1975,9 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
 
   # indicator guide
   c1_indicators <- c(
-    "C1. Non-polio AFP rate – subnational, %",
-    "C1. Stool adequacy – subnational, %",
-    "C1. ES EV detection rate – national, %",
+    "C1. Non-polio AFP rate \u2013 subnational, %",
+    "C1. Stool adequacy \u2013 subnational, %",
+    "C1. ES EV detection rate \u2013 national, %",
     "C1. Timeliness of detection for WPV/VDPV, %"
   )
 
@@ -2000,14 +2006,14 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
     "C2. Median timeliness of stool shipment",
     "C2. Timeliness of optimized field and shipment, %",
     "C2. Median timeliness of optimized field and shipment",
-    "C2. Timeliness of detection for WPV/VDPV – AFP, %",
+    "C2. Timeliness of detection for WPV/VDPV \u2013 AFP, %",
     "C2: Median timeliness of detection for WPV/VDPV"
   )
   c2_indicators_explanation <- c(
     "NPAFP cases per 100 000 population aged <15 years summarized at the country level",
-    "Proportion of AFP cases with 2 stool specimens collected ≥24 hours apart, both within 14 days of paralysis onset, AND received in good condition in a WHO-accredited laboratory summarized at the country level",
+    "Proportion of AFP cases with 2 stool specimens collected \u226524 hours apart, both within 14 days of paralysis onset, AND received in good condition in a WHO-accredited laboratory summarized at the country level",
     "Proportion of AFP cases with two stool specimens arriving in good condition at a WHO accredited lab",
-    "Proportion of inadequate AFP cases with a follow up exam for residual paralysis completed within 60–90 days of paralysis onset",
+    "Proportion of inadequate AFP cases with a follow up exam for residual paralysis completed within 60\u201390 days of paralysis onset",
     "Proportion of AFP cases reported within 7 days of paralysis onset",
     "Median days AFP cases reported since paralysis onset",
     "Proportion of AFP cases investigated within 48 hours of notification",
@@ -2029,7 +2035,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
       "C3. ES EV detection rate, % (>= 5 samples)",
       "C3. Condition of ES sample, %",
       "C3. Median Timeliness of ES sample, %",
-      "C3. Timeliness of detection for WPV/VDPV – ES, %"
+      "C3. Timeliness of detection for WPV/VDPV \u2013 ES, %"
     )
 
   es_cond_description <- switch(as.character(sc_targets),
@@ -2105,7 +2111,7 @@ export_kpi_table <- function(c1 = NULL, c2 = NULL, c3 = NULL, c4 = NULL,
 #' @param lab_data `tibble` Lab data.
 #' @param group_by `str` A column or a vector of columns to group results by.
 #'
-#' @return `tibble` Summary of missingness of date variables
+#' @returns `tibble` Summary of missingness of date variables
 #' @export
 #'
 #' @examples

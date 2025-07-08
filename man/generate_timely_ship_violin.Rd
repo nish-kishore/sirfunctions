@@ -28,7 +28,7 @@ generate_timely_ship_violin(
 \item{who_region}{\code{list} Regions to display. Defaults to \code{NULL}, which shows
 all of the regions.}
 
-\item{rolling}{\code{bool} Using rolling periods or year-to-year? Defaults to \code{TRUE}.}
+\item{rolling}{\code{logical} Using rolling periods or year-to-year? Defaults to \code{TRUE}.}
 
 \item{output_path}{\code{str} Where to output the figure to.}
 

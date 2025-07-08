@@ -21,8 +21,10 @@ this function should be used only if necessary. For example, in instances where 
 a district is critical and the shapefile from \code{\link[=extract_country_data]{extract_country_data()}} is not yet updated.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data() # must contain spatial data to run the function
 ctry.data <- extract_country_data("algeria", raw.data)
 error.list <- check_afp_guid_ctry_data(ctry.data)
+}
 
 }

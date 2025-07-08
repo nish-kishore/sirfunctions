@@ -28,10 +28,10 @@ export_kpi_table(
 \item{output_path}{\code{str} Path to output the table to. Defaults to the path
 initiated after running \code{\link[=init_kpi]{init_kpi()}}.}
 
-\item{drop_label_cols}{\code{bool} Keep or discard label columns. Defaults to
+\item{drop_label_cols}{\code{logical} Keep or discard label columns. Defaults to
 \code{TRUE}.}
 
-\item{sc_targets}{\code{bool} Whether to use SC targets when exporting the table. Defaults to FALSE.}
+\item{sc_targets}{\code{logical} Whether to use SC targets when exporting the table. Defaults to FALSE.}
 
 \item{pos_data}{\code{tibble} Positives dataset.}
 

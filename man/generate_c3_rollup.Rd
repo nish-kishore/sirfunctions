@@ -14,12 +14,12 @@ generate_c3_rollup(
 \arguments{
 \item{c3}{\code{tibble} Output of \code{\link[=generate_c3_table]{generate_c3_table()}}.}
 
-\item{include_labels}{\code{bool} Include columns for the labels? Default TRUE.}
+\item{include_labels}{\code{logical} Include columns for the labels? Default TRUE.}
 
 \item{min_sample}{\code{num} Only consider sites with at least this number
 of ES samples. Default is \code{10}.}
 
-\item{timely_spv_vdpv_target}{Target used when determining whether a country
+\item{timely_wpv_vdpv_target}{Target used when determining whether a country
 meets EV detection target.}
 }
 \value{

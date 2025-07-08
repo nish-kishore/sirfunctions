@@ -640,7 +640,9 @@ clean_lab_data_regional <- function(lab_data,
 #'
 #' @returns `tibble` A table containing the test lab location information.
 #' @examples
+#' \dontrun{
 #' ctry.seq <- get_lab_locs()
+#' }
 #'
 #' @export
 
@@ -701,7 +703,9 @@ get_lab_locs <- function(path = NULL) {
 #'
 #' @returns `str` A string, either `"EMRO"` or `"AFRO"`.
 #' @examples
+#' \dontrun{
 #' get_region("algeria")
+#' }
 #'
 #' @export
 get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {

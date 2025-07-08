@@ -40,6 +40,8 @@ which will download the information directly from EDAV.}
 Environmental surveillance KPIs summarized by site.
 }
 \examples{
+\dontrun{
 raw_data <- get_all_polio_data(attach.spatial.data = FALSE)
 c3 <- generate_c3_table(raw_data$es, "2021-01-01", "2023-12-31")
+}
 }

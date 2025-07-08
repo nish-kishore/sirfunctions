@@ -11,10 +11,13 @@ check_afp_geographies(afp_data, pop_data, spatial_scale, fix_afp = FALSE)
 
 \item{pop_data}{\code{tibble} Population dataset}
 
-\item{spatial_scale}{\code{str} Any of the following: \verb{"ctry", "prov", "dist}}
+\item{spatial_scale}{\code{str} Any of the following: \verb{"ctry", "prov", "dist}.}
+
+\item{fix_afp}{\code{logical} Whether to update the results to show corrected GUIDs
+based on the population dataset.}
 }
 \value{
-\code{tibble} Tibble with a column used for checking accuracy
+\code{tibble} Tibble with a column used for checking accuracy.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

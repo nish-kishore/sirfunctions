@@ -10,7 +10,7 @@
 #' or `ctry.data${ctry/prov/dist}.pop` of [extract_country_data()].
 #' @param year.data `tibble` Summary table. Created from [generate_year_data()].
 #' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`.
-#' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
+#' @param pending `logical` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @keywords internal
 #'
 #' @returns `tibble` A summary table including NPAFP rates and population data.
@@ -84,7 +84,7 @@ npafp_year <- function(afp.data, pop.data, year.data, spatial_scale, pending) {
 #' @param start_date `str` Start date to calculate the rolling interval for.
 #' @param end_date `str` End date to calculate the rolling interval for.
 #' @param spatial_scale Spatial scale. Valid arguments are: `"ctry", "prov", "dist`.
-#' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
+#' @param pending `logical` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
 #' @keywords internal
 #'
 #' @returns A summary table including NPAFP rates and population data.
@@ -179,10 +179,10 @@ npafp_rolling <- function(afp.data, year.pop.data, start_date, end_date, spatial
 #' - `"prov"` Province level.
 #' - `"dist"` District level.
 #' - `"ctry"` Country level.
-#' @param pending `bool` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
-#' @param missing_agemonths `bool` Should cases with `NA` values for `age.months` be included? Default `FALSE`.
-#' @param rolling `bool` Should the analysis be performed on a rolling bases? Default `FALSE`.
-#' @param sp_continuity_validation `bool` Should we filter places that are not present
+#' @param pending `logical` Should cases classified as `PENDING` or `LAB PENDING` be included in calculations? Default `TRUE`.
+#' @param missing_agemonths `logical` Should cases with `NA` values for `age.months` be included? Default `FALSE`.
+#' @param rolling `logical` Should the analysis be performed on a rolling bases? Default `FALSE`.
+#' @param sp_continuity_validation `logical` Should we filter places that are not present
 #' for the entirety of the analysis dates? Default `TRUE`.
 #' @returns `tibble` A table containing NPAFP rates as well as additional information relevant to each location analyzed.
 #' @examples
@@ -393,7 +393,7 @@ f.npafp.rate.01 <- function(
   }
 
   numeric_cols <- c("n_npafp",
-                    # "u15pop", "npafp_rate", "par", making sure these are NaNs
+                    "u15pop", "npafp_rate", "par",
                     "afp.case", "num.wpv.cases",
                     "num.vdpv1.cases", "num.vdpv2.cases", "num.vdpv3.cases")
   int.data <- int.data |>

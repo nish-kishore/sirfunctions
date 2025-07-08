@@ -33,19 +33,19 @@ sirfunctions_io(
 
 \item{obj}{\code{str} Object to be loaded into EDAV}
 
-\item{edav}{\code{bool} Whether the function should interact with the EDAV environment.
+\item{edav}{\code{logical} Whether the function should interact with the EDAV environment.
 Defaults to \code{TRUE}, otherwise, interacts with files locally.}
 
 \item{azcontainer}{\verb{Azure container} A container object returned by
 \code{\link[=get_azure_storage_connection]{get_azure_storage_connection()}}.}
 
-\item{full_names}{\code{bool} If \code{io="list"}, include the full reference path. Default \code{TRUE}.}
+\item{full_names}{\code{logical} If \code{io="list"}, include the full reference path. Default \code{TRUE}.}
 
 \item{...}{Optional parameters that work with \code{\link[readr:read_delim]{readr::read_delim()}} or \code{\link[readxl:read_excel]{readxl::read_excel()}}.}
 }
 \value{
 Conditional on \code{io}. If \code{io} is \code{"read"}, then it will return a tibble. If \code{io} is \code{"list"}, it will return a
-list of file names. Otherwise, the function will return \code{NULL}. \code{exists.dir} and \code{exists.file} will return a \code{bool}.
+list of file names. Otherwise, the function will return \code{NULL}. \code{exists.dir} and \code{exists.file} will return a \code{logical}.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

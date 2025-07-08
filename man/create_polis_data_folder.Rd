@@ -20,7 +20,7 @@ create_polis_data_folder(
 
 \item{core_ready_folder}{\code{str} Which core ready folder to use. Defaults to \code{"Core_Ready_Files"}.}
 
-\item{use_edav}{\code{bool} Are file paths on EDAV?}
+\item{use_edav}{\code{logical} Are file paths on EDAV?}
 
 \item{archive}{Logical. Whether to archive previous output directories
 before overwriting. Default is \code{TRUE}.}

@@ -21,7 +21,7 @@ set_emergence_colors(
 
 \item{end_date}{\code{str} End date of the time span to look for emergences Defaults to download date of \code{raw.data}.}
 
-\item{get_unassigned}{\code{bool} Get a list of emergence without a color mapped. This parameter is
+\item{get_unassigned}{\code{logical} Get a list of emergence without a color mapped. This parameter is
 useful for ensuring that emergences are all accounted for when making a map.}
 }
 \value{

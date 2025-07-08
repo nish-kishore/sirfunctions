@@ -9,9 +9,10 @@ create_emergence_group_gif(
   pos,
   dist,
   ctry,
-  include_env = T,
-  cumulative = T,
-  out_gif
+  output_dir,
+  include_env = TRUE,
+  cumulative = TRUE,
+  fps = 2
 )
 }
 \arguments{
@@ -24,14 +25,16 @@ output of \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
 
 \item{ctry}{\code{sf} Shapefile of all countries.}
 
+\item{output_dir}{\code{str} Directory where gif should be saved.}
+
 \item{include_env}{\code{bool} To include environmental detections in analysis. Defaults to \code{TRUE}.}
 
 \item{cumulative}{\code{bool} To display cases as cumulative. Defaults to \code{TRUE}.}
 
-\item{out_gif}{\code{str} Location where gif should be saved.}
+\item{fps}{\code{int} Frames per second. Defaults to 2.}
 }
 \value{
-GIF written out to location of \code{out_gif}.
+GIF written out to location of \code{output_dir}.
 }
 \description{
 Generate the figures and stitch together a GIF to evaluate emergence group
@@ -47,11 +50,11 @@ dist <- data$global.dist
 ctry <- data$global.ctry
 include_env <- T
 cumulative <- F
-out_gif <- getwd()
+output_dir <- getwd()
 
 create_emergence_group_gif(
   emergence_group, pos, dist, ctry, include_env,
-  cumulative, out_gif
+  cumulative, output_dir
 )
 }
 

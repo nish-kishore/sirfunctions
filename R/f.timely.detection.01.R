@@ -14,7 +14,7 @@
 #' This table is the output of [get_lab_locs()].
 #' @param start.date `str` Start date for evaluation with format `"YYYY-MM-DD"`.
 #' @param end.date `str` End date for evaluation with format `"YYYY-MM-DD"`.
-#' @param rolling `bool` Should timeliness be calculated in a rolling basis? Default `FALSE`.
+#' @param rolling `logical` Should timeliness be calculated in a rolling basis? Default `FALSE`.
 #' @returns `list` A list with two `tibble`s with global and sub-global
 #' AFP / ES detection timeliness evaluation.
 #' @examples

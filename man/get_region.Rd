@@ -16,6 +16,8 @@ get_region(country_name = Sys.getenv("DR_COUNTRY"))
 Outputs the name of the region which a country belongs to.
 }
 \examples{
+\dontrun{
 get_region("algeria")
+}
 
 }

@@ -313,12 +313,14 @@ add_prov_npafp_table <- function(npafp.output) {
 #' the function will explicitly ask for the AFP dataset instead of accessing it from a list.
 #' @returns `tibble` Summary table of AFP cases by month and another grouping variable.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' afp.by.month <- generate_afp_by_month_summary(
 #'   raw.data$afp, "2021-01-01", "2023-12-31", "ctry",
 #'   raw.data$ctry.pop
 #' )
+#' }
 #'
 #' @export
 generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
@@ -830,6 +832,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 #' @param end_date `str` End date of analysis.
 #' @returns `tibble` A summary table for those requiring 60-day follow-up.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' stool.data <- generate_stool_data(
@@ -838,6 +841,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 #'   "good", "inadequate"
 #' )
 #' table60.days <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
+#' }
 #'
 #' @export
 generate_60_day_table_data <- function(stool.data, start_date, end_date) {
@@ -1006,9 +1010,10 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #'
 #' @param cases.need60day `tibble` Summary table of cases that need 60-day follow-up.
 #' This is the output of [generate_60_day_table_data()].
-#' @param create_cluster `bool` Add column for clusters? Default to `FALSE`.
+#' @param create_cluster `logical` Add column for clusters? Default to `FALSE`.
 #' @returns `tibble` A summary table of cases.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' stool.data <- generate_stool_data(
@@ -1019,6 +1024,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #' pot.c.clust <- generate_potentially_compatibles_cluster(table60.days,
 #'   create_cluster = TRUE
 #' )
+#' }
 #'
 #' @export
 generate_potentially_compatibles_cluster <- function(cases.need60day, create_cluster = F) {
@@ -1211,8 +1217,10 @@ clean_ctry_data <- function(ctry.data) {
 #' `"inadequate"` treats samples with bad data as inadequate.
 #' @returns `tibble` AFP linelist with stool adequacy columns.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' stool.data <- generate_stool_data(raw.data$afp, "2021-01-01", "2023-12-31")
+#' }
 #'
 #' @seealso [f.stool.ad.01()]
 #' @export

@@ -32,7 +32,7 @@ as appropriate.}
 \item \code{"ctry"} Country level.
 }}
 
-\item{intervals.manual}{\code{bool} Should user input their own timeliness interval
+\item{intervals.manual}{\code{logical} Should user input their own timeliness interval
 requirements? Default is \code{FALSE}. This is only required if timeliness column such as
 \code{noti.7d.on}, \code{inv.2d.noti} are not already calculated. This draft function will currently fail if
 this parameter is set to \code{TRUE}.}

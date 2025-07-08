@@ -11,7 +11,7 @@ generate_kpi_template(output_path, name, edav)
 
 \item{name}{\code{str} Name of the KPI folder.}
 
-\item{edav}{\code{bool} Whether the init pulled data from EDAV or not.}
+\item{edav}{\code{logical} Whether the init pulled data from EDAV or not.}
 }
 \value{
 None.

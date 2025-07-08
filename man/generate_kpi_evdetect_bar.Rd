@@ -16,6 +16,18 @@ generate_kpi_evdetect_bar(
 
 \item{afp_data}{\code{tibble} AFP dataset. List item of the output of
 \code{\link[=get_all_polio_data]{get_all_polio_data()}}.}
+
+\item{output_path}{\code{str} Folder location to output the image to.}
+
+\item{who_region}{\code{str} A WHO region or a list of regions. Valid values are:
+\itemize{
+\item \code{"AFRO"}: African Region
+\item \code{"AMRO"}: Region of the Americas
+\item \code{"EMRO"}: Eastern Mediterranean Region
+\item \code{"EURO"}: European Region
+\item \code{"SEARO"}:South-East Asia Region
+\item \code{"WPRO"}:Western Pacific Region
+}}
 }
 \value{
 \code{ggplot2} A barplot.

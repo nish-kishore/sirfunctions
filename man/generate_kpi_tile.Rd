@@ -12,6 +12,11 @@ generate_kpi_tile(
 }
 \arguments{
 \item{c_table}{\code{tibble} Either C1, C2, C3, C4}
+
+\item{priority_category}{\code{str} A string or a list of priority category. Valid values
+are: "LOW", "LOW (WATCHLIST)", "MEDIUM", "HIGH".}
+
+\item{output_path}{\code{str} Where to output the figure to.}
 }
 \value{
 \code{ggplot2} A tile plot for each indicator for each geography

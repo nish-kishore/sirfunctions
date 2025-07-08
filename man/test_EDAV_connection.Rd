@@ -17,7 +17,7 @@ test_EDAV_connection(
 \item{folder}{\code{str} Location of folder in the EDAV environment that you want to download
 and upload data from.}
 
-\item{return_list}{\code{bool} return a list of download time estimates. Defaults to \code{FALSE}.}
+\item{return_list}{\code{logical} return a list of download time estimates. Defaults to \code{FALSE}.}
 
 \item{test_size}{\code{int} byte size of a theoretical file to be uploaded or downloaded.}
 }
@@ -29,6 +29,8 @@ Tests upload and download from EDAV by creating a temporary file
 of a given size and testing the time it takes to upload and download the file.
 }
 \examples{
+\dontrun{
 test_EDAV_connection()
+}
 
 }
