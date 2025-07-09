@@ -1,0 +1,104 @@
+---
+title: "The KPI Analysis Pipeline"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{kpi-analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo=FALSE}
+library(sirfunctions)
+```
+
+## Introduction
+Polio surveillance key performance indicators (KPIs) are regularly monitored by national programs, the regional offices of the World Health Organization (WHO), and the Surveillance Group (SG) of the Global Polio Eradication Initiative (GPEI).  
+
+There are four main KPI tables: 
+
+1. **C1** - Certification of Poliomyelitis Eradication
+2. **C2** - AFP surveillance
+3. **C3** - Environmental surveillance
+4. **C4** - Laboratory surveillance
+
+The KPI analysis pipeline will focus on creating these tables, creating figures based on these tables, and then exporting the results locally.
+
+## Pre-requisites
+
+Before starting, create a folder in the desktop called **kpi_analysis**. This folder will contain all of the KPI runs.
+
+The pipeline is initiated using the `init_kpi()` function. The function takes three arguments:
+
+- `path`: the absolute path of the kpi_analysis folder.
+- `name`: the name of the KPI run. By default, it will be the date `init_kpi()` was ran.
+- `edav`: whether the analysis should access resources from EDAV or not. EDAV is the data science platform within CDC. For non-CDC employees, please set this to `FALSE`.
+
+### Initializing the pipeline
+
+#### CDC employees
+Run the following: `init_kpi("path_to_kpi_folder")`
+
+The function will set up the folder structure within the kpi_analysis folder, as well as set the paths to export the tables and figures. In the KPI run folder, there are three subfolders: data, figures, and tables. The KPI template is also created, which contains all the code necessary to run the KPI analysis. The function will download the global polio dataset and the lab data if available. It will load both the polio and lab data to the R environment.
+
+**NOTE:** If there's a message about being unable to pull data from EDAV, contact Stephanie Kovacs at uvx4@cdc.gov. This is likely a permissions issue.
+
+#### Non-CDC employees
+Run the following: `init_kpi("path_to_kpi_folder", edav = FALSE)`
+
+Upon running, it will set up the folder structure but not download the lab and polio data. There will be several warnings about needing to create the polio data list locally, as well as saving the lab data locally. Please follow the instructions included in these warnings. To create the global polio dataset, please see the `Generating Global Polio Data` vignette.
+
+Once `init_kpi()` completely runs, open the template file. The function will link to the location of this template file and it can be linked if running the code in RStudio.
+
+### Loading the spatial data
+Lines 19-20 of the template loads the country and district shapefiles. For CDC employees, run the lines as-is. However, for non-CDC employees, see below:
+
+#### Non-CDC employees
+Run the following instead: 
+
+```
+ctry_sf <- load_clean_ctry_sp(st_year = 2022, type = "long", fp = "path to global.ctry.rds", edav = FALSE)
+dist_sf <- load_clean_dist_sp(st_year = 2022, type = "long", fp = "path to global.dist.rds", edav = FALSE)
+```
+
+Replace the string passed in `fp` with the actual absolute path to the shapefiles. To generate the shape files, follow the subsection titled **spatial folder** in the `Generating Global Polio Data` vignette.
+
+### Loading the lab information and country prioritization csv files {#load-lab}
+The lab information file contains data for each country regarding their culturing and sequencing capacity, as well as the lab names they send their samples to. The country prioritization csv file contains information regarding the SG priority level for each country. For CDC employees, run the lines as-is. However, for non-CDC employees, see below:
+
+#### Non-CDC employees
+Please request the csv files from Stephanie Kovacs and load these in R to variables `lab_locs` (lab info) and `risk_table` (priority levels). Use `readr::read_csv()` instead of the base `read.csv()` function as the base function renames some of the columns by default, especially when column names contain spaces. 
+
+#### Cleaning the lab data
+
+The lab data is sourced from WHO. Please request this data from Pham-Minh, Ly Mathilde, Florence at phamm@who.int if not already loaded. Then, run the `clean_lab_data()` function. For non-CDC employees, pass the absolute path to the lab information file in the `lab_locs_path` parameter of the cleaning function. 
+
+After cleaning, you can use the `get_lab_date_col_missingness()` function to check the proportion of missingness for each date column. It also has a `group_by` parameter that can be used to group results (ex. countries, regions, or labs).
+
+## Analysis
+
+### Start and end dates
+Before creating the table, set the start and end dates. The analyses are on rolling 12 months. It is important to set the end date day to be one day before the start date. For example, if the start date is 1/**1**/2023, then end date must be **12/31**/2025. For start dates in March, please pay attention to whether the end date is on a leap year. For example (for a rolling 2 year period), 3/1/2022 will have an end date of 2/29/2024 since 2024 is a leap year but 3/1/23 will have an end date of 2/28/2025.
+
+### Creating the C1-C4 tables
+For CDC employees, you may run lines 32-38 as-is. However, for non-CDC employees, the `generate_c1-c3_table()` functions require passing the two parameters: `risk_table` and `lab_locs`. Please pass the variables loaded from the [Loading the lab information and country prioritization csv files](#load-lab) section.
+
+## Figures
+For CDC employees, the section for creating figures can be ran as-is. However, for non-CDC employees, creating maps need a slight modification. The functions `generate_sg_priority_map()` and `generate_kpi_ev_map()` need the country shapefile passed to the `ctry_sf` parameter. For `generate_kpi_npafp_map()` and `generate_kpi_stool_map()`, the functions need the country and district shapefile passed in the `ctry_sf` and `dist_sf`, respectively. 
+
+The other figure creation function can be ran as-is. 
+
+### Creating tile plots
+A tile plot can visualize the improvements of indicators over time for each country. The `generate_kpi_tile()` can create tile plots quickly for the C1-C4 tables. It requires the following parameters: `c_table` and `priority_category`. `c_table` can be any of the tables generated. By default, `priority_category` is set to "HIGH". It is recommended to either leave this as-is, or to only create tile plots for less than 25 countries. Otherwise, the tile plot creation may take a long time and the final image illegible. 
+
+## Exporting tables and figures
+Run the `export_kpi_table()` line. Setting the `drop_lab_cols` parameter to `FALSE` will export a table with numeric columns for each indicator without the proportion labels. This is useful for creating additional figures using this Excel file. 
+
+## Final notes
+The template is simply a place to start. Each function has several parameters that can be tweaked. Thus, reviewing the function documentations is highly encouraged.

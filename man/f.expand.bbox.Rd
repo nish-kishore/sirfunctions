@@ -28,8 +28,10 @@ A function to take a bounding box (generated using \code{\link[sf:st_bbox]{sf::s
 in the X direction and y meters in the Y direction.
 }
 \examples{
+\dontrun{
 ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", st.year = 2019)
 ctry.bbox <- sf::st_bbox(ctry.shape)
 bbox_2 <- f.expand.bbox(ctry.bbox, 4, 4)
+}
 
 }

@@ -23,6 +23,8 @@ A general function that checks the number of \code{NA} rows for a particular
 column.
 }
 \examples{
+\dontrun{
 raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 missing <- check_missing_rows(raw.data$afp, "age.months", c("place.admin.0", "yronset"))
+}
 }

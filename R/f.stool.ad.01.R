@@ -351,8 +351,8 @@ get_incomplete_adm <- function(admin_data, spatial_scale, start_date, end_date) 
 #' - `"exclude"` uses `adequacy.02`
 #' @param bad.data `str` How to  treat bad data. Valid values are:`"remove", "inadequate"`. Defaults to `"inadequate"`.
 #' `"inadequate"` treats samples with bad data as inadequate.
-#' @param rolling `bool` Should data be analyzed on a rolling bases? Defaults to `FALSE`.
-#' @param sp_continuity_validation `bool` Should GUIDs not present in all years of the dataset be excluded? Default `TRUE`.
+#' @param rolling `logical` Should data be analyzed on a rolling bases? Defaults to `FALSE`.
+#' @param sp_continuity_validation `logical` Should GUIDs not present in all years of the dataset be excluded? Default `TRUE`.
 #' @param admin.data `tibble` Population data. Renamed in favor of `pop.data`.
 #' @returns `tibble` Long format stool adequacy evaluations.
 #' @examples
@@ -574,7 +574,16 @@ f.stool.ad.01 <- function(
 
   int.data <- int.data |>
     dplyr::rename("adequacy.denominator" = "num.ad.plus.inad") |>
-    # in rare cases of duplicate pop records
+    dplyr::select(dplyr::any_of(c(
+      "year", "days_in_year", "earliest_date", "latest_date",
+      "u15pop", "pop.cat", "days.at.risk", "weight",
+      "adm0guid", "adm1guid", "adm2guid",
+      "ctry", "prov", "dist",
+      "afp.cases", "adequacy.denominator", "num.adequate", "num.inadequate",
+      "bad.data", "same.day.stool.collection", "late.collection", "bad.condition",
+      "missing.condition", "missing.stool1.condition", "missing.stool2.condition",
+      "missing.stool1", "missing.stool2", "one.or.no.stool", "per.stool.ad"
+    ))) |>
     dplyr::distinct()
 
   return(int.data)

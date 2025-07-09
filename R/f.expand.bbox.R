@@ -13,9 +13,11 @@
 #'
 #' @returns A `bbox` object. This can be converted into an `sf` object using [sf::st_as_sfc()].
 #' @examples
+#' \dontrun{
 #' ctry.shape <- load_clean_ctry_sp(ctry_name = "ALGERIA", st.year = 2019)
 #' ctry.bbox <- sf::st_bbox(ctry.shape)
 #' bbox_2 <- f.expand.bbox(ctry.bbox, 4, 4)
+#' }
 #'
 #' @export
 

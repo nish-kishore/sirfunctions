@@ -4,7 +4,7 @@
 \alias{get_constant}
 \title{Obtain a constant variable used in sirfunctions}
 \usage{
-get_constant(constant_name)
+get_constant(constant_name = NULL)
 }
 \arguments{
 \item{constant_name}{\code{str} Name of the constant. Valid values include:
@@ -16,6 +16,7 @@ get_constant(constant_name)
 \item \code{"SIRFUNCTIONS_GITHUB_TREE"}
 \item \code{"AFRO_LAB_DATA"}
 \item \code{"EMRO_LAB_DATA"}
+\item \code{"CLEANED_LAB_DATA"}
 }}
 }
 \value{

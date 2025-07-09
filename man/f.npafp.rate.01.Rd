@@ -37,13 +37,13 @@ formatted as \verb{adm(0,1,2)guid}, onset date as \code{date} and \code{cdc.clas
 \item \code{"ctry"} Country level.
 }}
 
-\item{pending}{\code{bool} Should cases classified as \code{PENDING} or \verb{LAB PENDING} be included in calculations? Default \code{TRUE}.}
+\item{pending}{\code{logical} Should cases classified as \code{PENDING} or \verb{LAB PENDING} be included in calculations? Default \code{TRUE}.}
 
-\item{missing_agemonths}{\code{bool} Should cases with \code{NA} values for \code{age.months} be included? Default \code{FALSE}.}
+\item{missing_agemonths}{\code{logical} Should cases with \code{NA} values for \code{age.months} be included? Default \code{FALSE}.}
 
-\item{rolling}{\code{bool} Should the analysis be performed on a rolling bases? Default \code{FALSE}.}
+\item{rolling}{\code{logical} Should the analysis be performed on a rolling bases? Default \code{FALSE}.}
 
-\item{sp_continuity_validation}{\code{bool} Should we filter places that are not present
+\item{sp_continuity_validation}{\code{logical} Should we filter places that are not present
 for the entirety of the analysis dates? Default \code{TRUE}.}
 }
 \value{

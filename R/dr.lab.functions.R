@@ -282,7 +282,7 @@ clean_lab_data_who <- function(lab_data, start_date, end_date,
         # Intervals
         days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
         days.lab.culture = DateFinalCellCultureResults - DateStoolReceivedinLab,
-        days.seq.ship = DateIsolateRcvdForSeq - DateSeqResultsEntered,
+        days.seq.ship = DateIsolateRcvdForSeq - DateFinalCellCultureResults,
         days.lab.seq = DateSeqResult - DateStoolReceivedinLab,
         days.itd.seqres = DateSeqResult - DateFinalrRTPCRResults,
         days.itd.arriveseq = DateIsolateRcvdForSeq - DateFinalrRTPCRResults,
@@ -526,14 +526,29 @@ clean_lab_data_regional <- function(lab_data,
   cli::cli_process_start("Creating timeliness interval columns")
   lab_data5 <- lab_data4 |>
     dplyr::mutate(
-      # Intervals
+      # Intervals from stool arrival to sequencing ----
+      ## timeliness of stool collection to arrival in lab ----
       days.collect.lab = DateStoolReceivedinLab - DateStoolCollected,
+
+      ## timeliness of stool arriving in lab to final culture results ----
       days.lab.culture = DateFinalCellCultureResult - DateStoolReceivedinLab,
-      days.seq.ship = DateIsolateRcvdForSeq - ReportDateSequenceResultSent,
-      days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
-      days.itd.seqres = DateofSequencing - DateFinalrRTPCRResults,
+
+      ## timeliness of final culture results to arrival at the sequencing lab ----
+      days.seq.ship = DateIsolateRcvdForSeq - DateFinalCellCultureResult,
+
+      ## timeliness of arrival at sequencing lab to sequencing results ----
+      days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,,
+
+      # Interval measuring sequencing results from date of arrival (NOT part of KPI) ----
+      ## timeliness of ITD results to arrival at sequencing lab ----
       days.itd.arriveseq = DateIsolateRcvdForSeq - DateFinalrRTPCRResults,
-      days.seq.rec.res = DateofSequencing - DateIsolateRcvdForSeq,
+
+      ## timeliness of ITD results to sequencing results ----
+      days.itd.seqres = DateofSequencing - DateFinalrRTPCRResults,
+
+      # Measures overall lab timeliness ----
+      ## timeliness of arriving in lab to sequencing ----
+      days.lab.seq = DateofSequencing - DateStoolReceivedinLab,
 
       # Met target yes/no
       met.targ.collect.lab = ifelse(days.collect.lab < 3, 1, 0),
@@ -625,7 +640,9 @@ clean_lab_data_regional <- function(lab_data,
 #'
 #' @returns `tibble` A table containing the test lab location information.
 #' @examples
+#' \dontrun{
 #' ctry.seq <- get_lab_locs()
+#' }
 #'
 #' @export
 
@@ -648,11 +665,34 @@ get_lab_locs <- function(path = NULL) {
     )
   } else {
     lab.locs <- readr::read_csv(path)
-    lab.locs <- lab.locs |>
-      dplyr::mutate(country = stringr::str_to_upper(country))
   }
 
-  return(lab.locs)
+  lab.locs <- lab.locs |>
+    dplyr::mutate(country = stringr::str_to_upper(country))
+
+  # Manual corrections
+  lab.locs.edited <- lab.locs |>
+    dplyr::filter(!is.na(country)) |>
+    dplyr::mutate(`wgs.lab*` = stringr::str_replace_all(`wgs.lab*`, "- ", "-"),
+                  seq.lab = stringr::str_replace_all(seq.lab, "- ", "-"),
+                  culture.itd.lab = stringr::str_replace_all(culture.itd.lab, "- ", "-")) |>
+    dplyr::mutate(`wgs.lab*` = dplyr::case_when(
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Unknown",
+      `wgs.lab*` %in% c("-", NA) ~ "Unknown",
+      .default = `wgs.lab*`)) |>
+    dplyr::mutate(culture.itd.lab = dplyr::case_when(
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Jordan",
+      culture.itd.lab %in% c("-", NA) ~ "Unknown",
+      .default = culture.itd.lab
+    )) |>
+    dplyr::mutate(seq.lab = dplyr::case_when(
+      country == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM" ~ "Jordan",
+      seq.lab %in% c("-", NA) ~ "Unknown",
+      .default = seq.lab
+    ))
+
+
+  return(lab.locs.edited)
 }
 
 #' Determines whether lab data is EMRO or AFRO
@@ -663,7 +703,9 @@ get_lab_locs <- function(path = NULL) {
 #'
 #' @returns `str` A string, either `"EMRO"` or `"AFRO"`.
 #' @examples
+#' \dontrun{
 #' get_region("algeria")
+#' }
 #'
 #' @export
 get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
@@ -681,7 +723,7 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
     "SIERRA LEONE", "ZIMBABWE", "EQUATORIAL GUINEA", "MAURITIUS", "RWANDA",
     "ESWATINI", "COTE D'IVOIRE", "COTE D IVOIRE",
     "DEMOCRATIC REPUBLIC OF THE CONGO", "GHANA", "GAMBIA", "MALI",
-    "SEYCHELLES"
+    "SEYCHELLES", "COMOROS"
   )
 
   amro_ctry <- c(
@@ -701,7 +743,7 @@ get_region <- function(country_name = Sys.getenv("DR_COUNTRY")) {
     "SOMALIA", "BAHRAIN", "LEBANON",
     "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM",
     "QATAR", "SUDAN", "SAUDI ARABIA", "UNITED ARAB EMIRATES",
-    "DJIBOUTI", "JORDAN"
+    "DJIBOUTI", "JORDAN", "TUNISIA", "LIBYA", "OMAN"
   )
 
   euro_ctry <- c(
@@ -1223,21 +1265,18 @@ clean_lab_data <- function(lab_data, start_date, end_date,
       return(NULL)
     }
 
-    lab_data <- clean_lab_data_who(
-      lab_data, start_date, end_date,
-      afp_data, ctry_name
-    )
-    # lab_data <- add_rolling_years(lab_data, start_date, "DateOfOnset")
+    lab_data <- clean_lab_data_who(lab_data, start_date, end_date,
+                                   afp_data, ctry_name
+                                   )
+    lab_data <- add_rolling_years(lab_data, start_date, end_date, "DateOfOnset")
   } else {
     if ("prov" %in% lab_data_cols) {
       cli::cli_alert_warning("Lab data already cleaned.")
       return(lab_data)
     }
-    lab_data <- clean_lab_data_regional(
-      lab_data, start_date, end_date,
-      afp_data, ctry_name, lab_locs_path
-    )
-    # lab_data <- add_rolling_years(lab_data, start_date, "CaseDate")
+    lab_data <- clean_lab_data_regional(lab_data, start_date, end_date,
+                                        afp_data, ctry_name, lab_locs_path)
+    lab_data <- add_rolling_years(lab_data, start_date, end_date, "CaseDate")
   }
 
   return(lab_data)
@@ -1251,8 +1290,10 @@ clean_lab_data <- function(lab_data, start_date, end_date,
 #' @param lab_data `tibble` Lab data. Ensure that this lab data is cleaned using
 #' [clean_lab_data()] before running the function.
 #' @param spatial.scale `str` Spatial scale to analyze the data. Valid values are `"ctry", "prov", "dist"`.
-#' @param start.date `str` Start date of analysis.
-#' @param end.date `str` End date of analysis.
+#' @param start_date `str` Start date of analysis.
+#' @param end_date `str` End date of analysis.
+#' @param start.date `str` `r lifecycle::badge("deprecated")` renamed in favor of `start_date`.
+#' @param end.date `str` `r lifecycle::badge("deprecated")` renamed in favor of `end_date`.
 #'
 #' @returns `tibble` A table with timeliness data summary.
 #' @examples
@@ -1266,16 +1307,33 @@ clean_lab_data <- function(lab_data, start_date, end_date,
 generate_lab_timeliness <-
   function(lab_data,
            spatial.scale,
-           start.date,
-           end.date) {
+           start_date,
+           end_date,
+           start.date = lifecycle::deprecated(),
+           end.date = lifecycle::deprecated()) {
     spatial_groupby <- switch(spatial.scale,
       "ctry" = c("year", "ctry", "adm0guid"),
-      "prov" = c("year", "ctry", "prov", "adm1guid")
+      "prov" = c("year", "ctry", "prov", "adm0guid", "adm1guid")
     )
 
+    if (lifecycle::is_present(start.date)) {
+      lifecycle::deprecate_warn(
+        "1.3.0", "generate_int_data(start.date)",
+        "generate_int_data(start_date)"
+      )
+      start_date <- start.date
+    }
 
-    start.date <- lubridate::as_date(start.date)
-    end.date <- lubridate::as_date(end.date)
+    if (lifecycle::is_present(end.date)) {
+      lifecycle::deprecate_warn(
+        "1.3.0", "generate_int_data(end.date)",
+        "generate_int_data(end_date)"
+      )
+      end_date <- end.date
+    }
+
+    start_date <- lubridate::as_date(start_date)
+    end_date <- lubridate::as_date(end_date)
 
     # Check if the lab data is attached
     if (is.null(lab_data)) {
@@ -1287,7 +1345,7 @@ generate_lab_timeliness <-
     )
 
     lab_medians <- lab_data |>
-      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
+      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start_date, end_date)) |>
       dplyr::group_by(dplyr::across(dplyr::all_of(spatial_groupby))) |>
       dplyr::summarise(dplyr::across(
         dplyr::starts_with("days."),
@@ -1298,7 +1356,7 @@ generate_lab_timeliness <-
         names_to = "type", values_to = "medi"
       )
     lab_counts <- lab_data |>
-      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start.date, end.date)) |>
+      dplyr::filter(dplyr::between(as.Date(DateOfOnset), start_date, end_date)) |>
       dplyr::group_by(dplyr::across(dplyr::all_of(spatial_groupby))) |>
       dplyr::summarise(dplyr::across(
         dplyr::starts_with("days."),

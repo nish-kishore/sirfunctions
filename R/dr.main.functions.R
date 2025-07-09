@@ -223,6 +223,9 @@ set_data_size <- function(year) {
 #' @param dr_data_path `str` path to save the data set to.
 #' Expected path is ./country/year/data
 #' @param attach_spatial_data whether to attach spatial data
+#' @param .data_folder `str` Path to the data folder.
+#' @param .polis_folder `str` Path to the POLIS folder.
+#' @param .use_edav `logical` Whether to use EDAV or not.
 #' @keywords internal
 #'
 #' @returns `list` large list containing polio data
@@ -230,7 +233,10 @@ update_data <-
   function(data_size,
            country_name,
            dr_data_path,
-           attach_spatial_data) {
+           attach_spatial_data,
+           .data_folder,
+           .polis_folder,
+           .use_edav) {
     message("Saving a new copy of the dataset.")
     path_to_save <-
       paste0(paste(dr_data_path, "saved_on", Sys.Date(), sep = "_"), ".Rds")
@@ -241,7 +247,12 @@ update_data <-
     }
 
     raw_data <-
-      sirfunctions::get_all_polio_data(size = data_size, attach.spatial.data = attach_spatial_data)
+      sirfunctions::get_all_polio_data(size = data_size,
+                                       attach.spatial.data = attach_spatial_data,
+                                       data_folder = .data_folder,
+                                       polis_folder = .polis_folder,
+                                       use_edav = .use_edav
+                                       )
     country_data <- sirfunctions::extract_country_data(country_name, raw_data)
     readr::write_rds(country_data, path_to_save)
     message(paste0("Data saved at:\n", dr_data_path))
@@ -309,6 +320,7 @@ create_metadata <- function(path) {
 #' @param country_name `str` name of the country
 #' @param data_path path of the data folder used in the desk review
 #' @param attach_spatial_data whether to attach spatial data
+#' @inheritParams update_data
 #' @keywords internal
 #'
 #' @returns `list` large list containing polio data
@@ -317,7 +329,10 @@ generate_data <-
            data_size,
            country_name,
            dr_data_path,
-           attach_spatial_data) {
+           attach_spatial_data,
+           .data_folder,
+           .polis_folder,
+           .use_edav) {
     file_names <- list.files(data_path, pattern = "\\.rds$", ignore.case = T)
 
     data_exists <- length(file_names) != 0
@@ -341,7 +356,10 @@ generate_data <-
             data_size,
             country_name,
             dr_data_path,
-            attach_spatial_data
+            attach_spatial_data,
+            .data_folder,
+            .polis_folder,
+            .use_edav
           ))
         } else if (create_new_save == "n") {
           return(load_data(data_path))
@@ -358,7 +376,10 @@ generate_data <-
         data_size,
         country_name,
         dr_data_path,
-        attach_spatial_data
+        attach_spatial_data,
+        .data_folder,
+        .polis_folder,
+        .use_edav
       ))
     }
   }
@@ -463,14 +484,15 @@ fetch_dr_data <- function(country, year, local_dr_repo) {
 #' the function is ran.
 #' @param local_dr_folder `str` Folder where the desk review code is located.
 #' Defaults to the current working directory.
-#' @param attach_spatial_data `bool` Whether to include spatial data. Defaults to `TRUE`.
+#' @param attach_spatial_data `logical` Whether to include spatial data. Defaults to `TRUE`.
 #' @param sg_dr_folder `str` Folder where the local git repository is located. Defaults to `NULL`.
 #' @param lab_data_path `str` Location of the lab data. Defaults to `NULL`.
 #' @param iss_data_path `str` Location of the ISS data. Defaults to `NULL`.
 #' @param branch `str` What branch to download the DR functions from GitHub.
 #' `"main"` is the default, which contains the official version of the package. Other branches,
 #' like `"dev"` may contain experimental features not yet available in the `"main"` branch.
-#' @param source `bool` Whether to source local functions or use sirfunctions. Defaults to `TRUE`.
+#' @param source `logical` Whether to source local functions or use sirfunctions. Defaults to `TRUE`.
+#' @inheritParams get_all_polio_data
 #'
 #' @returns `list` A list containing all dataframe for all polio data.
 #' @examples
@@ -490,7 +512,10 @@ init_dr <-
            iss_data_path = NULL,
            attach_spatial_data = T,
            branch = "main",
-           source = T) {
+           source = T,
+           data_folder = "GID/PEB/SIR/Data",
+           polis_folder = "GID/PEB/SIR/POLIS",
+           use_edav = TRUE) {
     country_name <-
       stringr::str_trim(stringr::str_to_upper(country_name))
 
@@ -577,7 +602,10 @@ init_dr <-
       data_size,
       country_name,
       dr_data_path,
-      attach_spatial_data
+      attach_spatial_data,
+      data_folder,
+      polis_folder,
+      use_edav
     )
 
     # Attaching lab data if available and creating a copy to data folder
@@ -654,112 +682,3 @@ init_dr <-
 
     return(country_data)
   }
-
-#' Upload desk review script to the sg-desk-reviews GitHub repository
-#'
-#' Upload the desk review template script to the [sg-desk-reviews](https://github.com/nish-kishore/sg-desk-reviews)
-#' repository, which houses the code for the desk reviews.
-#' This function can be used in a general sense to upload files to
-#' a github repository. Note that the function will only commit, and that the user must push themselves.
-#'
-#' @param file_path `str` Location of the file to upload to the sg-desk-reviews repo.
-#' @param repo_path `str` Local path of the sg-desk-review repo.
-#' @param message `str` Message to include in the commit.
-#'
-#' @returns A status message.
-#' @examples
-#' \dontrun{
-#' dr_template_path <- "C:/Users/ABC1/Desktop/local_dr/algeria/2024/algeria_template.Rmd"
-#' repo_path <- "C:/Users/ABC1/Desktop/github/sg-desk-reviews"
-#' str_message <- "Added algeria to the SG folder"
-#' upload_dr_to_github(dr_template_path, repo_path, str_message)
-#' }
-#' @export
-upload_dr_to_github <-
-  function(file_path, repo_path, message = "updating file") {
-    if (!requireNamespace("git2r", quietly = TRUE)) {
-      stop('Package "git2r" must be installed to use this function.',
-        .call = FALSE
-      )
-    }
-
-    # Check if the repository is initialized
-    if (is.null(git2r::discover_repository(repo_path))) {
-      stop("Git repository not found at ", repo_path)
-    }
-
-    # Open the repository
-    repo <- git2r::repository(repo_path)
-
-    # Get the name of the current file
-    file_name <- basename(file_path)
-
-    # Copy over the file in the file_path to the repo_path
-    file.copy(file_path, repo_path, recursive = T)
-
-    # Add the file to the repository
-    tryCatch(
-      {
-        git2r::add(repo, path = file.path(repo_path, file_name))
-
-        # Commit the changes with a message including the file name
-        commit_msg <- paste0(message, ": ", file_name)
-        git2r::commit(repo, message = commit_msg)
-        message("Changes committed successfully. Please push using GitHub Desktop or command line ")
-      },
-      error = function(e) {
-        message("No changes to the file.")
-      }
-    )
-
-    # tryCatch({
-    #   git2r::push(repo)
-    #   message("Changes pushed successfully.")
-    # },
-    # error = function(e) {
-    #   stop(message("Unable to push changes. Check if Git is set up correctly."))
-    # })
-  }
-
-
-#' Freeze desk review data to the desk review folder in EDAV
-#'
-#' Data from the desk review can be stored in EDAV so there's an exact copy of the
-#' dataset used in the desk review. This ensures that even after years,
-#' the desk reviews can be ran exactly as it was.
-#' @param rds_obj `Robj` Object loaded in R. This would be `ctry.data`, for example.
-#' @param file_name `str` Name given to the Rds object, do not append `.rds`. This is
-#' what gets stored in EDAV.
-#' @param country `str` Country as a string.
-#' @param year `int` It is recommended to set this to the year
-#' when the desk review was ran.
-#'
-#' @returns A status message.
-#' @examples
-#' \dontrun{
-#' raw.data <- get_all_polio_data()
-#' ctry.data <- init_dr("algeria")
-#' freeze_dr_data(ctry.data, "algeria_ctry_data")
-#' }
-#'
-#' @export
-#' @seealso [init_dr()]
-freeze_dr_data <- function(rds_obj,
-                           file_name,
-                           country = Sys.getenv("DR_COUNTRY"),
-                           year = as.numeric(format(Sys.Date(), "%Y"))) {
-  country <- stringr::str_to_lower(country)
-
-  sirfunctions::edav_io(
-    io = "write",
-    default_dir = NULL,
-    file_loc = file.path(
-      "GID/PEB/SIR/Data/desk_review",
-      country,
-      year,
-      paste0(file_name, ".rds")
-    ),
-    obj = rds_obj
-  )
-  message("File saved successfully.")
-}

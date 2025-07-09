@@ -28,6 +28,7 @@ of interest. See examples.
 \item \code{"list"} Returns a tibble with all objects in a folder.
 \item \code{"upload"} Moves a file of any type to EDAV.
 \item \code{"delete"} Deletes a file.
+\item \code{"delete.dir"} Deletes a folder.
 }}
 
 \item{default_dir}{\code{str} The default directory in EDAV. \code{"GID/PEB/SIR"} is the default directory
@@ -40,7 +41,7 @@ the information in \code{default_dir} if you set that parameter to \code{NULL}.}
 
 \item{azcontainer}{Azure container object returned from \code{\link[=get_azure_storage_connection]{get_azure_storage_connection()}}.}
 
-\item{force_delete}{\code{bool} Use delete io without verification in the command line.}
+\item{force_delete}{\code{logical} Use delete io without verification in the command line.}
 
 \item{local_path}{\code{str} Local file pathway to upload a file to EDAV. Default is \code{NULL}.
 This parameter is only required when passing \code{"upload"} in the \code{io} parameter.}

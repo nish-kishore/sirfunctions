@@ -25,7 +25,7 @@
 #' -`"prov"` Province level.
 #' - `"dist"` District level.
 #' - `"ctry"` Country level.
-#' @param intervals.manual `bool` Should user input their own timeliness interval
+#' @param intervals.manual `logical` Should user input their own timeliness interval
 #' requirements? Default is `FALSE`. This is only required if timeliness column such as
 #' `noti.7d.on`, `inv.2d.noti` are not already calculated. This draft function will currently fail if
 #' this parameter is set to `TRUE`.

@@ -30,7 +30,9 @@ Defaults to "https://data.cdc.gov/resource/fhky-rtsk.json".}
 Pull coverage data from API and filter by desired geographic level and vaccines.
 }
 \examples{
+\dontrun{
 cdc_data <- get_cdc_childvaxview_data(geo_level="substate")
 cdc_data <- get_cdc_childvaxview_data(geo_level="national", vaccines=c("Polio","MMR"))
+}
 
 }

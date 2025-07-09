@@ -9,10 +9,14 @@ get_all_polio_data(
   data_folder = "GID/PEB/SIR/Data",
   polis_folder = "GID/PEB/SIR/POLIS",
   core_ready_folder = "Core_Ready_Files",
-  force.new.run = F,
-  recreate.static.files = F,
-  attach.spatial.data = T,
-  use_edav = TRUE
+  force.new.run = FALSE,
+  recreate.static.files = FALSE,
+  attach.spatial.data = TRUE,
+  use_edav = TRUE,
+  use_archived_data = FALSE,
+  archive = TRUE,
+  keep_n_archives = Inf,
+  output_format = "rds"
 )
 }
 \arguments{
@@ -30,13 +34,26 @@ spatial files, coverage data, and population data. Defaults to \code{"GID/PEB/SI
 
 \item{core_ready_folder}{\code{str} Which core ready folder to use. Defaults to \code{"Core_Ready_Files"}.}
 
-\item{force.new.run}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run recent data and cache.}
+\item{force.new.run}{\code{logical} Default \code{FALSE}, if \code{TRUE} will run recent data and cache.}
 
-\item{recreate.static.files}{\code{bool} Default \code{FALSE}, if \code{TRUE} will run all data and cache.}
+\item{recreate.static.files}{\code{logical} Default \code{FALSE}, if \code{TRUE} will run all data and cache.}
 
-\item{attach.spatial.data}{\code{bool} Default \code{TRUE}, adds spatial data to downloaded object.}
+\item{attach.spatial.data}{\code{logical} Default \code{TRUE}, adds spatial data to downloaded object.}
 
-\item{use_edav}{\code{bool} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
+\item{use_edav}{\code{logical} Build raw data list using EDAV files. Defaults to \code{TRUE}.}
+
+\item{use_archived_data}{\code{logical} Allows the ability to recreate the raw data file using previous
+preprocessed data. If}
+
+\item{archive}{Logical. Whether to archive previous output directories
+before overwriting. Default is \code{TRUE}.}
+
+\item{keep_n_archives}{Numeric. Number of archive folders to retain.
+Defaults to \code{Inf}, which keeps all archives. Set to a finite number
+(e.g., 3) to automatically delete older archives beyond the N most recent.}
+
+\item{output_format}{str: output_format to save files as.
+Available formats include 'rds' 'rda' 'csv' 'qs2' and 'parquet', Defaults is #' 'rds'.}
 }
 \value{
 Named \code{list} containing polio data that is relevant to CDC.
@@ -53,7 +70,7 @@ creation of the "medium" and "large" static datasets as necessary.
 \examples{
 \dontrun{
 raw.data <- get_all_polio_data() # downloads data since 2019, including spatial files
-}
 raw.data <- get_all_polio_data(size = "small", attach.spatial.data = FALSE) # exclude spatial data
+}
 
 }

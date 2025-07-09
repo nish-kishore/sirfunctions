@@ -9,12 +9,14 @@
 #' @param base_url `str` URL to US CDC NCIRD API endpoint.
 #' Defaults to "https://data.cdc.gov/resource/fhky-rtsk.json".
 #'
-#' @return `tibble` Dataframe of vaccine coverage estimates for all VPDs.
+#' @returns `tibble` Dataframe of vaccine coverage estimates for all VPDs.
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' cdc_data <- get_cdc_childvaxview_data(geo_level="substate")
 #' cdc_data <- get_cdc_childvaxview_data(geo_level="national", vaccines=c("Polio","MMR"))
+#' }
 #'
 get_cdc_childvaxview_data <- function(geo_level=NULL, vaccines=NULL,
                                       limit = 1000,

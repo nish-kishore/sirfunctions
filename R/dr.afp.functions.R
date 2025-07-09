@@ -313,12 +313,14 @@ add_prov_npafp_table <- function(npafp.output) {
 #' the function will explicitly ask for the AFP dataset instead of accessing it from a list.
 #' @returns `tibble` Summary table of AFP cases by month and another grouping variable.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' afp.by.month <- generate_afp_by_month_summary(
 #'   raw.data$afp, "2021-01-01", "2023-12-31", "ctry",
 #'   raw.data$ctry.pop
 #' )
+#' }
 #'
 #' @export
 generate_afp_by_month_summary <- function(afp_data, start_date, end_date, by,
@@ -632,41 +634,45 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     }
   )
 
+  int.data <- tidyr::pivot_longer(int.data,
+    cols = dplyr::any_of(c(stool_to_lab_name, "ontonot",
+                    "nottoinvest", "investtostool1",
+                    "stool1tostool2")),
+    names_to = "type",
+    values_to = "value"
+  )
+
   int.data <- switch(spatial_scale,
     "ctry" = {
       int.data <- int.data |>
-        tidyr::pivot_longer(!c("epid", "year", "adm0guid", "ctry"),
-          names_to = "type",
-          values_to = "value"
-        ) |>
-        dplyr::group_by(year, type, adm0guid, ctry) |>
+        dplyr::group_by(year, type, adm0guid) |>
         dplyr::summarize(
-          medi = median(value, na.rm = T),
+          medi = median(value, na.rm = TRUE),
           freq = sum(!is.na(value))
-        )
+        ) |>
+        dplyr::left_join(pop_data |>
+                           dplyr::select(ctry, adm0guid, year)) |>
+        dplyr::ungroup()
     },
     "prov" = {
       int.data <- int.data |>
-        tidyr::pivot_longer(
-          !c("epid", "year", "adm0guid", "adm1guid", "prov", "ctry"),
-          names_to = "type",
-          values_to = "value"
-        ) |>
         dplyr::group_by(
-          year, type, adm1guid,
-          prov, ctry
-        ) |>
+          year, type, adm1guid) |>
         dplyr::summarize(
-          medi = median(value, na.rm = T),
+          medi = median(value, na.rm = TRUE),
           freq = sum(!is.na(value))
-        )
+        ) |>
+        dplyr::left_join(pop_data |>
+                           dplyr::select(ctry, prov, adm0guid, adm1guid, year)) |>
+        dplyr::ungroup()
     }
   )
 
   if (!is.null(lab_data_summary)) {
+
     tryCatch(
       {
-        int.data <- dplyr::bind_rows(lab_data_summary, int.data)
+        int.data <- dplyr::bind_rows(dplyr::ungroup(lab_data_summary), int.data)
       },
       error = function(e) {
         error_message <- paste0(
@@ -679,13 +685,9 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
     )
   }
 
-  if (spatial_scale == "prov") {
-    int.data$prov <- pop_data$prov[match(int.data$adm1guid, pop_data$adm1guid)]
-  } else if (spatial_scale == "ctry") {
-    int.data$ctry <- pop_data$ctry[match(int.data$adm0guid, pop_data$adm0guid)]
-  }
-
   # Filtering based on whether labs are attached
+
+  # Without lab data
   if (is.null(lab_data_summary)) {
     int.data <- int.data |>
       dplyr::filter(type %in% c(
@@ -696,6 +698,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
         "daysstooltolab"
       ))
   } else {
+    # With lab data
     who.additional.cols <- c(
       "days.coll.sent.field",
       "days.sent.field.rec.nat",
@@ -703,20 +706,35 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
       "days.sent.lab.rec.lab",
       "days.rec.lab.culture"
     )
-    int.data.filter <- int.data |>
-      dplyr::filter(type %in% who.additional.cols) |>
-      dplyr::summarise(sum = sum(medi)) |>
-      dplyr::pull()
 
-    if (is.na(sum(int.data.filter))) {
-      int.data <- int.data |>
+    int.data.filter <- int.data |>
+      dplyr::select(type, medi) |>
+      dplyr::filter(type %in% who.additional.cols,
+                    !is.na(medi)) |>
+      dplyr::select(type) |>
+      dplyr::distinct() |>
+      pull(type)
+
+    # If only the lab timeliness are present
+    if (identical(int.data.filter,
+                  c("days.sent.lab.rec.lab", "days.rec.lab.culture"))) {
+      int.data |>
+        dplyr::filter(type %in% c("days.coll.sent.field",
+                                  "days.sent.field.rec.nat",
+                                  "days.rec.nat.sent.lab",
+                                  "days.collect.lab",
+                                  "days.lab.culture"))
+
+      # If some are filled, other than ONLY lab timeliness
+    } else if (length(int.data.filter) != 0) {
+      int.data |>
+        dplyr::filter(!type %in% c("days.collect.lab",
+                                  "days.lab.culture"))
+
+      # If none of the WHO columns are filled
+    } else if (length(int.data.filter) == 0) {
+      int.data |>
         dplyr::filter(!type %in% who.additional.cols)
-    } else {
-      int.data <- int.data |>
-        dplyr::filter(!type %in% c(
-          "days.collect.lab",
-          "days.lab.culture"
-        ))
     }
   }
 
@@ -814,6 +832,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 #' @param end_date `str` End date of analysis.
 #' @returns `tibble` A summary table for those requiring 60-day follow-up.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' stool.data <- generate_stool_data(
@@ -822,6 +841,7 @@ generate_int_data <- function(afp_data, pop_data, start_date, end_date,
 #'   "good", "inadequate"
 #' )
 #' table60.days <- generate_60_day_table_data(stool.data, "2021-01-01", "2023-12-31")
+#' }
 #'
 #' @export
 generate_60_day_table_data <- function(stool.data, start_date, end_date) {
@@ -862,32 +882,38 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
       need60.sys.date = Sys.Date()
     ) |> # needed to record when the table was created
     dplyr::filter(dplyr::between(date, start_date, end_date)) |>
-    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final == "Inadequate" &
+    dplyr::mutate(need60day.v2 = dplyr::if_else(adequacy.final2 == "Inadequate" &
       due.60followup == 1, 1, 0)) |>
     # dplyr::filter(need60day.v2 == 1 |
     #   cdc.classification.all2 == "COMPATIBLE") |>
     dplyr::mutate(
       got60day =
         dplyr::case_when(
-          need60day.v2 == 1 & is.na(followup.date) == F ~ 1,
+          # not missing follow-up date OR follow-up findings
           need60day.v2 == 1 &
-            is.na(followup.date) == T & is.na(followup.findings) == F ~ 1,
-          # If follow up date is missing, but findings are recorded, counts as getting follow up
+            (!is.na(followup.date) | !is.na(followup.findings)) ~ 1,
+
+          # missing follow-up date AND follow-up findings
           need60day.v2 == 1 &
-            is.na(followup.date) == T & is.na(followup.findings) == T ~ 0,
+            (is.na(followup.date) & is.na(followup.findings)) ~ 0,
+
+          # don't need 60 day
           need60day.v2 == 0 ~ 99
         ),
       timeto60day = followup.date - date,
       ontime.60day =
         dplyr::case_when(
+
+          # cases not needing follow-up
           need60day.v2 == 0 ~ 99,
-          # excluded timely cases
+
+          # on time follow-up
           need60day.v2 == 1 &
-            timeto60day >= 60 & timeto60day <= 90 ~ 1,
-          (
-            need60day == 1 &
-              timeto60day < 60 | timeto60day > 90 | is.na(timeto60day) == T
-          ) ~ 0
+            (timeto60day >= 60 & timeto60day <= 90) ~ 1,
+
+          # not timely
+          need60day == 1 &
+              (timeto60day < 60 | timeto60day > 90 | is.na(timeto60day)) ~ 0
         )
     ) |>
     # note if variables are all missing then this definition needs to be adjusted
@@ -895,15 +921,20 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
     dplyr::mutate(
       pot.compatible = dplyr::if_else(
         (
-          followup.findings == "Residual weakness/paralysis" |
-            followup.findings == "Died before follow-up" |
-            followup.findings == "Lost to follow-up" |
+          # if there is a follow-up date
+          followup.findings %in% c("Residual weakness/paralysis",
+                                   "Died before follow-up",
+                                   "Lost to follow-up") |
             (
+              # if no follow-up date make sure that findings are not
+              # no resid weakness or no follow-up
               is.na(followup.date) &
-                followup.findings != "No residual weakness/paralysis"
+                !(followup.findings %in% c("No residual weakness/paralysis",
+                                           "No follow-up"))
             )
         ) &
-          (doses.total < 3 | is.na(doses.total) == T) &
+          # doses are less than 3 or none
+          (doses.total < 3 | is.na(doses.total)) &
           (
             classification %in% c("Discarded", "Pending") |
               is.na(classification) == T
@@ -979,9 +1010,10 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #'
 #' @param cases.need60day `tibble` Summary table of cases that need 60-day follow-up.
 #' This is the output of [generate_60_day_table_data()].
-#' @param create_cluster `bool` Add column for clusters? Default to `FALSE`.
+#' @param create_cluster `logical` Add column for clusters? Default to `FALSE`.
 #' @returns `tibble` A summary table of cases.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' ctry.data <- extract_country_data("algeria", raw.data)
 #' stool.data <- generate_stool_data(
@@ -992,6 +1024,7 @@ generate_60_day_table_data <- function(stool.data, start_date, end_date) {
 #' pot.c.clust <- generate_potentially_compatibles_cluster(table60.days,
 #'   create_cluster = TRUE
 #' )
+#' }
 #'
 #' @export
 generate_potentially_compatibles_cluster <- function(cases.need60day, create_cluster = F) {
@@ -1184,8 +1217,10 @@ clean_ctry_data <- function(ctry.data) {
 #' `"inadequate"` treats samples with bad data as inadequate.
 #' @returns `tibble` AFP linelist with stool adequacy columns.
 #' @examples
+#' \dontrun{
 #' raw.data <- get_all_polio_data(attach.spatial.data = FALSE)
 #' stool.data <- generate_stool_data(raw.data$afp, "2021-01-01", "2023-12-31")
+#' }
 #'
 #' @seealso [f.stool.ad.01()]
 #' @export

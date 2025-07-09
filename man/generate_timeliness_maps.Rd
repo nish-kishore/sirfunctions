@@ -27,7 +27,7 @@ of \code{\link[=extract_country_data]{extract_country_data()}} or \code{\link[=i
 
 \item{end_date}{\code{str} End date of analysis.}
 
-\item{mark_x}{\code{bool} Mark where there are less than 5 AFP cases? Defaults to \code{TRUE}.}
+\item{mark_x}{\code{logical} Mark where there are less than 5 AFP cases? Defaults to \code{TRUE}.}
 
 \item{pt_size}{\code{numeric} Size of the marks.}
 

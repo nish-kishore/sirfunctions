@@ -32,7 +32,7 @@ build_detection_map(
 
 \item{m_data_prov}{\code{tibble} Map data for provinces.}
 
-\item{new_detect}{\code{bool} Whether to include new detections.}
+\item{new_detect}{\code{logical} Whether to include new detections.}
 
 \item{virus_type}{\code{str} or \code{list} Virus type to display.}
 
@@ -48,7 +48,7 @@ build_detection_map(
 
 \item{country}{\code{str} Country or countries of interest.}
 
-\item{labels}{\code{bool} Whether to label provinces.}
+\item{labels}{\code{logical} Whether to label provinces.}
 
 \item{clean_maps}{\code{ggplot} Clean maps.}
 

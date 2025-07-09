@@ -121,9 +121,9 @@ create_stool_adequacy_export <- function(cstool, pstool, dstool, excel_output_pa
   }
 
   sheets <- list(
-    "country_npafp" = cstool,
-    "province_npafp" = pstool,
-    "district_npafp" = dstool
+    "country_stoolad" = cstool,
+    "province_stoolad" = pstool,
+    "district_stoolad" = dstool
   )
   writexl::write_xlsx(sheets, file.path(
     excel_output_path,

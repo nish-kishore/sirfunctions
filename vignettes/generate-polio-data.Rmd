@@ -1,0 +1,210 @@
+---
+title: "Generating Global Polio Data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Generating Global Polio Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo=FALSE}
+library(sirfunctions)
+```
+
+## Introduction
+
+The Surveillance, Innovation, and Research (SIR) Team within the Polio Eradication Branch at CDC obtains global polio data (referred to in this guide as `polio_data`) from [POLIS](https://extranet.who.int/polis/Account/Login). Collaborators outside of CDC who wish to pull global polio data using the sirfunctions package must have access to POLIS beforehand, as well obtain a POLIS API key.
+
+All of the analysis conducted by the SIR team begin by creating a global polio dataset. For those with CDC credentials, loading this dataset can be as simple as running: 
+
+`polio_data <- sirfunctions::get_all_polio_data()`
+
+If you are a CDC employee, reach out to **Stephanie Kovacs** at [uvx4\@cdc.gov](mailto:uvx4@cdc.gov){.email} to ensure proper permissions are set for loading `polio_data`.
+
+This guide is tailored for collaborators, who may not have CDC credentials, but do have access to data in POLIS.
+
+## Prerequisites
+
+### Setting up the data folder {#data-folder-setup}
+
+In your local machine, preferably in the Desktop, create a folder called `polio_data`. Within this folder, create three subdirectories: `coverage`, `spatial`, and `pop`. These folders contain datasets required to build the global polio dataset `polio_data`.
+
+#### coverage folder
+
+The vaccine coverage information are sourced from [IHME](https://www.healthdata.org/research-analysis/health-risks-issues/vaccine-coverage-data).To access the data folder and download vaccine coverage data, you need to enter an email and agree to the terms and conditions of use. The folder must contain the following files:
+
+1. `dpt.rds`: vaccine coverage estimates of the DPT vaccine.
+2. `mcv1.rds`: vaccine coverage estimates of the MCV1 vaccine.
+
+The SIR team maintains these files. Please request these files from Stephanie Kovacs. Details on how to build these `.Rds` files are located in the Index section called [Building the coverage datasets](#build-coverage).
+
+#### spatial folder
+
+The spatial folder requires five files to be present:
+
+1.  `global.ctry.rds`: global country shapefiles
+2.  `global.prov.rds`: global province shapefiles
+3.  `global.dist.rds`: global district shapefiles
+4. `roads.rds`: lines outlining roads
+5. `cities.rds`: coordinates of city centroids
+
+<span style="color:darkgrey"> ***Building the global geographic shapefiles*** </span>
+
+These are built from the polio geodatabase maintained at the World Health Organization (WHO). It will be a `.gdb` file, which is an ESRI GeoDatabase file. Please request this file from **Oluwadamilola Obafemi Sonoiki** at  [sonoikio\@who.int](mailto:sonoikio@who.int){.email}.
+
+To build the three global geographic spatial files, please install [tidypolis](https://github.com/nish-kishore/tidypolis). Once tidypolis is installed, run the following lines:
+
+```
+library(tidypolis)
+preprocess_spatial(
+gdb_folder = "path/to/gdb_file.gdb", # replace with real path to the GDB file
+output_folder = "path/to/data/spatial", # replace with real path to the spatial folder
+edav = FALSE
+)
+```
+Upon completion, the `spatial` folder should contain the following three spatial files as well as some diagnostic files, including duplicate GUIDS and geographic names, as well as duplicated shapes.
+
+<span style="color:darkgrey"> **Building the roads rds file**
+
+This file is maintained by the SIR team. Please request this file from **Stephanie Kovacs**. Details on building the roads `.Rds` file is in the Index section called [Building the roads dataset](#build-roads).
+
+<span style="color:darkgrey"> ***Building the cities rds file*** </span>
+
+This file is maintained by the SIR team. Please request this file from **Stephanie Kovacs**. Details on building the roads `.Rds` file is in the Index section called [Building the cities dataset](#build-cities).
+
+#### pop folder
+
+The pop folder contains country, province, and district level population counts. It comes from several sources. Due to the complexity of building the population files, please reach out directly to **Stephanie Kovacs** for the  population files and place this in the pop folder. Please see the index
+
+### POLIS data {#polis-data}
+
+We source several information from POLIS, including case, environmental surveillance, and immunization activity (SIA) data and perform several data cleaning steps for each source, which the SIR team refers to as "preprocessing of POLIS datasets." The [tidypolis](https://github.com/nish-kishore/tidypolis) package is required for preprocessing. In general, preprocessing involves the following steps to be followed in sequential order:
+
+1. Initialize preprocessing via `tidypolis::init_tidypolis()`. This involves designating a folder in your local machine to store the POLIS data. We recommend creating a folder called `POLIS` in your desktop. The first time this function is ran, it will ask for a POLIS API key. Please ensure that you have a POLIS API key beforehand.
+2. Get all the POLIS tables via `tidypolis::get_polis_data()`.
+3. Run the preprocessing pipeline via `tidypolis::preprocess_data(type = "cdc")`. Only `type = "cdc"` is supported at this time.
+
+To ensure comparable data as those produced by the SIR team, please use the following schedule:
+
+1. Download of POLIS tables (step 2): Tuesdays at 6:00PM Eastern Time.
+2. Running preprocessing (step 3): Wednesdays at 9:00AM Eastern Time.
+
+## Creating `polio_data` locally
+Once the data folder is set up and preprocessing is complete, we now have all the required data to build `polio_data`. Creating `polio_data` locally is done through `get_all_polio_data()`.
+
+### First run
+
+There are four required arguments to pass onto `get_all_polio_data()` when building `polio_data` locally: 
+
+1. `data_folder`: This is the absolute path to the `polio_data` folder built in the [Setting up the data folder](#data-folder-setup) section.
+2. `polis_folder`: This is the absolute path to the POLIS folder containing the preprocessed data produced in the [POLIS data](#polis-data) section. In the first run, it will transfer all the preprocessed datasets from the POLIS folder unto a folder called `polis` within the data folder.
+3. `use_edav`: set this to `FALSE`. The SIR team stores `polio_data` in an Azure Datalake within the CDC Enterprise Data, Analytics, and Visualization (EDAV) platform.
+4. `recreate.static.files`: set this to `TRUE`. This will create another folder called `analytics` within the data folder. This stores the cached polio data and spatial data `.Rds` files. The spatial data `.Rds` file has the country, province, and district shapefiles. 
+
+Now, run the following line:
+```
+polio_data <- get_all_polio_data(
+data_folder = "C:/Users/ABC1/path/to/data_folder", # replace with actual path
+polis_folder = "C:/Users/ABC1/path/to/polis_folder", # replace with actual path
+use_edav = FALSE,
+recreate.static.files = TRUE
+)
+```
+
+You have now successfully built `polis_data`!
+
+### Ensuring `polio_data` is updated
+
+In future runs of `get_all_polio_data()`, you only need to specify the parameters for `data_folder`, `polis_folder`, and `use_edav`. 
+
+However, it is important to make sure to run `get_all_polio_data()` with `recreate.static.files = TRUE` preferable right after completing the preprocessing of POLIS data. This will ensure the data cache located in the `analytics` folder remains updated.
+
+### Arguments of interest within `get_all_polio_data()`
+
+You can choose to exclude spatial data within `polio_data` by setting `attach.spatial.data = FALSE`. You can also choose to download pre-2019 data by setting `size = "medium"` for data 2016-present or `size = "large"` for data 2001-present, although these depend on whether the data obtained from running `tidypolis::get_polis_data()` contain them.
+
+### Filtering `polio_data` for a specific country
+
+You can filter `polio_data` to only contain values for a specific country by running:
+`ctry_data <- sirfunctions::extract_country_data("country name", polio_data)`
+
+## Index
+
+### Population file processing
+
+Population files are built for global districts, provinces and countries, and are anchored to the latest release of WHO's global geodatabase. 
+
+When creating population files they are created in the following order: Districts -> Provinces -> Countries
+
+#### District Populations
+
+CDC creates district populations from WHO district population estimates and then uses a variety of patches from other data sources to fill in missingness.
+
+Data sources: 
+- WHO population estimates from 2015, 2019, 2020, 2021, 2022 and 2024
+- additional patches received: 2018 Kenya patch, supplemental WHO 2018 - 2022 population file, 2021/22 Pakistan population file from CDC Pakistan team, Somalia 2022-2024 patch from EMRO team
+- POLIS API population data
+
+Methods: 
+1. Use all WHO provided extracts to create a dataframe that is 2015 – 24 pops 
+2. Then patch in missingness with the Pakistan and Somalia patches
+3. Determine Anchor Year by identifying the max year for which each adm2GUID has a population number
+3a.	Then patch in Kenya and attach to shapes – Kenyan pops aren’t assigned to adm2GUIDs but rather district name and year so we only use when missing data. 
+Note: attaching to shapes is key in this process because population files need to be compatible with WHO global district shapes
+4. Attach to growth rates (growth rates can be obtained by contacting **Stephanie Kovacs**) and fill using that rate from the max year’s pop number
+5. After growth rate has been applied, determine which districts are missing pops and join in the supplemental WHO file
+5a.	Use the growth rate again but only apply to districts that are missing data and haven’t been filled in by previous extracts and patches. This fills in places where we either aren’t provided data in a WHO extract or for which we are provided data but with an expired GUID or when a shape changes between years so the growth factor is not applied 
+6. Repeat steps 5 and 5a but using POLIS population data from the API
+
+Assumptions/miscellaneous:
+- WHO file is assumed to be the “golden record”. Only patching when the original methodology leaves a district with a missing pop that is in one of the patch files
+- Datasource types (if a population for a given year is based on the growth factor being applied that records inherits the datasource from the anchor year, this is also the hierarchy of data, 1. worldpop/WHO, 2. Pakistan, Somalia and Kenya Patches, 3. WHO patch, 4. POLIS API)
+
+#### Province Populations
+
+Similar to distict populations, provinces start off using WHO population estimates and then patch from other sources and apply a growth factor. 
+
+Data sources: 
+-	WHO extracts from 2020, 2021, 2022 and 2024
+-	POLIS indicators (NPAFP rate indicator) 2023
+-	District roll-ups from dist.pop.long (created in district population processing)
+
+Methods:
+1. Use all WHO extracts to create a dataframe that is 2020 – 2024
+2. Use extracts to determine a max anchor year for each adm1guid and use growth factor to fill forwards and backwards for those shapes
+3. After using WHO extracts, we identify shapes with missing pops and use the POLIS NPAFP indicator denominators to fill and apply the growth factor on those shapes with missing pops
+4. Finally, for any adm1guids still missing pops, use the district pop file to roll up numbers (as long as districts aren’t missing data) to fill adm1guid pop numbers (no growth factor applied here)
+
+Assumptions/miscellaneous:
+-	Hierarchy of data sources: 1. WHO extracts, 2. POLIS npafp rate indicators 2023, 3. district roll ups from dist.pop.long only in cases where pop is missing after other sources have been used to apply growth rates where applicable
+
+#### Country Populations
+
+Country populations are unique to districts and provinces, rather than use WHO estimates, UN population figures are used. 
+
+Data source: UN World Population Prospectus
+
+Methods: 
+1. UN numbers pulled from their data portal API for all geographies 2010 – 2025
+2. Using “median” population variant from UN file to determine each county pop 2010-2025
+2a.	Correct some country names to conform with shape files
+
+
+### Building vaccine coverage datasets {#build-coverage}
+
+Method will be included soon. In the mean time, please request this dataset from Stephanie Kovacs.
+
+### Building the roads dataset {#build-roads}
+
+Method will be included soon. In the mean time, please request this dataset from Stephanie Kovacs.
+
+### Building the cities dataset {#build-cities}
+
+Method will be included soon. In the mean time, please request this dataset from Stephanie Kovacs.

@@ -8,7 +8,9 @@ create_polis_data_folder(
   data_folder,
   polis_folder,
   core_ready_folder,
-  use_edav
+  use_edav,
+  archive = TRUE,
+  keep_n_archives = Inf
 )
 }
 \arguments{
@@ -18,7 +20,14 @@ create_polis_data_folder(
 
 \item{core_ready_folder}{\code{str} Which core ready folder to use. Defaults to \code{"Core_Ready_Files"}.}
 
-\item{use_edav}{\code{bool} Are file paths on EDAV?}
+\item{use_edav}{\code{logical} Are file paths on EDAV?}
+
+\item{archive}{Logical. Whether to archive previous output directories
+before overwriting. Default is \code{TRUE}.}
+
+\item{keep_n_archives}{Numeric. Number of archive folders to retain.
+Defaults to \code{Inf}, which keeps all archives. Set to a finite number
+(e.g., 3) to automatically delete older archives beyond the N most recent.}
 }
 \description{
 Copies the updated POLIS data into the data folder. This function is used

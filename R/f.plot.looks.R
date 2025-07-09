@@ -11,11 +11,13 @@
 #' - `"gpln_type2"`
 #' @returns `ggplot2 theme obj` A theme object that can be added into an existing plot.
 #' @examples
+#' \dontrun{
 #' epicurve_looks <- f.plot.looks("epicurve")
 #' df <- datasets::iris
 #' p1 <- ggplot2::ggplot() +
 #'   ggplot2::geom_col(data = df, ggplot2::aes(x = Sepal.Length, y = Sepal.Width))
 #' p2 <- p1 + epicurve_looks
+#' }
 #'
 #' @export
 f.plot.looks <- function(type) {

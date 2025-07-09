@@ -6,3 +6,4 @@
 ^misc
 ^testing
 ^.git
+^\.github$
