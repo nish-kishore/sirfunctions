@@ -7,7 +7,6 @@ generate_incidence_map <- function(pos_data,
                                    sources = c("AFP", "ENV"),
                                    start_date = NULL,
                                    end_date = NULL,
-                                   cumulative = TRUE,
                                    output_dir = getwd()) {
   if (!requireNamespace("magick", quietly = TRUE)) {
     stop('Package "magick" must be installed to use this function.',
@@ -97,36 +96,13 @@ generate_incidence_map <- function(pos_data,
 
   cli::cli_process_done()
 
-  if (cumulative) {
-    cli::cli_alert_info("Producing cumulative results")
-    monthly_pos <- monthly_pos |>
-      dplyr::mutate(n_det = if_else(is.na(n_det), 0, n_det)) |>
-      dplyr::mutate(n_det = cumsum(n_det))
-
-    monthly_pos_source <- monthly_pos_source |>
-      dplyr::mutate(n_det = if_else(is.na(n_det), 0, n_det)) |>
-      dplyr::group_by(source) |>
-      dplyr::mutate(n_det = cumsum(n_det)) |>
-      dplyr::ungroup()
-
-    monthly_pos_emergence <- monthly_pos_emergence |>
-      dplyr::mutate(n_det = if_else(is.na(n_det), 0, n_det)) |>
-      dplyr::group_by(emergencegroup) |>
-      dplyr::mutate(n_det = cumsum(n_det)) |>
-      dplyr::ungroup()
-
-    monthly_pos_ctry <- monthly_pos_ctry |>
-      dplyr::mutate(n_det = if_else(is.na(n_det), 0, n_det)) |>
-      dplyr::group_by(adm0guid, ctry) |>
-      dplyr::mutate(n_det = cumsum(n_det)) |>
-      dplyr::ungroup()
-  }
-
   cli::cli_process_start("Parsing spatial information")
-  countries_to_include <- ctry |>
+  countries_to_include <- ctry_sf |>
     dplyr::filter(GUID %in% (emergence_group_pos |>
                                dplyr::pull(adm0guid) |>
                                unique()))
+  prov_to_include <- prov_sf |>
+    dplyr::filter(ADM0_GUID %in% countries_to_include$GUID)
 
   country_bbox <- sf::st_bbox(countries_to_include) |>
     sirfunctions::f.expand.bbox(X = 100000, Y = 100000)
@@ -134,7 +110,7 @@ generate_incidence_map <- function(pos_data,
   cli::cli_process_done()
 
   # Set up colors and shapes
-  if(is.null(emergence_colors)) {
+  if (is.null(emergence_colors)) {
     emergence_colors <- emergence_group_pos$emergencegroup |> unique()
     n_colors <- length(emergence_colors)
     random_colors <- rgb(runif(n_colors), runif(n_colors), runif(n_colors))
@@ -181,8 +157,9 @@ generate_incidence_map <- function(pos_data,
       flextable::flextable()
 
     map <- ggplot2::ggplot() +
-      ggplot2::geom_sf(data = ctry, fill = "white") +
-      ggplot2::geom_sf(data = countries_to_include, fill = "grey") +
+      ggplot2::geom_sf(data = ctry_sf, fill = "white") +
+      ggplot2::geom_sf(data = countries_to_include, fill = "lightgrey", color = "black", lwd = 1) +
+      ggplot2::geom_sf(data = prov_to_include, fill = NA, color = "darkgrey") +
       # ggplot2::geom_sf_text(data = countries_to_include,
       #                       ggplot2::aes(label = stringr::str_to_title(ADM0_NAME))) +
       ggplot2::geom_point(data = plot_data,
