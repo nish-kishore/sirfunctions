@@ -221,13 +221,15 @@ generate_incidence_map <- function(pos_data,
   img_animated <- magick::image_animate(img_joined, fps = fps)
 
   ## save to disk
-  magick::image_write(
-    image = img_animated,
-    path = file.path(output_dir,
-                     paste0(paste(emergence_group, collapse = ", "),
-                            " emergences from ", min_date, " to ", max_date, ".gif"
-                     ))
-  )
-
+  if (!is.null(output_dir)) {
+    magick::image_write(
+      image = img_animated,
+      path = file.path(output_dir,
+                       paste0(paste(emergence_group, collapse = ", "),
+                              " emergences from ", min_date, " to ", max_date, ".gif"
+                       ))
+    )
+  }
   cli::cli_process_done()
+  return(invisible(img_animated))
 }
