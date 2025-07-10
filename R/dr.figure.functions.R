@@ -512,7 +512,7 @@ generate_es_site_det <- function(sia.data,
     ggplot2::geom_point(
       data = es.data |>
         dplyr::arrange(ADM1_NAME),
-      ggplot2::aes(x = collect.date, y = site.name, col = all_dets),
+      ggplot2::aes(x = collect.date, y = site.name, col = desc(all_dets)),
       pch = 19,
       size = 3
     ) +
