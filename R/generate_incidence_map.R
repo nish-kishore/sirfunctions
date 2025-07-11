@@ -21,6 +21,10 @@
 #' which does not export the figure.
 #' @param fps `int` Frames per second. To increase the speed of the GIF, increase the fps.
 #' By default, it is set to 2.
+#' @param drop_legend `logical` Drop legends of the figure or not.
+#' @param drop_ctry_labels `logical` Drop country labels for the map.
+#' @param drop_description `logical` Drop the case counts of the map caption.
+#' @param pt_size `int` Size of the points in the map. Defaults to 5.
 #'
 #' @returns `gif` A GIF showing the emergence over time.
 #' @export
@@ -39,7 +43,12 @@ generate_incidence_map <- function(pos_data,
                                    end_date = NULL,
                                    monthly_rolling_window = 12,
                                    output_dir = NULL,
-                                   fps = 2) {
+                                   fps = 2,
+                                   drop_legend = FALSE,
+                                   drop_ctry_labels = FALSE,
+                                   drop_description = FALSE,
+                                   pt_size = 0.7
+                                   ) {
 
   # Checking for required packages ----
   if (!requireNamespace("magick", quietly = TRUE)) {
@@ -213,6 +222,10 @@ generate_incidence_map <- function(pos_data,
                        ctry_sf, country_bbox,
                        monthly_rolling_window,
                        max_date,
+                       drop_legend,
+                       drop_ctry_labels,
+                       drop_description,
+                       pt_size,
                        cumulative=FALSE)
   }, .progress = TRUE)
 
@@ -260,6 +273,10 @@ make_incidence_map <- function(date_of_eval,
                                countries_to_include,
                                ctry_sf, country_bbox,
                                monthly_rolling_window, max_date,
+                               drop_legend,
+                               drop_ctry_labels,
+                               drop_description,
+                               pt_size,
                                cumulative=FALSE) {
   date_of_eval <- lubridate::as_date(date_of_eval)
   rolling_month_end <- date_of_eval %m+% months(monthly_rolling_window)
@@ -331,30 +348,46 @@ make_incidence_map <- function(date_of_eval,
   }
 
 
+  if (drop_legend) {
+    emergence_colors[] <- "orange"
+  }
+
   map <- ggplot2::ggplot() +
+    ggplot2::theme_bw() +
     ggplot2::geom_sf(data = ctry_sf, fill = "lightgrey") +
-    ggplot2::geom_sf(data = countries_to_include, fill = "white", color = "black", lwd = 0.5) +
-    ggplot2::geom_sf_text(data = ctry_sf |> filter(yr.end == 9999),
-                          aes(label = stringr::str_to_title(ADM0_NAME)), color = "black",
-                          size = 2) +
+    ggplot2::geom_sf(data = countries_to_include, fill = "white", color = "black", lwd = 0.5)
+
+  if (!drop_ctry_labels) {
+    map <- map +
+      ggplot2::geom_sf_text(data = ctry_sf |> filter(yr.end == 9999),
+                                           aes(label = stringr::str_to_title(ADM0_NAME)), color = "black",
+                                           size = 2)
+  }
+
+  map <- map +
     ggplot2::geom_point(data = plot_data,
                         ggplot2::aes(x = as.numeric(longitude),
                                      y = as.numeric(latitude),
                                      color = emergencegroup,
                                      shape = source
-                        ), show.legend = T) +
-    ggplot2::labs(caption = paste0(ctry_counts_label, "\n",
-                                   emg_counts_label, "\n",
-                                   source_counts_label)) +
+                        ), size = pt_size, show.legend = T)
+
+  if (!drop_description) {
+    map <- map +
+      ggplot2::labs(caption = paste0(ctry_counts_label, "\n",
+                                     emg_counts_label, "\n",
+                                     source_counts_label))
+  }
+
+  map <- map +
     ggplot2::ylab("") +
     ggplot2::xlab("") +
-    ggplot2::scale_color_manual(name = "Emergence Group", values = emergence_colors, drop = FALSE) +
+    ggplot2::scale_color_manual(name = "Emergence Group", values = emergence_colors, drop = FALSE, na.value = "orange") +
     ggplot2::scale_shape_manual(name = "Detection Type", values = list("ENV" = 15, "AFP" = 16), drop = FALSE) +
     ggplot2::coord_sf(
       xlim = country_bbox[c("xmin", "xmax")],
       ylim = country_bbox[c("ymin", "ymax")]
     ) +
-    ggplot2::theme_bw() +
     ggplot2::theme(panel.background = ggplot2::element_rect(fill = "#E1EEF9"),
                    legend.key = ggplot2::element_rect(fill = NA),
                    axis.text.x = ggplot2::element_blank(),
@@ -363,22 +396,40 @@ make_incidence_map <- function(date_of_eval,
                    axis.ticks.y = ggplot2::element_blank()
                    )
 
+  if (drop_legend) {
+    map <- map +
+      ggplot2::guides(color = "none") +
+      ggplot2::theme_bw()
+  }
+
   epi_curve <- monthly_pos_emergence |>
     ggplot2::ggplot() +
+    ggplot2::theme_bw() +
     ggplot2::annotate("rect",
                       xmin = date_of_eval, xmax = rolling_month_end,
                       ymin = 0, ymax = Inf,
                       color = NA, fill = "grey", alpha = 0.3) +
     ggplot2::geom_bar(ggplot2::aes(x = month_date, y = n_det, fill = emergencegroup), stat = "identity") +
-    ggplot2::scale_fill_manual(values = emergence_colors, name = "Emergence Group") +
-    ggplot2::labs(x = "Date", y = paste("#", "Incident", "detections per month")) +
-    ggplot2::theme_bw()
+    ggplot2::scale_fill_manual(values = emergence_colors, name = "Emergence Group", na.value = "orange") +
+    ggplot2::labs(x = "Date", y = paste("#", "Incident", "detections per month"))
+
+  if (drop_legend) {
+    epi_curve <- epi_curve +
+      ggplot2::guides(fill = "none") +
+      ggplot2::theme_bw()
+  }
+
+  if (!is.null(emergence_group)) {
+    emg_group_description <- paste0("of ",  paste(emergence_group, collapse = ", "))
+  } else {
+    emg_group_description <- ""
+  }
 
   out_plot <- ggpubr::ggarrange(map, epi_curve, ncol = 1, heights = c(2, 1)) |>
     ggpubr::annotate_figure(top = paste0(
       ifelse(cumulative, "Cumulative", "Incident"),
-      " detections of ",
-      paste(emergence_group, collapse = ", "),
+      " detections",
+      emg_group_description,
       ":\n",
       lubridate::month(date_of_eval, label = T),
       " ",

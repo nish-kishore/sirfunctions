@@ -14,7 +14,11 @@ generate_incidence_map(
   end_date = NULL,
   monthly_rolling_window = 12,
   output_dir = NULL,
-  fps = 2
+  fps = 2,
+  drop_legend = FALSE,
+  drop_ctry_labels = FALSE,
+  drop_description = FALSE,
+  pt_size = 0.7
 )
 }
 \arguments{
@@ -43,6 +47,14 @@ which does not export the figure.}
 
 \item{fps}{\code{int} Frames per second. To increase the speed of the GIF, increase the fps.
 By default, it is set to 2.}
+
+\item{drop_legend}{\code{logical} Drop legends of the figure or not.}
+
+\item{drop_ctry_labels}{\code{logical} Drop country labels for the map.}
+
+\item{drop_description}{\code{logical} Drop the case counts of the map caption.}
+
+\item{pt_size}{\code{int} Size of the points in the map. Defaults to 5.}
 }
 \value{
 \code{gif} A GIF showing the emergence over time.
