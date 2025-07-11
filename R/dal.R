@@ -1537,6 +1537,11 @@ if (use_archived_data) {
                                 basename(polis_data_folder)))
 }
 
+# Create file tag for comparison
+sirfunctions_io("write", NULL,
+                file_loc = file.path(analytic_folder, "processed_timestamp.csv"),
+                obj = Sys.time())
+
 return(raw.data)
 
 }
