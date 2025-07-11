@@ -104,36 +104,36 @@ generate_incidence_map <- function(pos_data,
   # Create monthly summaries ----
 
   # (a) By month only
-  monthly_pos <- tidyr::expand_grid(month_date = date_seq) %>%
-    left_join(emergence_group_pos, by = "month_date") %>%
-    group_by(month_date) %>%
+  monthly_pos <- tidyr::expand_grid(month_date = date_seq) |>
+    left_join(emergence_group_pos, by = "month_date") |>
+    group_by(month_date) |>
     summarise(n_det = sum(!is.na(epid)), .groups = "drop")
 
   # (b) By month and source
   monthly_pos_source <- tidyr::expand_grid(
     month_date = date_seq,
     source = unique(emergence_group_pos$source)
-  ) %>%
-    left_join(emergence_group_pos, by = c("month_date", "source")) %>%
-    group_by(month_date, source) %>%
+  ) |>
+    left_join(emergence_group_pos, by = c("month_date", "source")) |>
+    group_by(month_date, source) |>
     summarise(n_det = sum(!is.na(epid)), .groups = "drop")
 
   # (c) By month and emergencegroup
   monthly_pos_emergence <- tidyr::expand_grid(
     month_date = date_seq,
     emergencegroup = unique(emergence_group_pos$emergencegroup)
-  ) %>%
-    left_join(emergence_group_pos, by = c("month_date", "emergencegroup")) %>%
-    group_by(month_date, emergencegroup) %>%
+  ) |>
+    left_join(emergence_group_pos, by = c("month_date", "emergencegroup")) |>
+    group_by(month_date, emergencegroup) |>
     summarise(n_det = sum(!is.na(epid)), .groups = "drop")
 
   # (d) By month, adm0guid, and ctry
   monthly_pos_ctry <- tidyr::expand_grid(
     month_date = date_seq,
     adm0guid = unique(emergence_group_pos$adm0guid)
-  ) %>%
-    left_join(emergence_group_pos, by = c("month_date", "adm0guid")) %>%
-    group_by(month_date, adm0guid) %>%
+  ) |>
+    left_join(emergence_group_pos, by = c("month_date", "adm0guid")) |>
+    group_by(month_date, adm0guid) |>
     summarise(n_det = sum(!is.na(epid)), .groups = "drop") |>
     dplyr::left_join(dplyr::distinct(emergence_group_pos |>
                                        dplyr::select(adm0guid, ctry)))
