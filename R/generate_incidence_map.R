@@ -1,4 +1,35 @@
 
+#' Generate incidence map timeline
+#'
+#' @description
+#' Generates an incidence map and an epicurve showing positive detections for
+#' emergence groups.
+#'
+#' @param pos_data `tibble` Positives dataset.
+#' @param ctry_sf `ctry_sf` Global country shapefile.
+#' @param emergence_group `str` An emergence group or a vector of emergence group names.
+#' @param emergence_colors `list` A named list where each emergence group is mapped its own
+#' color. Names correspond to the emergence group, while values are the colors. If no colors
+#' are passed, then colors are randomly selected for each emergence group.
+#' @param sources `str` Source of detection or a vector of source names. Valid values are:
+#' "AFP", "Community", "Contact", "ENV", "Healthy", "iVDPV".
+#' @param start_date `str` Start date of the map. By default, it will be the earliest date of
+#' detection.
+#' @param end_date `str` End date of the map. By default, it will be the latest detection.
+#' @param monthly_rolling_window `int` Monthly rolling window to show. Defaults to 12.
+#' @param output_dir `str` Local path to the directory to output the figure. Defaults to NULL,
+#' which does not export the figure.
+#' @param fps `int` Frames per second. To increase the speed of the GIF, increase the fps.
+#' By default, it is set to 2.
+#'
+#' @returns `gif` A GIF showing the emergence over time.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raw_data <- get_all_polio_data
+#' generate_incidence_map(raw_data$pos, raw_data$global.ctry, emergence_group = c("YEM-TAI-1", "SOM-BAN-1", "ETH-TIG-1"))
+#' }
 generate_incidence_map <- function(pos_data,
                                    ctry_sf,
                                    emergence_group = NULL,
@@ -6,8 +37,8 @@ generate_incidence_map <- function(pos_data,
                                    sources = c("AFP", "ENV"),
                                    start_date = NULL,
                                    end_date = NULL,
-                                   monthly_rolling_window = 6,
-                                   output_dir = getwd(),
+                                   monthly_rolling_window = 12,
+                                   output_dir = NULL,
                                    fps = 2) {
 
   # Checking for required packages ----
@@ -109,7 +140,38 @@ generate_incidence_map <- function(pos_data,
 
   cli::cli_process_done()
 
+  # Still in draft, disabling cumulative argument for now
+  cumulative <- FALSE
+  if (cumulative) {
+    cli::cli_alert_info("Producing cumulative results")
+    monthly_pos <- monthly_pos |>
+      dplyr::mutate(n_det = if_else(is.na(n_det), 0, n_det)) |>
+      dplyr::mutate(n_det = cumsum(n_det))
+
+    monthly_pos_source <- monthly_pos_source |>
+      dplyr::mutate(n_det = if_else(is.na(n_det), 0, n_det)) |>
+      dplyr::group_by(source) |>
+      dplyr::mutate(n_det = cumsum(n_det)) |>
+      dplyr::ungroup()
+
+    monthly_pos_emergence <- monthly_pos_emergence |>
+      dplyr::mutate(n_det = if_else(is.na(n_det), 0, n_det)) |>
+      dplyr::group_by(emergencegroup) |>
+      dplyr::mutate(n_det = cumsum(n_det)) |>
+      dplyr::ungroup()
+
+    monthly_pos_ctry <- monthly_pos_ctry |>
+      dplyr::mutate(n_det = if_else(is.na(n_det), 0, n_det)) |>
+      dplyr::group_by(adm0guid, ctry) |>
+      dplyr::mutate(n_det = cumsum(n_det)) |>
+      dplyr::ungroup()
+  }
+
+
   cli::cli_process_start("Parsing spatial information")
+  ctry_sf <- ctry_sf |>
+    dplyr::mutate(ADM0_NAME = dplyr::if_else(ADM0_NAME == "OCCUPIED PALESTINIAN TERRITORY, INCLUDING EAST JERUSALEM",
+                                             "PALESTINE", ADM0_NAME))
   countries_to_include <- ctry_sf |>
     dplyr::filter(GUID %in% (emergence_group_pos |>
                                dplyr::pull(adm0guid) |>
@@ -140,126 +202,21 @@ generate_incidence_map <- function(pos_data,
   # Generate snapshots ----
 
   purrr::map(date_seq, \(date_of_eval) {
-    date_of_eval <- lubridate::as_date(date_of_eval)
-    rolling_month_end <- date_of_eval %m+% months(monthly_rolling_window)
-
-    if (rolling_month_end > max_date) {
-      rolling_month_end <- max_date
-    }
-
-    # create temp directory
-    out_file <- paste0(tempdir(), "/", date_of_eval, ".png")
-
-    plot_data <- emergence_group_pos |>
-      dplyr::filter(dplyr::between(month_date, date_of_eval,
-                                   rolling_month_end))
-
-    ctry_counts <- monthly_pos_ctry |>
-      dplyr::filter(between(month_date, date_of_eval,
-                            rolling_month_end)) |>
-      dplyr::mutate(ctry = stringr::str_to_title(ctry)) |>
-      dplyr::select(ctry, n_det) |>
-      dplyr::group_by(ctry) |>
-      dplyr::summarize(n_det = sum(n_det, na.rm = TRUE)) |>
-      dplyr::arrange(ctry)
-
-    ctry_counts_label <- ""
-    for (i in 1:nrow(ctry_counts)) {
-      ctry_counts_label <- paste0(ctry_counts_label,
-                                  paste0(ctry_counts[[i, "ctry"]],": ",
-                                         ctry_counts[[i, "n_det"]]," ")
-      )
-    }
-
-    emergence_counts <- monthly_pos_emergence |>
-      dplyr::filter(between(month_date, date_of_eval,
-                            rolling_month_end)) |>
-      dplyr::arrange(emergencegroup) |>
-      dplyr::select(emergencegroup, n_det) |>
-      dplyr::group_by(emergencegroup) |>
-      dplyr::summarize(n_det = sum(n_det, na.rm = TRUE)) |>
-      dplyr::arrange(emergencegroup)
-
-    emg_counts_label <- ""
-    for (i in 1:nrow(emergence_counts)) {
-      emg_counts_label <- paste0(emg_counts_label,
-                                 paste0(emergence_counts[[i, "emergencegroup"]],": ",
-                                        emergence_counts[[i, "n_det"]]," ")
-      )
-    }
-
-    source_counts <- monthly_pos_source |>
-      dplyr::filter(between(month_date, date_of_eval,
-                            rolling_month_end)) |>
-      dplyr::arrange(source) |>
-      dplyr::select(source, n_det) |>
-      dplyr::group_by(source) |>
-      dplyr::summarize(n_det = sum(n_det, na.rm = TRUE))
-
-    source_counts_label <- ""
-    for (i in 1:nrow(source_counts)) {
-      source_counts_label <- paste0(source_counts_label,
-                                    paste0(source_counts[[i, "source"]],": ",
-                                           source_counts[[i, "n_det"]]," ")
-      )
-    }
-
-
-    map <- ggplot2::ggplot() +
-      ggplot2::geom_sf(data = ctry_sf, fill = "lightgrey") +
-      ggplot2::geom_sf(data = countries_to_include, fill = "white", color = "black", lwd = 0.5) +
-      ggplot2::geom_sf_text(data = ctry_sf |> filter(yr.end == 9999),
-                            aes(label = stringr::str_to_title(ADM0_NAME)), color = "black",
-                            size = 2) +
-      ggplot2::geom_point(data = plot_data,
-                          ggplot2::aes(x = as.numeric(longitude),
-                                       y = as.numeric(latitude),
-                                       color = emergencegroup,
-                                       shape = source
-                          ), show.legend = T) +
-      ggplot2::labs(caption = paste0(ctry_counts_label, "\n",
-                                     emg_counts_label, "\n",
-                                     source_counts_label)) +
-      ggplot2::ylab("") +
-      ggplot2::xlab("") +
-      ggplot2::scale_color_manual(name = "Emergence Group", values = emergence_colors, drop = FALSE) +
-      ggplot2::scale_shape_manual(name = "Detection Type", values = list("ENV" = 15, "AFP" = 16), drop = FALSE) +
-      ggplot2::coord_sf(
-        xlim = country_bbox[c("xmin", "xmax")],
-        ylim = country_bbox[c("ymin", "ymax")]
-      ) +
-      ggplot2::theme_bw() +
-      ggplot2::theme(panel.background = ggplot2::element_rect(fill = "#E1EEF9"))
-
-    epi_curve <- monthly_pos_emergence |>
-      ggplot2::ggplot() +
-      ggplot2::annotate("rect",
-                        xmin = date_of_eval, xmax = rolling_month_end,
-                        ymin = 0, ymax = Inf,
-                        color = NA, fill = "grey", alpha = 0.3) +
-      ggplot2::geom_bar(ggplot2::aes(x = month_date, y = n_det, fill = emergencegroup), stat = "identity") +
-      ggplot2::scale_fill_manual(values = emergence_colors, name = "Emergence Group") +
-      ggplot2::labs(x = "Date", y = paste("#", "Incident", "detections per month")) +
-      ggplot2::theme_bw()
-
-    out_plot <- ggpubr::ggarrange(map, epi_curve, ncol = 1, heights = c(2, 1)) |>
-      ggpubr::annotate_figure(top = paste0(
-        "Incident",
-        " detections of ",
-        paste(emergence_group, collapse = ", "),
-        ":\n",
-        lubridate::month(date_of_eval, label = T),
-        ", ",
-        lubridate::year(date_of_eval),
-        " - ",
-        lubridate::month(rolling_month_end, label = T),
-        ", ",
-        lubridate::year(rolling_month_end)
-      ))
-
-    ggplot2::ggsave(out_file, plot = out_plot, dpi = 300, height = 8, width = 6, bg = "white")
+    make_incidence_map(date_of_eval,
+                       emergence_group,
+                       emergence_colors,
+                       emergence_group_pos,
+                       monthly_pos,
+                       monthly_pos_ctry, monthly_pos_source,
+                       monthly_pos_emergence,
+                       countries_to_include,
+                       ctry_sf, country_bbox,
+                       monthly_rolling_window,
+                       max_date,
+                       cumulative=FALSE)
   }, .progress = TRUE)
 
+  # Creating the GIF ----
   cli::cli_h1("Generating Gif")
 
   cli::cli_process_start("Reading images")
@@ -291,3 +248,149 @@ generate_incidence_map <- function(pos_data,
   cli::cli_process_done()
   return(invisible(img_animated))
 }
+
+# Private functions ----
+make_incidence_map <- function(date_of_eval,
+                               emergence_group,
+                               emergence_colors,
+                               emergence_group_pos,
+                               monthly_pos,
+                               monthly_pos_ctry, monthly_pos_source,
+                               monthly_pos_emergence,
+                               countries_to_include,
+                               ctry_sf, country_bbox,
+                               monthly_rolling_window, max_date,
+                               cumulative=FALSE) {
+  date_of_eval <- lubridate::as_date(date_of_eval)
+  rolling_month_end <- date_of_eval %m+% months(monthly_rolling_window)
+
+  if (rolling_month_end > max_date) {
+    rolling_month_end <- max_date
+  }
+
+  # create temp directory
+  out_file <- paste0(tempdir(), "/", date_of_eval, ".png")
+
+  if (cumulative) {
+    plot_data <- emergence_group_pos |>
+      dplyr::filter(dplyr::between(month_date, min_date, date_of_eval))
+  } else {
+    plot_data <- emergence_group_pos |>
+      dplyr::filter(dplyr::between(month_date, date_of_eval,
+                                   rolling_month_end))
+  }
+
+  ctry_counts <- monthly_pos_ctry |>
+    dplyr::filter(between(month_date, date_of_eval,
+                          rolling_month_end)) |>
+    dplyr::mutate(ctry = stringr::str_to_title(ctry)) |>
+    dplyr::select(ctry, n_det) |>
+    dplyr::group_by(ctry) |>
+    dplyr::summarize(n_det = sum(n_det, na.rm = TRUE)) |>
+    dplyr::arrange(ctry)
+
+  ctry_counts_label <- ""
+  for (i in 1:nrow(ctry_counts)) {
+    ctry_counts_label <- paste0(ctry_counts_label,
+                                paste0(ctry_counts[[i, "ctry"]],": ",
+                                       ctry_counts[[i, "n_det"]]," ")
+    )
+  }
+
+  emergence_counts <- monthly_pos_emergence |>
+    dplyr::filter(between(month_date, date_of_eval,
+                          rolling_month_end)) |>
+    dplyr::arrange(emergencegroup) |>
+    dplyr::select(emergencegroup, n_det) |>
+    dplyr::group_by(emergencegroup) |>
+    dplyr::summarize(n_det = sum(n_det, na.rm = TRUE)) |>
+    dplyr::arrange(emergencegroup)
+
+  emg_counts_label <- ""
+  for (i in 1:nrow(emergence_counts)) {
+    emg_counts_label <- paste0(emg_counts_label,
+                               paste0(emergence_counts[[i, "emergencegroup"]],": ",
+                                      emergence_counts[[i, "n_det"]]," ")
+    )
+  }
+
+  source_counts <- monthly_pos_source |>
+    dplyr::filter(between(month_date, date_of_eval,
+                          rolling_month_end)) |>
+    dplyr::arrange(source) |>
+    dplyr::select(source, n_det) |>
+    dplyr::group_by(source) |>
+    dplyr::summarize(n_det = sum(n_det, na.rm = TRUE))
+
+  source_counts_label <- ""
+  for (i in 1:nrow(source_counts)) {
+    source_counts_label <- paste0(source_counts_label,
+                                  paste0(source_counts[[i, "source"]],": ",
+                                         source_counts[[i, "n_det"]]," ")
+    )
+  }
+
+
+  map <- ggplot2::ggplot() +
+    ggplot2::geom_sf(data = ctry_sf, fill = "lightgrey") +
+    ggplot2::geom_sf(data = countries_to_include, fill = "white", color = "black", lwd = 0.5) +
+    ggplot2::geom_sf_text(data = ctry_sf |> filter(yr.end == 9999),
+                          aes(label = stringr::str_to_title(ADM0_NAME)), color = "black",
+                          size = 2) +
+    ggplot2::geom_point(data = plot_data,
+                        ggplot2::aes(x = as.numeric(longitude),
+                                     y = as.numeric(latitude),
+                                     color = emergencegroup,
+                                     shape = source
+                        ), show.legend = T) +
+    ggplot2::labs(caption = paste0(ctry_counts_label, "\n",
+                                   emg_counts_label, "\n",
+                                   source_counts_label)) +
+    ggplot2::ylab("") +
+    ggplot2::xlab("") +
+    ggplot2::scale_color_manual(name = "Emergence Group", values = emergence_colors, drop = FALSE) +
+    ggplot2::scale_shape_manual(name = "Detection Type", values = list("ENV" = 15, "AFP" = 16), drop = FALSE) +
+    ggplot2::coord_sf(
+      xlim = country_bbox[c("xmin", "xmax")],
+      ylim = country_bbox[c("ymin", "ymax")]
+    ) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(panel.background = ggplot2::element_rect(fill = "#E1EEF9"),
+                   legend.key = ggplot2::element_rect(fill = NA),
+                   axis.text.x = ggplot2::element_blank(),
+                   axis.text.y = ggplot2::element_blank(),
+                   axis.ticks.x = ggplot2::element_blank(),
+                   axis.ticks.y = ggplot2::element_blank()
+                   )
+
+  epi_curve <- monthly_pos_emergence |>
+    ggplot2::ggplot() +
+    ggplot2::annotate("rect",
+                      xmin = date_of_eval, xmax = rolling_month_end,
+                      ymin = 0, ymax = Inf,
+                      color = NA, fill = "grey", alpha = 0.3) +
+    ggplot2::geom_bar(ggplot2::aes(x = month_date, y = n_det, fill = emergencegroup), stat = "identity") +
+    ggplot2::scale_fill_manual(values = emergence_colors, name = "Emergence Group") +
+    ggplot2::labs(x = "Date", y = paste("#", "Incident", "detections per month")) +
+    ggplot2::theme_bw()
+
+  out_plot <- ggpubr::ggarrange(map, epi_curve, ncol = 1, heights = c(2, 1)) |>
+    ggpubr::annotate_figure(top = paste0(
+      ifelse(cumulative, "Cumulative", "Incident"),
+      " detections of ",
+      paste(emergence_group, collapse = ", "),
+      ":\n",
+      lubridate::month(date_of_eval, label = T),
+      " ",
+      lubridate::year(date_of_eval),
+      " - ",
+      lubridate::month(rolling_month_end, label = T),
+      " ",
+      lubridate::year(rolling_month_end)
+    ))
+
+  ggplot2::ggsave(out_file, plot = out_plot, dpi = 300, height = 8, width = 6, bg = "white")
+  invisible()
+
+  }
+
