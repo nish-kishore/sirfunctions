@@ -59,8 +59,11 @@ get_azure_storage_connection <- function(
       password = creds$pw,
       ...
     )
-    cli::cli_alert_success("Posit Workbench token obtained!")
-    cli::cli_alert_info(paste0("Auth type: ", mytoken$auth_type))
+
+    endptoken <- AzureStor::storage_endpoint(endpoint = "https://davsynapseanalyticsdev.dfs.core.windows.net", token = mytoken)
+    azcontainer <- AzureStor::storage_container(endptoken, "ddphsis-cgh")
+    return(azcontainer)
+
   } else {
     mytoken <- AzureAuth::get_azure_token(
       resource = "https://storage.azure.com/",
