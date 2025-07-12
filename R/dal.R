@@ -59,6 +59,8 @@ get_azure_storage_connection <- function(
       password = creds$pw,
       ...
     )
+    cli::cli_alert_success("Posit Workbench token obtained!")
+    cli::cli_alert_info(paste0("Auth type: ", mytoken$auth_type))
   } else {
     mytoken <- AzureAuth::get_azure_token(
       resource = "https://storage.azure.com/",
@@ -71,6 +73,10 @@ get_azure_storage_connection <- function(
 
   cached_tokens <- AzureAuth::list_azure_tokens()
   token_hash_names <- AzureAuth::list_azure_tokens() |> names()
+
+  if (length(token_hash_names) == 0) {
+    cli::cli_alert_danger("No cached tokens detected!")
+  }
 
   mytoken <- lapply(1:length(token_hash_names), function(x) {
     dplyr::tibble(
