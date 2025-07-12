@@ -48,6 +48,22 @@ get_azure_storage_connection <- function(
       password = creds$pw,
       ...
     )
+  } else if (stringr::str_starts(Sys.getenv("SF_PARTNER"), "posit_connect")) {
+    creds_path <- "posit_workbench_creds.yaml"
+    creds <- yaml::read_yaml(creds_path)
+    mytoken <- AzureAuth::get_azure_token(
+      resource = "https://storage.azure.com/",
+      tenant = "9ce70869-60db-44fd-abe8-d2767077fc8f",
+      app = creds$app_id,
+      auth_type = NULL,
+      password = creds$pw,
+      ...
+    )
+
+    endptoken <- AzureStor::storage_endpoint(endpoint = "https://davsynapseanalyticsdev.dfs.core.windows.net", token = mytoken)
+    azcontainer <- AzureStor::storage_container(endptoken, "ddphsis-cgh")
+    return(azcontainer)
+
   } else {
     mytoken <- AzureAuth::get_azure_token(
       resource = "https://storage.azure.com/",
@@ -60,6 +76,10 @@ get_azure_storage_connection <- function(
 
   cached_tokens <- AzureAuth::list_azure_tokens()
   token_hash_names <- AzureAuth::list_azure_tokens() |> names()
+
+  if (length(token_hash_names) == 0) {
+    cli::cli_alert_danger("No cached tokens detected!")
+  }
 
   mytoken <- lapply(1:length(token_hash_names), function(x) {
     dplyr::tibble(
